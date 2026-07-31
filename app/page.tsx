@@ -136,6 +136,10 @@ const LENSES: { id: RankLens; zh: string; en: string; shortZh: string; shortEn: 
 ];
 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
+const formatUsd = (value: number) => new Intl.NumberFormat("en-US", {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: value < 0.01 ? 6 : value < 1 ? 4 : 2,
+}).format(value);
 const normalized = (b: BenchmarkRecord, value: number) => b.unit === "Elo" ? clamp((value - 1000) / 8) : clamp(value);
 const scoresFor = (modelId: string) => BENCHMARK_SCORES[modelId] ?? {};
 const observationsFor = (modelId: string) => BENCHMARK_OBSERVATIONS[modelId] ?? {};
@@ -240,6 +244,8 @@ function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; ax
 
 export default function Home() {
   const [lang,setLang] = useState<Lang>("zh");
+  const [activeSection,setActiveSection] = useState("ranking");
+  const [catalogOpen,setCatalogOpen] = useState(false);
   const [models,setModels] = useState(MODELS);
   const [activeId,setActiveId] = useState("gpt-5.6-sol-max");
   const [compareIds,setCompareIds] = useState<string[]>(["claude-fable-5","kimi-k3-max"]);
@@ -272,6 +278,31 @@ export default function Home() {
   useEffect(() => { const initial=setTimeout(refresh,0); const timer=setInterval(refresh,300000); return () => { clearTimeout(initial); clearInterval(timer); }; }, []);
   useEffect(() => { const saved=localStorage.getItem("observatory-language"); const frame=requestAnimationFrame(() => { if(saved === "zh" || saved === "en") setLang(saved); }); return () => cancelAnimationFrame(frame); }, []);
   useEffect(() => { document.documentElement.lang = lang === "zh" ? "zh-CN" : "en"; }, [lang]);
+  useEffect(() => {
+    const sectionIds = ["ranking","model-detail","benchmarks","pricing"];
+    let frame = 0;
+    const updateActiveSection = () => {
+      const marker = Math.min(window.innerHeight * 0.34, 240);
+      let current = sectionIds[0];
+      for (const id of sectionIds) {
+        const element = document.getElementById(id);
+        if (element && element.getBoundingClientRect().top <= marker) current = id;
+      }
+      setActiveSection(current);
+    };
+    const scheduleUpdate = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(updateActiveSection);
+    };
+    updateActiveSection();
+    window.addEventListener("scroll",scheduleUpdate,{passive:true});
+    window.addEventListener("resize",scheduleUpdate);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll",scheduleUpdate);
+      window.removeEventListener("resize",scheduleUpdate);
+    };
+  }, []);
 
   const ranked = useMemo(() => models
     .filter(model => (maker === "All labs" || model.maker === maker) && (!openOnly || model.open) && `${model.name} ${model.maker}`.toLowerCase().includes(query.toLowerCase()))
@@ -287,7 +318,7 @@ export default function Home() {
   const bestValue = [...models].sort((a,b) => rankScore(b,"value")-rankScore(a,"value"))[0];
 
   return <main className="shell">
-    <aside className="rail"><div className="logo">Ø</div><nav><a className="active" href="#ranking" aria-label="Ranking">⌁</a><a href="#model-detail" aria-label="Capability">◇</a><a href="#benchmarks" aria-label="Benchmarks">△</a><a href="#pricing" aria-label="Pricing">$</a></nav><a className="rail-source" href="#sources" aria-label="Sources">≡</a></aside>
+    <aside className="rail"><div className="logo">Ø</div><nav><a className={activeSection==="ranking"?"active":""} href="#ranking" aria-label="Ranking" aria-current={activeSection==="ranking"?"page":undefined} onClick={()=>setActiveSection("ranking")}>⌁</a><a className={activeSection==="model-detail"?"active":""} href="#model-detail" aria-label="Capability" aria-current={activeSection==="model-detail"?"page":undefined} onClick={()=>setActiveSection("model-detail")}>◇</a><a className={activeSection==="benchmarks"?"active":""} href="#benchmarks" aria-label="Benchmarks" aria-current={activeSection==="benchmarks"?"page":undefined} onClick={()=>setActiveSection("benchmarks")}>△</a><a className={activeSection==="pricing"?"active":""} href="#pricing" aria-label="Pricing" aria-current={activeSection==="pricing"?"page":undefined} onClick={()=>setActiveSection("pricing")}>$</a></nav><a className="rail-source" href="#sources" aria-label="Sources">≡</a></aside>
     <div className="workspace">
       <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?"live":"live offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}<em>{updated}</em></button></div></header>
 
@@ -323,7 +354,7 @@ export default function Home() {
           <div className="section-head"><div className="section-title"><span>02</span><div><h2>{ui.capability}</h2><p>{ui.capabilityDesc}</p></div></div><div className="mode-switch"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}><b>{ui.controlled}</b><span>{ui.controlledNote}</span></button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}><b>{ui.best}</b><span>{ui.bestNote}</span></button></div></div>
           <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className={`coverage-card ${coverage.status}`}><span>{ui.coverage}</span><strong>{coverageText(active.id,profileMode,lang)}</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.status === "uncollected" ? ui.notIngested : `${coverage.present} / ${coverage.total} ${ui.coreMetrics} · ${coverage.status === "partial" ? ui.partialCoverage : ui.broadCoverage}`}</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageText(model.id,profileMode,lang)}</em></button>)}</div></div></div>
         </article>
-        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div><div className="price-strip"><div><span>{ui.input}</span><b>${active.price.input}</b></div><div><span>{ui.output}</span><b>${active.price.output}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
+        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div><div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
       </section>
 
       <section className="panel benchmark-panel" id="benchmarks">
@@ -332,12 +363,12 @@ export default function Home() {
         <div className="benchmark-body"><BenchmarkChart models={compare} axis={axis} mode={profileMode} lang={lang}/></div>
       </section>
 
-      <section className="panel catalog-panel">
-        <div className="section-head"><div className="section-title"><span>04</span><div><h2>{ui.catalog}</h2><p>{ui.catalogDesc}</p></div></div><div className="catalog-count">{BENCHMARKS.filter(b=>b.tier==="core").length} CORE · {BENCHMARKS.filter(b=>b.tier==="observe").length} OBSERVE</div></div>
-        <div className="catalog-grid">{BENCHMARKS.map(b => <a className={`catalog-card ${b.tier}`} href={b.url} target="_blank" rel="noreferrer" key={b.id}><div><span className={`tier ${b.tier}`}>{ui[b.tier]}</span><span className={`method ${b.method}`}>{b.method === "execution" ? ui.exec : b.method === "exam" ? ui.exam : b.method === "rubric" ? ui.rubric : ui.preference}</span></div><h3>{b.name}</h3><p>{b[lang]}</p><footer><span>{AXES.find(a=>a.id===b.axis)?.[lang]}</span><b>{b.mode === "model" ? ui.modelMode : ui.systemMode}</b><em>{b.version} ↗</em></footer></a>)}</div>
-      </section>
+      <section className="panel pricing-panel" id="pricing"><div className="section-head"><div className="section-title"><span>04</span><div><h2>{ui.pricing}</h2><p>{ui.pricingDesc}</p></div></div><button className={live?"feed-status":"feed-status offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}</button></div><div className="price-cards">{compare.map(model => { const blended=model.price.input*.7+model.price.output*.2+model.price.cache*.1; return <article key={model.id} style={{"--accent":model.color} as React.CSSProperties}><div className="card-name"><i/><span><b>{model.name}</b><small>{model.maker}</small></span></div><div className="price-pair"><div><span>{ui.input}</span><strong>${formatUsd(model.price.input)}</strong></div><div><span>{ui.output}</span><strong>${formatUsd(model.price.output)}</strong></div></div><div className="blended"><span>{ui.blended}</span><b>${formatUsd(blended)}</b><i><em style={{width:`${Math.min(100,blended/8*100)}%`}}/></i></div></article>; })}</div></section>
 
-      <section className="panel pricing-panel" id="pricing"><div className="section-head"><div className="section-title"><span>05</span><div><h2>{ui.pricing}</h2><p>{ui.pricingDesc}</p></div></div><button className={live?"feed-status":"feed-status offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}</button></div><div className="price-cards">{compare.map(model => { const blended=model.price.input*.7+model.price.output*.2+model.price.cache*.1; return <article key={model.id} style={{"--accent":model.color} as React.CSSProperties}><div className="card-name"><i/><span><b>{model.name}</b><small>{model.maker}</small></span></div><div className="price-pair"><div><span>{ui.input}</span><strong>${model.price.input}</strong></div><div><span>{ui.output}</span><strong>${model.price.output}</strong></div></div><div className="blended"><span>{ui.blended}</span><b>${blended.toFixed(2)}</b><i><em style={{width:`${Math.min(100,blended/8*100)}%`}}/></i></div></article>; })}</div></section>
+      <section className="panel catalog-panel">
+        <div className="section-head"><div className="section-title"><span>05</span><div><h2>{ui.catalog}</h2><p>{ui.catalogDesc}</p></div></div><div className="catalog-actions"><div className="catalog-count">{BENCHMARKS.filter(b=>b.tier==="core").length} CORE · {BENCHMARKS.filter(b=>b.tier==="observe").length} OBSERVE</div><button className="catalog-toggle" type="button" aria-expanded={catalogOpen} onClick={()=>setCatalogOpen(open=>!open)}>{catalogOpen ? (lang==="zh"?"收起目录":"Collapse catalog") : (lang==="zh"?`展开 ${BENCHMARKS.length} 项`:`Show ${BENCHMARKS.length} items`)}<span>{catalogOpen?"↑":"↓"}</span></button></div></div>
+        {catalogOpen && <div className="catalog-grid">{BENCHMARKS.map(b => <a className={`catalog-card ${b.tier}`} href={b.url} target="_blank" rel="noreferrer" key={b.id}><div><span className={`tier ${b.tier}`}>{ui[b.tier]}</span><span className={`method ${b.method}`}>{b.method === "execution" ? ui.exec : b.method === "exam" ? ui.exam : b.method === "rubric" ? ui.rubric : ui.preference}</span></div><h3>{b.name}</h3><p>{b[lang]}</p><footer><span>{AXES.find(a=>a.id===b.axis)?.[lang]}</span><b>{b.mode === "model" ? ui.modelMode : ui.systemMode}</b><em>{b.version} ↗</em></footer></a>)}</div>}
+      </section>
 
       <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a href={source.url} target="_blank" rel="noreferrer" key={source.label}><span>{source.date}</span><b>{source.label}</b><small>{"votes" in source ? source.votes : source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
       <footer className="site-footer"><div><i/>VERSIONED SNAPSHOT · 2026-07-31</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
