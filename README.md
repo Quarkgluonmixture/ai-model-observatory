@@ -4,6 +4,8 @@ A bilingual, mobile-ready dashboard for comparing frontier AI models across vers
 
 一个支持中英文切换与手机端使用的前沿 AI 模型看板，可查看排行榜、能力雷达图、多模型 Benchmark 折线对比、上下文窗口及实时 Token 价格。
 
+For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ## Features
 
 - 22 frontier and open-weight model configurations
@@ -43,6 +45,7 @@ Requires Node.js 22.13 or newer.
 
 ```bash
 npm ci
+npm run check:data
 npm run dev:next
 ```
 
@@ -81,6 +84,8 @@ app/
   model-data.ts             # benchmark snapshots and model metadata
   page.tsx                  # ranking, radar, comparison, pricing UI
 public/                     # static assets
+docs/ARCHITECTURE.md        # diagrams, data contract, deployment and change playbooks
+AGENTS.md                    # concise coding-agent handoff rules
 ```
 
 ## Notes
