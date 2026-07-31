@@ -1,9 +1,24 @@
 const LOOKUPS: Record<string, string[]> = {
-  "gpt-5.6": ["gpt-5.6", "gpt-5"],
-  "claude-opus-5": ["claude-opus-5", "claude-opus"],
-  "gemini-3.1-pro": ["gemini-3.1-pro", "gemini-3-pro"],
-  "deepseek-v4": ["deepseek-v4", "deepseek"],
-  "qwen-4-max": ["qwen-4-max", "qwen-max"],
+  "claude-opus-5-max": ["claude-opus-5"],
+  "claude-opus-5-xhigh": ["claude-opus-5"],
+  "claude-fable-5": ["claude-fable-5"],
+  "gpt-5.6-sol-max": ["gpt-5.6-sol", "gpt-5.6"],
+  "claude-opus-5-high": ["claude-opus-5"],
+  "gpt-5.6-sol-xhigh": ["gpt-5.6-sol", "gpt-5.6"],
+  "kimi-k3-max": ["kimi-k3"],
+  "gpt-5.6-sol-high": ["gpt-5.6-sol", "gpt-5.6"],
+  "gpt-5.6-terra-max": ["gpt-5.6-terra"],
+  "grok-4.5-high": ["grok-4.5"],
+  "claude-sonnet-5-max": ["claude-sonnet-5"],
+  "gpt-5.6-terra-xhigh": ["gpt-5.6-terra"],
+  "glm-5.2-max": ["glm-5.2"],
+  "muse-spark-1.1": ["muse-spark-1.1"],
+  "gemini-3.5-flash": ["gemini-3.5-flash"],
+  "gemini-3.6-flash": ["gemini-3.6-flash"],
+  "deepseek-v4-flash": ["deepseek-v4-flash", "deepseek-v4"],
+  "gemini-3.1-pro": ["gemini-3.1-pro"],
+  "qwen3.7-max": ["qwen3.7-max", "qwen-3.7-max"],
+  "deepseek-v4-pro": ["deepseek-v4-pro", "deepseek-v4"],
 };
 
 export async function GET() {
@@ -15,7 +30,7 @@ export async function GET() {
     if (!response.ok) throw new Error(`upstream ${response.status}`);
     const payload = await response.json() as { data?: Array<{ id:string; name?:string; context_length?:number; pricing?:{prompt?:string;completion?:string} }> };
     const list = payload.data ?? [];
-    const prices: Record<string, {input:number;output:number;context?:string;source:string}> = {};
+    const prices: Record<string, {input:number;output:number;contextK?:number;source:string}> = {};
     for (const [key, needles] of Object.entries(LOOKUPS)) {
       const found = list.find(item => needles.some(needle => item.id.toLowerCase().includes(needle)));
       if (!found?.pricing) continue;
@@ -23,7 +38,7 @@ export async function GET() {
       const output = Number(found.pricing.completion ?? 0) * 1_000_000;
       if (!Number.isFinite(input) || !Number.isFinite(output)) continue;
       const n = found.context_length ?? 0;
-      prices[key] = { input, output, context: n >= 1_000_000 ? `${Math.round(n/1_000_000)}M` : n ? `${Math.round(n/1000)}K` : undefined, source: found.id };
+      prices[key] = { input, output, contextK: n ? Math.round(n/1000) : undefined, source: found.id };
     }
     return Response.json({ prices, updatedAt: new Date().toISOString(), provider: "OpenRouter" }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=240" } });
   } catch {
