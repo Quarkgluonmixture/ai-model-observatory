@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   AXES,
   BENCHMARKS,
+  BENCHMARK_OBSERVATIONS,
   BENCHMARK_SCORES,
   MODELS,
   SOURCE_META,
@@ -40,6 +41,11 @@ const UI = {
     controlledNote: "优先单轮、无工具或统一设置的结果",
     bestNote: "允许模型使用公开最佳 Agent scaffold 与工具",
     coverage: "数据覆盖",
+    notIngested: "尚未接入",
+    partialCoverage: "部分覆盖",
+    broadCoverage: "广泛覆盖",
+    coreMetrics: "项核心指标",
+    observations: "条公开观测",
     noRadar: "该模型尚无足够的兼容 Benchmark 数据",
     benchmark: "Benchmark 组合面板",
     benchmarkDesc: "按能力族查看原始分数、版本、评测对象与评分方法；最多对比三个模型。",
@@ -88,6 +94,11 @@ const UI = {
     controlledNote: "Prioritises single-step, no-tool or controlled results",
     bestNote: "Allows each model's strongest public agent scaffold and tools",
     coverage: "Coverage",
+    notIngested: "Not ingested",
+    partialCoverage: "Partial",
+    broadCoverage: "Broad",
+    coreMetrics: "core metrics",
+    observations: "public observations",
     noRadar: "Not enough compatible benchmark evidence for this model yet",
     benchmark: "Benchmark portfolio",
     benchmarkDesc: "Inspect raw scores, versions, evaluated object and scoring method by capability family. Compare up to three models.",
@@ -127,6 +138,7 @@ const LENSES: { id: RankLens; zh: string; en: string; shortZh: string; shortEn: 
 const clamp = (n: number) => Math.max(0, Math.min(100, n));
 const normalized = (b: BenchmarkRecord, value: number) => b.unit === "Elo" ? clamp((value - 1000) / 8) : clamp(value);
 const scoresFor = (modelId: string) => BENCHMARK_SCORES[modelId] ?? {};
+const observationsFor = (modelId: string) => BENCHMARK_OBSERVATIONS[modelId] ?? {};
 
 function axisScore(modelId: string, axis: BenchmarkAxis, mode: BenchmarkMode) {
   const scores = scoresFor(modelId);
@@ -143,7 +155,15 @@ function coverageFor(modelId: string, mode: BenchmarkMode) {
   const scores = scoresFor(modelId);
   const core = BENCHMARKS.filter(b => b.tier === "core" && (mode === "system" || b.mode === "model"));
   const present = core.filter(b => typeof scores[b.id] === "number").length;
-  return { present, total: core.length, pct: core.length ? Math.round(present / core.length * 100) : 0 };
+  const pct = core.length ? Math.round(present / core.length * 100) : 0;
+  const status = present === 0 ? "uncollected" : pct < 50 ? "partial" : "broad";
+  return { present, total: core.length, pct, status } as const;
+}
+
+function coverageText(modelId: string, mode: BenchmarkMode, lang: Lang) {
+  const coverage = coverageFor(modelId, mode);
+  if (coverage.status === "uncollected") return UI[lang].notIngested;
+  return `${coverage.pct}%`;
 }
 
 function rankScore(model: ModelRecord, lens: RankLens) {
@@ -206,15 +226,15 @@ function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; ax
       {[0,25,50,75,100].map(v => <g className="line-grid" key={v}><line x1="52" x2={width-30} y1={y(v)} y2={y(v)}/><text x="43" y={y(v)} textAnchor="end" dominantBaseline="middle">{v}</text></g>)}
       {metrics.map((b,i) => <g key={b.id}><text className="axis-label" x={x(i)} y="218" textAnchor="middle">{b.name}</text><text className="axis-version" x={x(i)} y="231" textAnchor="middle">{b.version}</text></g>)}
       {models.map(model => {
-        const points = metrics.map((b,i) => { const raw = scoresFor(model.id)[b.id]; return typeof raw === "number" ? {x:x(i), y:y(normalized(b, raw)), raw, b} : null; });
+        const points = metrics.map((b,i) => { const raw = scoresFor(model.id)[b.id]; const observation = observationsFor(model.id)[b.id]; return typeof raw === "number" ? {x:x(i), y:y(normalized(b, raw)), raw, b, observation} : null; });
         const segments = points.flatMap((p,i) => p && i > 0 && points[i-1] ? [[points[i-1]!,p]] : []);
         return <g className="bench-series" key={model.id}>
           {segments.map((s,i) => <line key={i} x1={s[0].x} y1={s[0].y} x2={s[1].x} y2={s[1].y} stroke={model.color}/>)}
-          {points.map((p,i) => p && <circle key={i} cx={p.x} cy={p.y} r="4" fill={model.color}><title>{model.name} · {p.b.name}: {p.raw}{p.b.unit}</title></circle>)}
+          {points.map((p,i) => p && <circle key={i} cx={p.x} cy={p.y} r="4" fill={model.color}><title>{model.name} · {p.b.name}: {p.raw}{p.b.unit} · {p.observation?.sourceLabel ?? "public source"}</title></circle>)}
         </g>;
       })}
     </svg></div>
-    <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; return <td key={b.id}>{typeof v === "number" ? `${v}${b.unit}` : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
+    <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={observation ? `${observation.sourceLabel} · ${observation.benchmarkVersion}${observation.harness ? ` · ${observation.harness}` : ""}` : ui.notIngested}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
   </div>;
 }
 
@@ -301,13 +321,13 @@ export default function Home() {
       <section className="detail-grid" id="model-detail">
         <article className="panel radar-panel">
           <div className="section-head"><div className="section-title"><span>02</span><div><h2>{ui.capability}</h2><p>{ui.capabilityDesc}</p></div></div><div className="mode-switch"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}><b>{ui.controlled}</b><span>{ui.controlledNote}</span></button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}><b>{ui.best}</b><span>{ui.bestNote}</span></button></div></div>
-          <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className="coverage-card"><span>{ui.coverage}</span><strong>{coverage.pct}%</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.present} / {coverage.total} core metrics</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageFor(model.id,profileMode).pct}%</em></button>)}</div></div></div>
+          <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className={`coverage-card ${coverage.status}`}><span>{ui.coverage}</span><strong>{coverageText(active.id,profileMode,lang)}</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.status === "uncollected" ? ui.notIngested : `${coverage.present} / ${coverage.total} ${ui.coreMetrics} · ${coverage.status === "partial" ? ui.partialCoverage : ui.broadCoverage}`}</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageText(model.id,profileMode,lang)}</em></button>)}</div></div></div>
         </article>
         <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div><div className="price-strip"><div><span>{ui.input}</span><b>${active.price.input}</b></div><div><span>{ui.output}</span><b>${active.price.output}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
       </section>
 
       <section className="panel benchmark-panel" id="benchmarks">
-        <div className="section-head"><div className="section-title"><span>03</span><div><h2>{ui.benchmark}</h2><p>{ui.benchmarkDesc}</p></div></div><div className="compare-pills">{compare.map(model=><button key={model.id} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/>{model.name}<span>{scoresFor(model.id) ? Object.keys(scoresFor(model.id)).length : 0}</span></button>)}</div></div>
+        <div className="section-head"><div className="section-title"><span>03</span><div><h2>{ui.benchmark}</h2><p>{ui.benchmarkDesc}</p></div></div><div className="compare-pills">{compare.map(model=>{const count=Object.keys(observationsFor(model.id)).length;return <button key={model.id} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/>{model.name}<span>{count ? `${count} ${ui.observations}` : ui.notIngested}</span></button>;})}</div></div>
         <div className="benchmark-toolbar"><div className="axis-tabs">{AXES.map(item => <button key={item.id} className={axis===item.id?"active":""} onClick={()=>setAxis(item.id)}><span>{item[lang]}</span><b>{item.weight}%</b></button>)}</div><div className="mode-compact"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}>{ui.controlled}</button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}>{ui.best}</button></div></div>
         <div className="benchmark-body"><BenchmarkChart models={compare} axis={axis} mode={profileMode} lang={lang}/></div>
       </section>
@@ -319,7 +339,7 @@ export default function Home() {
 
       <section className="panel pricing-panel" id="pricing"><div className="section-head"><div className="section-title"><span>05</span><div><h2>{ui.pricing}</h2><p>{ui.pricingDesc}</p></div></div><button className={live?"feed-status":"feed-status offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}</button></div><div className="price-cards">{compare.map(model => { const blended=model.price.input*.7+model.price.output*.2+model.price.cache*.1; return <article key={model.id} style={{"--accent":model.color} as React.CSSProperties}><div className="card-name"><i/><span><b>{model.name}</b><small>{model.maker}</small></span></div><div className="price-pair"><div><span>{ui.input}</span><strong>${model.price.input}</strong></div><div><span>{ui.output}</span><strong>${model.price.output}</strong></div></div><div className="blended"><span>{ui.blended}</span><b>${blended.toFixed(2)}</b><i><em style={{width:`${Math.min(100,blended/8*100)}%`}}/></i></div></article>; })}</div></section>
 
-      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a href={source.url} target="_blank" rel="noreferrer" key={source.label}><span>{source.date}</span><b>{source.label}</b><small>{"votes" in source ? source.votes : "public methodology / results"}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
+      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a href={source.url} target="_blank" rel="noreferrer" key={source.label}><span>{source.date}</span><b>{source.label}</b><small>{"votes" in source ? source.votes : source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
       <footer className="site-footer"><div><i/>VERSIONED SNAPSHOT · 2026-07-31</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
     </div>
   </main>;
