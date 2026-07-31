@@ -3,8 +3,9 @@
 每个批次都是**自包含**的：整段复制粘给带浏览的 GPT 即可，不需要拼接。
 一次只跑一个批次。返回的 ```jsonl 原样贴回来入库。
 
-批次 1–5 已完成，存档在 `data/sources/`。**下一个要跑的是批次 6**，它抓的是模型运营参数
-（不是 benchmark 成绩），拿到后 12 个当前世代模型才能进目录，存档里等着的 43 行观测会自动接上。
+批次 1–7 已完成，存档在 `data/sources/`。**下一个要跑的是批次 8**（文件最后），
+它补齐模型运营参数里缺的速度/延迟与厂商定价 —— 目前 `npm run check:models` 报 67% 有出处，
+补完这一批能到 90% 以上。
 
 ---
 
@@ -372,3 +373,71 @@ JSONL 之后再输出：`# ROWCOUNT:` / `# COVERED:` / `# UNAVAILABLE:` / `# AMB
 存进 `data/sources/batch-06-operating.jsonl` + `.meta.json`。这一批**不走 `npm run ingest`**
 （它产出的是模型记录不是观测行），会单独处理成 `MODELS` 里的 `configurations`。
 凑齐参数后，12 个当前世代模型进目录，存档里等着的 43 行观测会自动接上。
+
+---
+
+## 批次 8 · 补齐运营参数（下一轮的主目标）
+
+> `npm run check:models` 现在报 **171/255 有出处（67%）**，剩下 84 个值没有存档行支撑，
+> 集中在两类：**老模型的速度/延迟**（44 个）和**没抓过的厂商定价页**（28 个）。
+> 这一批把它们补完，能把 67% 推到 90% 以上。格式与批次 6 相同。
+
+````
+你是模型参数采集员。任务是**从公开页面逐行抄录模型的运营参数**，输出 JSONL。
+这是抄录任务，不是估计任务。
+
+## 硬性规则
+
+1. **只抄，不猜。** 没有的字段填 null。绝不用同系列模型推算价格、速度或延迟。
+2. **必须展开全部行**，或逐个打开模型详情页。抄完用
+   `# ROWCOUNT: <url> — 可见 N 行，已抄录 M 行` 自查。
+3. **effort 单独成行。** Artificial Analysis 把同一模型的不同 reasoning effort 列成多行，
+   每个 effort 输出一行，不要只取最强的。页面没标 effort 就填 null。
+4. **价格单位统一为「每百万 token 的美元数」。** 缓存价分清 cache **read/hit** 与
+   cache **write**，我们要的是 read/hit，write 写进 note。没有就 null，不要用规则推算。
+5. **区分上下文档位定价。** 若厂商按上下文长度分档（如 xAI 的 <200K / ≥200K、
+   MiniMax 的 ≤512K / 512K–1M），**每档单独一行**，档位写进 note。
+6. 一行一个来源。同一模型的 AA 数据与厂商定价来自不同页面，就输出两行，各带各的 URL。
+7. 页面打不开 → `# UNAVAILABLE: <url> — 原因`，不要编数据填补。
+
+## 这一批要补的两块
+
+**A. 速度与延迟**（`output_tokens_per_s`、`latency_first_chunk_s`）
+   到 Artificial Analysis **逐个模型详情页** 抓，主表没有这两列：
+     Claude Opus 5（max/xhigh/high）· Claude Fable 5 · Claude Sonnet 5 · Claude Opus 4.8
+     GPT-5.6 Sol（max/xhigh/high）· GPT-5.6 Terra（max/xhigh）· GPT-5.5
+     Kimi K3 · Grok 4.5 · GLM-5.2 · Gemini 3.5 Flash · Gemini 3.6 Flash
+     Gemini 3.1 Pro · DeepSeek V4 Pro · DeepSeek V4 Flash · Qwen3.7 Max
+   入口：https://artificialanalysis.ai/models
+
+**B. 厂商官方定价**（`price_input_per_m` / `price_output_per_m` / `price_cache_per_m`）
+   批次 6 只跑到 OpenAI、Moonshot、MiniMax、xAI、Cursor。这次要这几家：
+     https://www.anthropic.com/pricing            （Opus 5 / Fable 5 / Sonnet 5 / Opus 4.8）
+     https://ai.google.dev/pricing                （Gemini 3.5 Flash / 3.6 Flash / 3.1 Pro）
+     https://api-docs.deepseek.com/quick_start/pricing   （V4 Pro / V4 Flash）
+     https://www.alibabacloud.com/help/en/model-studio/models   （Qwen3.7 Max / Qwen3.6 Plus / Max）
+     https://docs.z.ai/guides/overview/pricing    （GLM-5.2）
+     https://thinkingmachines.ai/                 （Inkling / Inkling Small，若有定价页）
+     Meta 的 Muse Spark 1.1 定价页（若公开）
+
+⚠️ 名单是**覆盖目标**，不是输出清单。页面上没有的模型不要输出那一行。
+
+## 输出格式
+
+```jsonl，字段与批次 6 完全一致（没有的填 null）：
+
+{"model_raw":"Claude Opus 5","effort":"max","maker":"Anthropic","open_weights":false,"context_k":1000,"intelligence_index":null,"cost_per_task_usd":null,"output_tokens_per_s":54,"latency_first_chunk_s":83.49,"price_input_per_m":5,"price_output_per_m":25,"price_cache_per_m":0.5,"text_elo":null,"code_elo":null,"evaluation_date":null,"source_label":"Artificial Analysis model page","source_url":"https://artificialanalysis.ai/models/claude-opus-5","source_kind":"independent","note":null}
+
+- `source_kind`："independent"（Artificial Analysis）/ "official"（厂商自己的定价页）
+- 所有 price_* 都是**每百万 token 的美元数**
+
+JSONL 之后输出：`# ROWCOUNT:` / `# COVERED:` / `# UNAVAILABLE:` / `# AMBIGUOUS:`
+
+不要写总结、分析或建议。只要数据。
+````
+
+### 拿到之后
+
+存进 `data/sources/batch-08-operating.jsonl` + `.meta.json`（`schema` 必须以
+`Model operating parameters` 开头，否则会被当成观测行）。然后 `npm run check:models`
+—— 它会直接告诉你补上了多少、还差哪些。**如果它报 catalog 与存档矛盾，以存档为准改目录。**
