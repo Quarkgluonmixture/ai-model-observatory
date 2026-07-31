@@ -34,8 +34,8 @@ export async function GET() {
     for (const [key, needles] of Object.entries(LOOKUPS)) {
       const found = list.find(item => needles.some(needle => item.id.toLowerCase().includes(needle)));
       if (!found?.pricing) continue;
-      const input = Number(found.pricing.prompt ?? 0) * 1_000_000;
-      const output = Number(found.pricing.completion ?? 0) * 1_000_000;
+      const input = Number((Number(found.pricing.prompt ?? 0) * 1_000_000).toFixed(6));
+      const output = Number((Number(found.pricing.completion ?? 0) * 1_000_000).toFixed(6));
       if (!Number.isFinite(input) || !Number.isFinite(output)) continue;
       const n = found.context_length ?? 0;
       prices[key] = { input, output, contextK: n ? Math.round(n/1000) : undefined, source: found.id };
