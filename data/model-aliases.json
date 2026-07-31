@@ -1,0 +1,1076 @@
+{
+  "_doc": [
+    "Maps a published leaderboard model string to a catalog model id.",
+    "A row is ingested only if it matches an entry here. Unmatched rows stay in the",
+    "raw archive and are reported by `npm run ingest`; they are never guessed into place.",
+    "",
+    "The catalog holds ONE record per model family and keeps reasoning effort on the",
+    "observation row, so `effort` is \"*\" almost everywhere: a published string identifies the",
+    "family, and whatever effort the source printed is stored on the row. Add an effort-specific",
+    "entry only if a maker ever ships two records for one family again.",
+    "",
+    "Deliberately absent, with reasons, so nobody re-adds them by accident:",
+    "  Muse Spark (no version)         - a different model from Muse Spark 1.1",
+    "  GPT-5.5 Pro / 5.2 Pro / 5.4 Pro - Pro is a different model from the base",
+    "  DeepSeek v4 (max)               - ambiguous between DeepSeek V4 Pro and base V4",
+    "  GPT 5.6 Sol (Max + Pro)         - a two-model system, not a model configuration",
+    "  Fable 5 (1M) on PostTrainBench  - the page says failed cells fell back to Opus 4.8",
+    "  Multiple / Best per task       - leaderboard aggregate rows, not a model at all",
+    "  MiniMax, Composer, Seed, Qwen3.6, GPT-5.x - not in the catalog yet; archived for later",
+    "  Opus 4.7/4.6/4.5, Gemini 3 Pro, GLM-5.1, Kimi K2.5, GPT-5.x, Composer 2.5, Seed 2.1 Pro,",
+    "  Muse Spark (base) - previous generation, or too little operating data to build a record"
+  ],
+  "aliases": [
+    {
+      "modelRaw": "Claude Opus 5",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "claude-opus-5[max]",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (Adaptive Reasoning, Max Effort)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (Adaptive Reasoning, Xhigh Effort)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (Adaptive Reasoning, High Effort)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Opus 5 Max",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (max)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (xhigh)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (high)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5.6-sol[max]",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT 5.6 Sol Max",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5-6-sol",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra (max)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra (xhigh)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "gpt-5.6-terra[max]",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "Claude Fable 5",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Claude Fable 5 (max)",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "claude-fable-5[max]",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Claude Fable 5 (Adaptive Reasoning, Max Effort, Opus 4.8 Fallback)",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Fable 5",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Fable 5 Max",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "claude-fable-5 40% tasks downgraded",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (max)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "Claude Opus 4.8",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (Adaptive Reasoning, Max Effort)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "claude-opus-4.8[max]",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "claude-opus-4-8 (max)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "Opus 4.8",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "GPT-5.5 (xHigh)",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "GPT-5.5 (xhigh)",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "GPT-5.5",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "gpt-5.5[xhigh]",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "gpt-5.5 (xhigh)",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "gpt-5-5",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "Claude Sonnet 5",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Adaptive Reasoning, Max Effort)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "claude-sonnet-5[max]",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "Sonnet 5",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "Kimi K3",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "Kimi K3 (max)",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "kimi-k3 (max)",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "kimi-k3[max]",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "Grok 4.5",
+      "effort": "*",
+      "modelId": "grok-4.5"
+    },
+    {
+      "modelRaw": "Grok 4.5 (high)",
+      "effort": "*",
+      "modelId": "grok-4.5"
+    },
+    {
+      "modelRaw": "grok-4.5[high]",
+      "effort": "*",
+      "modelId": "grok-4.5"
+    },
+    {
+      "modelRaw": "GLM-5.2 (max)",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "GLM-5.2",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "GLM 5.2",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "glm-5.2[max]",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "glm-5p2",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "glm-5-2",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "Muse Spark 1.1",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "Muse Spark 1.1*",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "Muse Spark 1.1 xHigh",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "muse-spark-1.1[xhigh]",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "Qwen3.7-Max",
+      "effort": "*",
+      "modelId": "qwen3.7-max"
+    },
+    {
+      "modelRaw": "qwen3-7-max",
+      "effort": "*",
+      "modelId": "qwen3.7-max"
+    },
+    {
+      "modelRaw": "DeepSeek V4 Pro",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "DeepSeek V4 Pro (max)",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "deepseek-v4-pro",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "Gemini 3.5 Flash (Minimal)",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "Gemini 3.5 Flash (High)",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "Gemini 3.5 Flash (high)",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "Gemini 3.5 Flash",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3.5-flash (high)",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3.5-flash[medium]",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3.6-flash[high]",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash"
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro (Preview)",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro Preview",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro Thinking (High)",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "gemini-3.1-pro (thinking)*",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "gemini-3.1-pro-preview (high)",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "gemini-3.1-pro[high]",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "gemini-3-1-pro",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "GPT 5.5",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "GPT 5.5 · Codex",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "GPT 5.5 · OpenHands",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "Gemini 3.6 Flash",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash"
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro Preview (02/26)",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "Claude Fable 5 with Exa",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Fable 5 with Exa",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "Fable 5 with native search",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "gpt-5.6 (sol)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5-6-terra",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (Adaptive Reasoning, Medium Effort)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Adaptive Reasoning, Xhigh Effort)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (medium)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra (high)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "DeepSeek V4",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "gpt-5.6-luna[max]",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "gpt-5-6-luna",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "Kimi K2.6",
+      "effort": "*",
+      "modelId": "kimi-k2.6"
+    },
+    {
+      "modelRaw": "kimi-k2-6",
+      "effort": "*",
+      "modelId": "kimi-k2.6"
+    },
+    {
+      "modelRaw": "Kimi K2.7 Code",
+      "effort": "*",
+      "modelId": "kimi-k2.7-code"
+    },
+    {
+      "modelRaw": "kimi-k2.7-code",
+      "effort": "*",
+      "modelId": "kimi-k2.7-code"
+    },
+    {
+      "modelRaw": "Inkling",
+      "effort": "*",
+      "modelId": "inkling"
+    },
+    {
+      "modelRaw": "Inkling-small",
+      "effort": "*",
+      "modelId": "inkling-small"
+    },
+    {
+      "modelRaw": "Qwen3.6-Plus",
+      "effort": "*",
+      "modelId": "qwen3.6-plus"
+    },
+    {
+      "modelRaw": "Qwen 3.6 Max (Preview)",
+      "effort": "*",
+      "modelId": "qwen3.6-max"
+    },
+    {
+      "modelRaw": "Grok 4.3",
+      "effort": "*",
+      "modelId": "grok-4.3"
+    },
+    {
+      "modelRaw": "Grok 4.3 Beta",
+      "effort": "*",
+      "modelId": "grok-4.3"
+    },
+    {
+      "modelRaw": "grok-4-3",
+      "effort": "*",
+      "modelId": "grok-4.3"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "MiniMax-M3",
+      "effort": "*",
+      "modelId": "minimax-m3"
+    },
+    {
+      "modelRaw": "minimax-m3",
+      "effort": "*",
+      "modelId": "minimax-m3"
+    },
+    {
+      "modelRaw": "MiniMax M3",
+      "effort": "*",
+      "modelId": "minimax-m3"
+    },
+    {
+      "modelRaw": "Inkling (xHigh)",
+      "effort": "*",
+      "modelId": "inkling"
+    },
+    {
+      "modelRaw": "inkling",
+      "effort": "*",
+      "modelId": "inkling"
+    },
+    {
+      "modelRaw": "Kimi 2.6",
+      "effort": "*",
+      "modelId": "kimi-k2.6"
+    },
+    {
+      "modelRaw": "kimi-k2.6",
+      "effort": "*",
+      "modelId": "kimi-k2.6"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash Preview (Non-reasoning)",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "gemini-3-flash",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (max)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (xhigh)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (high)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (medium)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Opus 5 (low)",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "Claude Fable 5 (with fallback)",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (low)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (Non-reasoning)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "Kimi K3 (low)",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra (medium)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra (low)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "GPT-5.6 Terra (Non-reasoning)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (max)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Non-reasoning)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "Muse Spark 1.1 (xhigh)",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "DeepSeek V4 Flash 0731 (max)",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash"
+    },
+    {
+      "modelRaw": "Qwen3.7 Max",
+      "effort": "*",
+      "modelId": "qwen3.7-max"
+    },
+    {
+      "modelRaw": "DeepSeek V4 Pro (high)",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "Inkling Small",
+      "effort": "*",
+      "modelId": "inkling-small"
+    },
+    {
+      "modelRaw": "Qwen3.6 Plus",
+      "effort": "*",
+      "modelId": "qwen3.6-plus"
+    },
+    {
+      "modelRaw": "Qwen3.6 Max Preview",
+      "effort": "*",
+      "modelId": "qwen3.6-max"
+    },
+    {
+      "modelRaw": "Grok 4.3 (high)",
+      "effort": "*",
+      "modelId": "grok-4.3"
+    },
+    {
+      "modelRaw": "Grok 4.3 (Non-reasoning)",
+      "effort": "*",
+      "modelId": "grok-4.3"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna (max)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna (xhigh)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna (high)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna (medium)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna (low)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "GPT-5.6 Luna (Non-reasoning)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "Kimi K2.6 (Non-reasoning)",
+      "effort": "*",
+      "modelId": "kimi-k2.6"
+    },
+    {
+      "modelRaw": "claude-opus-5-max",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "claude-opus-5-high",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "claude-fable-5",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "kimi-k3-max",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "gpt-5.6-sol-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5.6-sol-xhigh (codex-harness)",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5.6-terra-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "gpt-5.6-terra-xhigh (codex-harness)",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "gpt-5.6-luna-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "gpt-5.6-luna-xhigh (codex-harness)",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "gpt-5.5",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "gpt-5.5-high",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "gpt-5.5-xhigh (codex-harness)",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "claude-opus-4-8",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "claude-opus-4-8-thinking",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "claude-sonnet-5-high",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "glm-5.2-max",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "gemini-3.5-flash-high",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3.5-flash",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3.5-flash-medium",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3.6-flash",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash"
+    },
+    {
+      "modelRaw": "gemini-3.1-pro-preview",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "grok-4.5",
+      "effort": "*",
+      "modelId": "grok-4.5"
+    },
+    {
+      "modelRaw": "deepseek-v4-pro-thinking",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "deepseek-v4-flash",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash"
+    },
+    {
+      "modelRaw": "qwen3.7-max-preview",
+      "effort": "*",
+      "modelId": "qwen3.7-max"
+    },
+    {
+      "modelRaw": "qwen3.7-max-20260517",
+      "effort": "*",
+      "modelId": "qwen3.7-max"
+    },
+    {
+      "modelRaw": "qwen3.6-plus",
+      "effort": "*",
+      "modelId": "qwen3.6-plus"
+    },
+    {
+      "modelRaw": "qwen3.6-max-preview",
+      "effort": "*",
+      "modelId": "qwen3.6-max"
+    },
+    {
+      "modelRaw": "inkling-small",
+      "effort": "*",
+      "modelId": "inkling-small"
+    },
+    {
+      "modelRaw": "muse-spark-1.1",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    }
+  ],
+  "benchmarkSplits": [
+    {
+      "benchmark": "frontiermath",
+      "benchmarkVersion": "Tier 4 (v2)",
+      "benchmarkId": "frontiermath-t4",
+      "reason": "Tier 4 is a harder, separate problem set from Tiers 1-3. Kept in one cell they would share a table column, so one model's Tier 4 score would be read against another model's Tiers 1-3 score."
+    },
+    {
+      "benchmark": "terminal",
+      "benchmarkVersion": "2.0",
+      "benchmarkId": "terminal-20",
+      "reason": "Terminal-Bench 2.0 and 2.1 are different task sets and the architecture forbids merging them. 2.0 gets its own legacy-tier benchmark so the 2.1 column stays clean."
+    }
+  ],
+  "versionAliases": [
+    {
+      "benchmark": "arc-agi-2",
+      "from": "2",
+      "to": "v2",
+      "reason": "ARC Prize writes the version as '2'; the catalog and the existing rows write 'v2'. Same version, different spelling."
+    },
+    {
+      "benchmark": "swe-pro",
+      "from": "Public Dataset",
+      "to": "Public",
+      "reason": "Scale calls it the 'Public Dataset'; existing rows call it 'Public'. Same 731-instance public split."
+    },
+    {
+      "benchmark": "toolathlon",
+      "from": "Toolathlon-Verified",
+      "to": "Verified",
+      "reason": "Same verified split, written with and without the benchmark name as a prefix."
+    },
+    {
+      "benchmark": "osworld2",
+      "from": "2.0 v2026.06.24",
+      "to": "2.0",
+      "reason": "The suffix is the task-set build date within OSWorld 2.0, not a separate version."
+    },
+    {
+      "benchmark": "gdpval",
+      "from": "GDPval-AA v2",
+      "to": "v2",
+      "reason": "Same v2 leaderboard, written with and without the benchmark name as a prefix."
+    },
+    {
+      "benchmark": "mmmu",
+      "from": "MMMU-Pro · Overall",
+      "to": "Pro",
+      "reason": "The MMMU-Pro Overall column is what the catalog already records as 'Pro'. The Vision and Standard subsets are deliberately not ingested rather than folded in."
+    },
+    {
+      "benchmark": "apex",
+      "from": "Pass@1",
+      "to": "2026",
+      "reason": "Evidence-backed: Mercor's Pass@1 values match the existing rows exactly for Fable 5 (43.3) and GPT-5.6 Sol (39.9), so '2026' is a placeholder label for the same Pass@1 metric."
+    },
+    {
+      "benchmark": "ale",
+      "from": "ALE-V1",
+      "to": "2026",
+      "reason": "ALE has published one version; '2026' is the placeholder label the existing rows use for it."
+    },
+    {
+      "benchmark": "mcp-atlas",
+      "from": "April 2026 methodology",
+      "to": "2026",
+      "reason": "JUDGEMENT CALL, not an exact match. Both refer to Scale's MCP-Atlas board, but the values differ by 1-2 points from the existing vendor rows (Kimi K3 84.2 vs 82.3, Fable 5 84.7 vs 83.3). Treated as one version so the column stays single-versioned; the gap is visible as two rows in the cell, benchmark-native first."
+    },
+    {
+      "benchmark": "frontierswe",
+      "from": "Mean@5",
+      "to": "2026-07",
+      "reason": "JUDGEMENT CALL, not an exact match. FrontierSWE publishes one leaderboard whose metric is Mean@5; '2026-07' is a snapshot date the existing rows use as a version label. Values differ (Fable 5 89 vs 86.6), most likely different snapshots. Revisit if FrontierSWE starts publishing real version numbers."
+    }
+  ],
+  "sourceKindOverrides": [
+    {
+      "sourceUrl": "https://epoch.ai/benchmarks/gpqa-diamond",
+      "sourceKind": "independent",
+      "reason": "GPQA is not Epoch's benchmark. Epoch runs it as a third party under its own harness, which is an independent evaluation, not a benchmark-native leaderboard. FrontierMath is Epoch's own benchmark and stays 'benchmark'."
+    }
+  ],
+  "benchmarkAliases": [
+    {
+      "benchmark": "vals-gpqa-diamond",
+      "benchmarkId": "gpqa",
+      "reason": "Vals runs the same GPQA Diamond set as a third party. Same benchmark, an independent evaluator, so it belongs in the gpqa column alongside the other runs."
+    },
+    {
+      "benchmark": "vals-mmmu-pro",
+      "benchmarkId": "mmmu",
+      "reason": "Vals' MMMU-Pro run is the same benchmark under an independent evaluator."
+    },
+    {
+      "benchmark": "vals-mmlu-pro",
+      "benchmarkId": "mmlu-pro",
+      "reason": "Vals' MMLU-Pro run is the same benchmark under an independent evaluator."
+    },
+    {
+      "benchmark": "vals-swe-bench-verified",
+      "benchmarkId": "swe-verified",
+      "reason": "Vals' SWE-bench Verified run is the same benchmark under an independent evaluator and its own bash-only mini-swe-agent harness, which is recorded on the row."
+    },
+    {
+      "benchmark": "vals-terminal-bench-2-1",
+      "benchmarkId": "terminal",
+      "reason": "Vals' Terminal-Bench 2.1 run is the same benchmark version under an independent evaluator with the Terminus 2 harness."
+    }
+  ],
+  "droppedBenchmarks": [
+    {
+      "benchmark": "arena-text",
+      "reason": "383 rows of LMArena text Elo. Arena is a human-preference lens, not a capability benchmark, and the catalog already carries textElo/codeElo on the model record. Ingesting it as a benchmark would put preference into the capability tables."
+    },
+    {
+      "benchmark": "aa-intelligence-index",
+      "reason": "A composite index, already represented by ModelRecord.intelligence. Adding it as a benchmark would double-count the same aggregate."
+    },
+    {
+      "benchmark": "vals-index",
+      "reason": "Vals' own composite of its sub-benchmarks. The sub-benchmarks are ingested individually; the composite would double-count them."
+    },
+    {
+      "benchmark": "vals-cyberbench-poc / vals-cyberbench-patch / vals-web-search-index*",
+      "reason": "Two to three rows each and tool-dependent definitions; not enough to form a comparable column yet. Archived for later."
+    }
+  ],
+  "versionFallbacks": [
+    {
+      "benchmarks": [
+        "vals-legal-research",
+        "vals-medscribe",
+        "vals-skillsbench",
+        "vals-mortgage-tax",
+        "vals-ioi",
+        "vals-code-migration",
+        "vals-proofbench",
+        "vals-livecodebench",
+        "vals-vibe-code-bench"
+      ],
+      "version": "2026",
+      "reason": "Vals AI runs one current version of each of these and publishes no version label. These benchmark records were created for this project, so no other source competes for the column and the label cannot collide. The retrievedDate on each row pins the snapshot. Deliberately NOT applied to SWE-Marathon, PostTrainBench or ProgramBench, where an unlabelled row would land in a column that already holds vendor numbers of unknown provenance."
+    },
+    {
+      "benchmarks": [
+        "swe-verified"
+      ],
+      "version": "Verified",
+      "reason": "Vals publishes no version for its swe-verified run. 'Verified' is the name of the evaluation split, not a release number, so recording it asserts nothing beyond what the source states."
+    },
+    {
+      "benchmarks": [
+        "gpqa"
+      ],
+      "version": "Diamond",
+      "reason": "Vals publishes no version for its gpqa run. 'Diamond' is the name of the evaluation split, not a release number, so recording it asserts nothing beyond what the source states."
+    },
+    {
+      "benchmarks": [
+        "mmmu"
+      ],
+      "version": "Pro",
+      "reason": "Vals publishes no version for its mmmu run. 'Pro' is the name of the evaluation split, not a release number, so recording it asserts nothing beyond what the source states."
+    }
+  ]
+}

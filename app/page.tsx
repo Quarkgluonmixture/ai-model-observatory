@@ -7,11 +7,13 @@ import {
   BENCHMARK_OBSERVATIONS,
   BENCHMARK_SCORES,
   MODELS,
+  OBSERVATIONS_BY_CELL,
   SOURCE_META,
   type BenchmarkAxis,
   type BenchmarkMode,
   type BenchmarkRecord,
   type ModelRecord,
+  type ObservationRow,
 } from "./model-data";
 
 type Lang = "zh" | "en";
@@ -143,6 +145,28 @@ const formatUsd = (value: number) => new Intl.NumberFormat("en-US", {
 const normalized = (b: BenchmarkRecord, value: number) => b.unit === "Elo" ? clamp((value - 1000) / 8) : clamp(value);
 const scoresFor = (modelId: string) => BENCHMARK_SCORES[modelId] ?? {};
 const observationsFor = (modelId: string) => BENCHMARK_OBSERVATIONS[modelId] ?? {};
+const variantsFor = (modelId: string, benchmarkId: string) => OBSERVATIONS_BY_CELL[modelId]?.[benchmarkId] ?? [];
+
+// A cell can hold several non-mergeable runs (harness, effort, tools, context length).
+// The table shows the primary value and exposes the alternates in the tooltip.
+const cellTitle = (rows: ObservationRow[], fallback: string) => {
+  if (!rows.length) return fallback;
+  return rows
+    .map((row, index) => {
+      const parts = [
+        `${index === 0 ? "▸" : "·"} ${row.score}`,
+        row.benchmarkVersion,
+        row.harness,
+        row.reasoningEffort,
+        row.contextLength,
+        row.toolsEnabled === null ? null : row.toolsEnabled ? "tools" : "no tools",
+        row.sourceLabel,
+        row.evaluationDate,
+      ].filter(Boolean);
+      return parts.join(" · ") + (row.note ? `\n   ${row.note}` : "");
+    })
+    .join("\n");
+};
 
 function axisScore(modelId: string, axis: BenchmarkAxis, mode: BenchmarkMode) {
   const scores = scoresFor(modelId);
@@ -175,7 +199,8 @@ function rankScore(model: ModelRecord, lens: RankLens) {
   if (lens === "coding") return portfolioScore(model.id, "coding") ?? -1;
   if (lens === "preference") return model.textElo ?? -1;
   if (lens === "speed") return model.speed ?? -1;
-  if (lens === "value") return model.intelligence / Math.max(0.01, model.costTask);
+  // A model with no published cost per task is absent from the value lens, not free.
+  if (lens === "value") return model.costTask === null ? -1 : model.intelligence / Math.max(0.01, model.costTask);
   return model.intelligence;
 }
 
@@ -238,7 +263,7 @@ function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; ax
         </g>;
       })}
     </svg></div>
-    <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={observation ? `${observation.sourceLabel} · ${observation.benchmarkVersion}${observation.harness ? ` · ${observation.harness}` : ""}` : ui.notIngested}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
+    <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; const rows=variantsFor(model.id, b.id); return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={cellTitle(rows, ui.notIngested)}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}{rows.length > 1 ? ` +${rows.length - 1}` : ""}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
   </div>;
 }
 
@@ -327,7 +352,7 @@ export default function Home() {
         <div><span>{ui.portfolio}</span><strong>{BENCHMARKS.length}</strong><small>7 capability families</small></div>
         <div><span>AA Intelligence</span><strong>{leader.name}</strong><small>{leader.intelligence} · {leader.maker}</small></div>
         <div><span>{lang === "zh" ? "输出速度最快" : "Fastest output"}</span><strong>{fastest.name}</strong><small>{fastest.speed} output tok/s</small></div>
-        <div><span>{lang === "zh" ? "最佳性价比" : "Best value"}</span><strong>{bestValue.name}</strong><small>${bestValue.costTask.toFixed(2)} / AA task</small></div>
+        <div><span>{lang === "zh" ? "最佳性价比" : "Best value"}</span><strong>{bestValue.name}</strong><small>{bestValue.costTask === null ? ui.unavailable : `$${bestValue.costTask.toFixed(2)} / AA task`}</small></div>
       </section>
 
       <section className="panel ranking-panel" id="ranking">
@@ -354,7 +379,7 @@ export default function Home() {
           <div className="section-head"><div className="section-title"><span>02</span><div><h2>{ui.capability}</h2><p>{ui.capabilityDesc}</p></div></div><div className="mode-switch"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}><b>{ui.controlled}</b><span>{ui.controlledNote}</span></button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}><b>{ui.best}</b><span>{ui.bestNote}</span></button></div></div>
           <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className={`coverage-card ${coverage.status}`}><span>{ui.coverage}</span><strong>{coverageText(active.id,profileMode,lang)}</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.status === "uncollected" ? ui.notIngested : `${coverage.present} / ${coverage.total} ${ui.coreMetrics} · ${coverage.status === "partial" ? ui.partialCoverage : ui.broadCoverage}`}</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageText(model.id,profileMode,lang)}</em></button>)}</div></div></div>
         </article>
-        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div><div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
+        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div>{active.configurations.length > 1 && <div className="configs"><span>{lang === "zh" ? "已发布的运行档位" : "Published operating points"}</span><ul>{active.configurations.map(config=><li key={config.effort ?? "default"}><b>{config.effort ?? "default"}</b><em>{config.intelligence}</em><small>{config.costTask === null ? "" : `$${formatUsd(config.costTask)}/task`}{config.latency === null ? "" : `${config.costTask === null ? "" : " · "}${config.latency}s`}</small></li>)}</ul></div>}<div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
       </section>
 
       <section className="panel benchmark-panel" id="benchmarks">
