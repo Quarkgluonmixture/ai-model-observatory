@@ -11,7 +11,7 @@ A bilingual, mobile-ready dashboard for comparing frontier AI models across vers
 - separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
 - evidence-backed seven-axis capability radar with explicit coverage
-- 32-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
+- 31-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
 - multi-model benchmark line charts and raw-score tables by capability family
 - model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter-backed live token pricing with snapshot fallback
