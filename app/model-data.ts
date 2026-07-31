@@ -402,13 +402,50 @@ export const BENCHMARK_SCORES: Record<string, BenchmarkScores> = Object.fromEntr
   Object.entries(BENCHMARK_OBSERVATIONS).map(([modelId, values]) => [modelId, Object.fromEntries(Object.entries(values).map(([benchmarkId, value]) => [benchmarkId, value.score]))]),
 );
 
-export const SOURCE_META = {
-  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent index + GDPval" },
-  arena: { label: "Arena Text", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", votes: "7.50M votes", role: "human preference" },
-  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results + harness notes" },
-  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results + effort modes" },
-  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native leaderboard" },
-  tbench: { label: "Terminal-Bench 2.1 leaderboard", date: "11 Jul 2026", url: "https://www.tbench.ai/leaderboard/terminal-bench/2.1", role: "benchmark-native, one row per harness" },
-  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed, not global standard" },
-  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results + harness notes" },
-};
+// The registry declares what a source *is*. Whether it is actually connected is not
+// declared - it is measured, by looking for observation rows that came from it. Listing a
+// source is not coverage; that confusion is what this dashboard exists to avoid.
+//
+// `match` is tested against each row's sourceUrl. `feeds` marks a source that legitimately
+// supplies something other than observation rows - live pricing, or Arena Elo on the model
+// record - and must say what, so it cannot be used to quietly promote an unused source.
+const SOURCE_REGISTRY = {
+  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent capability, speed, price and GDPval index", category: "independent", match: "artificialanalysis.ai" },
+  arena: { label: "LM Arena", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", role: "large-scale human preference signal", category: "preference", match: "lmarena.ai", feeds: "Arena Elo on the model records" },
+  vals: { label: "Vals AI", date: "23 Jul 2026", url: "https://www.vals.ai/benchmarks", role: "independent professional-work evaluations", category: "independent", match: "vals.ai" },
+  epoch: { label: "Epoch AI", date: "v2 · 2026", url: "https://epoch.ai/frontiermath", role: "FrontierMath and benchmark methodology cross-checks", category: "independent", match: "epoch.ai" },
+  arc: { label: "ARC Prize verified", date: "2026", url: "https://arcprize.org/leaderboard", role: "verified ARC-AGI fluid-intelligence results", category: "benchmark", match: "arcprize.org" },
+  terminal: { label: "Terminal-Bench", date: "live", url: "https://www.tbench.ai/leaderboard/terminal-bench/2.1", role: "benchmark-native verified terminal-agent runs", category: "benchmark", match: "tbench.ai" },
+  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native long-horizon coding runs", category: "benchmark", match: "deepswe.datacurve.ai" },
+  scale: { label: "Scale Labs", date: "2026", url: "https://labs.scale.com/leaderboard", role: "MCP-Atlas and SWE-Bench Pro leaderboards", category: "benchmark", match: "labs.scale.com" },
+  osworld: { label: "OSWorld 2.0", date: "2026.06", url: "https://osworld-v2.xlang.ai/", role: "execution-based long-horizon computer use", category: "benchmark", match: "osworld" },
+  ale: { label: "Agents' Last Exam", date: "2026", url: "https://agents-last-exam.org/leaderboard", role: "verifiable real-world professional tasks", category: "benchmark", match: "agents-last-exam.org" },
+  frontierswe: { label: "FrontierSWE", date: "2026-07", url: "https://www.frontierswe.com/", role: "frontier engineering tasks, Mean@5", category: "benchmark", match: "frontierswe.com" },
+  apex: { label: "Mercor APEX-Agents", date: "2026", url: "https://www.mercor.com/apex/apex-agents-leaderboard/", role: "banking, consulting and legal deliverables", category: "benchmark", match: "mercor.com" },
+  toolathlon: { label: "Toolathlon-Verified", date: "2026", url: "https://github.com/hkust-nlp/Toolathlon", role: "long-horizon cross-application tool use", category: "benchmark", match: "Toolathlon" },
+  mmmu: { label: "MMMU", date: "2026", url: "https://mmmu-benchmark.github.io/", role: "expert multimodal reasoning", category: "benchmark", match: "mmmu-benchmark.github.io" },
+  swebench: { label: "SWE-bench", date: "live", url: "https://www.swebench.com/", role: "official software-engineering leaderboard and archive", category: "benchmark", match: "swebench.com" },
+  livebench: { label: "LiveBench", date: "rolling", url: "https://livebench.ai/", role: "objective, contamination-limited general evaluation", category: "benchmark", match: "livebench.ai" },
+  helm: { label: "Stanford HELM", date: "living", url: "https://crfm.stanford.edu/helm/", role: "transparent and reproducible multi-scenario evaluation", category: "independent", match: "crfm.stanford.edu" },
+  openrouter: { label: "OpenRouter Models API", date: "live feed", url: "https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties", role: "provider pricing and context-window metadata", category: "pricing", match: "openrouter.ai", feeds: "the live price route" },
+  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", category: "vendor", match: "deepmind.google" },
+  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", category: "vendor", match: "DeepSeek-V4" },
+  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", category: "vendor", match: "MoonshotAI/Kimi-K3" },
+  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results with harness notes", category: "vendor", match: "qwen.ai" },
+} as const;
+
+export type SourceStatus = "active" | "queued";
+
+export const SOURCE_META = Object.fromEntries(
+  Object.entries(SOURCE_REGISTRY).map(([key, entry]) => {
+    const observations = OBSERVATION_ROWS.filter((row) => row.sourceUrl.includes(entry.match)).length;
+    const feeds = "feeds" in entry ? entry.feeds : null;
+    return [key, {
+      ...entry,
+      observations,
+      // Connected means rows in the store, or a stated non-observation contribution.
+      status: (observations > 0 || feeds ? "active" : "queued") as SourceStatus,
+    }];
+  }),
+);
+

@@ -68,7 +68,7 @@ const UI = {
     output: "输出",
     blended: "7:2:1 混合价",
     sources: "数据来源与可比性",
-    sourceNote: "Arena 衡量人类偏好；Benchmark 分数来自公开排行榜或模型发布材料。系统类结果同时反映模型、harness、工具和预算，因此与模型能力分开展示。",
+    sourceNote: "“已接入”是数出来的，不是声明的：只有当存档里确实有来自该来源的观测行时才算接入，数字即行数。“接入队列”只是下一批采集目标，不参与现有分数。Arena 衡量人工偏好，系统类结果还同时反映 harness、工具与预算。",
     back: "返回排行 ↑",
     unavailable: "N/A",
     updated: "更新于 2026 年 7 月 31 日",
@@ -121,7 +121,7 @@ const UI = {
     output: "Output",
     blended: "7:2:1 blended",
     sources: "Sources and comparability",
-    sourceNote: "Arena measures human preference. Benchmark scores come from public leaderboards or release materials. System results also reflect harness, tools and budget, so they remain separate from model capability.",
+    sourceNote: "Connected is measured, not declared: a source counts only when observation rows in the archive came from it, and the number is that row count. Queued sources are ingestion targets and affect nothing. Arena measures preference; system results also reflect harness, tools and budget.",
     back: "Back to ranking ↑",
     unavailable: "N/A",
     updated: "Updated 31 Jul 2026",
@@ -395,7 +395,7 @@ export default function Home() {
         {catalogOpen && <div className="catalog-grid">{BENCHMARKS.map(b => <a className={`catalog-card ${b.tier}`} href={b.url} target="_blank" rel="noreferrer" key={b.id}><div><span className={`tier ${b.tier}`}>{ui[b.tier]}</span><span className={`method ${b.method}`}>{b.method === "execution" ? ui.exec : b.method === "exam" ? ui.exam : b.method === "rubric" ? ui.rubric : ui.preference}</span></div><h3>{b.name}</h3><p>{b[lang]}</p><footer><span>{AXES.find(a=>a.id===b.axis)?.[lang]}</span><b>{b.mode === "model" ? ui.modelMode : ui.systemMode}</b><em>{b.version} ↗</em></footer></a>)}</div>}
       </section>
 
-      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a href={source.url} target="_blank" rel="noreferrer" key={source.label}><span>{source.date}</span><b>{source.label}</b><small>{"votes" in source ? source.votes : source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
+      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2><div className="source-summary"><b>{Object.values(SOURCE_META).filter(source=>source.status==="active").length} {lang==="zh"?"已接入":"CONNECTED"}</b><span>{Object.values(SOURCE_META).filter(source=>source.status==="queued").length} {lang==="zh"?"接入队列":"QUEUED"}</span></div></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a className={source.status} href={source.url} target="_blank" rel="noreferrer" key={source.label}><div><span>{source.date}</span><i>{source.status==="active"?`${lang==="zh"?"已接入":"CONNECTED"}${source.observations?` · ${source.observations}`:""}`:(lang==="zh"?"接入队列":"QUEUED")}</i></div><b>{source.label}</b><small>{source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
       <footer className="site-footer"><div><i/>VERSIONED SNAPSHOT · 2026-07-31</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
     </div>
   </main>;

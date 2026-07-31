@@ -22,27 +22,28 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 
 ## Data sources
 
-- [ARC Prize — ARC-AGI-2 leaderboard and verified model results](https://arcprize.org/leaderboard)
-- [Epoch AI — FrontierMath Tiers 1-3 (v2)](https://epoch.ai/benchmarks/frontiermath-tiers-1-3-v2) and [Tier 4 (v2)](https://epoch.ai/benchmarks/frontiermath-tier-4-v2)
-- [Epoch AI — GPQA Diamond](https://epoch.ai/benchmarks/gpqa-diamond) (independent run of a third-party benchmark)
-- [LM Arena — Text](https://arena.ai/leaderboard/text)
-- [LM Arena — Code / WebDev](https://arena.ai/leaderboard/code/webdev)
-- [Artificial Analysis — Model Leaderboard](https://artificialanalysis.ai/leaderboards/models)
-- [Google DeepMind — Gemini 3.5 Flash model card](https://deepmind.google/models/model-cards/gemini-3-5-flash/)
-- [Google DeepMind — Gemini 3.6 Flash results](https://deepmind.google/models/gemini/flash/)
-- [DeepSeek V4 — official model card](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro)
-- [Qwen3.7 — official release results](https://qwen.ai/blog?id=qwen3.7)
-- [DeepSWE v1.1](https://github.com/datacurve-ai/deep-swe)
-- [Terminal-Bench 2.1](https://www.tbench.ai/leaderboard/terminal-bench/2.1) and [2.0](https://www.tbench.ai/leaderboard/terminal-bench/2.0)
-- [SWE-Bench Pro Public](https://labs.scale.com/leaderboard/swe_bench_pro_public) · [SWE-bench Verified](https://www.swebench.com/) · [FrontierSWE](https://www.frontierswe.com/)
-- [OSWorld 2.0](https://osworld-v2.xlang.ai/) · [Agents' Last Exam](https://agents-last-exam.org/leaderboard) · [Toolathlon-Verified](https://huggingface.co/datasets/hkust-nlp/Toolathlon-Verified_Trajectories)
-- [Mercor APEX-Agents](https://www.mercor.com/apex/apex-agents-leaderboard/)
-- [Vals AI](https://www.vals.ai/benchmarks) (independent evaluations across finance, legal, medical and coding work)
-- [MCP-Atlas](https://github.com/scaleapi/mcp-atlas)
-- [Toolathlon](https://github.com/hkust-nlp/Toolathlon)
-- [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties)
-- [LiveBench](https://livebench.ai/)
-- [Kimi K3 — public cross-model evaluation table](https://github.com/MoonshotAI/Kimi-K3) (comparison seed only, not the global standard)
+The source registry distinguishes data that already feeds the dashboard from the next ingestion targets. **A source counts as connected only when observation rows in `data/sources/` actually came from it** — the status is measured, not declared, so a source card can never imply coverage it does not have. A queued source stays visible for transparency and affects nothing.
+
+### Connected
+
+- [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) — independent capability, speed, price, long-context and GDPval references
+- [Vals AI](https://www.vals.ai/benchmarks) — independent finance, legal, medical and coding evaluations
+- [Epoch AI](https://epoch.ai/frontiermath) — FrontierMath Tiers 1-3 and Tier 4, plus an independent GPQA Diamond run
+- [ARC Prize](https://arcprize.org/leaderboard) — verified ARC-AGI-2 results across reasoning efforts
+- [Terminal-Bench](https://www.tbench.ai/leaderboard/terminal-bench/2.1) — 2.1 and 2.0, one row per harness
+- [DeepSWE v1.1](https://deepswe.datacurve.ai/) — benchmark-native long-horizon coding results
+- [Scale Labs](https://labs.scale.com/leaderboard) — MCP-Atlas and SWE-Bench Pro
+- [OSWorld 2.0](https://osworld-v2.xlang.ai/) · [Agents' Last Exam](https://agents-last-exam.org/leaderboard) · [FrontierSWE](https://www.frontierswe.com/) · [Toolathlon-Verified](https://github.com/hkust-nlp/Toolathlon)
+- [Mercor APEX-Agents](https://www.mercor.com/apex/apex-agents-leaderboard/) · [MMMU](https://mmmu-benchmark.github.io/)
+- [LM Arena](https://arena.ai/leaderboard/text) — human preference, kept separate from capability and used only for Elo
+- [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties) — live provider pricing
+- Vendor material: [Google DeepMind](https://deepmind.google/models/gemini/flash/) · [DeepSeek V4](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) · [Qwen3.7](https://qwen.ai/blog?id=qwen3.7) · [Kimi K3](https://github.com/MoonshotAI/Kimi-K3) (comparison seed only, not the global standard)
+
+### Ingestion queue
+
+- [LiveBench](https://livebench.ai/) — objective, frequently refreshed general evaluation
+- [Stanford HELM](https://crfm.stanford.edu/helm/) — transparent and reproducible multi-scenario evaluation
+- [SWE-bench](https://www.swebench.com/) — the official board returned only pre-2026 models, so nothing is ingested from it yet
 
 Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
 
