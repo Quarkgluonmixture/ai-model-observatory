@@ -28,6 +28,7 @@ export type BenchmarkAxis =
 export type BenchmarkMode = "model" | "system";
 export type BenchmarkTier = "core" | "observe" | "legacy";
 export type ScoreMethod = "execution" | "exam" | "rubric" | "preference";
+export type SourceKind = "benchmark" | "vendor" | "independent";
 
 export type BenchmarkRecord = {
   id: string;
@@ -90,14 +91,14 @@ export const MODELS: ModelRecord[] = [
   m("gpt-5.6-sol-high", "GPT-5.6 Sol · high", "OpenAI", "#e2aa32", false, 1000, 56, 0.77, 62, 13.25, null, null, 5, 30, ["reasoning", "coding", "efficient"]),
   m("gpt-5.6-terra-max", "GPT-5.6 Terra · max", "OpenAI", "#ecbb55", false, 1000, 55, 0.73, 132, 152.99, null, null, 2.5, 15, ["fast", "reasoning", "multimodal"]),
   m("grok-4.5-high", "Grok 4.5 · high", "xAI", "#42576b", false, 500, 54, 0.44, 58, 8.01, null, 1550, 2, 6, ["coding", "reasoning", "realtime"]),
-  m("claude-sonnet-5-max", "Claude Sonnet 5 · max", "Anthropic", "#df9a72", false, 1000, 53, 1.72, 79, 155.55, null, 1544, 1, 5, ["coding", "agents", "fast"]),
+  m("claude-sonnet-5-max", "Claude Sonnet 5 · max", "Anthropic", "#df9a72", false, 1000, 53, 1.72, 79, 155.55, null, 1544, 3, 15, ["coding", "agents", "fast"]),
   m("gpt-5.6-terra-xhigh", "GPT-5.6 Terra · xhigh", "OpenAI", "#e8c36e", false, 1000, 52, 0.43, 111, 12.9, null, null, 2.5, 15, ["fast", "value", "reasoning"]),
   m("glm-5.2-max", "GLM-5.2 · max", "Z.ai", "#177f72", true, 1000, 51, 0.29, 111, 1.43, null, 1588, 1.4, 4.4, ["open weights", "coding", "low latency"]),
   m("muse-spark-1.1", "Muse Spark 1.1", "Meta", "#2d71b9", false, 1050, 51, 0.29, 130, 2.52, 1491, 1536, 1.25, 4.25, ["fast", "creative", "webdev"], true),
-  m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, 50, 0.69, 172, 22.42, null, null, 0.75, 3.75, ["fast", "vision", "long context"]),
-  m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, 50, 0.56, 217, 14.74, 1482, null, 0.75, 3.75, ["very fast", "vision", "arena"], true),
+  m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, 50, 0.69, 172, 22.42, null, null, 1.5, 9, ["fast", "vision", "long context"]),
+  m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, 50, 0.56, 217, 14.74, 1482, null, 1.5, 7.5, ["very fast", "vision", "arena"], true),
   m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, 50, 0.03, null, null, null, null, 0.07, 0.11, ["open weights", "extreme value", "new"]),
-  m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, 46, 0.34, 123, 22.05, 1486, null, 1, 6, ["vision", "arena", "long context"]),
+  m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, 46, 0.34, 123, 22.05, 1486, null, 2, 12, ["vision", "arena", "long context"]),
   m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", true, 1000, 46, 1.28, 200, 2.41, null, null, 1.2, 6, ["open weights", "fast", "multilingual"]),
   m("deepseek-v4-pro", "DeepSeek V4 Pro · max", "DeepSeek", "#8467d6", true, 1000, 44, 0.05, 65, 1.64, null, null, 0.14, 0.28, ["open weights", "value", "reasoning"]),
   m("claude-opus-4.8-max", "Claude Opus 4.8 · max", "Anthropic", "#a35f42", false, 1000, 52, 1.36, 48, 18.4, 1478, 1598, 5, 25, ["reasoning", "coding", "agents"]),
@@ -148,23 +149,86 @@ export const BENCHMARKS: BenchmarkRecord[] = [
   { id:"swe-verified", name:"SWE-bench Verified", axis:"coding", mode:"system", tier:"legacy", method:"execution", unit:"%", version:"Verified", source:"SWE-bench", url:"https://www.swebench.com/", zh:"历史软件修复指标", en:"Historical software repair metric" },
 ];
 
-export type BenchmarkScores = Record<string, number | null>;
-
-// Public snapshot transcribed from the Kimi K3 release table (23 Jul 2026).
-// The table mixes harnesses by design; the UI therefore labels these as best-system results.
-export const BENCHMARK_SCORES: Record<string, BenchmarkScores> = {
-  "kimi-k3-max": { gpqa:93.5, critpt:23.4, "aa-lcr":74.7, "hle-no-tools":43.5, "hle-tools":56, deepswe:67.5, program:77.8, terminal:88.3, frontierswe:81.2, marathon:42, posttrain:36.6, scicode:58.7, browsecomp:91.2, gdpval:1686, toolathlon:76.5, "mcp-atlas":84.2, ale:28.3, apex:41, osworld2:58.3, omnidoc:91.1, mmmu:81.6, charxiv:84.8 },
-  "claude-fable-5": { gpqa:92.6, critpt:28.6, "aa-lcr":70, "hle-no-tools":53.3, "hle-tools":63, deepswe:70, program:76.8, terminal:88, frontierswe:86.6, marathon:35, posttrain:41.4, scicode:60.2, browsecomp:88, gdpval:1747, toolathlon:77.9, "mcp-atlas":84.7, ale:25.7, apex:43.3, osworld2:66.1, omnidoc:89.8, mmmu:81.2, charxiv:88.9 },
-  "gpt-5.6-sol-max": { gpqa:94.1, critpt:32.3, "aa-lcr":73.7, "hle-no-tools":44.5, "hle-tools":58, deepswe:73, program:77.6, terminal:88.8, frontierswe:71.3, marathon:39, posttrain:34.6, scicode:56.1, browsecomp:90.4, gdpval:1736, toolathlon:74.9, "mcp-atlas":83.6, ale:29.6, apex:39.9, osworld2:62.6, omnidoc:85.8, mmmu:83, charxiv:84.6 },
-  "claude-opus-4.8-max": { gpqa:91, critpt:20.9, "aa-lcr":67.7, "hle-no-tools":49.8, "hle-tools":57.9, deepswe:59, program:71.9, terminal:84.6, frontierswe:66.7, marathon:40, posttrain:34.1, scicode:53.5, browsecomp:84.3, gdpval:1593, toolathlon:76.2, "mcp-atlas":83.6, ale:27, apex:39.4, osworld2:55.7, omnidoc:87.9, mmmu:78.9, charxiv:80.5 },
-  "gpt-5.5-xhigh": { gpqa:93.5, critpt:27.1, "aa-lcr":74.3, "hle-no-tools":41.4, "hle-tools":52.2, deepswe:67, program:70.8, terminal:83.4, frontierswe:64.9, marathon:14, posttrain:28.4, scicode:56.1, browsecomp:84.4, gdpval:1491, toolathlon:73.5, "mcp-atlas":82.8, ale:26.6, apex:38.5, osworld2:49.5, omnidoc:89.4, mmmu:81.2, charxiv:84.1 },
-  "glm-5.2-max": { gpqa:91.2, critpt:20.9, "aa-lcr":71.3, deepswe:46.2, program:63.7, terminal:82.7, frontierswe:67.3, marathon:13, posttrain:34.3, scicode:50.5, gdpval:1510, toolathlon:59.9, "mcp-atlas":82.6, ale:20.4, apex:35.6 },
+export type BenchmarkObservation = {
+  score: number;
+  sourceId: string;
+  sourceLabel: string;
+  sourceUrl: string;
+  sourceKind: SourceKind;
+  benchmarkVersion: string;
+  evaluationDate: string;
+  harness: string | null;
+  reasoningEffort: string | null;
+  toolsEnabled: boolean | null;
+  contextLength?: string;
 };
 
+export type BenchmarkObservations = Record<string, BenchmarkObservation>;
+export type BenchmarkScores = Record<string, number>;
+
+const observation = (
+  score: number,
+  sourceId: string,
+  sourceLabel: string,
+  sourceUrl: string,
+  sourceKind: SourceKind,
+  benchmarkVersion: string,
+  evaluationDate: string,
+  harness: string | null = null,
+  reasoningEffort: string | null = null,
+  toolsEnabled: boolean | null = null,
+  contextLength?: string,
+): BenchmarkObservation => ({ score, sourceId, sourceLabel, sourceUrl, sourceKind, benchmarkVersion, evaluationDate, harness, reasoningEffort, toolsEnabled, contextLength });
+
+const KIMI_URL = "https://github.com/MoonshotAI/Kimi-K3";
+const GOOGLE_35_URL = "https://deepmind.google/models/model-cards/gemini-3-5-flash/";
+const GOOGLE_36_URL = "https://deepmind.google/models/gemini/flash/";
+const DEEPSEEK_URL = "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro";
+const DEEPSEEK_FLASH_URL = "https://huggingface.co/deepseek-ai/DeepSeek-V4-Flash-0731";
+const DEEPSWE_URL = "https://deepswe.datacurve.ai/";
+const GDPVAL_URL = "https://artificialanalysis.ai/evaluations/gdpval-aa";
+const QWEN_URL = "https://qwen.ai/blog?id=qwen3.7";
+
+const kimi = (score: number, version: string, harness: string | null = null, reasoningEffort: string | null = null, toolsEnabled: boolean | null = null) =>
+  observation(score, "kimi-k3-release", "Kimi K3 release table", KIMI_URL, "vendor", version, "2026-07-23", harness, reasoningEffort, toolsEnabled);
+const google35 = (score: number, version: string, harness: string | null = null, toolsEnabled: boolean | null = null, contextLength?: string) =>
+  observation(score, "gemini-3.5-card", "Gemini 3.5 Flash model card", GOOGLE_35_URL, "vendor", version, "2026-05-19", harness, "published setting", toolsEnabled, contextLength);
+const google36 = (score: number, version: string, harness: string | null = null, toolsEnabled: boolean | null = null, contextLength?: string) =>
+  observation(score, "gemini-3.6-release", "Gemini 3.6 Flash release", GOOGLE_36_URL, "vendor", version, "2026-07-31", harness, "published setting", toolsEnabled, contextLength);
+const deepseek = (score: number, version: string, harness: string | null = null, toolsEnabled: boolean | null = null, contextLength?: string) =>
+  observation(score, "deepseek-v4-card", "DeepSeek V4 model card", DEEPSEEK_URL, "vendor", version, "2026-04-26", harness, "Max", toolsEnabled, contextLength);
+
+// Each value is an observation with its own source, version and execution setup.
+// Vendor comparison tables are retained as evidence, but no vendor is the global backbone.
+export const BENCHMARK_OBSERVATIONS: Record<string, BenchmarkObservations> = {
+  "kimi-k3-max": { gpqa:kimi(93.5,"Diamond",null,"max",false), critpt:kimi(23.4,"2026",null,"max",false), "aa-lcr":kimi(74.7,"2026",null,"max",false), "hle-no-tools":kimi(43.5,"Full",null,"max",false), "hle-tools":kimi(56,"Full","Kimi Code","max",true), deepswe:kimi(67.5,"v1.1","Kimi Code","max",true), program:kimi(77.8,"2026","Kimi Code","max",true), terminal:kimi(88.3,"2.1","Kimi Code","max",true), frontierswe:kimi(81.2,"2026-07","Kimi Code","max",true), marathon:kimi(42,"v1.1","Kimi Code","max",true), posttrain:kimi(36.6,"v1.1","Kimi Code","max",true), scicode:kimi(58.7,"2026",null,"max",false), browsecomp:kimi(91.2,"2026","search harness","max",true), gdpval:kimi(1686,"v2",null,"max",true), toolathlon:kimi(76.5,"Verified","Kimi Code","max",true), "mcp-atlas":kimi(84.2,"2026",null,"max",true), ale:kimi(28.3,"2026",null,"max",true), apex:kimi(41,"2026",null,"max",true), osworld2:kimi(58.3,"2.0",null,"max",true), omnidoc:kimi(91.1,"1.5",null,"max",false), mmmu:kimi(81.6,"Pro",null,"max",false), charxiv:kimi(84.8,"RQ",null,"max",false) },
+  "claude-fable-5": { gpqa:kimi(92.6,"Diamond"), critpt:kimi(28.6,"2026"), "aa-lcr":kimi(70,"2026"), "hle-no-tools":kimi(53.3,"Full"), "hle-tools":kimi(63,"Full",null,null,true), deepswe:kimi(70,"v1.1","Claude Code",null,true), program:kimi(76.8,"2026","Claude Code",null,true), terminal:kimi(88,"2.1","Claude Code",null,true), frontierswe:kimi(86.6,"2026-07","Claude Code",null,true), marathon:kimi(35,"v1.1","Claude Code",null,true), posttrain:kimi(41.4,"v1.1","Claude Code",null,true), scicode:kimi(60.2,"2026"), browsecomp:kimi(88,"2026",null,null,true), gdpval:kimi(1747,"v2",null,null,true), toolathlon:kimi(77.9,"Verified",null,null,true), "mcp-atlas":kimi(84.7,"2026",null,null,true), ale:kimi(25.7,"2026",null,null,true), apex:kimi(43.3,"2026",null,null,true), osworld2:kimi(66.1,"2.0",null,null,true), omnidoc:kimi(89.8,"1.5"), mmmu:kimi(81.2,"Pro"), charxiv:kimi(88.9,"RQ") },
+  "gpt-5.6-sol-max": { gpqa:kimi(94.1,"Diamond"), critpt:kimi(32.3,"2026"), "aa-lcr":kimi(73.7,"2026"), "hle-no-tools":kimi(44.5,"Full"), "hle-tools":kimi(58,"Full",null,null,true), deepswe:kimi(73,"v1.1","Codex",null,true), program:kimi(77.6,"2026","Codex",null,true), terminal:kimi(88.8,"2.1","Codex",null,true), frontierswe:kimi(71.3,"2026-07","Codex",null,true), marathon:kimi(39,"v1.1","Codex",null,true), posttrain:kimi(34.6,"v1.1","Codex",null,true), scicode:kimi(56.1,"2026"), browsecomp:kimi(90.4,"2026",null,null,true), gdpval:kimi(1736,"v2",null,null,true), toolathlon:kimi(74.9,"Verified",null,null,true), "mcp-atlas":kimi(83.6,"2026",null,null,true), ale:kimi(29.6,"2026",null,null,true), apex:kimi(39.9,"2026",null,null,true), osworld2:kimi(62.6,"2.0",null,null,true), omnidoc:kimi(85.8,"1.5"), mmmu:kimi(83,"Pro"), charxiv:kimi(84.6,"RQ") },
+  "claude-opus-4.8-max": { gpqa:kimi(91,"Diamond"), critpt:kimi(20.9,"2026"), "aa-lcr":kimi(67.7,"2026"), "hle-no-tools":kimi(49.8,"Full"), "hle-tools":kimi(57.9,"Full",null,null,true), deepswe:kimi(59,"v1.1","Claude Code",null,true), program:kimi(71.9,"2026","Claude Code",null,true), terminal:kimi(84.6,"2.1","Claude Code",null,true), frontierswe:kimi(66.7,"2026-07","Claude Code",null,true), marathon:kimi(40,"v1.1","Claude Code",null,true), posttrain:kimi(34.1,"v1.1","Claude Code",null,true), scicode:kimi(53.5,"2026"), browsecomp:kimi(84.3,"2026",null,null,true), gdpval:kimi(1593,"v2",null,null,true), toolathlon:kimi(76.2,"Verified",null,null,true), "mcp-atlas":kimi(83.6,"2026",null,null,true), ale:kimi(27,"2026",null,null,true), apex:kimi(39.4,"2026",null,null,true), osworld2:kimi(55.7,"2.0",null,null,true), omnidoc:kimi(87.9,"1.5"), mmmu:kimi(78.9,"Pro"), charxiv:kimi(80.5,"RQ") },
+  "gpt-5.5-xhigh": { gpqa:kimi(93.5,"Diamond"), critpt:kimi(27.1,"2026"), "aa-lcr":kimi(74.3,"2026"), "hle-no-tools":kimi(41.4,"Full"), "hle-tools":kimi(52.2,"Full",null,null,true), deepswe:kimi(67,"v1.1","Codex",null,true), program:kimi(70.8,"2026","Codex",null,true), terminal:kimi(83.4,"2.1","Codex",null,true), frontierswe:kimi(64.9,"2026-07","Codex",null,true), marathon:kimi(14,"v1.1","Codex",null,true), posttrain:kimi(28.4,"v1.1","Codex",null,true), scicode:kimi(56.1,"2026"), browsecomp:kimi(84.4,"2026",null,null,true), gdpval:kimi(1491,"v2",null,null,true), toolathlon:kimi(73.5,"Verified",null,null,true), "mcp-atlas":kimi(82.8,"2026",null,null,true), ale:kimi(26.6,"2026",null,null,true), apex:kimi(38.5,"2026",null,null,true), osworld2:kimi(49.5,"2.0",null,null,true), omnidoc:kimi(89.4,"1.5"), mmmu:kimi(81.2,"Pro"), charxiv:kimi(84.1,"RQ") },
+  "glm-5.2-max": { gpqa:kimi(91.2,"Diamond"), critpt:kimi(20.9,"2026"), "aa-lcr":kimi(71.3,"2026"), deepswe:kimi(46.2,"v1.1",null,null,true), program:kimi(63.7,"2026",null,null,true), terminal:kimi(82.7,"2.1",null,null,true), frontierswe:kimi(67.3,"2026-07",null,null,true), marathon:kimi(13,"v1.1",null,null,true), posttrain:kimi(34.3,"v1.1",null,null,true), scicode:kimi(50.5,"2026"), gdpval:kimi(1510,"v2",null,null,true), toolathlon:kimi(59.9,"Verified",null,null,true), "mcp-atlas":kimi(82.6,"2026",null,null,true), ale:kimi(20.4,"2026",null,null,true), apex:kimi(35.6,"2026",null,null,true) },
+
+  "gemini-3.5-flash": { "hle-no-tools":google35(40.2,"Full",null,false), "arc-agi-2":google35(72.1,"v2",null,false), "swe-pro":google36(55.1,"Public",null,true), deepswe:google36(37,"v1.1",null,true), terminal:google36(76.2,"2.1","Terminus-2",true), gdpval:google36(1349,"v2",null,true), charxiv:google36(84.2,"RQ",null,false), mmmu:google35(83.6,"Pro",null,false), mrcr:google36(77.3,"v2 · 8 needle",null,false,"128K average") },
+  "gemini-3.6-flash": { "swe-pro":google36(58.7,"Public",null,true), deepswe:google36(49,"v1.1",null,true), terminal:google36(78,"2.1","Terminus-2",true), gdpval:google36(1421,"v2",null,true), charxiv:google36(85.2,"RQ",null,false), mrcr:google36(91.8,"v2 · 8 needle",null,false,"128K average") },
+  "gemini-3.1-pro": { "hle-no-tools":google35(44.4,"Full",null,false), "arc-agi-2":google35(77.1,"v2",null,false), "swe-pro":google36(54.2,"Public",null,true), deepswe:google36(12,"v1.1",null,true), terminal:google36(73.8,"2.1","Terminus-2",true), gdpval:google36(965,"v2",null,true), charxiv:google36(83.3,"RQ",null,false), mmmu:google35(80.5,"Pro",null,false), mrcr:google36(84.9,"v2 · 8 needle",null,false,"128K average") },
+  "claude-sonnet-5-max": { "swe-pro":google36(63.2,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(80.4,"2.1","Terminus-2",true), gdpval:google36(1607,"v2",null,true), charxiv:google36(77,"RQ",null,false), mrcr:google36(71.6,"v2 · 8 needle",null,false,"128K average") },
+  "grok-4.5-high": { "swe-pro":google36(64.7,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(83.3,"2.1","Terminus-2",true), gdpval:google36(1535,"v2",null,true), charxiv:google36(81.6,"RQ",null,false), mrcr:google36(81.4,"v2 · 8 needle",null,false,"128K average") },
+  "deepseek-v4-pro": { gpqa:deepseek(90.1,"Diamond",null,false), "hle-no-tools":deepseek(37.7,"Full",null,false), "imo-answer":deepseek(89.8,"2026",null,false), "hle-tools":deepseek(48.2,"Full",null,true), "swe-pro":deepseek(55.4,"2026",null,true), browsecomp:deepseek(83.4,"2026",null,true), "mcp-atlas":deepseek(73.6,"Public",null,true), toolathlon:deepseek(51.8,"Verified",null,true), gdpval:deepseek(1554,"v2",null,true), apex:deepseek(38.3,"2026",null,true), mrcr:deepseek(83.5,"v2 · 8 needle",null,false,"1M") },
+  "deepseek-v4-flash": { terminal:observation(82.7,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","2.1","2026-07-31",null,"published setting",true), deepswe:observation(54.4,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","v1.1","2026-07-31",null,"published setting",true), toolathlon:observation(70.3,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","Verified","2026-07-31",null,"published setting",true), ale:observation(25.2,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","2026","2026-07-31",null,"published setting",true) },
+  "claude-opus-5-max": { deepswe:observation(74,"deepswe-v1.1","DeepSWE leaderboard",DEEPSWE_URL,"benchmark","v1.1","2026-07-25","public leaderboard","max",true), gdpval:observation(1860,"gdpval-aa-v2","GDPval-AA v2 leaderboard",GDPVAL_URL,"independent","v2","2026-07-31",null,"max",true) },
+  "qwen3.7-max": { "mcp-atlas":observation(76.4,"qwen3.7-release","Qwen3.7 release",QWEN_URL,"vendor","Public","2026-05-19",null,"published setting",true) },
+};
+
+export const BENCHMARK_SCORES: Record<string, BenchmarkScores> = Object.fromEntries(
+  Object.entries(BENCHMARK_OBSERVATIONS).map(([modelId, values]) => [modelId, Object.fromEntries(Object.entries(values).map(([benchmarkId, value]) => [benchmarkId, value.score]))]),
+);
+
 export const SOURCE_META = {
-  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models" },
-  arena: { label: "Arena Text", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", votes: "7.50M votes" },
-  code: { label: "Code Arena · WebDev", date: "28 Jul 2026", url: "https://arena.ai/leaderboard/code/webdev", votes: "492K votes" },
-  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: "https://github.com/MoonshotAI/Kimi-K3" },
-  livebench: { label: "LiveBench", date: "25 Jun 2026", url: "https://livebench.ai/" },
+  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent index + GDPval" },
+  arena: { label: "Arena Text", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", votes: "7.50M votes", role: "human preference" },
+  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results + harness notes" },
+  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results + effort modes" },
+  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native leaderboard" },
+  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed, not global standard" },
+  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results + harness notes" },
 };
