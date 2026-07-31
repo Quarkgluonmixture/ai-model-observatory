@@ -10,27 +10,32 @@ A bilingual, mobile-ready dashboard for comparing frontier AI models across vers
 - Chinese / English interface with persistent language preference
 - separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
-- evidence-backed seven-axis capability radar with explicit coverage
+- evidence-backed seven-axis capability radar with explicit `Not ingested` / partial / broad coverage states
 - 31-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
 - multi-model benchmark line charts and raw-score tables by capability family
 - model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter-backed live token pricing with snapshot fallback
 - responsive ranking cards, horizontally scrollable charts, and bottom navigation on mobile
+- per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
 
 ## Data sources
 
 - [LM Arena — Text](https://arena.ai/leaderboard/text)
 - [LM Arena — Code / WebDev](https://arena.ai/leaderboard/code/webdev)
 - [Artificial Analysis — Model Leaderboard](https://artificialanalysis.ai/leaderboards/models)
-- [Kimi K3 — public cross-model evaluation table](https://github.com/MoonshotAI/Kimi-K3)
+- [Google DeepMind — Gemini 3.5 Flash model card](https://deepmind.google/models/model-cards/gemini-3-5-flash/)
+- [Google DeepMind — Gemini 3.6 Flash results](https://deepmind.google/models/gemini/flash/)
+- [DeepSeek V4 — official model card](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro)
+- [Qwen3.7 — official release results](https://qwen.ai/blog?id=qwen3.7)
 - [DeepSWE v1.1](https://github.com/datacurve-ai/deep-swe)
 - [Terminal-Bench 2.1](https://www.tbench.ai/leaderboard/terminal-bench/2.1)
 - [MCP-Atlas](https://github.com/scaleapi/mcp-atlas)
 - [Toolathlon](https://github.com/hkust-nlp/Toolathlon)
 - [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties)
 - [LiveBench](https://livebench.ai/)
+- [Kimi K3 — public cross-model evaluation table](https://github.com/MoonshotAI/Kimi-K3) (comparison seed only, not the global standard)
 
-Benchmark snapshots are stored in `app/model-data.ts`. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
+Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
 
 ## Local development
 
@@ -43,24 +48,24 @@ npm run dev:next
 
 Open `http://localhost:3000`.
 
-Production validation:
+Production validation (the same command EdgeOne Pages runs):
 
 ```bash
-npm run build:next
+npm run build
 npm run start:next
 ```
 
-The existing `npm run build` command is retained for the OpenAI Sites / Vinext deployment target.
+`npm run build` is the canonical production build for EdgeOne Pages. The old Vinext compatibility build remains available as `npm run build:sites`, but is not part of the normal deploy path.
 
-## Deploy to Tencent EdgeOne Makers
+## Deploy to Tencent EdgeOne Pages
 
-EdgeOne Makers supports Git-connected Next.js applications and API routes, so this project can be deployed without removing the live pricing endpoint.
+GitHub `main` is the single source of truth. EdgeOne Pages watches the branch and deploys the Next.js application and API route directly; a second Sites deployment is not required.
 
 1. Push this repository to GitHub or Gitee.
 2. In EdgeOne Makers, choose **Import Git repository**.
 3. Select this repository and use Node.js 22.
 4. Set the install command to `npm ci`.
-5. Set the build command to `npm run build:next`.
+5. Set the build command to `npm run build`.
 6. Keep the framework preset as Next.js / automatic detection.
 7. Deploy, then optionally bind a custom domain.
 
@@ -83,7 +88,8 @@ public/                     # static assets
 - Metrics from different sources are not blended into a hidden universal score.
 - Arena remains a separate human-preference signal rather than a capability axis.
 - Raw benchmark values, versions, evaluation object, and scoring method remain visible.
-- Missing source values remain `N/A`; the radar never zero-fills or estimates a missing axis.
+- Missing source values remain `N/A`; zero is reserved for a real published score of zero. The radar never zero-fills or estimates a missing axis.
+- Coverage is evidence completeness, not model quality: `Not ingested` means no compatible public observation has been loaded yet.
 - Agentic results can depend on the model snapshot, harness, tools, reasoning effort, budget, and number of attempts.
 - Upstream leaderboards and provider pricing change over time, so dated snapshots should be refreshed deliberately.
 
