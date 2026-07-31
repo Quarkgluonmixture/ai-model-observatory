@@ -65,6 +65,7 @@ export default function Home(){
   async function refresh(){setUpdated("refreshing");try{const res=await fetch("/api/live-models",{cache:"no-store"});if(!res.ok)throw new Error();const data=await res.json() as {prices:Record<string,{input:number;output:number;contextK?:number}>};setModels(now=>now.map(m=>data.prices[m.id]?{...m,price:{...m.price,input:data.prices[m.id].input,output:data.prices[m.id].output},contextK:data.prices[m.id].contextK??m.contextK}:m));setLive(true);setUpdated("just now")}catch{setLive(false);setUpdated("snapshot")}}
   useEffect(()=>{refresh();const t=setInterval(refresh,300000);return()=>clearInterval(t)},[]);
   useEffect(()=>{const saved=localStorage.getItem("observatory-language");if(saved==="zh"||saved==="en")setLang(saved)},[]);
+  useEffect(()=>{document.documentElement.lang=lang==="zh"?"zh-CN":"en"},[lang]);
   const changeLang=(next:Lang)=>{setLang(next);localStorage.setItem("observatory-language",next)};
 
   const ranked=useMemo(()=>models.filter(m=>(maker==="All labs"||m.maker===maker)&&(!openOnly||m.open)&&`${m.name} ${m.maker}`.toLowerCase().includes(query.toLowerCase())).sort((a,b)=>scoreFor(b,sort)-scoreFor(a,sort)),[models,maker,openOnly,query,sort]);
