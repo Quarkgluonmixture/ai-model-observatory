@@ -1,17 +1,19 @@
 # AI Model Observatory · AI 模型观测站
 
-A bilingual, mobile-ready dashboard for comparing frontier AI models across independent intelligence benchmarks, human-preference rankings, coding performance, throughput, latency, context windows, and token prices.
+A bilingual, mobile-ready dashboard for comparing frontier AI models across versioned capability benchmarks, best-available agent systems, human-preference rankings, throughput, context windows, and token prices.
 
 一个支持中英文切换与手机端使用的前沿 AI 模型看板，可查看排行榜、能力雷达图、多模型 Benchmark 折线对比、上下文窗口及实时 Token 价格。
 
 ## Features
 
-- 20 frontier and open-weight models
+- 22 frontier and open-weight model configurations
 - Chinese / English interface with persistent language preference
-- sortable ranking by Artificial Analysis Intelligence, Arena Text, Code Arena, speed, and value
+- separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
-- normalized six-axis capability radar
-- multi-model Benchmark line chart with raw values retained
+- evidence-backed seven-axis capability radar with explicit coverage
+- 32-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
+- multi-model benchmark line charts and raw-score tables by capability family
+- model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter-backed live token pricing with snapshot fallback
 - responsive ranking cards, horizontally scrollable charts, and bottom navigation on mobile
 
@@ -20,6 +22,11 @@ A bilingual, mobile-ready dashboard for comparing frontier AI models across inde
 - [LM Arena — Text](https://arena.ai/leaderboard/text)
 - [LM Arena — Code / WebDev](https://arena.ai/leaderboard/code/webdev)
 - [Artificial Analysis — Model Leaderboard](https://artificialanalysis.ai/leaderboards/models)
+- [Kimi K3 — public cross-model evaluation table](https://github.com/MoonshotAI/Kimi-K3)
+- [DeepSWE v1.1](https://github.com/datacurve-ai/deep-swe)
+- [Terminal-Bench 2.1](https://www.tbench.ai/leaderboard/terminal-bench/2.1)
+- [MCP-Atlas](https://github.com/scaleapi/mcp-atlas)
+- [Toolathlon](https://github.com/hkust-nlp/Toolathlon)
 - [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties)
 - [LiveBench](https://livebench.ai/)
 
@@ -74,8 +81,10 @@ public/                     # static assets
 ## Notes
 
 - Metrics from different sources are not blended into a hidden universal score.
-- Raw benchmark values remain visible beneath the normalized visualizations.
-- Missing source values remain `N/A`; radar-only estimates are disclosed in the interface.
+- Arena remains a separate human-preference signal rather than a capability axis.
+- Raw benchmark values, versions, evaluation object, and scoring method remain visible.
+- Missing source values remain `N/A`; the radar never zero-fills or estimates a missing axis.
+- Agentic results can depend on the model snapshot, harness, tools, reasoning effort, budget, and number of attempts.
 - Upstream leaderboards and provider pricing change over time, so dated snapshots should be refreshed deliberately.
 
 ## License
