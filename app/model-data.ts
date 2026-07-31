@@ -224,11 +224,19 @@ export const BENCHMARK_SCORES: Record<string, BenchmarkScores> = Object.fromEntr
 );
 
 export const SOURCE_META = {
-  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent index + GDPval" },
-  arena: { label: "Arena Text", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", votes: "7.50M votes", role: "human preference" },
-  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results + harness notes" },
-  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results + effort modes" },
-  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native leaderboard" },
-  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed, not global standard" },
-  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results + harness notes" },
-};
+  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent capability, speed, price and GDPval index", status: "active", category: "independent" },
+  arena: { label: "LM Arena", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", role: "large-scale human preference signal", status: "active", category: "preference" },
+  livebench: { label: "LiveBench", date: "rolling", url: "https://livebench.ai/", role: "objective, contamination-limited general evaluation", status: "queued", category: "benchmark" },
+  helm: { label: "Stanford HELM", date: "living", url: "https://crfm.stanford.edu/helm/", role: "transparent and reproducible multi-scenario evaluation", status: "queued", category: "independent" },
+  arc: { label: "ARC Prize verified", date: "2026", url: "https://arcprize.org/leaderboard", role: "verified ARC-AGI fluid-intelligence results", status: "queued", category: "benchmark" },
+  epoch: { label: "Epoch AI", date: "v2 · 2026", url: "https://epoch.ai/frontiermath", role: "FrontierMath and benchmark methodology cross-checks", status: "queued", category: "independent" },
+  terminal: { label: "Terminal-Bench 2.1", date: "live", url: "https://www.tbench.ai/leaderboard/terminal-bench/2.1", role: "benchmark-native verified terminal-agent runs", status: "queued", category: "benchmark" },
+  osworld: { label: "OSWorld 2.0", date: "2026.06", url: "https://github.com/xlang-ai/OSWorld-V2", role: "execution-based long-horizon computer use", status: "queued", category: "benchmark" },
+  swebench: { label: "SWE-bench", date: "live", url: "https://www.swebench.com/", role: "official software-engineering leaderboard and archive", status: "queued", category: "benchmark" },
+  openrouter: { label: "OpenRouter Models API", date: "live feed", url: "https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties", role: "provider pricing and context-window metadata", status: "active", category: "pricing" },
+  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", status: "active", category: "vendor" },
+  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", status: "active", category: "vendor" },
+  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native long-horizon coding runs", status: "active", category: "benchmark" },
+  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", status: "active", category: "vendor" },
+  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results with harness notes", status: "active", category: "vendor" },
+} as const;
