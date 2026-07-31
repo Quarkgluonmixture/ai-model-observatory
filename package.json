@@ -12,6 +12,7 @@
     "build": "next build",
     "build:next": "next build",
     "build:sites": "bash scripts/build-verified.sh",
+    "check:data": "node --experimental-strip-types scripts/check-model-data.mjs",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "start:next": "next start",
     "test": "npm run build",
