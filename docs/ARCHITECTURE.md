@@ -26,12 +26,14 @@ The application has two data paths:
 
 1. Versioned benchmark evidence, generated from the `data/sources/` archive into
    `app/observations.generated.ts` and combined with the seed rows in `app/model-data.ts`.
-2. Best-effort live price refresh through `app/api/live-models/route.ts`, with bundled prices
-   retained when the upstream call fails.
+2. A live price **comparison** through `app/api/live-models/route.ts`. It does not write into
+   the catalog. The card shows the archived list price, and the provider's current figure
+   appears beside it only where the two disagree — a disagreement is a collection signal, not
+   a number to display. See §6.
 
-Current scale: **27 model families, 68 benchmarks, 999 observations across 866 of 1836 cells**,
-sourced benchmark-native 695 / independent 127 / vendor 177. 98% of catalog numbers are backed
-by an archive row.
+Current scale: **27 model families, 68 benchmarks, 1162 observations across 902 of 1836 cells**,
+sourced benchmark-native 741 / independent 244 / vendor 177. **100% of catalog numbers are backed
+by an archive row** — one exception, `claude-opus-4.8 codeElo`, an Arena figure no scripted source publishes.
 
 ## 2. Repository map
 
@@ -44,15 +46,20 @@ by an archive row.
 | `data/sources/*.jsonl` | Append-only raw transcription archive, one row per published result |
 | `data/model-aliases.json` | Every editorial decision: model mapping, benchmark splits, version and source-class overrides |
 | `scripts/ingest.mjs` | Archive + aliases → `app/observations.generated.ts` |
+| `scripts/lib/archive.mjs` | Alias resolution and archive reading, shared by ingestion and the gap report |
+| `scripts/report-gaps.mjs` | What has *not* been collected: cells below a floor, unaliased rows, new upstream models |
+| `scripts/publish-gaps-issue.sh` | Publishes that report to one self-updating GitHub issue |
 | `docs/INGEST-PROMPT.md` | The transcription contract given to a browsing model |
 | `docs/UI.md` | Type scale, breakpoints, the phone contract, and how to verify a layout change |
 | `scripts/check-model-data.mjs` | Observation contract enforced in CI |
 | `scripts/check-model-provenance.mjs` | Audits every catalog number against the archive |
-| `scripts/fetch-livebench.mjs` | Collects batch 09 from LiveBench's own data files; `--check` diffs archive vs upstream |
+| `scripts/fetchers/*.mjs` | One module per source this project can re-read by script |
+| `scripts/fetch-source.mjs` | Runs them: writes a batch, or `--check` diffs every archive against upstream |
+| `scripts/open-refresh-pr.sh` | Turns a moved live board into one self-updating pull request |
 | `scripts/check-price-terms.mjs` | Fails when the catalog quotes a promotion recorded in a batch meta |
 | `scripts/check-mobile.mjs` | Layout probe: overflow, type floor and tap-target floor under device emulation |
 | `.github/workflows/ci.yml` | Lint, data contract, price terms, and production build checks |
-| `.github/workflows/upstream.yml` | Weekly re-fetch of archived sources to catch upstream edits |
+| `.github/workflows/upstream.yml` | Weekly: re-fetch archived sources for drift, then report what was never collected |
 | `README.md` | User-facing overview and deployment instructions |
 | `AGENTS.md` | Short coding-agent operating contract |
 
@@ -137,18 +144,32 @@ catalog will not track. Each batch's `.meta.json` records `filtered`, the rule u
 source URLs, so a fuller re-transcription can be dropped in later — `npm run ingest` picks
 up whatever the files contain, with no code change.
 
-`data/model-aliases.json` carries four kinds of decision, each with a written reason:
+`data/model-aliases.json` carries every kind of judgement the archive itself must not encode,
+each with a written reason:
 
 | Key | Decides |
 | --- | --- |
 | `aliases` | which published model string is which catalog model, at which effort |
 | `benchmarkSplits` | when a published "version" is really a different problem set |
 | `versionAliases` | when two sources spell the same version differently |
+| `benchmarkAliases` | when an evaluator uses its own name for a benchmark already catalogued |
+| `versionFallbacks` | when a source publishes no version label and the catalog owns the column |
+| `droppedBenchmarks` | what is deliberately not carried, and why |
 | `sourceKindOverrides` | when a page's source class is not what it looks like |
+| `supersededRows` | when a scripted fetch replaces an earlier transcription of the same page |
 
-The last one is not cosmetic. Epoch AI's FrontierMath page is benchmark-native because
+`sourceKindOverrides` is not cosmetic. Epoch AI's FrontierMath page is benchmark-native because
 FrontierMath is Epoch's own benchmark; Epoch's GPQA page is an *independent* evaluation,
 because GPQA belongs to someone else and Epoch is a third party running it.
+
+`supersededRows` exists because the archive is append-only and a scripted fetch is not a
+correction of the transcription it replaces — it is the same measurement, read exactly instead
+of by eye. Batch 02 read 18 DeepSWE rows off the screen rounded to whole points; batch 11 reads
+all 50 configurations from the artifact the page loads. Ingesting both would put two rows in one
+cell and let the rounded reading win the primary slot, because a system benchmark keeps the
+highest score within a source class and 74 beats 73.6. So the transcribed rows stay in the
+archive as evidence of what the page showed that day, and the alias file records that they are
+no longer ingested. `npm run ingest` prints them, like every other skip.
 
 ### Observation store
 
@@ -229,8 +250,10 @@ while `Claude Fable 5`, measured on all five including `osworld2` where scores c
 fifth at 75.7. `Inkling Small` ranked second on a single cell.
 
 So `portfolioScore` publishes a number only when the model covers **at least half of that axis's
-core benchmarks and at least two of them** (`PORTFOLIO_MIN_RATIO`, `PORTFOLIO_MIN_CELLS` in
-`app/page.tsx`). Below the floor the value is `N/A` and the model leaves that ranking, the same
+core benchmarks and at least two of them** (`PORTFOLIO_MIN_RATIO`, `PORTFOLIO_MIN_CELLS`,
+`portfolioFloor` in `app/model-data.ts` — the data layer, not the page, because
+`npm run report:gaps` reads the same rule to find the models sitting one cell below it).
+Below the floor the value is `N/A` and the model leaves that ranking, the same
 way a model with no published cost per task is absent from the value lens rather than free. Each
 ranking cell and dossier KPI prints its `present/total` count, so the floor is visible rather than
 inferred.
@@ -259,9 +282,30 @@ sequenceDiagram
     GH->>EO: Trigger production build
     EO->>User: Serve Next.js UI and API route
     User->>EO: Request live prices
-    EO->>EO: Call OpenRouter or return 503
-    User->>User: Keep bundled snapshot on failure
+    EO->>EO: Look up exact provider ids, or return 503
+    User->>User: Compare against the archived price, never replace it
 ```
+
+### The live price path is a comparison, not a refresh
+
+Two rules of this project make an overwriting price feed impossible to keep honest. The catalog
+quotes **list price, never a promotion** (§10), and every catalog number is **backed by an archive
+row** (`npm run check:models`) — a figure that arrives at runtime satisfies neither. The feed used
+to write straight into the model record anyway, which meant the dashboard silently published the
+Claude Sonnet 5 introductory rate that §10 exists to exclude, and `check:prices` could not see it
+because that check runs at build time over batch metadata.
+
+So the archived price is what the card shows. OpenRouter's current figure sits beside it and is
+rendered only where the two disagree by more than 0.5%. Today 17 of 27 corroborate the archive
+exactly, which is a provenance signal worth having; the other 10 are a collection queue.
+
+Lookups are **exact provider ids**, never substrings. `list.find` returns the first id containing
+the needle, and OpenRouter serves overlapping names: the needle `gpt-5.6` matched
+`openai/gpt-5.6-luna-pro`, so the GPT-5.6 Sol card rendered $0.10/$0.60 in place of $5/$30. Six
+other lookups landed on a `-fast`, `-pro` or `-lite` variant the same way, and none of it was
+visible, because a wrong price looks exactly like a right one. A retired id now resolves to
+nothing and the card keeps its archived figure, which is the safe direction to fail in;
+`npm run report:gaps` reports the dead lookup.
 
 Canonical production settings:
 
@@ -333,6 +377,13 @@ npm run build
 over the network and fails for reasons unrelated to the commit under review, which is how a red
 check gets trained into background noise. It runs weekly instead, in `.github/workflows/upstream.yml`.
 
+`npm run report:gaps` is not in that list either, for a different reason: **it can never fail.**
+An uncollected model is not a defect in the commit under review, so the report exits zero no
+matter what it finds and the finding becomes an issue instead. The weekly job publishes it to one
+long-lived issue titled *Collection gaps*, edited in place and closed when the report comes back
+empty — so an open issue always means there is something to collect, and there is never a backlog
+of stale weekly issues to ignore. Add `--no-network` to run the two local sections offline.
+
 The data check currently enforces:
 
 - unique model and benchmark IDs;
@@ -371,6 +422,38 @@ pages are known-dead or known-empty and were already worked around.
 | 08 | Operating parameters, second pass | AA model pages plus Anthropic, Google, DeepSeek, Alibaba, Z.AI and Thinking Machines pricing. Took catalog provenance from 67% to 97% and corrected 43 values. |
 | 09 | LiveBench | 23 task columns × 36 models = 828 rows, fetched by script, not transcribed. Took cell coverage from 25.7% to 47.2%. |
 | 10 | Standard vendor pricing | Claude Sonnet 5's list $3/$15. No new retrieval — promoted from batch 08's capture, where it sat in a row's note. |
+| 11 | DeepSWE | 50 configurations fetched from the artifact the board loads. Supersedes batch 02's 18 transcribed rows of the same page. |
+| 12 | Epoch AI export | 711 rows from the CC BY ZIP: Epoch's own FrontierMath / tier 4 / GPQA runs, plus four second-hand boards the catalog has no first-hand path to. |
+| 13 | Terminal-Bench 2.1 | 17 submissions from the Supabase function the page calls, each with its agent, effort and run date. Supersedes batch 02's 2.1 rows. |
+| 14 | Artificial Analysis | 590 configurations of operating parameters from the REST API. Not observations — this batch feeds `check:models`, which reached 100% because of it. On demand, needs `AA_API_KEY`. |
+
+### Which sources can be re-read by script
+
+Measured twice on 2026-08-01. **Do not re-probe without reading this** — and note *how* the two
+passes differed, because that is the reusable part.
+
+The first pass fetched each landing page and searched it for referenced `.json`/`.csv` assets,
+`/api/` strings and framework state. That found DeepSWE and nothing else. **It was wrong about two
+sources**, and wrong in a way worth naming: a landing page cannot tell you about a data file
+published somewhere other than the site. The second pass looked for exports, repositories and the
+endpoints a client builds at runtime, and found the two largest additions to this archive.
+
+| Source | Verdict |
+| --- | --- |
+| LiveBench | `table_<release>.csv` + `categories_*.json` + `cost_*.csv`. **Scripted, batch 09.** |
+| DeepSWE | `/artifacts/v1.1/leaderboard-live.json` — every configuration with harness, effort, pass@1, CI, cost. **Scripted, batch 11.** |
+| Epoch AI | `epoch.ai/data/benchmark_data.zip` — 76 CSVs, CC BY. Invisible from the page. **Scripted, batch 12.** |
+| Terminal-Bench | An unauthenticated Supabase Edge Function the page calls, found in Harbor's client source. **Scripted, batch 13.** |
+| Artificial Analysis | A documented REST API at `/api/v2`. **Scripted, batch 14**, on demand with `AA_API_KEY`. The free tier carries intelligence index, cost per task, speed, latency and pricing; GDPval-AA and AA-LCR return 403 behind the Pro tier, so those two core benchmarks still have no scripted path. |
+| LM Arena | `lmarena/arena-catalog` publishes `data/leaderboard-text.json`, and it decodes — but it is **stale**: 282 models topped by `gemini-3-pro` at 1487, with no Fable 5, Opus 5, GPT-5.6 or Kimi K3. Nothing in the repo says it stopped syncing. |
+| SWE-bench | `swe-bench.github.io/data/leaderboards.json`, 180 Verified entries, genuinely fetchable — and useless: the newest entry is Opus 4.5 from 2025-12, and `swe-verified` is a legacy column. The HELM situation exactly. |
+| Scale, MMMU, Mercor APEX, HLE | Hugging Face's `/api/datasets/{id}/leaderboard` returns 200 for all four, which is a trap: every record is a **vendor self-report scraped from the model's own card**, `verified:false`, with no version, harness, effort or date. SWE-bench Pro's mixes 19 model-card claims with 6 official rows and nothing distinguishes them. |
+| ARC Prize | The verified board publishes nothing readable. `arcprize/arc_agi_v2_public_eval` does — and it is a **different split**: GPT-5.2 xHigh scores 64.0 there against 52.9 on the verified board. Substituting it would have moved the column ~11 points. |
+| Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. |
+
+Four of thirteen batches are now scripted, and only those four have a drift check or an automatic
+refresh. The rest are hand transcriptions whose only freshness signal is how long ago someone read
+them — which is why the source cards print that date (§10).
 
 Batch 09 is the first batch collected by a script rather than a browsing model. LiveBench renders
 client-side and batch 05 recorded it as UNAVAILABLE for that reason, but the page loads
@@ -426,24 +509,56 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-The highest-value next move is **scripting one more source fetcher**, because it pays twice:
-a scripted batch has no row limit and no transcription error, and re-running it *is* that
-source's drift check. Batch 09 turned LiveBench from "cannot be transcribed" into 828 rows and
-a weekly integrity check with one script. Before writing another transcription prompt, look for
-the data file the page itself loads — that is the question batch 05 did not ask about LiveBench.
+**The four scripted sources now maintain themselves; the other nine batches cannot.** That gap is
+the whole of the remaining work, and it is not a code problem — §9 records that no other source
+publishes a data file to read. Re-probing is cheap but the answer is written down; go read it
+before spending an afternoon on it.
 
-- **The coverage floor names its own collection targets.** Since a portfolio score needs half an
-  axis (§5), a model sitting one cell short is one observation away from entering a ranking, and
-  the axes are small enough that single benchmarks unlock many models at once. As of 2026-08-01
-  the two highest-leverage gaps are `mrcr`, missing for 7 models on a 2-benchmark long-context
-  axis that currently ranks nobody, and `hle-no-tools`, missing for 8 on reasoning. Recompute
-  before acting rather than trusting these counts — for each axis take
-  `max(2, ceil(core/2))` and list the models exactly one cell below it. Worth folding into
-  `check:data` as a standing report, which would make the floor self-servicing.
-- Upstream diffing now exists, but only for sources with a machine-readable feed. LiveBench is
+What "maintains itself" means concretely, weekly, in `.github/workflows/upstream.yml`:
+
+| Finding | Source kind | Verdict |
+| --- | --- | --- |
+| A cell moved under a frozen version | pinned (LiveBench) | Integrity failure, job red, a human decides |
+| A cell moved on a live board | live (DeepSWE, Epoch, Terminal-Bench) | New data → the batch is rewritten and a pull request opens |
+| A newer release exists | pinned | Reported only. Collecting it changes 23 benchmark version fields and is a catalog decision |
+| Anything never collected at all | any | The collection-gaps issue |
+
+The refresh is idempotent: an unchanged board writes nothing, not even a new `retrievedDate`, so
+a quiet week produces no pull request. And the pull request carries its own check output, because
+one opened with `GITHUB_TOKEN` does not trigger CI — GitHub blocks that to prevent recursion.
+Push any commit to the branch to get a real CI run.
+
+Two consequences worth keeping in mind. A live board means the archive is *expected* to change,
+so DeepSWE's numbers are only as frozen as the last merge — read `evaluation_date`, not the
+retrieval date, when comparing it to a transcribed source. And auto-collecting a new LiveBench
+release is deliberately **not** automated: the release changes the question set, so it would need
+23 `BenchmarkRecord` version fields updated and a decision about whether the old release's rows
+stay. That is judgement, and judgement does not go in a cron job.
+
+- **The coverage floor names its own collection targets, and now says so out loud.** Since a
+  portfolio score needs half an axis (§5), a model sitting one cell short is one observation away
+  from entering a ranking, and the axes are small enough that single benchmarks unlock many models
+  at once. `npm run report:gaps` computes this from the same floor the dashboard publishes with —
+  never a second copy of the rule — so the counts are current by construction rather than
+  transcribed into this document and left to rot. As of 2026-08-01 it ranks `hle-no-tools` first
+  (would admit 11 models), then `apex` (8), `arc-agi-2` (7), `mrcr` and `aa-lcr` (6 each).
+- **What has never been collected is now reported too, which is the other half of drift.**
+  `check:upstream` asks whether an archived number moved; it cannot ask what exists that was never
+  archived. `report:gaps` does: archived rows still waiting on a catalog model (678 rows across
+  246 published model strings, with the batch each appears in as the triage signal — a string in
+  the current LiveBench release is a live model, one that appears only in an older transcription
+  is almost always previous-generation), and models published in a namespace the catalog already
+  tracks. The watched namespaces are **measured, not declared** — they are whichever providers the
+  catalog's own price lookups resolve into, so adding a lab to the catalog adds it to the watch
+  list with no second list to maintain.
+- Upstream diffing still exists only for sources with a machine-readable feed. LiveBench is
   re-fetched and compared cell by cell (`npm run check:upstream`, weekly in CI). The eight
   transcribed batches are still undiffable — nothing tells you that Terminal-Bench or Vals
   edited a number after it was archived. Each source that gains a fetcher gains a drift check.
+  Until then, how long ago a source was last read is the only honest freshness signal there is,
+  which is why every source card now prints it and marks itself aging after
+  `SOURCE_STALE_DAYS` (30). The card prints *read* or *evaluated* and never blurs the two: a
+  recently-read source with an old evaluation date is not stale, its leaderboard is quiet.
 - Five catalog numbers still have no archive row: cost per task for Claude Opus 4.8 and
   GPT-5.5 (both absent from the AA leaderboard), Opus 4.8's code Elo, and Inkling's speed and
   latency. `npm run check:models` lists them. Grok 4.3's two Elo figures left this list without
@@ -473,7 +588,11 @@ the data file the page itself loads — that is the question batch 05 did not as
   record per family and effort lives on the observation row. Ingestion rose from 179 to 214
   rows on the same archive when this changed, because leaderboards publish one line per
   model, not one per effort.
-- Live price matching is substring-based and should eventually use canonical provider model IDs.
+- Live price matching now uses exact provider ids and no longer overwrites the catalog (§6). What
+  remains is judgement, not code: 10 of 27 models disagree with their provider today, and each one
+  is either a vendor price change to collect or a rate the catalog deliberately excludes — a
+  promotion, a reseller margin, a regional tier. Nothing tells them apart automatically, and
+  nothing should.
 - Pixel regression testing is not yet in CI. Add Playwright screenshots only after a stable public
   preview URL and baseline approval exist. `npm run check:mobile` covers the part that regresses
   silently — overflow, type floor, tap-target floor — but it needs Chrome and a running server, so

@@ -29,6 +29,12 @@ means adding one entry there and one `id` on the section, nothing else.
 State lives in `Home`. Nothing is persisted except the language choice (`localStorage`,
 `observatory-language`), applied after mount so the prerendered HTML stays static.
 
+**Two things are deliberately resolved after mount for the same reason.** The page is prerendered,
+so anything derived from the clock would make the server's HTML and the browser's disagree. The
+source-card staleness cutoff (`staleBefore`) and the live price comparison both start empty and
+fill in on the client. Until they land, no card is marked and no comparison is shown — an
+unflagged card is a flag not yet computed, never a false reassurance.
+
 ## 2. Type scale
 
 Every size in the stylesheet comes from one of two scales. Do not introduce a third value.
@@ -159,6 +165,15 @@ dynamic toolbars and font rendering wrong.
 
 - The live-price button shows `font-size: 0` on a phone: the dot and the state colour survive, the
   label does not. The same information is in the pricing section head.
+- A price card can print two prices. The large one is the archived list price and is the number
+  the dashboard stands behind; the small `≠ OpenRouter now …` line underneath is what the provider
+  charges right now, shown only when the two disagree by more than 0.5%. It is not a correction
+  waiting to be applied — see ARCHITECTURE §6.
+- A source card prints `read <date>` or `evaluated <date>`, not both, and they mean different
+  things: when this project last transcribed the source, versus when the newest published result
+  was produced. Cards with no observation rows behind them (Arena, OpenRouter) keep the registry's
+  hand-written label instead. Past `SOURCE_STALE_DAYS` the date turns amber with a `◷` — one card
+  qualifies today, which is the intended volume.
 - `maximum-scale` is 5, not 1. Pinch-zoom is the only way to read a dense score table on a phone
   and must not be disabled.
 - The catalog is collapsed by default on every width. It is 68 cards; expanded, it is longer than

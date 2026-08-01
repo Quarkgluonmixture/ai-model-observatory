@@ -48,13 +48,13 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 
 - **Stanford HELM** — evaluated on 2026-08-01 and its source card *removed* rather than left queued. HELM is fully machine-readable, but across all 18 of its projects exactly one model overlaps this catalog, and its frontier project stops about a generation short. A card would have promised an ingestion target that does not exist. The measurement is recorded in `docs/ARCHITECTURE.md` §9 — re-run it before re-adding HELM.
 
-Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
+Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Provider pricing is *compared*, not refreshed: `app/api/live-models/route.ts` looks up exact provider ids and the UI shows the archived list price with the provider's current figure beside it where the two disagree. A number arriving at runtime has no archive row behind it, so it never becomes a catalog number.
 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-999 observations across 866/1836 cells (47.2% cell coverage;
-benchmark 695 / independent 127 / vendor 177)
+1162 observations across 902/1836 cells (49.1% cell coverage;
+benchmark 741 / independent 244 / vendor 177)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -66,8 +66,12 @@ every mapping decision lives in `data/model-aliases.json` with a written reason,
 `npm run ingest` generates the typed rows. A row whose model string has no alias is skipped
 and reported rather than guessed into place. `docs/INGEST-PROMPT.md` holds the transcription
 contract used to collect new rows — but check for a published data file first: LiveBench renders
-client-side and looked untranscribable until it turned out the page fetches its own CSV, which
-`npm run fetch:livebench` now reads directly.
+client-side and looked untranscribable until it turned out the page fetches its own CSV, and
+DeepSWE's board loads a JSON artifact carrying every configuration it has ever run. Epoch AI
+publishes its whole benchmark hub as one CC BY ZIP that the page never mentions, and Terminal-Bench
+answers an unauthenticated function call found in its client's source. All four are scripted
+(`npm run fetch:sources`), which is what gives them an automatic drift check and an automatic
+weekly refresh. The other nine batches have neither.
 
 Model records are hand-authored, but their numbers are audited the same way. `npm run check:models`
 fails when a catalog value contradicts the archive and reports how much of the catalog nothing

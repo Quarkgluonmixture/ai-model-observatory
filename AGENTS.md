@@ -2,6 +2,10 @@
 
 Read `docs/ARCHITECTURE.md` before making structural or data changes.
 
+**If you are an agent running on a schedule, read `docs/AGENT-OPERATIONS.md` as well.** It says
+what may be done unsupervised, what must be handed back for approval, and the five mistakes that
+have already been made here — all of which passed every automated check.
+
 ## Mission
 
 Maintain a bilingual, mobile-first AI model observatory with honest evidence semantics. The
@@ -46,8 +50,16 @@ npm run check:prices  # a promotional price that reached the catalog
 npm run build
 ```
 
-`npm run check:upstream` re-fetches an archived source and diffs it cell by cell. It needs the
-network, so it runs weekly rather than on every PR — see `.github/workflows/upstream.yml`.
+`npm run check:upstream` re-reads every scripted source and diffs it cell by cell. It needs the
+network, so it runs weekly rather than on every PR — see `.github/workflows/upstream.yml`. It
+fails only when a **pinned** source moved under a frozen version; a **live** board moving is new
+data, and the same weekly workflow rewrites that batch and opens a pull request instead.
+
+`npm run report:gaps` asks the opposite question: what exists that was never collected. Models one
+cell below a ranking floor, archived rows still waiting on a catalog model, and models published
+in a namespace the catalog already tracks. **It never fails** — an uncollected model is not a
+defect in your commit — so it prints a report and the weekly job turns it into one self-updating
+issue. Run it before deciding what to collect next; `--no-network` skips the upstream section.
 
 `npm run check:mobile` probes the built site at 320 / 390 / 430px under real device emulation and
 fails on horizontal overflow. It needs Chrome and `PORT=3111 npm run start:next`, so it is a local
@@ -81,11 +93,32 @@ Never hand-write a score into `app/model-data.ts`.
 to be pasted whole, one batch at a time.
 
 **Check for a data file before hiring a transcriber.** Batch 05 recorded LiveBench as
-UNAVAILABLE because the page renders client-side — but the page fetches its own CSV and JSON,
-and `scripts/fetch-livebench.mjs` reads those directly. A scripted batch beats a transcribed one
-on every axis that matters here: no row limit, no transcription error, and re-running it *is* the
-upstream drift check. A leaderboard that "cannot be scraped" is often a leaderboard whose data
-file nobody looked for.
+UNAVAILABLE because the page renders client-side — but the page fetches its own CSV and JSON.
+DeepSWE was transcribed by eye into 18 rounded rows while the page was loading a JSON artifact
+with all 50 configurations at full precision. A scripted batch beats a transcribed one on every
+axis that matters here: no row limit, no transcription error, re-running it *is* the drift check,
+and a live board can then refresh itself into a pull request. A leaderboard that "cannot be
+scraped" is often a leaderboard whose data file nobody looked for.
+
+**But do not go looking blind, and do not stop at the landing page.** Every source was probed
+twice on 2026-08-01 and the verdicts are in `docs/ARCHITECTURE.md` §9. The first pass only searched
+each page's HTML and missed the two biggest wins in the archive: Epoch AI publishes its entire
+benchmark hub as a ZIP the page never links, and Terminal-Bench answers a function call that only
+appears in its client's source. **Where the data lives is not always where the page is.**
+
+Three failure modes that pass a naive check, all hit for real:
+- **A live 200 with plausible JSON is not verification.** Hugging Face's
+  `/api/datasets/{id}/leaderboard` answers for many benchmarks; every record is a vendor
+  self-report scraped from a model card, with no version, harness, effort or date.
+- **A working mirror can be silently stale.** `lmarena/arena-catalog` decodes cleanly and stopped
+  syncing a generation ago. Check that a source knows about models you already carry.
+- **An official file can be the wrong split.** ARC's public-eval JSON runs ~11 points above the
+  verified board it would have been filed under.
+
+To add a scripted source: write `scripts/fetchers/<id>.mjs`, list it in `scripts/fetchers/index.mjs`,
+and declare `versioning`. `"pinned"` means the source freezes a version and any movement is an
+integrity failure; `"live"` means it appends results and movement is new data. Getting that wrong
+either turns the weekly job permanently red or silently accepts a rewritten history.
 
 ## Adding a model
 
@@ -94,13 +127,19 @@ display name, colour, tags, ordering — that has no source to generate from. Ev
 on them is audited instead: `npm run check:models` fails when a catalog value contradicts
 `data/sources/`, and reports how many values have no archive row at all.
 
-So: put the operating parameters in the archive first, then write the record.
+So: put the operating parameters in the archive first, then write the record. For a model
+Artificial Analysis already covers, that is one command — and batch 14 keeps AA's **whole** list,
+not just catalogued models, so a model you are about to add usually has its numbers archived
+already. `npm run check:models` then tells you if what you typed disagrees with them.
+
+`AA_API_KEY` is read from the environment and belongs in a GitHub secret, never in a file. It is
+optional everywhere: without it the AA source skips itself and every other check still runs.
 
 Field sources are fixed:
 
 | Field | Source |
 | --- | --- |
-| intelligence, cost per task, speed, latency | Artificial Analysis |
+| intelligence, cost per task, speed, latency | Artificial Analysis — now scripted: `AA_API_KEY=… npm run fetch:sources aa` archives them with provenance before you write the record |
 | price | official vendor page, else Artificial Analysis — **list price, never a promotion** |
 | text / code Elo | LMArena |
 
@@ -125,6 +164,12 @@ official pages for precision, not because LMArena is wrong.
   that had been used as evidence *against* a source.
 - Vendors price in tiers and regions. Archive the tier the catalog quotes and record the
   others in the batch meta, so a later reader does not "correct" Standard to Batch.
+- **A substring lookup will find the wrong model, and a wrong price looks exactly like a right
+  one.** `list.find(id => id.includes("gpt-5.6"))` returned `openai/gpt-5.6-luna-pro`, so the
+  GPT-5.6 Sol price card rendered $0.10/$0.60 instead of $5/$30 — and six other lookups landed on
+  a `-fast`, `-pro` or `-lite` variant. Provider ids in `PROVIDER_LOOKUPS` are exact, and the live
+  feed compares against the archived price rather than overwriting it. A number that arrives at
+  runtime has no archive row behind it, so it can never be a catalog number.
 
 ## High-value files
 
@@ -135,7 +180,9 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/ingest.mjs` | Archive + aliases → `app/observations.generated.ts` |
 | `scripts/check-model-data.mjs` | Observation contract, enforced in CI |
 | `scripts/check-model-provenance.mjs` | Catalog numbers vs the archive |
-| `scripts/fetch-livebench.mjs` | Fetches batch 09; `--check` diffs the archive against upstream |
+| `scripts/fetchers/*.mjs` | One module per source that can be re-read by script |
+| `scripts/fetch-source.mjs` | Runs them; `--check` diffs, `--live` refreshes the moving boards |
+| `scripts/report-gaps.mjs` | What was never collected — floors, unaliased rows, new upstream models |
 | `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |
@@ -144,13 +191,15 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/check-mobile.mjs` | Layout probe: overflow, type floor, tap-target floor |
 | `docs/ARCHITECTURE.md` | Architecture, data policy, collection state, next work |
 | `docs/UI.md` | Type scale, breakpoints, phone contract, layout verification |
+| `docs/AGENT-OPERATIONS.md` | Standing instructions for a scheduled agent: risk tiers, hard rules, traps |
 | `docs/INGEST-PROMPT.md` | Transcription contract for collecting new rows |
 
 ## Safe change sequence
 
 1. Add evidence to `data/sources/` before touching anything in `app/`.
 2. Record the editorial call in `data/model-aliases.json` with its reason.
-3. `npm run ingest` and read the skip report — it tells you what the catalog is missing.
+3. `npm run ingest` and read the skip report, or `npm run report:gaps` for the same thing ranked
+   by what it would unlock — both tell you what the catalog is missing.
 4. Run every required check.
 5. Review desktop and mobile on the EdgeOne preview URL; run `npm run check:mobile` for layout.
 6. Update `README.md` counts and `docs/ARCHITECTURE.md` if behaviour or schema changed.
