@@ -619,6 +619,11 @@
       "modelId": "inkling"
     },
     {
+      "modelRaw": "Inkling (xhigh)",
+      "effort": "*",
+      "modelId": "inkling"
+    },
+    {
       "modelRaw": "inkling",
       "effort": "*",
       "modelId": "inkling"
