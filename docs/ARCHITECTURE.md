@@ -398,6 +398,12 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
+The highest-value next move is **scripting one more source fetcher**, because it pays twice:
+a scripted batch has no row limit and no transcription error, and re-running it *is* that
+source's drift check. Batch 09 turned LiveBench from "cannot be transcribed" into 828 rows and
+a weekly integrity check with one script. Before writing another transcription prompt, look for
+the data file the page itself loads — that is the question batch 05 did not ask about LiveBench.
+
 - Upstream diffing now exists, but only for sources with a machine-readable feed. LiveBench is
   re-fetched and compared cell by cell (`npm run check:upstream`, weekly in CI). The eight
   transcribed batches are still undiffable — nothing tells you that Terminal-Bench or Vals
