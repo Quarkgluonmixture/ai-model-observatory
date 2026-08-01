@@ -29,8 +29,8 @@ The application has two data paths:
 2. Best-effort live price refresh through `app/api/live-models/route.ts`, with bundled prices
    retained when the upstream call fails.
 
-Current scale: **27 model families, 45 benchmarks, 442 observations across 312 of 1215 cells**,
-sourced benchmark-native 138 / independent 127 / vendor 177. 67% of catalog numbers are backed
+Current scale: **27 model families, 68 benchmarks, 999 observations across 866 of 1836 cells**,
+sourced benchmark-native 695 / independent 127 / vendor 177. 98% of catalog numbers are backed
 by an archive row.
 
 ## 2. Repository map
@@ -47,7 +47,10 @@ by an archive row.
 | `docs/INGEST-PROMPT.md` | The transcription contract given to a browsing model |
 | `scripts/check-model-data.mjs` | Observation contract enforced in CI |
 | `scripts/check-model-provenance.mjs` | Audits every catalog number against the archive |
-| `.github/workflows/ci.yml` | Lint, data contract, and production build checks |
+| `scripts/fetch-livebench.mjs` | Collects batch 09 from LiveBench's own data files; `--check` diffs archive vs upstream |
+| `scripts/check-price-terms.mjs` | Fails when a quoted price outlives the end date recorded in a batch meta |
+| `.github/workflows/ci.yml` | Lint, data contract, price terms, and production build checks |
+| `.github/workflows/upstream.yml` | Weekly re-fetch of archived sources to catch upstream edits |
 | `README.md` | User-facing overview and deployment instructions |
 | `AGENTS.md` | Short coding-agent operating contract |
 
@@ -245,6 +248,12 @@ Source branch: GitHub main
 
 GitHub Pages is intentionally not used because it is static-only and cannot run the current Next.js API route.
 
+EdgeOne builds from `main` independently of GitHub Actions. A failing CI run does not block a
+deploy — only a failing `npm run build` does. `check:prices` and `check:upstream` are therefore
+notifications, not guards: when the Sonnet 5 introductory rate lapses, CI turns red while the
+site keeps serving the stale price until someone acts. Making them gate production would mean
+letting a vendor's pricing calendar take the site down, which is the worse failure.
+
 ## 7. Change playbooks
 
 ### Add a model
@@ -289,8 +298,13 @@ npm run lint
 npm run ingest && git diff --exit-code app/observations.generated.ts
 npm run check:data
 npm run check:models
+npm run check:prices
 npm run build
 ```
+
+`npm run check:upstream` is deliberately **not** in that list. It re-fetches an archived source
+over the network and fails for reasons unrelated to the commit under review, which is how a red
+check gets trained into background noise. It runs weekly instead, in `.github/workflows/upstream.yml`.
 
 The data check currently enforces:
 
@@ -307,12 +321,14 @@ The data check currently enforces:
 - **no cell mixes two benchmark versions** — one cell is one table column, so two versions
   in it would compare one model's version against another's;
 - minimum catalog/model size;
-- retention of a known official Gemini 3.5 Flash observation as a regression guard.
+- retention of a known official Gemini 3.5 Flash observation as a regression guard;
+- no catalog price has outlived a published end date recorded in a batch's `priceTerms`
+  (`npm run check:prices`, which also warns for 45 days beforehand).
 
 
 ## 9. Collection state
 
-Seven archive batches, all under `data/sources/`. Read this before re-running a source: several
+Nine archive batches, all under `data/sources/`. Read this before re-running a source: several
 pages are known-dead or known-empty and were already worked around.
 
 | Batch | Covers | Outcome |
@@ -325,6 +341,27 @@ pages are known-dead or known-empty and were already worked around.
 | 06 | Model operating parameters | AA model pages, vendor pricing, LMArena Elo. |
 | 07 | AA leaderboard main table | Cost per task, which batch 06 could not reach. |
 | 08 | Operating parameters, second pass | AA model pages plus Anthropic, Google, DeepSeek, Alibaba, Z.AI and Thinking Machines pricing. Took catalog provenance from 67% to 97% and corrected 43 values. |
+| 09 | LiveBench | 23 task columns × 36 models = 828 rows, fetched by script, not transcribed. Took cell coverage from 25.7% to 47.2%. |
+
+Batch 09 is the first batch collected by a script rather than a browsing model. LiveBench renders
+client-side and batch 05 recorded it as UNAVAILABLE for that reason, but the page loads
+`table_<release>.csv`, `categories_<release>.json` and `cost_<release>.csv` from its own asset
+directory — those files *are* the published numbers, so `npm run fetch:livebench` copies them
+directly. This is strictly more faithful than reading a rendered table: no row limit, no
+transcription error, and re-running it is the drift check (`npm run check:upstream`).
+
+Three LiveBench decisions worth not re-litigating:
+
+- **`source_kind` is `benchmark`, not `independent`.** Batch 05's prompt filed livebench.ai under
+  independent evaluators, but that instruction never produced a row, and LiveBench publishes its
+  own tasks — it is benchmark-native, which is also what `SOURCE_REGISTRY` already said.
+- **Only task columns are archived.** LiveBench's category averages and Global Average are
+  computed in the browser from those same columns. Archiving them would create a score with no
+  published source *and* double-count its own components, which is what dropped `vals-index`.
+- **The Agentic Coding tasks name `mini-SWE-agent` as their harness.** The leaderboard prints no
+  scaffold, so the harness is taken from the runner LiveBench vendors at
+  `livebench/agentic_code_runner/minisweagent`. Without it a benchmark-native system result would
+  fail the harness rule, and the honest fix was to find the scaffold, not to relabel the rows.
 
 Known-dead or known-empty, with the workaround already applied:
 
@@ -338,6 +375,16 @@ Known-dead or known-empty, with the workaround already applied:
 - `huggingface.co/datasets/openai/mrcr` — dataset card publishes no scores.
 - MMLU-Pro HF Space and OpenRouter's model table — never rendered.
 
+**Stanford HELM was measured and declined on 2026-08-01.** It is reachable and fully
+machine-readable — every project publishes JSON under
+`storage.googleapis.com/crfm-helm-public/<project>/benchmark_output/releases/<version>/` — so the
+obstacle is not access. Across all 18 projects and roughly 700 model deployments, exactly one
+model overlaps this catalog: `deepseek-v4-pro-thinking-disabled`, in `arabic-enterprise`. HELM's
+frontier project, `capabilities` v1.15.0, tops out at GPT-5.1, Gemini 3 Pro Preview and Grok 4 —
+about a generation behind. Connecting it would add a source card and no cells, which is the exact
+move AGENTS.md warns about. Re-measure before reconsidering; the sweep is a short script against
+the `runs.json` of each project's latest release.
+
 Deliberately not carried, with reasons in `droppedBenchmarks`: LMArena text Elo as a benchmark
 (383 rows — it is a preference lens and already lives on the model record), the Artificial
 Analysis and Vals composite indices (they double-count their own components), and a few
@@ -350,16 +397,22 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-- Upstream diffing is still manual. The pipeline re-ingests deterministically, but nothing
-  yet tells you that a leaderboard changed a number after it was archived.
-- Seven catalog numbers still have no archive row: cost per task for Claude Opus 4.8 and
-  GPT-5.5 (both absent from the AA leaderboard), Opus 4.8's code Elo, Inkling's speed and
-  latency, and Grok 4.3's two Elo figures. `npm run check:models` lists them.
+- Upstream diffing now exists, but only for sources with a machine-readable feed. LiveBench is
+  re-fetched and compared cell by cell (`npm run check:upstream`, weekly in CI). The eight
+  transcribed batches are still undiffable — nothing tells you that Terminal-Bench or Vals
+  edited a number after it was archived. Each source that gains a fetcher gains a drift check.
+- Five catalog numbers still have no archive row: cost per task for Claude Opus 4.8 and
+  GPT-5.5 (both absent from the AA leaderboard), Opus 4.8's code Elo, and Inkling's speed and
+  latency. `npm run check:models` lists them. Grok 4.3's two Elo figures left this list without
+  new collection: batch 09 added a lowercase `grok-4.3` alias, which attached LMArena rows that
+  had been sitting in the archive unmatched. Check for an orphaned row before collecting again.
 - Vendors price in tiers and regions and the catalog quotes one. Google publishes Standard,
-  Batch, Flex and Priority; Alibaba publishes six regions; Anthropic's Sonnet 5 price is
-  introductory through 2026-08-31. The tier archived is recorded in each batch's meta, but
-  nothing re-checks it when a promotion ends.
-- 929 archived rows are not ingested because the catalog has no model for them, almost all
+  Batch, Flex and Priority; Alibaba publishes six regions. A promotion with a published end date
+  is now recorded as a `priceTerms` entry in its batch meta and enforced by
+  `npm run check:prices`, which fails once the quoted price outlives its date and warns for 45
+  days beforehand. Only Anthropic's Sonnet 5 introductory rate (ends 2026-08-31) is recorded so
+  far; the other tier notes in batch metas are still prose.
+- 709 archived rows are not ingested because the catalog has no model for them, almost all
   previous-generation. They are kept deliberately: adding the model is all it takes for
   `npm run ingest` to attach them, with no code change.
 - Four benchmarks are still empty: `swe-evo` (no leaderboard exists), `videommmu` (newest

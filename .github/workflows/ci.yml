@@ -46,5 +46,8 @@ jobs:
       - name: Audit model catalog against the source archive
         run: npm run check:models
 
+      - name: Fail on a quoted price that has outlived its published end date
+        run: npm run check:prices
+
       - name: Build production application
         run: npm run build

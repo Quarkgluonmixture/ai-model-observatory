@@ -3,9 +3,14 @@
 每个批次都是**自包含**的：整段复制粘给带浏览的 GPT 即可，不需要拼接。
 一次只跑一个批次。返回的 ```jsonl 原样贴回来入库。
 
-批次 1–7 已完成，存档在 `data/sources/`。**下一个要跑的是批次 8**（文件最后），
-它补齐模型运营参数里缺的速度/延迟与厂商定价 —— 目前 `npm run check:models` 报 67% 有出处，
-补完这一批能到 90% 以上。
+批次 1–9 已完成，存档在 `data/sources/`。目前 `npm run check:models` 报 98% 有出处，
+`npm run check:data` 报 47.2% 格子覆盖率。
+
+**开新批次前先找数据文件，别急着雇转写员。** 批次 9（LiveBench）不在这份文件里，因为它
+根本不需要浏览模型：LiveBench 是客户端渲染的，批次 5 曾因此记成 UNAVAILABLE，但那个页面
+自己会去拉 `table_<release>.csv`，`scripts/fetch-livebench.mjs` 直接读它。脚本批次在每个
+维度上都更好 —— 没有行数上限、没有转写错误，而且重跑一次就是上游漂移检查
+（`npm run check:upstream`）。只有确认拿不到数据文件时，才回到下面的转写合同。
 
 ---
 

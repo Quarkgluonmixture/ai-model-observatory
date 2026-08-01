@@ -39,8 +39,12 @@ npm run ingest        # rebuilds app/observations.generated.ts from data/sources
 npm run lint
 npm run check:data    # observation contract + coverage report
 npm run check:models  # every catalog number vs the source archive
+npm run check:prices  # a quoted price that outlived its published end date
 npm run build
 ```
+
+`npm run check:upstream` re-fetches an archived source and diffs it cell by cell. It needs the
+network, so it runs weekly rather than on every PR — see `.github/workflows/upstream.yml`.
 
 CI runs all of these, and additionally fails if `app/observations.generated.ts` differs from
 a fresh `npm run ingest` — the generated file must never be hand-edited.
@@ -67,6 +71,13 @@ Never hand-write a score into `app/model-data.ts`.
 
 `docs/INGEST-PROMPT.md` is the transcription contract to hand a browsing model. It is written
 to be pasted whole, one batch at a time.
+
+**Check for a data file before hiring a transcriber.** Batch 05 recorded LiveBench as
+UNAVAILABLE because the page renders client-side — but the page fetches its own CSV and JSON,
+and `scripts/fetch-livebench.mjs` reads those directly. A scripted batch beats a transcribed one
+on every axis that matters here: no row limit, no transcription error, and re-running it *is* the
+upstream drift check. A leaderboard that "cannot be scraped" is often a leaderboard whose data
+file nobody looked for.
 
 ## Adding a model
 
@@ -116,6 +127,8 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/ingest.mjs` | Archive + aliases → `app/observations.generated.ts` |
 | `scripts/check-model-data.mjs` | Observation contract, enforced in CI |
 | `scripts/check-model-provenance.mjs` | Catalog numbers vs the archive |
+| `scripts/fetch-livebench.mjs` | Fetches batch 09; `--check` diffs the archive against upstream |
+| `scripts/check-price-terms.mjs` | Fails when a quoted price outlives its published end date |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |
 | `app/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
