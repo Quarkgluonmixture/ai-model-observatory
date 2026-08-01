@@ -1,11 +1,18 @@
-# Leaderboards edit published numbers after the fact, and the pipeline cannot see it: ingestion
-# is deterministic, so a silently-corrected upstream score reproduces perfectly from a stale
-# archive. This job re-fetches the archived LiveBench release and fails when a cell moved.
+# The weekly conversation with every source this project can re-read by script. Three questions,
+# three different verdicts, deliberately not collapsed into one:
 #
-# It is deliberately not part of PR CI. It needs the network and it fails for reasons that have
-# nothing to do with the commit under review, which is exactly the kind of failure that teaches
-# people to ignore a red check.
-name: Upstream drift
+#   drift    Has a number moved under a version that is supposed to be frozen? Ingestion is
+#            deterministic, so a silently-corrected upstream score reproduces perfectly from a
+#            stale archive and nothing else would ever catch it. This is an integrity failure
+#            and it turns the job red.
+#   refresh  Has a live board published new results? DataCurve appends DeepSWE runs and the pass
+#            rates move; that is the board working, not an error. It opens a pull request.
+#   gaps     What exists that was never collected at all? Neither of the above can see this.
+#            It is a collection target, so it becomes an issue.
+#
+# None of it belongs in PR CI. It needs the network and it fails for reasons that have nothing
+# to do with the commit under review, which is exactly how a red check gets trained into noise.
+name: Upstream
 
 on:
   schedule:
@@ -17,9 +24,12 @@ permissions:
 
 jobs:
   drift:
-    name: Re-fetch archived sources and compare
+    name: Compare archived sources against upstream
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - name: Check out repository
@@ -34,6 +44,110 @@ jobs:
       - name: Install locked dependencies
         run: npm ci
 
-      # Reports a newer upstream release without failing — a new release is new data, not drift.
-      - name: Compare the archived LiveBench release against its source
+      # Fails only on a pinned source whose archived cell moved. A live board that moved, and a
+      # newer LiveBench release existing, are both reported without failing — they are new data.
+      # AA_API_KEY is optional. Without it the Artificial Analysis source skips itself and the
+      # rest still runs; with it, the job reports when AA's numbers have moved. It is set only on
+      # this job, never on the refresh job below, so an AA re-measurement can never rewrite the
+      # archive on its own — see scripts/fetchers/artificial-analysis.mjs.
+      - name: Diff every scripted source against its archive
+        env:
+          AA_API_KEY: ${{ secrets.AA_API_KEY }}
         run: npm run check:upstream
+
+      # Runs even when drift failed above: the two findings are independent, and suppressing the
+      # gap report because a cell moved would hide a week of collection targets behind one number.
+      - name: Report what the catalog has not collected
+        if: always()
+        id: gaps
+        run: |
+          npm run --silent report:gaps > gaps.md
+          sed -n 's/.*<!-- gaps: \([0-9]*\) -->.*/count=\1/p' gaps.md >> "$GITHUB_OUTPUT"
+          cat gaps.md >> "$GITHUB_STEP_SUMMARY"
+
+      # A missing GitHub permission must not read like a missing model, so this step reports its
+      # own failure and leaves the job's verdict to the drift check above.
+      - name: Open or refresh the collection-gaps issue
+        if: always() && steps.gaps.outputs.count != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/publish-gaps-issue.sh gaps.md "${{ steps.gaps.outputs.count }}" || echo "::warning::Could not publish the gap issue; the report is in the step summary."
+
+  refresh:
+    name: Re-read live boards and open a pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Independent of the drift job on purpose: LiveBench rewriting a frozen release must not stop
+    # DeepSWE's new rows from reaching a pull request. They are unrelated findings.
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      # Writes nothing when a board has not moved — not even the sidecar's retrievedDate — so an
+      # unchanged week leaves a clean tree, commits nothing and opens nothing.
+      # No AA_API_KEY here on purpose. Artificial Analysis is versioning: "manual" and `--live`
+      # never selects it, because AA re-measures speed and latency continuously — a scheduled
+      # rewrite would fail check:models every time a number moved. It is read by the drift job
+      # above, which reports and changes nothing.
+      - name: Re-read the live boards
+        run: node scripts/fetch-source.mjs --live | tee fetch.log
+
+      - name: Rebuild the observation store
+        run: npm run ingest
+
+      # The risk boundary is the file set, not the author. Values moving inside data/sources are
+      # tier A: the mapping that interprets them was reviewed when the fetcher was written, so the
+      # contract is a complete check and this may reach production unattended. A change touching
+      # app/model-data.ts or data/model-aliases.json introduces a NEW mapping — which is where
+      # every real mistake in this project has come from — and must be reviewed by a human.
+      - name: Classify the change
+        id: diff
+        run: |
+          changed="$(git diff --name-only)"
+          if [ -z "$changed" ]; then
+            echo "class=none" >> "$GITHUB_OUTPUT"
+            echo "No live board moved." >> "$GITHUB_STEP_SUMMARY"
+          elif echo "$changed" | grep -qvE '^(data/sources/|app/observations\.generated\.ts$)'; then
+            echo "class=review" >> "$GITHUB_OUTPUT"
+            { echo "Change reaches outside the tier-A footprint — opening a pull request:"; echo '```'; echo "$changed"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "class=auto" >> "$GITHUB_OUTPUT"
+            { echo "Tier A refresh:"; git diff --stat; } >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Runs before either outcome. A refresh that cannot pass the contract must never reach main
+      # and must never become a pull request either.
+      - name: Run the contract
+        if: steps.diff.outputs.class != 'none'
+        run: |
+          {
+            npm run --silent lint && echo "lint ok"
+            npm run --silent check:data
+            npm run --silent check:models | head -1
+            npm run --silent check:prices
+            npm run --silent build > /dev/null && echo "build ok"
+          } 2>&1 | tee checks.txt
+
+      - name: Commit a tier-A refresh straight to main
+        if: steps.diff.outputs.class == 'auto'
+        run: bash scripts/commit-refresh.sh fetch.log
+
+      # Anything that introduces a new mapping stops here for a human, however green it is.
+      - name: Open a pull request for review
+        if: steps.diff.outputs.class == 'review'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/open-refresh-pr.sh checks.txt
