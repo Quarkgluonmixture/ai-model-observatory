@@ -40,3 +40,6 @@ next-env.d.ts
 /.sites-runtime/
 /outputs/
 /work/
+
+# Local cross-AI working notes. The conclusions that mattered are in docs/ARCHITECTURE.md §9.
+docs/cross-ai-audits/

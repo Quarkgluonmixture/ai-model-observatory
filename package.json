@@ -16,8 +16,7 @@
     "check:models": "node --experimental-strip-types scripts/check-model-provenance.mjs",
     "check:prices": "node --experimental-strip-types scripts/check-price-terms.mjs",
     "check:mobile": "node scripts/check-mobile.mjs",
-    "check:upstream": "node scripts/fetch-livebench.mjs --check",
-    "fetch:livebench": "node scripts/fetch-livebench.mjs",
+    "check:upstream": "node scripts/fetch-source.mjs --check",
     "ingest": "node scripts/ingest.mjs",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "start:next": "next start",
@@ -25,7 +24,9 @@
     "test:sites": "npm run build:sites && node --test tests/rendered-html.test.mjs",
     "validate:artifact": "bash scripts/validate-artifact.sh",
     "lint": "bash scripts/sites-env.sh -- eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate"
+    "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
+    "report:gaps": "node --experimental-strip-types scripts/report-gaps.mjs",
+    "fetch:sources": "node scripts/fetch-source.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

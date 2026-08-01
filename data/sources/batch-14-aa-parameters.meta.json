@@ -1,0 +1,13 @@
+{
+  "batch": "14 · Artificial Analysis parameters",
+  "collectedWith": "scripts/fetchers/artificial-analysis.mjs",
+  "filtered": false,
+  "release": "intelligence index v4.1",
+  "sources": [
+    "https://artificialanalysis.ai/api/v2/language/models/free",
+    "https://artificialanalysis.ai/leaderboards/models"
+  ],
+  "schema": "Model operating parameters, NOT benchmark scores. Supplies intelligence index, cost per task, output speed, time to first chunk and vendor pricing for check:models.",
+  "note": "Fetched from Artificial Analysis' documented REST API v2 (free tier) with AA_API_KEY. Reasoning effort is split off AA's slug (claude-opus-5-xhigh) into its own field. latency_first_chunk_s is AA's median time to FIRST TOKEN; its end-to-end response time is a different measurement and is kept in the note rather than substituted. text_elo/code_elo stay null because AA does not publish Arena Elo — only LMArena does, and nothing here may satisfy an Elo check. open_weights and context_k stay null for the same reason: AA's free tier does not publish them, and inferring them would put an unsourced number behind a catalog field that check:models currently reports honestly. AA's own composite coding and agentic indices are deliberately not archived, for the same double-counting reason that dropped aa-intelligence-index. This batch is fetched ON DEMAND, never by the weekly refresh: AA re-measures speed and latency continuously, so a scheduled rewrite would fail check:models every time a number moved and would need a hand edit to app/model-data.ts to go green again.",
+  "retrievedDate": "2026-08-01"
+}

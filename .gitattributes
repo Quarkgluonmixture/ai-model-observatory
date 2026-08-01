@@ -1,0 +1,14 @@
+# The archive and the generated store are compared byte for byte — `npm run ingest` must
+# reproduce app/observations.generated.ts exactly, and a fetcher rewrites its batch only when a
+# value actually moved. Git's Windows default (core.autocrlf=true) checks these out as CRLF while
+# the scripts write LF, so every run would produce a whitespace-only diff and the weekly refresh
+# would open a pull request each time claiming a leaderboard had changed.
+#
+# The maintaining agent runs on Windows. Normalise everything to LF in the working tree.
+* text=auto eol=lf
+
+# Never touched by hand and never diffed as text.
+*.png binary
+*.jpg binary
+*.ico binary
+*.zip binary

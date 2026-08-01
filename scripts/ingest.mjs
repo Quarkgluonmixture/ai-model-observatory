@@ -7,22 +7,20 @@
 // A row that has no alias is skipped and reported. It is not guessed into place, and it
 // stays in the archive so it can be ingested later when the catalog gains that model.
 
-import { readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
 
-const ROOT = new URL("..", import.meta.url).pathname;
-const SOURCE_DIR = join(ROOT, "data/sources");
+// fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
+// leading slash that fs cannot resolve. The agent maintaining this runs there.
+const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const OUTPUT = join(ROOT, "app/observations.generated.ts");
 
-const config = JSON.parse(readFileSync(join(ROOT, "data/model-aliases.json"), "utf8"));
-
-const aliasKey = (modelRaw, effort) => `${modelRaw}|${effort ?? "null"}`;
-const aliasIndex = new Map();
-const wildcardIndex = new Map();
-for (const alias of config.aliases) {
-  if (alias.effort === "*") wildcardIndex.set(alias.modelRaw, alias.modelId);
-  else aliasIndex.set(aliasKey(alias.modelRaw, alias.effort), alias.modelId);
-}
+const config = loadAliasConfig();
+// Alias resolution and the dropped-benchmark rule are shared with scripts/report-gaps.mjs,
+// which has to agree with ingestion about which rows the catalog can accept.
+const { resolveModelId, isDropped, supersededBy } = buildResolvers(config);
 
 const kindOverrides = new Map(config.sourceKindOverrides.map((entry) => [entry.sourceUrl, entry.sourceKind]));
 
@@ -33,17 +31,10 @@ const splits = new Map(config.benchmarkSplits.map((entry) => [`${entry.benchmark
 const versionAliases = new Map(config.versionAliases.map((entry) => [`${entry.benchmark}|${entry.from}`, entry.to]));
 // An evaluator's own name for a benchmark the catalog already tracks.
 const benchmarkAliases = new Map((config.benchmarkAliases ?? []).map((entry) => [entry.benchmark, entry.benchmarkId]));
-// Transcribed benchmarks the dashboard deliberately does not carry, each with a reason.
-const droppedBenchmarks = new Map((config.droppedBenchmarks ?? []).flatMap((entry) =>
-  entry.benchmark.split("/").map((name) => [name.trim().replace(/\*$/, ""), entry.reason]),
-));
 // Benchmarks whose source publishes no version label, where we own the column outright.
 const versionFallbacks = new Map((config.versionFallbacks ?? []).flatMap((entry) =>
   entry.benchmarks.map((name) => [name, entry.version]),
 ));
-const isDropped = (benchmark) =>
-  droppedBenchmarks.has(benchmark) ||
-  [...droppedBenchmarks.keys()].some((key) => key.endsWith("-") && benchmark.startsWith(key));
 
 const slug = (value) =>
   value.replace(/^https?:\/\//, "").replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase();
@@ -51,43 +42,38 @@ const slug = (value) =>
 const rows = [];
 const skipped = [];
 const dropped = [];
-const files = readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".jsonl")).sort();
+const replaced = [];
+const { batches, parameterBatches, fileCount } = readArchiveFiles();
 
-for (const file of files) {
-  const metaPath = join(SOURCE_DIR, file.replace(/\.jsonl$/, ".meta.json"));
-  let meta = {};
-  try {
-    meta = JSON.parse(readFileSync(metaPath, "utf8"));
-  } catch {
-    throw new Error(`${file} has no sidecar .meta.json; a batch must record when it was retrieved`);
-  }
+// Some batches carry model operating parameters, not observations. They live in the same
+// archive for provenance but must never reach the observation store.
+for (const batch of parameterBatches) {
+  console.log(`Skipping ${batch.file}: ${batch.meta.batch} holds model parameters, not observations.`);
+}
 
-  // Some batches carry model operating parameters, not observations. They live in the same
-  // archive for provenance but must never reach the observation store.
-  if (meta.schema?.startsWith("Model operating parameters")) {
-    console.log(`Skipping ${file}: ${meta.batch} holds model parameters, not observations.`);
-    continue;
-  }
-
-  const lines = readFileSync(join(SOURCE_DIR, file), "utf8").split("\n").filter((line) => line.trim());
-  for (const [index, line] of lines.entries()) {
-    const raw = JSON.parse(line);
-
+for (const { file, meta, rows: lines } of batches) {
+  for (const { line, raw } of lines) {
     if (isDropped(raw.benchmark)) {
       dropped.push(raw.benchmark);
       continue;
     }
 
-    const modelId = aliasIndex.get(aliasKey(raw.model_raw, raw.reasoning_effort)) ?? wildcardIndex.get(raw.model_raw);
+    const replacedBy = supersededBy(file, raw.benchmark, raw.benchmark_version);
+    if (replacedBy) {
+      replaced.push(`${file} ${raw.benchmark} -> ${replacedBy}`);
+      continue;
+    }
+
+    const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort);
 
     if (!modelId) {
-      skipped.push({ file, line: index + 1, modelRaw: raw.model_raw, effort: raw.reasoning_effort, benchmark: raw.benchmark });
+      skipped.push({ file, line, modelRaw: raw.model_raw, effort: raw.reasoning_effort, benchmark: raw.benchmark });
       continue;
     }
 
     const fallbackVersion = versionFallbacks.get(benchmarkAliases.get(raw.benchmark) ?? raw.benchmark);
     if (!raw.benchmark_version && !fallbackVersion) {
-      skipped.push({ file, line: index + 1, modelRaw: raw.model_raw, effort: raw.reasoning_effort, benchmark: raw.benchmark, reason: "no published benchmark version" });
+      skipped.push({ file, line, modelRaw: raw.model_raw, effort: raw.reasoning_effort, benchmark: raw.benchmark, reason: "no published benchmark version" });
       continue;
     }
 
@@ -148,12 +134,20 @@ writeFileSync(
 );
 
 const bySource = rows.reduce((counts, row) => ({ ...counts, [row.sourceKind]: (counts[row.sourceKind] ?? 0) + 1 }), {});
-console.log(`Ingested ${rows.length} rows from ${files.length} batch file(s) into app/observations.generated.ts`);
+console.log(`Ingested ${rows.length} rows from ${fileCount} batch file(s) into app/observations.generated.ts`);
 console.log(`  by source class: benchmark ${bySource.benchmark ?? 0} / independent ${bySource.independent ?? 0} / vendor ${bySource.vendor ?? 0}`);
 
 if (dropped.length) {
   const counts = dropped.reduce((acc, name) => ({ ...acc, [name]: (acc[name] ?? 0) + 1 }), {});
   console.log("\nDeliberately not carried (see droppedBenchmarks in data/model-aliases.json):");
+  for (const [name, count] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
+    console.log(`  ${String(count).padStart(4)} x ${name}`);
+  }
+}
+
+if (replaced.length) {
+  const counts = replaced.reduce((acc, name) => ({ ...acc, [name]: (acc[name] ?? 0) + 1 }), {});
+  console.log("\nSuperseded by a scripted fetch of the same page (see supersededRows):");
   for (const [name, count] of Object.entries(counts).sort((a, b) => b[1] - a[1])) {
     console.log(`  ${String(count).padStart(4)} x ${name}`);
   }

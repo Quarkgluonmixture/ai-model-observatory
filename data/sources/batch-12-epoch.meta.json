@@ -1,0 +1,14 @@
+{
+  "batch": "12 · Epoch AI benchmark export",
+  "collectedWith": "scripts/fetchers/epoch.mjs",
+  "filtered": true,
+  "filterRule": "Of the export's 76 CSVs this batch takes Epoch's own three evaluations (FrontierMath tiers 1-3, tier 4, GPQA Diamond) plus four *_external files for benchmarks the catalog has no first-hand machine-readable path to (ARC-AGI-2, CritPt, APEX-Agents, OSWorld 2.0). Everything else is either already fetched first-hand, or a different benchmark than its filename suggests — see the header of scripts/fetchers/epoch.mjs.",
+  "release": "rolling",
+  "sources": [
+    "https://epoch.ai/data/benchmark_data.zip",
+    "https://epoch.ai/benchmarks"
+  ],
+  "licence": "CC BY 4.0 — Epoch AI, 'AI Benchmarking Hub', https://epoch.ai/benchmarks",
+  "note": "Fetched from the ZIP Epoch publishes at a fixed URL, not read off a page. Epoch's own evaluations are source_kind benchmark for FrontierMath (Epoch's own benchmark) and independent for GPQA (Epoch running someone else's), which is the distinction already recorded in sourceKindOverrides. The *_external rows are Epoch transcribing another board and are always independent, so a first-hand row outranks them automatically. Reasoning effort is split off the model string (claude-opus-5_max) onto the row. evaluation_date is Epoch's run timestamp for its own evaluations and null for the external files, which publish only the model's release date — dating a result with a model release would be a fabrication.",
+  "retrievedDate": "2026-08-01"
+}

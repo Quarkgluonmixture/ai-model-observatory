@@ -36,7 +36,21 @@
     "Gemini 3 Flash publishes one line per effort (Minimal/Low/Medium/High) and some sources say",
     "'Preview'. They are the same family as the plain string, which was already mapped for",
     "(Non-reasoning); the effort lives on the observation row. Leaving them unmapped was an",
-    "oversight, not a decision -- it stranded the SWE-bench rows in batch 02."
+    "oversight, not a decision -- it stranded the SWE-bench rows in batch 02.",
+    "",
+    "DeepSWE (batch 11) prints dash-separated slugs with no effort in the string (gpt-5-6-sol,",
+    "claude-opus-4-8) and publishes one row per effort, so the effort arrives in its own field",
+    "and every mapping is \"*\". gpt-5-4 and claude-sonnet-4-6 are left unmapped: previous",
+    "generation, no catalog record.",
+    "",
+    "Epoch AI (batch 12) writes the operating point onto the model string as <slug>_<effort>",
+    "(claude-opus-5_max, o1-2024-12-17_low); the fetcher splits it off, so aliases map the bare",
+    "slug and the effort rides on the row. Epoch spells families with dots where DeepSWE uses",
+    "dashes, hence both gpt-5.6-sol and gpt-5-6-sol appear here. Terminal-Bench (batch 13) uses",
+    "the board's display labels instead (\"Fable 5\", \"GLM-5.1\").",
+    "Left unmapped from these two batches: claude-opus-4-5/4-6/4-7, claude-sonnet-4-6, gpt-5.x and",
+    "o-series snapshots, glm-5/5.1, gemini-2.x/3-pro-preview, qwen3.5/3.6-flash, muse-spark (base),",
+    "and the _16K/_32K/_120K context variants -- previous generation or no catalog record."
   ],
   "aliases": [
     {
@@ -1053,6 +1067,66 @@
       "modelRaw": "Gemini 3 Flash Preview (High)",
       "effort": "*",
       "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "claude-opus-5",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "claude-sonnet-5",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "gemini-3-1-pro-preview",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "gemini-3-5-flash",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash"
+    },
+    {
+      "modelRaw": "gemini-3-6-flash",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash"
+    },
+    {
+      "modelRaw": "grok-4-5",
+      "effort": "*",
+      "modelId": "grok-4.5"
+    },
+    {
+      "modelRaw": "kimi-k2-7-code",
+      "effort": "*",
+      "modelId": "kimi-k2.7-code"
+    },
+    {
+      "modelRaw": "muse-spark-1-1",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "gpt-5.6-sol",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5.6-terra",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "gpt-5.6-luna",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "gemini-3-flash-preview",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
     }
   ],
   "benchmarkSplits": [
@@ -1219,6 +1293,21 @@
       ],
       "version": "Pro",
       "reason": "Vals publishes no version for its mmmu run. 'Pro' is the name of the evaluation split, not a release number, so recording it asserts nothing beyond what the source states."
+    }
+  ],
+  "supersededRows": [
+    {
+      "file": "batch-02-coding",
+      "benchmark": "deepswe",
+      "supersededBy": "batch-11-deepswe",
+      "reason": "Batch 02 transcribed the DeepSWE board by eye: 18 rows of its 'Best view', rounded to whole points (74 where the artifact says 73.6). Batch 11 reads the same page's own artifact and gets all 50 configurations at full precision. These are not two measurements, they are one measurement read twice, so ingesting both would put two rows in one cell and let the rounded one win the primary slot -- a system benchmark keeps the highest score within a source class, and 74 beats 73.6. The rows stay in the archive because they are real evidence of what the page showed on 2026-07-31."
+    },
+    {
+      "file": "batch-02-coding",
+      "benchmark": "terminal",
+      "benchmarkVersion": "2.1",
+      "supersededBy": "batch-13-terminal-bench",
+      "reason": "Batch 02 transcribed the Terminal-Bench 2.1 board by eye. Batch 13 reads the Supabase function the page itself calls, which returns the same submissions with the agent, reasoning effort, run date, trial count and pass@k attached. One measurement read twice, so only the scripted reading is ingested. Scoped to version 2.1 deliberately: batch 02 also holds Terminal-Bench 2.0 rows under the same benchmark name, they map to the separate terminal-20 column, and no scripted source replaces them."
     }
   ]
 }

@@ -142,7 +142,7 @@ export const MODELS: ModelRecord[] = [
     cfg("max", 53, 1.72, 79.1, 167.49, 1460, 1544, 3, 15),
   ]),
   m("claude-opus-4.8", "Claude Opus 4.8", "Anthropic", "#a35f42", false, 1000, ["reasoning", "coding", "agents"], [
-    cfg("max", 56, 1.36, 61.3, 10.06, 1474, 1539, 5, 25, false, 0.5),
+    cfg("max", 56, 2.0318, 61.3, 10.06, 1474, 1539, 5, 25, false, 0.5),
   ]),
   m("glm-5.2", "GLM-5.2", "Z.ai", "#177f72", true, 1000, ["open weights", "coding", "low latency"], [
     cfg("max", 51, 0.29, 118.3, 1.43, 1469, 1588, 1.4, 4.4, false, 0.26),
@@ -151,7 +151,7 @@ export const MODELS: ModelRecord[] = [
     cfg("xhigh", 51, 0.29, 130, 2.64, 1491, 1536, 1.25, 4.25, true),
   ]),
   m("gpt-5.5", "GPT-5.5", "OpenAI", "#8d751e", false, 1000, ["reasoning", "codex", "long context"], [
-    cfg("xhigh", 55, 0.91, 64.6, 99.32, 1476, 1507, 5, 30, false, 0.5),
+    cfg("xhigh", 55, 1.1748, 64.6, 99.32, 1476, 1507, 5, 30, false, 0.5),
   ]),
   m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, ["fast", "vision", "long context"], [
     cfg("high", 50, 0.69, 171.5, 23.83, 1476, 1492, 1.5, 9, false, 0.15),
@@ -197,7 +197,7 @@ export const MODELS: ModelRecord[] = [
     cfg(null, 44, 0.14, 77.2, 1.32, 1444, 1494, 0.3, 1.2, false, 0.06),
   ]),
   m("inkling", "Inkling", "Thinking Machines", "#3f8f6d", true, 1000, ["open weights", "reasoning"], [
-    cfg("xhigh", 41, null, 85.1, 2.0, 1443, 1417, 1, 4.05, false, 0.17),
+    cfg("xhigh", 41, null, 85.07, 1.88, 1443, 1417, 1, 4.05, false, 0.17),
   ]),
   m("inkling-small", "Inkling Small", "Thinking Machines", "#6fb094", true, 1000, ["open weights", "fast"], [
     cfg(null, 40, 0.07, 93.5, 1.64, 1431, null, 0.3, 1.2, false, 0.06),
@@ -436,6 +436,45 @@ export const BENCHMARK_SCORES: Record<string, BenchmarkScores> = Object.fromEntr
   Object.entries(BENCHMARK_OBSERVATIONS).map(([modelId, values]) => [modelId, Object.fromEntries(Object.entries(values).map(([benchmarkId, value]) => [benchmarkId, value.score]))]),
 );
 
+// --- The portfolio coverage floor -------------------------------------------------
+// A portfolio average only compares models that were measured on comparable baskets.
+// Averaging whatever cells happen to exist put Muse Spark 1.1 first on the agent lens with
+// 2 of 5 agent benchmarks — the two generous ones — above Claude Fable 5 measured on all
+// five. So a portfolio number is published only when the model covers at least half of that
+// axis's core benchmarks and at least two of them.
+//
+// This lives in the data layer, not in the page, because the gap report reads it too: a model
+// sitting exactly one cell below the floor is one observation away from entering a ranking,
+// which is the highest-value thing collection can do next. Two copies of this rule would
+// drift, and the report would then recommend collecting the wrong cells.
+export const PORTFOLIO_MIN_RATIO = 0.5;
+export const PORTFOLIO_MIN_CELLS = 2;
+
+/** How many core cells of an axis a model must carry before that axis publishes a number. */
+export const portfolioFloor = (total: number) =>
+  Math.max(PORTFOLIO_MIN_CELLS, Math.ceil(total * PORTFOLIO_MIN_RATIO));
+
+/**
+ * The core benchmarks of an axis under one lens. The system lens reads every core benchmark
+ * of the axis; the model lens reads only the ones that measure a model without a scaffold.
+ * `"*"` takes every axis.
+ */
+export const coreBenchmarksOf = (axis: BenchmarkAxis | "*", mode: BenchmarkMode) =>
+  BENCHMARKS.filter(
+    (benchmark) =>
+      benchmark.tier === "core" &&
+      (mode === "system" || benchmark.mode === "model") &&
+      (axis === "*" || benchmark.axis === axis),
+  );
+
+/** Which core cells of an axis a model carries, and which ones it is missing. */
+export const portfolioCoverageOf = (modelId: string, axis: BenchmarkAxis) => {
+  const core = coreBenchmarksOf(axis, "system");
+  const scores = BENCHMARK_SCORES[modelId] ?? {};
+  const missing = core.filter((benchmark) => typeof scores[benchmark.id] !== "number");
+  return { present: core.length - missing.length, total: core.length, missing };
+};
+
 // The registry declares what a source *is*. Whether it is actually connected is not
 // declared - it is measured, by looking for observation rows that came from it. Listing a
 // source is not coverage; that confusion is what this dashboard exists to avoid.
@@ -473,15 +512,33 @@ const SOURCE_REGISTRY = {
 
 export type SourceStatus = "active" | "queued";
 
+/**
+ * After this many days a source is shown as aging. Nine of the fourteen archive batches were
+ * transcribed by hand and cannot be diffed against their upstream (see docs/ARCHITECTURE.md
+ * §10), so how long ago a source was last read is the only honest freshness signal there is.
+ * Printing it turns a manual pipeline from a hidden weakness into a stated one.
+ */
+export const SOURCE_STALE_DAYS = 30;
+
+const latestDate = (values: (string | null | undefined)[]) =>
+  values.filter((value): value is string => typeof value === "string").sort().at(-1) ?? null;
+
 export const SOURCE_META = Object.fromEntries(
   Object.entries(SOURCE_REGISTRY).map(([key, entry]) => {
-    const observations = OBSERVATION_ROWS.filter((row) => row.sourceUrl.includes(entry.match)).length;
+    const rows = OBSERVATION_ROWS.filter((row) => row.sourceUrl.includes(entry.match));
     const feeds = "feeds" in entry ? entry.feeds : null;
     return [key, {
       ...entry,
-      observations,
+      observations: rows.length,
+      // Measured, like the connection status above: the registry's own `date` is a hand-written
+      // label and would drift the moment a batch is re-run. These two come from the rows.
+      // They answer different questions and are never interchanged — `lastRetrieved` is when
+      // this project last looked, `lastEvaluated` is when the newest result was produced. A
+      // recently-read source with an old evaluation date is not stale; the benchmark is quiet.
+      lastRetrieved: latestDate(rows.map((row) => row.retrievedDate)),
+      lastEvaluated: latestDate(rows.map((row) => row.evaluationDate)),
       // Connected means rows in the store, or a stated non-observation contribution.
-      status: (observations > 0 || feeds ? "active" : "queued") as SourceStatus,
+      status: (rows.length > 0 || feeds ? "active" : "queued") as SourceStatus,
     }];
   }),
 );

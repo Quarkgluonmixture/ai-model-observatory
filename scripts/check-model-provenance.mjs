@@ -11,9 +11,12 @@
 
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { MODELS } from "../app/model-data.ts";
 
-const ROOT = new URL("..", import.meta.url).pathname;
+// fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
+// leading slash that fs cannot resolve. The agent maintaining this runs there.
+const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const SOURCE_DIR = join(ROOT, "data/sources");
 const config = JSON.parse(readFileSync(join(ROOT, "data/model-aliases.json"), "utf8"));
 
