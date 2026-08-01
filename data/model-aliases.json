@@ -939,6 +939,11 @@
       "modelId": "qwen3.6-plus"
     },
     {
+      "modelRaw": "qwen3-6-plus",
+      "effort": "*",
+      "modelId": "qwen3.6-plus"
+    },
+    {
       "modelRaw": "qwen3.6-max-preview",
       "effort": "*",
       "modelId": "qwen3.6-max"

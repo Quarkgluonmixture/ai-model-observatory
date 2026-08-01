@@ -1,0 +1,11 @@
+{
+  "batch": "16 · ALE supplement",
+  "retrievedDate": "2026-08-01",
+  "collectedWith": "Re-reading the ALE leaderboard for issue #7 Worth-collecting pass",
+  "filtered": true,
+  "filterRule": "Only the three catalog models whose ALE rows were absent from batch-03 despite appearing on the leaderboard: gpt-5.6-luna, grok-4.5, qwen3.6-plus.",
+  "sources": [
+    "https://agents-last-exam.org/leaderboard"
+  ],
+  "note": "These rows supplement batch-03, whose filterRule promised 'every row that maps to a catalog model today' but missed these three. The leaderboard was re-read on 2026-08-01; Pass% values for already-archived models (e.g. gpt-5.6-sol 30.6) are unchanged from the 2026-07-31 snapshot, confirming the same data. qwen3-6-plus (dash) is a new alias for the dot-form catalog id qwen3.6-plus; Grok 4.5 and gpt-5-6-luna already had aliases."
+}
