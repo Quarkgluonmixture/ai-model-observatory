@@ -30,7 +30,13 @@ const HUB = "https://epoch.ai/benchmarks";
 // Epoch writes the operating point onto the model string as `<slug>_<effort>`. Splitting it back
 // out keeps effort on the observation row where this project puts it, and leaves one alias entry
 // per model family rather than one per effort.
-const UNKNOWN_EFFORTS = new Set(["unknown", "none", "default", ""]);
+// "none" is not "unknown". Epoch prints `gpt-5.5_none` for a published non-reasoning run, which
+// is an operating point the catalog already names; folding it into null loses that and, worse,
+// makes it collide with rows from sources that simply did not print an effort — which is how
+// Epoch's non-reasoning CritPt result (1.43) came to sit against a vendor table's reasoning
+// result (27.1) as though the two sources disagreed about the same thing.
+const EFFORT_SYNONYMS = new Map([["none", "non-reasoning"]]);
+const UNKNOWN_EFFORTS = new Set(["unknown", "default", ""]);
 const splitEffort = (modelVersion) => {
   const cut = modelVersion.lastIndexOf("_");
   if (cut === -1) return { modelRaw: modelVersion, effort: null };
@@ -39,6 +45,7 @@ const splitEffort = (modelVersion) => {
   // an underscore keeps its name.
   const known = ["max", "xhigh", "high", "medium", "low", "minimal", "thinking", "non-reasoning"];
   if (known.includes(tail)) return { modelRaw: modelVersion.slice(0, cut), effort: tail };
+  if (EFFORT_SYNONYMS.has(tail)) return { modelRaw: modelVersion.slice(0, cut), effort: EFFORT_SYNONYMS.get(tail) };
   if (UNKNOWN_EFFORTS.has(tail)) return { modelRaw: modelVersion.slice(0, cut), effort: null };
   return { modelRaw: modelVersion, effort: null };
 };

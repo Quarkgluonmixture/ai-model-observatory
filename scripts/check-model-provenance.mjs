@@ -82,6 +82,7 @@ for (const row of rows) {
 const close = (a, b) => Math.abs(a - b) < 0.005;
 const errors = [];
 const caseErrors = [];
+const variantErrors = [];
 let backed = 0;
 const legacy = [];
 const disputed = [];
@@ -108,6 +109,37 @@ for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".json
         `alias resolution is case-sensitive, so this row is silently dropped from ingest.`,
       );
     }
+  }
+}
+
+// Variant-tier guard. A wrong alias is the most dangerous edit in this repository: it reports
+// one model's score as another's, and no other check can see it — the row is well-formed, the
+// version matches, the harness is named, the arithmetic is fine. Only the meaning is wrong.
+//
+// One family of that mistake is mechanical enough to catch. A vendor's size or tier word names a
+// DIFFERENT PRODUCT, not an operating point of the same one: Flash-Lite is not Flash at low
+// effort, GPT-5.5 Pro is not GPT-5.5, Inkling Small is not Inkling. So a published string
+// carrying such a word must not map to a catalog id that lacks it.
+//
+// The word list is deliberately short. `preview`, `thinking` and `codex` were measured and left
+// out: all 27 aliases they matched were legitimate — the catalog model *is* the preview, thinking
+// is a mode, and codex is a harness printed inside the model string. With the list below, zero of
+// the 219 current aliases trip, and four of the six near-misses recorded in the alias file's
+// `_doc` would have been caught.
+const VARIANT_TIERS = ["pro", "lite", "mini", "nano", "small", "air", "turbo", "plus", "fast"];
+const words = (value) => new Set(value.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+for (const alias of config.aliases) {
+  if (alias.allowVariant) continue; // an explicit, reasoned exception on the alias entry
+  const raw = words(alias.modelRaw);
+  const target = words(alias.modelId);
+  const extra = VARIANT_TIERS.filter((tier) => raw.has(tier) && !target.has(tier));
+  if (extra.length) {
+    variantErrors.push(
+      `alias "${alias.modelRaw}" -> ${alias.modelId}: the published string says ` +
+      `${extra.map((tier) => `"${tier}"`).join(", ")} and the catalog id does not. A size or tier ` +
+      `word names a different product, not an operating point. If this mapping really is correct, ` +
+      `add "allowVariant": true to the entry with a reason.`,
+    );
   }
 }
 
@@ -218,6 +250,15 @@ for (const model of MODELS) {
   checkFlag(`${model.id} open`, model.open, fact("open_weights"));
 }
 
+if (variantErrors.length) {
+  console.error(
+    "Alias maps a product tier onto a different model:\n" +
+      variantErrors.map((error) => `- ${error}`).join("\n") +
+      "\n\nCheck the source: is the published string really this catalog model at some operating\n" +
+      "point, or is it the vendor's separate Lite / Mini / Pro / Small product? If it is a\n" +
+      "different product it needs its own catalog record, or no mapping at all.\n",
+  );
+}
 if (caseErrors.length) {
   console.error(
     "Unmapped model_raw matching an existing alias except for casing:\n" +
@@ -235,7 +276,7 @@ if (errors.length) {
       "add the newer row to the archive - do not edit an archived value to match the catalog.",
   );
 }
-if (caseErrors.length || errors.length) process.exit(1);
+if (caseErrors.length || variantErrors.length || errors.length) process.exit(1);
 
 const total = backed + legacy.length;
 console.log(

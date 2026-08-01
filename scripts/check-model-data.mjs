@@ -47,6 +47,18 @@ for (const row of OBSERVATION_ROWS) {
     errors.push(`${cell} is a benchmark-native system result without a harness`);
   }
 
+  // Unit plausibility. The cheapest guard against the "same name, different metric" mistake:
+  // Epoch publishes a `gdpval` win rate while this catalog's `gdpval` is GDPval-AA, scored in
+  // Elo by Artificial Analysis. Filing one under the other produces a row that satisfies every
+  // structural check and means something entirely different. An Elo of 41 or a percentage of
+  // 1686 is not a close call.
+  if (benchmark?.unit === "Elo" && row.score < 200) {
+    errors.push(`${cell} is an Elo benchmark but the score is ${row.score} — is this a percentage from a different metric?`);
+  }
+  if (benchmark?.unit === "%" && row.score > 100) {
+    errors.push(`${cell} is a percentage benchmark but the score is ${row.score} — is this an Elo from a different metric?`);
+  }
+
   rowKeys.push([
     row.modelId,
     row.benchmarkId,
@@ -110,6 +122,43 @@ const multiHarness = Object.values(OBSERVATIONS_BY_CELL).some(
 );
 if (!multiHarness) errors.push("expected at least one model with multiple Terminal-Bench harnesses");
 
+// Cross-source disagreement, reported and never failed on.
+//
+// Two sources measuring the SAME configuration — same model, benchmark, harness and reasoning
+// effort — should land in the same neighbourhood. When they do not, one of them is measuring
+// something else, and that is invisible today: both rows sit in the cell, source precedence
+// silently picks a winner, and the loser becomes a "+n" the reader never opens.
+//
+// It found a real one immediately. Epoch's own CSV export puts Claude Opus 4.8 at 47.24 on
+// FrontierMath while a transcription of Epoch's own web page recorded 80, and adding the scripted
+// batch quietly changed the published figure from one to the other.
+//
+// This cannot be a failure: legitimate disagreements exist and resolving them is research, not a
+// code fix. Grouping by harness AND effort matters — without it, a model's max and low runs read
+// as a contradiction between sources.
+const disagreements = [];
+for (const [modelId, cells] of Object.entries(OBSERVATIONS_BY_CELL)) {
+  for (const [benchmarkId, variants] of Object.entries(cells)) {
+    const byConfiguration = new Map();
+    for (const row of variants) {
+      const key = `${row.harness ?? "-"}|${row.reasoningEffort ?? "-"}`;
+      (byConfiguration.get(key) ?? byConfiguration.set(key, []).get(key)).push(row);
+    }
+    for (const [configuration, rows] of byConfiguration) {
+      // Deliberately not requiring two different sourceIds: the same source read twice —
+      // once by script, once by eye — disagreeing is the most interesting case of all.
+      if (rows.length < 2) continue;
+      const low = Math.min(...rows.map((row) => row.score));
+      const high = Math.max(...rows.map((row) => row.score));
+      if (high - low <= 0.2 * Math.max(high, 1)) continue;
+      disagreements.push(
+        `${modelId}/${benchmarkId} [${configuration}]: ${low} vs ${high} — ` +
+        [...new Set(rows.map((row) => row.sourceLabel))].join(" | "),
+      );
+    }
+  }
+}
+
 if (errors.length) {
   console.error("Model data contract failed:\n" + errors.map((error) => `- ${error}`).join("\n"));
   process.exit(1);
@@ -118,6 +167,15 @@ if (errors.length) {
 const filledCells = Object.values(OBSERVATIONS_BY_CELL).reduce((total, cells) => total + Object.keys(cells).length, 0);
 const totalCells = MODELS.length * BENCHMARKS.length;
 const byKind = OBSERVATION_ROWS.reduce((counts, row) => ({ ...counts, [row.sourceKind]: (counts[row.sourceKind] ?? 0) + 1 }), {});
+
+if (disagreements.length) {
+  console.log(
+    `\n${disagreements.length} configuration(s) measured by two sources that disagree by more than 20% ` +
+      "(reported, not failed — one of them is measuring something else):",
+  );
+  for (const entry of disagreements.sort()) console.log(`  ${entry}`);
+  console.log("");
+}
 
 console.log(
   `Model data contract passed: ${MODELS.length} models, ${BENCHMARKS.length} benchmarks, ` +
