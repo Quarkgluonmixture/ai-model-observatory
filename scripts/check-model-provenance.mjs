@@ -13,6 +13,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODELS } from "../app/model-data.ts";
+import { buildResolvers } from "./lib/archive.mjs";
 
 // fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
 // leading slash that fs cannot resolve. The agent maintaining this runs there.
@@ -84,10 +85,17 @@ let backed = 0;
 const legacy = [];
 const disputed = [];
 
+const { supersededBy } = buildResolvers(config);
+
 // Prefer the row that describes the flagship configuration, then a row with no effort at
 // all, then anything. Without this the answer would depend on archive line order.
+// A row whose value for `field` has been declared superseded (supersededRows with a
+// `field` key) is excluded — the replacement batch carries the value the catalog should
+// see, while the original row stays in the archive untouched.
 const pickModelLevel = (model, field, allow = () => true) => {
-  const candidates = (modelIndex.get(model.id) ?? []).filter((row) => row[field] != null && allow(row));
+  const candidates = (modelIndex.get(model.id) ?? []).filter(
+    (row) => row[field] != null && allow(row) && !supersededBy(row.file, null, null, field, row.model_raw),
+  );
   if (!candidates.length) return null;
   const flagship = norm(model.configurations[0]?.effort);
   return (

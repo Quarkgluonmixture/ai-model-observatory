@@ -49,6 +49,8 @@ export const buildResolvers = (config) => {
     file: entry.file,
     benchmark: entry.benchmark ?? null,
     benchmarkVersion: entry.benchmarkVersion ?? null,
+    field: entry.field ?? null,
+    modelRaw: entry.modelRaw ?? null,
     supersededBy: entry.supersededBy,
   }));
 
@@ -58,12 +60,14 @@ export const buildResolvers = (config) => {
     isDropped: (benchmark) =>
       droppedBenchmarks.has(benchmark) ||
       [...droppedBenchmarks.keys()].some((key) => key.endsWith("-") && benchmark.startsWith(key)),
-    /** The batch that replaced this row, or null if nothing has. */
-    supersededBy: (file, benchmark, benchmarkVersion) =>
+    /** The batch that replaced this row (or field), or null if nothing has. */
+    supersededBy: (file, benchmark, benchmarkVersion, field, modelRaw) =>
       superseded.find((entry) =>
         file.replace(/\.jsonl$/, "") === entry.file &&
         (entry.benchmark === null || entry.benchmark === benchmark) &&
-        (entry.benchmarkVersion === null || entry.benchmarkVersion === benchmarkVersion),
+        (entry.benchmarkVersion === null || entry.benchmarkVersion === benchmarkVersion) &&
+        (entry.field === null || entry.field === field) &&
+        (entry.modelRaw === null || entry.modelRaw === modelRaw),
       )?.supersededBy ?? null,
     droppedBenchmarks,
   };
