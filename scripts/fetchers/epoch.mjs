@@ -50,6 +50,20 @@ const splitEffort = (modelVersion) => {
   return { modelRaw: modelVersion, effort: null };
 };
 
+// Some external rows carry the operating point ONLY in the display name: arc_agi_2_external
+// lists four `gemini-3-flash-preview` rows whose Model version is byte-identical and whose
+// efforts live in "Gemini 3 Flash Preview (High / Medium / Minimal / Low)". Reading the slug
+// alone collapsed all four onto one configuration, so four separate measurements — 33.61, 12.78,
+// 3.33 and 1.25 — became four indistinguishable rows in one cell and the primary picked one at
+// random-looking. Fall back to the trailing parenthetical when the slug says nothing.
+const NAMED_EFFORTS = ["non-reasoning", "minimal", "medium", "xhigh", "high", "low", "max", "thinking"];
+const effortFromName = (name) => {
+  const match = /\(([^)]+)\)\s*$/.exec(name ?? "");
+  if (!match) return null;
+  const inside = match[1].toLowerCase().replace(/\s*effort\s*$/, "").trim();
+  return NAMED_EFFORTS.includes(inside) ? inside : null;
+};
+
 const pct = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return null;
@@ -59,17 +73,6 @@ const pct = (value) => {
 
 const OWN = [
   {
-    file: "frontiermath.csv", benchmark: "frontiermath", version: "Tiers 1-3 (v2)",
-    // FrontierMath is Epoch's own benchmark, so its own numbers are benchmark-native.
-    sourceKind: "benchmark", score: "mean_score", stderr: "stderr",
-    url: `${HUB}/frontiermath-tiers-1-3-v2`, label: "Epoch AI FrontierMath Tiers 1-3",
-  },
-  {
-    file: "frontiermath_tier_4.csv", benchmark: "frontiermath-t4", version: "Tier 4 (v2)",
-    sourceKind: "benchmark", score: "mean_score", stderr: "stderr",
-    url: `${HUB}/frontiermath-tier-4-v2`, label: "Epoch AI FrontierMath Tier 4",
-  },
-  {
     // GPQA belongs to someone else; Epoch running it is an independent evaluation. This is the
     // same call `sourceKindOverrides` already records for Epoch's GPQA page.
     file: "gpqa_diamond.csv", benchmark: "gpqa", version: "Diamond",
@@ -77,6 +80,24 @@ const OWN = [
     url: `${HUB}/gpqa`, label: "Epoch AI GPQA Diamond",
   },
 ];
+
+// frontiermath.csv and frontiermath_tier_4.csv are DELIBERATELY NOT READ, and this is the reason,
+// so nobody adds them back on the reasonable-looking grounds that Epoch publishes them.
+//
+// Their contents do not match Epoch's own leaderboard page. The export tops out at 52.40 across
+// all 101 Tiers 1-3 rows; the page's leader is 89. Model by model the page runs about 1.7x the
+// export — GPT-5.5 xhigh 85.3 on the page against 51.70 in the CSV, Claude Opus 4.8 max 80
+// against 47.24 — consistently enough to be two different measurements, not a stale file.
+//
+// What settles which to trust is that the page is what a reader can open and check, and the
+// transcription in batch 01 agrees with it. What rules out a parsing bug on this side is GPQA:
+// same fetcher, same CSV shape, same code path, and its values agree with the transcription
+// exactly. So the divergence lives inside Epoch's FrontierMath export, not here.
+//
+// Reading them anyway put a wrong number on the dashboard rather than a missing one, because a
+// model with no transcribed row showed the export's figure while its neighbour showed the page's:
+// GPT-5.5 at 85.3 beside Claude Opus 4.8 at 47.24, in one column, as though the gap were real.
+// Until someone establishes what the export measures, the page is the source for this benchmark.
 
 const EXTERNAL = [
   {
@@ -162,7 +183,9 @@ export const epoch = {
         const score = pct(record[spec.score]);
         if (score === null || !record["Model version"]) continue;
         const split = splitEffort(record["Model version"]);
-        const effort = spec.effortColumn ? (record[spec.effortColumn] || null) : split.effort;
+        const effort = spec.effortColumn
+          ? (record[spec.effortColumn] || null)
+          : (split.effort ?? effortFromName(record.Name));
         const tools = spec.toolsColumn ? (record[spec.toolsColumn] || null) : null;
         rows.push({
           model_raw: split.modelRaw,
