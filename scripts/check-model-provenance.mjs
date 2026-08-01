@@ -82,6 +82,7 @@ const close = (a, b) => Math.abs(a - b) < 0.005;
 const errors = [];
 let backed = 0;
 const legacy = [];
+const disputed = [];
 
 // Prefer the row that describes the flagship configuration, then a row with no effort at
 // all, then anything. Without this the answer would depend on archive line order.
@@ -97,6 +98,18 @@ const pickModelLevel = (model, field, allow = () => true) => {
 };
 
 for (const model of MODELS) {
+
+  // Booleans cannot go through `check`, which compares numerically. Same verdicts otherwise:
+  // absent from the archive is unsourced, present and different is a contradiction.
+  const checkFlag = (label, catalogValue, archiveValue) => {
+    if (catalogValue == null) return;
+    if (archiveValue == null) { legacy.push(label); return; }
+    if (catalogValue !== archiveValue) {
+      errors.push(`${label}: catalog ${catalogValue} but archive says ${archiveValue}`);
+      return;
+    }
+    backed += 1;
+  };
 
   const check = (label, catalogValue, archiveValue) => {
     if (catalogValue == null) return;
@@ -142,6 +155,35 @@ for (const model of MODELS) {
   check(`${model.id} price.output`, model.price.output, priceRow("price_output_per_m"));
   check(`${model.id} textElo`, model.textElo, pickModelLevel(model, "text_elo"));
   check(`${model.id} codeElo`, model.codeElo, pickModelLevel(model, "code_elo"));
+
+  // Context window and open-weights status are facts about the model, and the archive has
+  // carried both since batch 06 — this audit simply never read them. Until it did, they were
+  // the only catalog numbers that could be wrong without anything noticing, which is how
+  // Qwen3.7 Plus arrived with a context length copied from a sibling record.
+  //
+  // `tags`, `color`, `name` and the ordering stay out of this deliberately: they are editorial,
+  // they have no source to check against, and AGENTS.md says so.
+  //
+  // Source precedence matters here exactly as it does for price. An official vendor page
+  // outranks Artificial Analysis — OpenAI publishes 1050K for GPT-5.6 Luna where AA measured
+  // 1000K — and LMArena never counts, for the same reason its price column never counts: the
+  // column is unlabelled, and where it can be compared it disagrees with everyone (it claims
+  // 1100K for GPT-5.5 against AA's 922K).
+  const fact = (field) =>
+    pickModelLevel(model, field, (row) => !isArena(row) && row.source_kind === "official") ??
+    pickModelLevel(model, field, (row) => !isArena(row));
+  // Context length is REPORTED, not failed on. A 1,048,576-token window reaches this project as
+  // 1000, 1049 or 1050 depending on who rounded it, so treating every difference as a
+  // contradiction would manufacture corrections out of arithmetic. What is worth seeing is the
+  // disagreement itself — inkling is carried at 1000K while Artificial Analysis says 256K, and
+  // until now nothing said so. Open weights has no rounding excuse and stays a hard failure:
+  // it drives the "open weights only" filter, so a wrong value hides or invents a model.
+  const archivedContext = fact("context_k");
+  if (archivedContext == null) legacy.push(`${model.id} contextK`);
+  else if (Math.abs(model.contextK - archivedContext) > 0.1 * archivedContext) {
+    disputed.push(`${model.id} contextK: catalog ${model.contextK}K, archive ${archivedContext}K`);
+  } else backed += 1;
+  checkFlag(`${model.id} open`, model.open, fact("open_weights"));
 }
 
 if (errors.length) {
@@ -159,6 +201,10 @@ console.log(
   `Model provenance passed: ${backed}/${total} catalog values backed by data/sources ` +
     `(${((100 * backed) / total).toFixed(0)}%), ${legacy.length} with no archive row.`,
 );
+if (disputed.length) {
+  console.log("\nCatalog and archive disagree by more than 10% (reported, not failed):");
+  for (const entry of disputed) console.log(`  ${entry}`);
+}
 if (legacy.length) {
   console.log("\nNo archive row behind these (not necessarily wrong, just unsourced):");
   for (const entry of legacy) console.log(`  ${entry}`);

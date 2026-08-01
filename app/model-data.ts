@@ -165,7 +165,7 @@ export const MODELS: ModelRecord[] = [
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
     cfg(null, 46, 0.34, 123.3, 25.39, 1486, null, 2, 12, false, 0.2),
   ]),
-  m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", true, 1000, ["open weights", "fast", "multilingual"], [
+  m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["open weights", "fast", "multilingual"], [
     cfg(null, 46, 1.28, 199.6, 2.45, 1475, 1517, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
