@@ -25,6 +25,7 @@ import {
   MODELS,
   SOURCE_META,
   SOURCE_STALE_DAYS,
+  OBSERVATION_ROWS,
   coreBenchmarksOf,
   portfolioCoverageOf,
   portfolioFloor,
@@ -53,6 +54,58 @@ const clipped = (items, render) => {
   for (const item of items.slice(0, LIST_LIMIT)) say(render(item));
   if (items.length > LIST_LIMIT) say(`- … ${items.length - LIST_LIMIT} more, not listed`);
 };
+
+// Which benchmarks can actually still be collected, measured from the archive rather than
+// declared. This is the difference between a target and a wish: the report ranks by how many
+// models a cell would admit, and without this it would send an agent after cells that nobody
+// publishes. A batch whose meta names a fetcher was collected by script; re-running it adds
+// nothing until the source itself evaluates more models.
+const { resolveModelId, isDropped } = buildResolvers(loadAliasConfig());
+const { batches } = readArchiveFiles();
+
+const collectability = (() => {
+  const scripted = new Map();
+  const manual = new Map();
+  const add = (map, key, value) => (map.get(key) ?? map.set(key, new Set()).get(key)).add(value);
+  for (const { meta, rows } of batches) {
+    const byScript = String(meta.collectedWith ?? "").startsWith("scripts/fetchers/");
+    for (const { raw } of rows) {
+      if (!raw.benchmark) continue;
+      // The source label, not the batch name: what a person needs in order to decide whether
+      // re-reading is worth it is which leaderboard the rows came off, not which batch filed them.
+      add(byScript ? scripted : manual, raw.benchmark, raw.source_label ?? "unlabelled source");
+    }
+  }
+  // Rows that never came from data/sources at all: the vendor comparison tables seeded directly
+  // into app/model-data.ts. They are real evidence but they are not a source anyone can re-read.
+  const seeded = new Set(
+    OBSERVATION_ROWS.filter((row) => row.retrievedDate === undefined).map((row) => row.benchmarkId),
+  );
+
+  const few = (set) => {
+    const all = [...set];
+    return all.length <= 2 ? all.join(" / ") : `${all.slice(0, 2).join(" / ")} +${all.length - 2}`;
+  };
+
+  return (benchmarkId) => {
+    if (scripted.has(benchmarkId)) {
+      return {
+        actionable: false,
+        note: `already scripted (${few(scripted.get(benchmarkId))}) — the models missing it are absent upstream, not uncollected`,
+      };
+    }
+    if (manual.has(benchmarkId)) {
+      return { actionable: true, note: `transcribed from ${few(manual.get(benchmarkId))} — re-reading it may add models` };
+    }
+    if (seeded.has(benchmarkId)) {
+      return {
+        actionable: false,
+        note: "only vendor seed rows in app/model-data.ts — no archived source to re-read; finding one is a collection project, not a fetch",
+      };
+    }
+    return { actionable: false, note: "no observations anywhere — see docs/ARCHITECTURE.md §9 before hunting for a source" };
+  };
+})();
 
 // --- 1. One cell below a ranking floor ------------------------------------------------
 // The floor and the basket both come from app/model-data.ts, so this cannot drift from what
@@ -99,14 +152,35 @@ if (axisReports.length === 0) {
     gapCount += nearly.length;
   }
 
-  const ranked = [...unlocks].sort((a, b) => b[1] - a[1]).filter(([, count]) => count > 1);
-  if (ranked.length) {
-    say("Collecting one benchmark can admit several models at once:");
+  // Sorted by what can actually be done, not by what would be worth the most. Ranking purely by
+  // reach put four benchmarks nobody publishes at the top of this list, which is precisely the
+  // instruction an unattended agent should never be given.
+  const ranked = [...unlocks]
+    .filter(([, count]) => count > 1)
+    .map(([benchmarkId, count]) => ({ benchmarkId, count, ...collectability(benchmarkId) }))
+    .sort((a, b) => (b.actionable ? 1 : 0) - (a.actionable ? 1 : 0) || b.count - a.count);
+
+  const doable = ranked.filter((entry) => entry.actionable);
+  const blocked = ranked.filter((entry) => !entry.actionable);
+  const line = (entry) => {
+    const benchmark = BENCHMARKS.find((record) => record.id === entry.benchmarkId);
+    return `- \`${entry.benchmarkId}\` (${benchmark?.name ?? "unknown"}) would admit ${entry.count} models — ${entry.note}`;
+  };
+
+  if (doable.length) {
+    say("**Worth collecting** — one benchmark, several models admitted, and a path to the data:");
     say();
-    for (const [benchmarkId, count] of ranked.slice(0, 8)) {
-      const benchmark = BENCHMARKS.find((entry) => entry.id === benchmarkId);
-      say(`- \`${benchmarkId}\` (${benchmark?.name ?? "unknown"}) would admit ${count} models`);
-    }
+    clipped(doable, line);
+    say();
+  }
+  if (blocked.length) {
+    say(
+      "**High reach, no path.** These would admit the most models and are listed so nobody " +
+        "re-derives them as targets — the cells are empty because the source has not published " +
+        "them, not because they were never collected:",
+    );
+    say();
+    clipped(blocked.slice(0, 8), line);
     say();
   }
 }
@@ -119,9 +193,6 @@ if (axisReports.length === 0) {
 
 say("## Archived rows waiting on a catalog model");
 say();
-
-const { resolveModelId, isDropped } = buildResolvers(loadAliasConfig());
-const { batches } = readArchiveFiles();
 
 const waiting = new Map();
 for (const { file, rows } of batches) {

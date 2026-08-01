@@ -136,6 +136,12 @@ Only after the activation check has passed once, and only when a trigger fired.
    upstream that the catalog has never heard of.
 3. Pick the highest-value item you can complete **fully**, including its provenance. One finished
    item beats three half-done ones.
+
+   The unlock list is split into **Worth collecting** and **High reach, no path**. Take work only
+   from the first. The second exists so the same dead ends are not rediscovered every week: those
+   cells are empty because the source has not published them, and no amount of effort on your side
+   changes that. Reach is not feasibility — chasing a high-reach blocked cell is how an agent ends
+   up "finding" a source it should have rejected.
 4. Run the contract. Open a PR. Explain what you did and, specifically, **what you checked and
    ruled out**.
 
