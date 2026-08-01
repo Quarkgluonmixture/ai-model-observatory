@@ -1,0 +1,12 @@
+{
+  "batch": "15 · model context window from Hugging Face config.json",
+  "retrievedDate": "2026-08-01",
+  "collectedWith": "Direct fetch of config.json text_config.model_max_length from each model's Hugging Face repository.",
+  "filtered": false,
+  "schema": "Model operating parameters, NOT benchmark scores. This batch provides only context_k from the model's own config.json — the architectural maximum sequence length, not a platform serving limit.",
+  "sources": [
+    "https://huggingface.co/thinkingmachines/Inkling/blob/main/config.json",
+    "https://huggingface.co/thinkingmachines/Inkling-Small/blob/main/config.json"
+  ],
+  "note": "Resolves the Inkling context_k dispute. Batch-08 recorded 256K from the Tinker Serverless Inference pricing page; that number is the Serverless Inference product's serving limit, not the model's context window. The model's config.json shows text_config.model_max_length = 1048576 (1M) for both Inkling and Inkling-Small. Artificial Analysis independently reports 1M for both (batch-06). OpenRouter agrees for Inkling (1049K) but incorrectly lists Inkling-Small at 524K."
+}
