@@ -91,7 +91,9 @@ h1{font-size:20px}
 .feed-status{width:100%;height:44px;justify-content:center;font-size:10px}
 
 /* --- ranking ------------------------------------------------------------- */
-.rank-toolbar{position:sticky;top:0;z-index:20;padding:8px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+/* Deliberately not sticky: the lens tabs and lab filter are set once, and a pinned two-row
+   toolbar costs a fifth of a phone screen for the whole length of the ranking list. */
+.rank-toolbar{padding:8px;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
 .metric-tabs{overflow-x:auto;overscroll-behavior-x:contain;padding-bottom:2px}
 .metric-tabs button{flex:0 0 auto;height:40px;padding:0 14px}
 .metric-tabs button span{display:none}

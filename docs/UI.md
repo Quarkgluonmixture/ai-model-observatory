@@ -95,8 +95,11 @@ Six guarantees. A change that breaks one of them is a regression even if it look
 5. **Nothing absolutely positioned inside the header.** The header is static on a phone; the
    search sits in its own flow row. It used to be `position:absolute; top:72px` inside a sticky
    header, which meant it floated over the page permanently while scrolling.
-6. **The lens toolbar is the only sticky element**, at `top:0`. This works because `.panel` uses
-   `overflow:clip`, not `overflow:hidden` — `hidden` makes the panel a scroll container, which
+6. **Nothing is sticky on a phone.** The header scrolls away, the lens toolbar scrolls away, and
+   the bottom rail is the only fixed element. A pinned two-row toolbar cost a fifth of the screen
+   for the length of the ranking list, and the lens is set once.
+   If you ever do add a sticky element inside a panel, note that `.panel` uses `overflow:clip`
+   rather than `overflow:hidden` for a reason: `hidden` makes the panel a scroll container, which
    silently confines a sticky child to a box that never scrolls.
 
 Layout differences from desktop, beyond size:
@@ -107,7 +110,9 @@ Layout differences from desktop, beyond size:
   toggles (`.mode-switch`, `.mode-compact`) split the row instead of scrolling.
 - Ranking rows become cards: rank, name, current lens value, then a `.mobile-metrics` strip
   carrying AA, Arena and the active lens. The six desktop metric columns are hidden, not shrunk.
-- The score table keeps its sticky first column and gains a swipe hint above it.
+- The score table pins its model column — body cells *and* the header cell above them, or the
+  names read as a detached box once the table scrolls — and gains a swipe hint above it. That
+  column is sticky inside `.score-table-wrap`, its own scroller, not against the viewport.
 
 ## 5. Performance rules
 
