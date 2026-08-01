@@ -20,15 +20,5 @@
     "thinkingMachines": "Tinker training/sampling pricing is a different product from Serverless Inference; only the latter is comparable to the other models here.",
     "anthropic": "Claude Sonnet 5's $2/$10 is introductory through 2026-08-31, reverting to $3/$15. Fast mode is 2x; US-only inference is 1.1x."
   },
-  "priceTerms": [
-    {
-      "modelId": "claude-sonnet-5",
-      "quoted": { "input": 2, "output": 10 },
-      "endsOn": "2026-08-31",
-      "revertsTo": { "input": 3, "output": 15 },
-      "source": "https://www.anthropic.com/pricing",
-      "reason": "Introductory pricing with a published end date. The catalog quotes the promotional price, so it silently becomes wrong the day after endsOn; npm run check:prices is what notices."
-    }
-  ],
   "note": "This batch overturns an earlier conclusion. Batch 06 recorded that LMArena's price column was unreliable because it disagreed with the catalog on Claude Fable 5 ($10/$50) and GPT-5.5 ($5/$30). Artificial Analysis and Anthropic's own pricing page both confirm those figures: the catalog was stale, not LMArena. See the fieldSourcePolicy correction in this file."
 }

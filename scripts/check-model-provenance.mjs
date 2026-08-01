@@ -20,6 +20,17 @@ const config = JSON.parse(readFileSync(join(ROOT, "data/model-aliases.json"), "u
 const aliasFor = new Map(config.aliases.map((alias) => [alias.modelRaw, alias.modelId]));
 const norm = (value) => (value == null ? null : String(value).toLowerCase());
 
+// Promotional prices recorded in batch metas. The rows stay in the archive because a published
+// discount is a real published fact, but the catalog quotes list price - so a promotional row
+// must never be what backs a price check, the same way an Arena price never can.
+const promotions = new Set();
+for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".meta.json"))) {
+  const meta = JSON.parse(readFileSync(join(SOURCE_DIR, file), "utf8"));
+  for (const term of meta.priceTerms ?? []) {
+    promotions.add(`${term.modelId}|${term.promotional.input}|${term.promotional.output}`);
+  }
+}
+
 // Load every archive batch that holds model parameters rather than observations.
 const rows = [];
 for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".jsonl"))) {
@@ -116,10 +127,14 @@ for (const model of MODELS) {
     check(`${at} latency`, configuration.latency, archive.latency_first_chunk_s);
   }
 
-  // Official vendor pages outrank Artificial Analysis for price; LMArena never counts.
+  // Official vendor pages outrank Artificial Analysis for price; LMArena and rows quoting a
+  // recorded promotion never count.
+  const isPromotional = (row) =>
+    promotions.has(`${model.id}|${row.price_input_per_m}|${row.price_output_per_m}`);
+  const usable = (row) => !isArena(row) && !isPromotional(row);
   const priceRow = (field) =>
-    pickModelLevel(model, field, (row) => !isArena(row) && row.source_kind === "official") ??
-    pickModelLevel(model, field, (row) => !isArena(row));
+    pickModelLevel(model, field, (row) => usable(row) && row.source_kind === "official") ??
+    pickModelLevel(model, field, usable);
   check(`${model.id} price.input`, model.price.input, priceRow("price_input_per_m"));
   check(`${model.id} price.output`, model.price.output, priceRow("price_output_per_m"));
   check(`${model.id} textElo`, model.textElo, pickModelLevel(model, "text_elo"));
