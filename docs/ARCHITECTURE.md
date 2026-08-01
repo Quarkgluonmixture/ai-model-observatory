@@ -418,7 +418,7 @@ same cell, so those columns would silently mix two different metrics.
 - Vendors also price in tiers and regions and the catalog quotes one. Google publishes Standard,
   Batch, Flex and Priority; Alibaba publishes six regions. The tier archived is recorded in each
   batch's meta.
-- 709 archived rows are not ingested because the catalog has no model for them, almost all
+- 704 archived rows are not ingested because the catalog has no model for them, almost all
   previous-generation. They are kept deliberately: adding the model is all it takes for
   `npm run ingest` to attach them, with no code change.
 - Four benchmarks are still empty: `swe-evo` (no leaderboard exists), `videommmu` (newest
