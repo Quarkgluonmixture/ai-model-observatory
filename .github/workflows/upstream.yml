@@ -1,0 +1,39 @@
+# Leaderboards edit published numbers after the fact, and the pipeline cannot see it: ingestion
+# is deterministic, so a silently-corrected upstream score reproduces perfectly from a stale
+# archive. This job re-fetches the archived LiveBench release and fails when a cell moved.
+#
+# It is deliberately not part of PR CI. It needs the network and it fails for reasons that have
+# nothing to do with the commit under review, which is exactly the kind of failure that teaches
+# people to ignore a red check.
+name: Upstream drift
+
+on:
+  schedule:
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: Re-fetch archived sources and compare
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      # Reports a newer upstream release without failing — a new release is new data, not drift.
+      - name: Compare the archived LiveBench release against its source
+        run: npm run check:upstream

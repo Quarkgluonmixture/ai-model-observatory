@@ -18,7 +18,25 @@
     "  Multiple / Best per task       - leaderboard aggregate rows, not a model at all",
     "  MiniMax, Composer, Seed, Qwen3.6, GPT-5.x - not in the catalog yet; archived for later",
     "  Opus 4.7/4.6/4.5, Gemini 3 Pro, GLM-5.1, Kimi K2.5, GPT-5.x, Composer 2.5, Seed 2.1 Pro,",
-    "  Muse Spark (base) - previous generation, or too little operating data to build a record"
+    "  Muse Spark (base) - previous generation, or too little operating data to build a record",
+    "",
+    "LiveBench (batch 09) prints lowercase slugs with the effort suffixed onto the model string",
+    "(claude-opus-5-max-effort, gpt-5.5-xhigh). The suffix identifies an operating point, not a",
+    "separate model, so it maps to the family and the effort stays on the observation row -- the",
+    "fetcher copies it into reasoning_effort only when the token literally appears in the string.",
+    "",
+    "LiveBench strings deliberately left unmapped, so nobody adds them by reflex:",
+    "  gemini-3.5-flash-lite-high      - Flash-Lite is a different model from Flash, not an effort",
+    "  claude-opus-4-5/4-6/4-7-*       - previous generation, no catalog record",
+    "  claude-sonnet-4-6-thinking-*    - previous generation, no catalog record",
+    "  gpt-5.2-*, gpt-5.4-*            - previous generation, no catalog record",
+    "  qwen3.6-27b                     - the 27B open model, not Qwen3.6 Plus or Max",
+    "  grok-build-0.1                  - a coding product, not a catalog model",
+    "",
+    "Gemini 3 Flash publishes one line per effort (Minimal/Low/Medium/High) and some sources say",
+    "'Preview'. They are the same family as the plain string, which was already mapped for",
+    "(Non-reasoning); the effort lives on the observation row. Leaving them unmapped was an",
+    "oversight, not a decision -- it stranded the SWE-bench rows in batch 02."
   ],
   "aliases": [
     {
@@ -925,6 +943,116 @@
       "modelRaw": "Inkling-Small",
       "effort": "*",
       "modelId": "inkling-small"
+    },
+    {
+      "modelRaw": "claude-opus-5-max-effort",
+      "effort": "*",
+      "modelId": "claude-opus-5"
+    },
+    {
+      "modelRaw": "claude-opus-4-8-max-effort",
+      "effort": "*",
+      "modelId": "claude-opus-4.8"
+    },
+    {
+      "modelRaw": "claude-fable-5-max-effort",
+      "effort": "*",
+      "modelId": "claude-fable-5"
+    },
+    {
+      "modelRaw": "claude-sonnet-5-xhigh-effort",
+      "effort": "*",
+      "modelId": "claude-sonnet-5"
+    },
+    {
+      "modelRaw": "gpt-5.6-sol-max",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol"
+    },
+    {
+      "modelRaw": "gpt-5.6-terra-max",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra"
+    },
+    {
+      "modelRaw": "gpt-5.6-luna-max",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna"
+    },
+    {
+      "modelRaw": "gpt-5.5-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
+      "modelRaw": "gemini-3.1-pro-preview-high",
+      "effort": "*",
+      "modelId": "gemini-3.1-pro"
+    },
+    {
+      "modelRaw": "gemini-3.6-flash-high",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash"
+    },
+    {
+      "modelRaw": "glm-5.2",
+      "effort": "*",
+      "modelId": "glm-5.2"
+    },
+    {
+      "modelRaw": "grok-4.3",
+      "effort": "*",
+      "modelId": "grok-4.3"
+    },
+    {
+      "modelRaw": "kimi-k3",
+      "effort": "*",
+      "modelId": "kimi-k3"
+    },
+    {
+      "modelRaw": "kimi-k2.6-thinking",
+      "effort": "*",
+      "modelId": "kimi-k2.6"
+    },
+    {
+      "modelRaw": "qwen3.7-max",
+      "effort": "*",
+      "modelId": "qwen3.7-max"
+    },
+    {
+      "modelRaw": "muse-spark-1.1-xhigh",
+      "effort": "*",
+      "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "inkling-xhigh",
+      "effort": "*",
+      "modelId": "inkling"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash (high reasoning)",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash Preview (Minimal)",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash Preview (Low)",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash Preview (Medium)",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "Gemini 3 Flash Preview (High)",
+      "effort": "*",
+      "modelId": "gemini-3-flash"
     }
   ],
   "benchmarkSplits": [

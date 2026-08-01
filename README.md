@@ -13,7 +13,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
 - evidence-backed seven-axis capability radar with explicit `Not ingested` / partial / broad coverage states
-- 45-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
+- 68-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
 - multi-model benchmark line charts and raw-score tables by capability family
 - model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter-backed live token pricing with snapshot fallback
@@ -35,14 +35,14 @@ The source registry distinguishes data that already feeds the dashboard from the
 - [Scale Labs](https://labs.scale.com/leaderboard) — MCP-Atlas and SWE-Bench Pro
 - [OSWorld 2.0](https://osworld-v2.xlang.ai/) · [Agents' Last Exam](https://agents-last-exam.org/leaderboard) · [FrontierSWE](https://www.frontierswe.com/) · [Toolathlon-Verified](https://github.com/hkust-nlp/Toolathlon)
 - [Mercor APEX-Agents](https://www.mercor.com/apex/apex-agents-leaderboard/) · [MMMU](https://mmmu-benchmark.github.io/)
+- [LiveBench](https://livebench.ai/) — 23 objective, contamination-limited tasks, fetched from the site's own data files rather than transcribed
 - [LM Arena](https://arena.ai/leaderboard/text) — human preference, kept separate from capability and used only for Elo
 - [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties) — live provider pricing
 - Vendor material: [Google DeepMind](https://deepmind.google/models/gemini/flash/) · [DeepSeek V4](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) · [Qwen3.7](https://qwen.ai/blog?id=qwen3.7) · [Kimi K3](https://github.com/MoonshotAI/Kimi-K3) (comparison seed only, not the global standard)
 
 ### Ingestion queue
 
-- [LiveBench](https://livebench.ai/) — objective, frequently refreshed general evaluation
-- [Stanford HELM](https://crfm.stanford.edu/helm/) — transparent and reproducible multi-scenario evaluation
+- [Stanford HELM](https://crfm.stanford.edu/helm/) — transparent and reproducible multi-scenario evaluation. Measured on 2026-08-01 and not connected: across all 18 HELM projects exactly one model overlaps this catalog, and its frontier project stops about a generation short. See `docs/ARCHITECTURE.md` §9.
 - [SWE-bench](https://www.swebench.com/) — the official board returned only pre-2026 models, so nothing is ingested from it yet
 
 Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
@@ -50,8 +50,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-442 observations across 312/1215 cells (25.7% cell coverage;
-benchmark 138 / independent 127 / vendor 177)
+999 observations across 866/1836 cells (47.2% cell coverage;
+benchmark 695 / independent 127 / vendor 177)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -62,15 +62,17 @@ Data is not hand-written. Raw leaderboard rows are archived verbatim in `data/so
 every mapping decision lives in `data/model-aliases.json` with a written reason, and
 `npm run ingest` generates the typed rows. A row whose model string has no alias is skipped
 and reported rather than guessed into place. `docs/INGEST-PROMPT.md` holds the transcription
-contract used to collect new rows.
+contract used to collect new rows — but check for a published data file first: LiveBench renders
+client-side and looked untranscribable until it turned out the page fetches its own CSV, which
+`npm run fetch:livebench` now reads directly.
 
 Model records are hand-authored, but their numbers are audited the same way. `npm run check:models`
 fails when a catalog value contradicts the archive and reports how much of the catalog nothing
 on file supports:
 
 ```text
-Model provenance passed: 245/252 catalog values backed by data/sources (97%),
-7 with no archive row.
+Model provenance passed: 247/252 catalog values backed by data/sources (98%),
+5 with no archive row.
 ```
 
 ## Local development
@@ -85,6 +87,21 @@ npm run dev:next
 
 Open `http://localhost:3000`.
 
+The full check set, which CI also runs:
+
+```bash
+npm run lint
+npm run ingest && git diff --exit-code app/observations.generated.ts
+npm run check:data      # observation contract + coverage report
+npm run check:models    # every catalog number vs the source archive
+npm run check:prices    # a quoted price that outlived its published end date
+npm run build
+```
+
+`npm run check:upstream` is separate: it re-fetches an archived source over the network and
+diffs it cell by cell, so it runs weekly rather than per commit. `npm run fetch:livebench`
+re-collects batch 09.
+
 Production validation (the same command EdgeOne Pages runs):
 
 ```bash
@@ -97,6 +114,12 @@ npm run start:next
 ## Deploy to Tencent EdgeOne Pages
 
 GitHub `main` is the single source of truth. EdgeOne Pages watches the branch and deploys the Next.js application and API route directly; a second Sites deployment is not required.
+
+EdgeOne builds from the branch **independently of GitHub Actions**, so a red CI run does not hold
+back a deploy. Only `npm run build` can stop production. That is deliberate for `check:prices`
+and `check:upstream` — they report a fact about the data going stale, which should reach a human
+without taking the site down — but it does mean a merge to `main` publishes whether or not the
+checks passed. Read the CI result before merging, not after.
 
 1. Push this repository to GitHub or Gitee.
 2. In EdgeOne Makers, choose **Import Git repository**.
