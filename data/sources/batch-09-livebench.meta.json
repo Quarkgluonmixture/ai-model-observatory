@@ -1,7 +1,7 @@
 {
   "batch": "09 · LiveBench",
   "retrievedDate": "2026-08-01",
-  "collectedWith": "scripts/fetch-livebench.mjs",
+  "collectedWith": "scripts/fetchers/livebench.mjs",
   "filtered": false,
   "release": "2026-06-25",
   "sources": [

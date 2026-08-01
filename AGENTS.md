@@ -125,7 +125,11 @@ either turns the weekly job permanently red or silently accepts a rewritten hist
 Model records are hand-authored because they also carry editorial content — inclusion,
 display name, colour, tags, ordering — that has no source to generate from. Every *number*
 on them is audited instead: `npm run check:models` fails when a catalog value contradicts
-`data/sources/`, and reports how many values have no archive row at all.
+`data/sources/`, and reports how many values have no archive row at all. It audits 314 values —
+including context window and open-weights status, which nothing checked until one of them turned
+out to be inventing an open model — and it fails on a `model_raw` that differs from an existing
+alias only in casing, because alias resolution is case-sensitive and such a row is silently
+dropped from ingest.
 
 So: put the operating parameters in the archive first, then write the record. For a model
 Artificial Analysis already covers, that is one command — and batch 14 keeps AA's **whole** list,

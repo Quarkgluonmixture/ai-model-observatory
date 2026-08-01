@@ -516,7 +516,7 @@ const SOURCE_REGISTRY = {
 export type SourceStatus = "active" | "queued";
 
 /**
- * After this many days a source is shown as aging. Nine of the fourteen archive batches were
+ * After this many days a source is shown as aging. Eleven of the sixteen archive batches were
  * transcribed by hand and cannot be diffed against their upstream (see docs/ARCHITECTURE.md
  * §10), so how long ago a source was last read is the only honest freshness signal there is.
  * Printing it turns a manual pipeline from a hidden weakness into a stated one.

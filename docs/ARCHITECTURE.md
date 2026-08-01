@@ -31,9 +31,10 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **27 model families, 68 benchmarks, 1162 observations across 902 of 1836 cells**,
-sourced benchmark-native 741 / independent 244 / vendor 177. **100% of catalog numbers are backed
-by an archive row** — one exception, `claude-opus-4.8 codeElo`, an Arena figure no scripted source publishes.
+Current scale: **28 model families, 68 benchmarks, 1167 observations across 907 of 1904 cells**,
+sourced benchmark-native 744 / independent 246 / vendor 177. **311 of 314 catalog numbers are
+backed by an archive row**; the three that are not are listed by `npm run check:models` on every
+run rather than hidden.
 
 ## 2. Repository map
 
@@ -156,7 +157,7 @@ each with a written reason:
 | `versionFallbacks` | when a source publishes no version label and the catalog owns the column |
 | `droppedBenchmarks` | what is deliberately not carried, and why |
 | `sourceKindOverrides` | when a page's source class is not what it looks like |
-| `supersededRows` | when a scripted fetch replaces an earlier transcription of the same page |
+| `supersededRows` | when a later reading replaces an earlier one — a whole batch, one benchmark, or a single field of a single row |
 
 `sourceKindOverrides` is not cosmetic. Epoch AI's FrontierMath page is benchmark-native because
 FrontierMath is Epoch's own benchmark; Epoch's GPQA page is an *independent* evaluation,
@@ -170,6 +171,15 @@ cell and let the rounded reading win the primary slot, because a system benchmar
 highest score within a source class and 74 beats 73.6. So the transcribed rows stay in the
 archive as evidence of what the page showed that day, and the alias file records that they are
 no longer ingested. `npm run ingest` prints them, like every other skip.
+
+An entry can be scoped four ways, narrowing from a whole batch down to one number:
+`file` alone supersedes everything in a batch; `benchmark` and `benchmarkVersion` narrow it to a
+column (batch 02 holds Terminal-Bench 2.0 and 2.1 under one name and only 2.1 was rescripted);
+`modelRaw` and `field` narrow it to a single value in a single row. The last pair exists because
+of Inkling: the Tinker pricing page publishes 256K, which is that product's serving limit, while
+the model's own `config.json` publishes 1,048,576. Both are true, both are archived, and neither
+should be deleted — the entry only tells the provenance audit which one answers "what is this
+model's context window".
 
 ### Observation store
 
@@ -400,6 +410,12 @@ The data check currently enforces:
   in it would compare one model's version against another's;
 - minimum catalog/model size;
 - retention of a known official Gemini 3.5 Flash observation as a regression guard;
+- every catalog number, including context window and open-weights status, agrees with the
+  archive or is reported as unsourced (`npm run check:models`); context length is *reported*
+  rather than failed on, because a 1,048,576-token window reaches this project as 1000, 1049 or
+  1050 depending on who rounded it;
+- no `model_raw` differs from an existing alias only in casing — alias resolution is
+  case-sensitive, so such a row resolves to nothing and is silently dropped from ingest;
 - no catalog price is a promotion recorded in a batch's `priceTerms` (`npm run check:prices`);
   the archive keeps the promotional row, but it can no longer back a price check, the same way
   an Arena price never could.
@@ -425,7 +441,9 @@ pages are known-dead or known-empty and were already worked around.
 | 11 | DeepSWE | 50 configurations fetched from the artifact the board loads. Supersedes batch 02's 18 transcribed rows of the same page. |
 | 12 | Epoch AI export | 711 rows from the CC BY ZIP: Epoch's own FrontierMath / tier 4 / GPQA runs, plus four second-hand boards the catalog has no first-hand path to. |
 | 13 | Terminal-Bench 2.1 | 17 submissions from the Supabase function the page calls, each with its agent, effort and run date. Supersedes batch 02's 2.1 rows. |
-| 14 | Artificial Analysis | 590 configurations of operating parameters from the REST API. Not observations — this batch feeds `check:models`, which reached 100% because of it. On demand, needs `AA_API_KEY`. |
+| 14 | Artificial Analysis | 590 configurations of operating parameters from the REST API. Not observations — this batch feeds `check:models`. On demand, needs `AA_API_KEY`. |
+| 15 | Model config.json | Context windows read from each model's own Hugging Face `config.json`. Two rows, added to settle whether Inkling's window is a serving limit or an architectural maximum. |
+| 16 | ALE supplement | Three rows batch 03 missed despite promising every row that maps to a catalog model. Hand-read; ALE publishes nothing machine-readable. |
 
 ### Which sources can be re-read by script
 
@@ -451,7 +469,7 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | ARC Prize | The verified board publishes nothing readable. `arcprize/arc_agi_v2_public_eval` does — and it is a **different split**: GPT-5.2 xHigh scores 64.0 there against 52.9 on the verified board. Substituting it would have moved the column ~11 points. |
 | Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. |
 
-Four of thirteen batches are now scripted, and only those four have a drift check or an automatic
+Five of sixteen batches are now scripted, and only those five have a drift check or an automatic
 refresh. The rest are hand transcriptions whose only freshness signal is how long ago someone read
 them — which is why the source cards print that date (§10).
 
@@ -509,7 +527,7 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**The four scripted sources now maintain themselves; the other nine batches cannot.** That gap is
+**The four scripted boards now maintain themselves; the other eleven batches cannot.** That gap is
 the whole of the remaining work, and it is not a code problem — §9 records that no other source
 publishes a data file to read. Re-probing is cheap but the answer is written down; go read it
 before spending an afternoon on it.
