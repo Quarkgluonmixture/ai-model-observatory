@@ -207,9 +207,24 @@ Every one of these is real, was hit on 2026-08-01, and would have passed all sev
    contest scored around 2176 — not Agents' Last Exam. Check the metric's shape, not its name.
 5. **The same name can be a different metric.** `gdpval_external.csv` publishes a win rate; this
    catalog's `gdpval` is GDPval-AA, scored in Elo by Artificial Analysis.
+6. **A source's own machine-readable export is not automatically the same measurement as its own
+   page.** Epoch publishes both; for FrontierMath they disagree by about 1.7x, model for model,
+   and the export is the one that does not match the leaderboard. Reading it put GPT-5.5 at 85.3
+   beside Claude Opus 4.8 at 47.24 in one column. **Before trusting a new export, take one model
+   you can already see on the page and check that the file agrees with it.** A file being
+   official, current and well-formed says nothing about which quantity it holds.
 
 Before proposing any new source, state: what you fetched, its status code, one recognisable model
-with its score, and whether that score matches what the catalog already holds for that model.
+with its score, and whether that score matches what the catalog already holds for that model — and
+for an export, whether it matches the source's own page.
+
+### The limit of the disagreement check
+
+`npm run check:data` reports two sources that disagree about the same configuration, which is what
+caught the FrontierMath problem. It can only do that where a second source exists. Four core
+benchmarks currently rest on a single source — `frontiermath`, `frontiermath-t4`, `imo-answer`,
+`aa-lcr` — and for those, nothing will contradict a wrong reading. Treat a change to one of them
+with the care you would give an unreviewed number, because that is what it is.
 
 ---
 
