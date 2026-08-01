@@ -200,7 +200,7 @@ export const MODELS: ModelRecord[] = [
     cfg(null, 44, 0.14, 77.2, 1.32, 1444, 1494, 0.3, 1.2, false, 0.06),
   ]),
   m("inkling", "Inkling", "Thinking Machines", "#3f8f6d", true, 1000, ["open weights", "reasoning"], [
-    cfg("xhigh", 41, null, 85.07, 1.88, 1443, 1417, 1, 4.05, false, 0.17),
+    cfg("xhigh", 41, null, 85.1, 2.0, 1443, 1417, 1, 4.05, false, 0.17),
   ]),
   m("inkling-small", "Inkling Small", "Thinking Machines", "#6fb094", true, 1000, ["open weights", "fast"], [
     cfg(null, 40, 0.07, 93.5, 1.64, 1431, null, 0.3, 1.2, false, 0.06),
