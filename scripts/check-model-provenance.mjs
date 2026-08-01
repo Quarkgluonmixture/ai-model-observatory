@@ -81,6 +81,7 @@ for (const row of rows) {
 
 const close = (a, b) => Math.abs(a - b) < 0.005;
 const errors = [];
+const caseErrors = [];
 let backed = 0;
 const legacy = [];
 const disputed = [];
@@ -102,7 +103,7 @@ for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".json
     if (model_raw == null || aliasFor.has(model_raw)) continue;
     const mapped = aliasRawLower.get(model_raw.toLowerCase());
     if (mapped) {
-      errors.push(
+      caseErrors.push(
         `${file}: model_raw "${model_raw}" matches alias "${mapped}" except for casing — ` +
         `alias resolution is case-sensitive, so this row is silently dropped from ingest.`,
       );
@@ -217,6 +218,15 @@ for (const model of MODELS) {
   checkFlag(`${model.id} open`, model.open, fact("open_weights"));
 }
 
+if (caseErrors.length) {
+  console.error(
+    "Unmapped model_raw matching an existing alias except for casing:\n" +
+      caseErrors.map((error) => `- ${error}`).join("\n") +
+      "\n\nAdd the correctly-cased variant to data/model-aliases.json. Do not rename the\n" +
+      "model_raw string in the archive — another batch may use the existing casing, and\n" +
+      "renaming one would orphan the other (see PR #10).",
+  );
+}
 if (errors.length) {
   console.error(
     "Model catalog contradicts the archive:\n" +
@@ -224,8 +234,8 @@ if (errors.length) {
       "\n\nEither the catalog is stale or the archive was re-transcribed. Fix the catalog, or\n" +
       "add the newer row to the archive - do not edit an archived value to match the catalog.",
   );
-  process.exit(1);
 }
+if (caseErrors.length || errors.length) process.exit(1);
 
 const total = backed + legacy.length;
 console.log(
