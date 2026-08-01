@@ -39,7 +39,7 @@ npm run ingest        # rebuilds app/observations.generated.ts from data/sources
 npm run lint
 npm run check:data    # observation contract + coverage report
 npm run check:models  # every catalog number vs the source archive
-npm run check:prices  # a quoted price that outlived its published end date
+npm run check:prices  # a promotional price that reached the catalog
 npm run build
 ```
 
@@ -93,7 +93,7 @@ Field sources are fixed:
 | Field | Source |
 | --- | --- |
 | intelligence, cost per task, speed, latency | Artificial Analysis |
-| price | official vendor page, else Artificial Analysis |
+| price | official vendor page, else Artificial Analysis — **list price, never a promotion** |
 | text / code Elo | LMArena |
 
 LMArena's price column is not used as a price source — it states no tier or region, so it
@@ -128,7 +128,7 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/check-model-data.mjs` | Observation contract, enforced in CI |
 | `scripts/check-model-provenance.mjs` | Catalog numbers vs the archive |
 | `scripts/fetch-livebench.mjs` | Fetches batch 09; `--check` diffs the archive against upstream |
-| `scripts/check-price-terms.mjs` | Fails when a quoted price outlives its published end date |
+| `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |
 | `app/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |

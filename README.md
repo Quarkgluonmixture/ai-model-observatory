@@ -42,8 +42,11 @@ The source registry distinguishes data that already feeds the dashboard from the
 
 ### Ingestion queue
 
-- [Stanford HELM](https://crfm.stanford.edu/helm/) — transparent and reproducible multi-scenario evaluation. Measured on 2026-08-01 and not connected: across all 18 HELM projects exactly one model overlaps this catalog, and its frontier project stops about a generation short. See `docs/ARCHITECTURE.md` §9.
 - [SWE-bench](https://www.swebench.com/) — the official board returned only pre-2026 models, so nothing is ingested from it yet
+
+### Measured and not connected
+
+- **Stanford HELM** — evaluated on 2026-08-01 and its source card *removed* rather than left queued. HELM is fully machine-readable, but across all 18 of its projects exactly one model overlaps this catalog, and its frontier project stops about a generation short. A card would have promised an ingestion target that does not exist. The measurement is recorded in `docs/ARCHITECTURE.md` §9 — re-run it before re-adding HELM.
 
 Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
 
@@ -94,7 +97,7 @@ npm run lint
 npm run ingest && git diff --exit-code app/observations.generated.ts
 npm run check:data      # observation contract + coverage report
 npm run check:models    # every catalog number vs the source archive
-npm run check:prices    # a quoted price that outlived its published end date
+npm run check:prices    # a promotional price that reached the catalog
 npm run build
 ```
 
@@ -116,10 +119,8 @@ npm run start:next
 GitHub `main` is the single source of truth. EdgeOne Pages watches the branch and deploys the Next.js application and API route directly; a second Sites deployment is not required.
 
 EdgeOne builds from the branch **independently of GitHub Actions**, so a red CI run does not hold
-back a deploy. Only `npm run build` can stop production. That is deliberate for `check:prices`
-and `check:upstream` — they report a fact about the data going stale, which should reach a human
-without taking the site down — but it does mean a merge to `main` publishes whether or not the
-checks passed. Read the CI result before merging, not after.
+back a deploy. Only `npm run build` can stop production. That means a merge to `main` publishes
+whether or not the checks passed — read the CI result before merging, not after.
 
 1. Push this repository to GitHub or Gitee.
 2. In EdgeOne Makers, choose **Import Git repository**.

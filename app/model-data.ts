@@ -135,8 +135,11 @@ export const MODELS: ModelRecord[] = [
   m("grok-4.5", "Grok 4.5", "xAI", "#42576b", false, 500, ["coding", "reasoning", "realtime"], [
     cfg("high", 54, 0.44, 57.9, 8.62, 1468, 1550, 2, 6, false, 0.5),
   ]),
+  // List price, not the $2/$10 introductory rate that runs to 2026-08-31: a temporary discount
+  // is not comparable against every other model's list price. Cache falls back to the standard
+  // tenth-of-input default because the official page prices cache only under the promotion.
   m("claude-sonnet-5", "Claude Sonnet 5", "Anthropic", "#df9a72", false, 1000, ["coding", "agents", "fast"], [
-    cfg("max", 53, 1.72, 79.1, 167.49, 1460, 1544, 2, 10, false, 0.2),
+    cfg("max", 53, 1.72, 79.1, 167.49, 1460, 1544, 3, 15),
   ]),
   m("claude-opus-4.8", "Claude Opus 4.8", "Anthropic", "#a35f42", false, 1000, ["reasoning", "coding", "agents"], [
     cfg("max", 56, 1.36, 61.3, 10.06, 1474, 1539, 5, 25, false, 0.5),
@@ -457,7 +460,10 @@ const SOURCE_REGISTRY = {
   mmmu: { label: "MMMU", date: "2026", url: "https://mmmu-benchmark.github.io/", role: "expert multimodal reasoning", category: "benchmark", match: "mmmu-benchmark.github.io" },
   swebench: { label: "SWE-bench", date: "live", url: "https://www.swebench.com/", role: "official software-engineering leaderboard and archive", category: "benchmark", match: "swebench.com" },
   livebench: { label: "LiveBench", date: "2026-06-25", url: "https://livebench.ai/", role: "objective, contamination-limited general evaluation", category: "benchmark", match: "livebench.ai" },
-  helm: { label: "Stanford HELM", date: "living", url: "https://crfm.stanford.edu/helm/", role: "transparent and reproducible multi-scenario evaluation", category: "independent", match: "crfm.stanford.edu" },
+  // Stanford HELM was measured on 2026-08-01 and removed rather than left queued: across all 18
+  // of its projects exactly one model overlaps this catalog, so a card would have promised an
+  // ingestion target that does not exist. The measurement is in docs/ARCHITECTURE.md §9 — re-run
+  // it before re-adding this line.
   openrouter: { label: "OpenRouter Models API", date: "live feed", url: "https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties", role: "provider pricing and context-window metadata", category: "pricing", match: "openrouter.ai", feeds: "the live price route" },
   deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", category: "vendor", match: "deepmind.google" },
   deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", category: "vendor", match: "DeepSeek-V4" },

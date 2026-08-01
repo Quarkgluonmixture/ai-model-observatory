@@ -48,7 +48,7 @@ by an archive row.
 | `scripts/check-model-data.mjs` | Observation contract enforced in CI |
 | `scripts/check-model-provenance.mjs` | Audits every catalog number against the archive |
 | `scripts/fetch-livebench.mjs` | Collects batch 09 from LiveBench's own data files; `--check` diffs archive vs upstream |
-| `scripts/check-price-terms.mjs` | Fails when a quoted price outlives the end date recorded in a batch meta |
+| `scripts/check-price-terms.mjs` | Fails when the catalog quotes a promotion recorded in a batch meta |
 | `.github/workflows/ci.yml` | Lint, data contract, price terms, and production build checks |
 | `.github/workflows/upstream.yml` | Weekly re-fetch of archived sources to catch upstream edits |
 | `README.md` | User-facing overview and deployment instructions |
@@ -250,9 +250,8 @@ GitHub Pages is intentionally not used because it is static-only and cannot run 
 
 EdgeOne builds from `main` independently of GitHub Actions. A failing CI run does not block a
 deploy — only a failing `npm run build` does. `check:prices` and `check:upstream` are therefore
-notifications, not guards: when the Sonnet 5 introductory rate lapses, CI turns red while the
-site keeps serving the stale price until someone acts. Making them gate production would mean
-letting a vendor's pricing calendar take the site down, which is the worse failure.
+notifications rather than gates: they turn CI red while the site keeps serving whatever was last
+merged. Read the CI result before merging, not after.
 
 ## 7. Change playbooks
 
@@ -322,13 +321,14 @@ The data check currently enforces:
   in it would compare one model's version against another's;
 - minimum catalog/model size;
 - retention of a known official Gemini 3.5 Flash observation as a regression guard;
-- no catalog price has outlived a published end date recorded in a batch's `priceTerms`
-  (`npm run check:prices`, which also warns for 45 days beforehand).
+- no catalog price is a promotion recorded in a batch's `priceTerms` (`npm run check:prices`);
+  the archive keeps the promotional row, but it can no longer back a price check, the same way
+  an Arena price never could.
 
 
 ## 9. Collection state
 
-Nine archive batches, all under `data/sources/`. Read this before re-running a source: several
+Ten archive batches, all under `data/sources/`. Read this before re-running a source: several
 pages are known-dead or known-empty and were already worked around.
 
 | Batch | Covers | Outcome |
@@ -342,6 +342,7 @@ pages are known-dead or known-empty and were already worked around.
 | 07 | AA leaderboard main table | Cost per task, which batch 06 could not reach. |
 | 08 | Operating parameters, second pass | AA model pages plus Anthropic, Google, DeepSeek, Alibaba, Z.AI and Thinking Machines pricing. Took catalog provenance from 67% to 97% and corrected 43 values. |
 | 09 | LiveBench | 23 task columns × 36 models = 828 rows, fetched by script, not transcribed. Took cell coverage from 25.7% to 47.2%. |
+| 10 | Standard vendor pricing | Claude Sonnet 5's list $3/$15. No new retrieval — promoted from batch 08's capture, where it sat in a row's note. |
 
 Batch 09 is the first batch collected by a script rather than a browsing model. LiveBench renders
 client-side and batch 05 recorded it as UNAVAILABLE for that reason, but the page loads
@@ -406,12 +407,17 @@ same cell, so those columns would silently mix two different metrics.
   latency. `npm run check:models` lists them. Grok 4.3's two Elo figures left this list without
   new collection: batch 09 added a lowercase `grok-4.3` alias, which attached LMArena rows that
   had been sitting in the archive unmatched. Check for an orphaned row before collecting again.
-- Vendors price in tiers and regions and the catalog quotes one. Google publishes Standard,
-  Batch, Flex and Priority; Alibaba publishes six regions. A promotion with a published end date
-  is now recorded as a `priceTerms` entry in its batch meta and enforced by
-  `npm run check:prices`, which fails once the quoted price outlives its date and warns for 45
-  days beforehand. Only Anthropic's Sonnet 5 introductory rate (ends 2026-08-31) is recorded so
-  far; the other tier notes in batch metas are still prose.
+- **The catalog quotes list price, never a promotion.** A temporary discount is not comparable
+  against every other model's list price, and it goes stale silently the day it lapses — so
+  Claude Sonnet 5 is carried at its standard $3/$15 rather than the $2/$10 introductory rate
+  that runs to 2026-08-31. The promotion stays archived because it is a real published fact, but
+  a promotional row can no longer back a price check (`check-model-provenance.mjs` excludes it,
+  the same way it excludes an Arena price), and `npm run check:prices` fails if one ever reaches
+  a catalog record. Only the Sonnet 5 promotion is recorded as a `priceTerms` entry so far; the
+  other tier notes in batch metas are still prose.
+- Vendors also price in tiers and regions and the catalog quotes one. Google publishes Standard,
+  Batch, Flex and Priority; Alibaba publishes six regions. The tier archived is recorded in each
+  batch's meta.
 - 709 archived rows are not ingested because the catalog has no model for them, almost all
   previous-generation. They are kept deliberately: adding the model is all it takes for
   `npm run ingest` to attach them, with no code change.
