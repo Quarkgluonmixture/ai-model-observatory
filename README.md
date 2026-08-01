@@ -22,7 +22,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 
 ## Data sources
 
-The source registry distinguishes data that already feeds the dashboard from the next ingestion targets. **A source counts as connected only when observation rows in `data/sources/` actually came from it** — the status is measured, not declared, so a source card can never imply coverage it does not have. A queued source stays visible for transparency and affects nothing.
+**A source counts as connected only when observation rows in `data/sources/` actually came from it** — the status is measured, not declared, so a source card can never imply coverage it does not have. Every source in the registry currently clears that bar; a source that did not would show as queued and affect nothing.
 
 ### Connected
 
@@ -36,13 +36,10 @@ The source registry distinguishes data that already feeds the dashboard from the
 - [OSWorld 2.0](https://osworld-v2.xlang.ai/) · [Agents' Last Exam](https://agents-last-exam.org/leaderboard) · [FrontierSWE](https://www.frontierswe.com/) · [Toolathlon-Verified](https://github.com/hkust-nlp/Toolathlon)
 - [Mercor APEX-Agents](https://www.mercor.com/apex/apex-agents-leaderboard/) · [MMMU](https://mmmu-benchmark.github.io/)
 - [LiveBench](https://livebench.ai/) — 23 objective, contamination-limited tasks, fetched from the site's own data files rather than transcribed
+- [SWE-bench](https://www.swebench.com/) — one row: the official board is almost entirely pre-2026 models, and Gemini 3 Flash is the only one this catalog tracks
 - [LM Arena](https://arena.ai/leaderboard/text) — human preference, kept separate from capability and used only for Elo
 - [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties) — live provider pricing
 - Vendor material: [Google DeepMind](https://deepmind.google/models/gemini/flash/) · [DeepSeek V4](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) · [Qwen3.7](https://qwen.ai/blog?id=qwen3.7) · [Kimi K3](https://github.com/MoonshotAI/Kimi-K3) (comparison seed only, not the global standard)
-
-### Ingestion queue
-
-- [SWE-bench](https://www.swebench.com/) — the official board returned only pre-2026 models, so nothing is ingested from it yet
 
 ### Measured and not connected
 
