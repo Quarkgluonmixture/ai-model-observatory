@@ -1323,6 +1323,20 @@
       "benchmarkVersion": "2.1",
       "supersededBy": "batch-13-terminal-bench",
       "reason": "Batch 02 transcribed the Terminal-Bench 2.1 board by eye. Batch 13 reads the Supabase function the page itself calls, which returns the same submissions with the agent, reasoning effort, run date, trial count and pass@k attached. One measurement read twice, so only the scripted reading is ingested. Scoped to version 2.1 deliberately: batch 02 also holds Terminal-Bench 2.0 rows under the same benchmark name, they map to the separate terminal-20 column, and no scripted source replaces them."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Inkling",
+      "field": "context_k",
+      "supersededBy": "batch-15-model-config",
+      "reason": "256K is the Tinker Serverless Inference product serving limit (the pricing page lists it per product tier), not the model's architectural context window. The architectural maximum (1,048,576 from HF config.json model_max_length) is carried in batch-15. Both values are real published facts and both stay in the archive unchanged; this entry tells the provenance check to use batch-15 for the context_k field, so the catalog's 1000K is backed rather than disputed. Scoped to modelRaw + field so other models in batch-08 are unaffected."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Inkling-Small",
+      "field": "context_k",
+      "supersededBy": "batch-15-model-config",
+      "reason": "Same as Inkling above: 256K is the Serverless Inference serving limit, not the context window. config.json model_max_length is 1,048,576 (batch-15). Both stay in the archive; this entry routes the provenance check to batch-15 for this field."
     }
   ]
 }
