@@ -349,6 +349,16 @@
       "modelId": "qwen3.7-max"
     },
     {
+      "modelRaw": "qwen3-7-plus",
+      "effort": "*",
+      "modelId": "qwen3.7-plus"
+    },
+    {
+      "modelRaw": "qwen3.7-plus",
+      "effort": "*",
+      "modelId": "qwen3.7-plus"
+    },
+    {
       "modelRaw": "DeepSeek V4 Pro",
       "effort": "*",
       "modelId": "deepseek-v4-pro"
