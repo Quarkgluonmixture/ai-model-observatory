@@ -1,19 +1,48 @@
-const LOOKUPS: Record<string, string[]> = {
-  "claude-opus-5": ["claude-opus-5"],
-  "claude-fable-5": ["claude-fable-5"],
-  "gpt-5.6-sol": ["gpt-5.6-sol", "gpt-5.6"],
-  "kimi-k3": ["kimi-k3"],
-  "gpt-5.6-terra": ["gpt-5.6-terra"],
-  "grok-4.5": ["grok-4.5"],
-  "claude-sonnet-5": ["claude-sonnet-5"],
-  "glm-5.2": ["glm-5.2"],
-  "muse-spark-1.1": ["muse-spark-1.1"],
-  "gemini-3.5-flash": ["gemini-3.5-flash"],
-  "gemini-3.6-flash": ["gemini-3.6-flash"],
-  "deepseek-v4-flash": ["deepseek-v4-flash", "deepseek-v4"],
-  "gemini-3.1-pro": ["gemini-3.1-pro"],
-  "qwen3.7-max": ["qwen3.7-max", "qwen-3.7-max"],
-  "deepseek-v4-pro": ["deepseek-v4-pro", "deepseek-v4"],
+// The canonical OpenRouter id for each catalog model, exact — never a substring.
+//
+// Substring matching looked harmless and was not. `list.find` returns the first entry that
+// contains the needle, and OpenRouter serves several products whose ids contain each other:
+// the needle "gpt-5.6" matched `openai/gpt-5.6-luna-pro`, so the GPT-5.6 Sol card rendered
+// Luna Pro's $0.10/$0.60 in place of Sol's $5/$30. Six other lookups landed on a `-fast`,
+// `-pro` or `-lite` variant the same way. None of it was visible: a wrong price looks exactly
+// like a right one.
+//
+// So a lookup is now one exact provider id. A retired or renamed id resolves to nothing and
+// the card keeps its archived price, which is the safe direction to fail in. `npm run
+// report:gaps` reports both a dead lookup and a catalog model that has no lookup at all —
+// this table cannot silently stop covering a model.
+export const PROVIDER_LOOKUPS: Record<string, string> = {
+  "claude-opus-5": "anthropic/claude-opus-5",
+  "claude-opus-4.8": "anthropic/claude-opus-4.8",
+  "claude-fable-5": "anthropic/claude-fable-5",
+  "claude-sonnet-5": "anthropic/claude-sonnet-5",
+  "gpt-5.6-sol": "openai/gpt-5.6-sol",
+  "gpt-5.6-terra": "openai/gpt-5.6-terra",
+  "gpt-5.6-luna": "openai/gpt-5.6-luna",
+  "gpt-5.5": "openai/gpt-5.5",
+  "gemini-3.6-flash": "google/gemini-3.6-flash",
+  "gemini-3.5-flash": "google/gemini-3.5-flash",
+  // The catalog carries the preview, so the lookup names it. `-customtools` is a separate
+  // deployment of the same model and is not what the catalog measured.
+  "gemini-3.1-pro": "google/gemini-3.1-pro-preview",
+  "gemini-3-flash": "google/gemini-3-flash-preview",
+  "grok-4.5": "x-ai/grok-4.5",
+  "grok-4.3": "x-ai/grok-4.3",
+  "glm-5.2": "z-ai/glm-5.2",
+  "muse-spark-1.1": "meta/muse-spark-1.1",
+  "kimi-k3": "moonshotai/kimi-k3",
+  "kimi-k2.6": "moonshotai/kimi-k2.6",
+  "kimi-k2.7-code": "moonshotai/kimi-k2.7-code",
+  // The catalog tracks the dated snapshot, which upstream also serves undated. They are
+  // different rows with different prices; the dated one is the one that was measured.
+  "deepseek-v4-flash": "deepseek/deepseek-v4-flash-0731",
+  "deepseek-v4-pro": "deepseek/deepseek-v4-pro",
+  "qwen3.7-max": "qwen/qwen3.7-max",
+  "qwen3.6-plus": "qwen/qwen3.6-plus",
+  "qwen3.6-max": "qwen/qwen3.6-max-preview",
+  "minimax-m3": "minimax/minimax-m3",
+  "inkling": "thinkingmachines/inkling",
+  "inkling-small": "thinkingmachines/inkling-small",
 };
 
 export async function GET() {
@@ -25,9 +54,10 @@ export async function GET() {
     if (!response.ok) throw new Error(`upstream ${response.status}`);
     const payload = await response.json() as { data?: Array<{ id:string; name?:string; context_length?:number; pricing?:{prompt?:string;completion?:string} }> };
     const list = payload.data ?? [];
+    const byId = new Map(list.map(item => [item.id.toLowerCase(), item]));
     const prices: Record<string, {input:number;output:number;contextK?:number;source:string}> = {};
-    for (const [key, needles] of Object.entries(LOOKUPS)) {
-      const found = list.find(item => needles.some(needle => item.id.toLowerCase().includes(needle)));
+    for (const [key, providerId] of Object.entries(PROVIDER_LOOKUPS)) {
+      const found = byId.get(providerId);
       if (!found?.pricing) continue;
       const input = Number((Number(found.pricing.prompt ?? 0) * 1_000_000).toFixed(6));
       const output = Number((Number(found.pricing.completion ?? 0) * 1_000_000).toFixed(6));
