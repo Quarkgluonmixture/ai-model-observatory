@@ -9,6 +9,9 @@ import {
   MODELS,
   OBSERVATIONS_BY_CELL,
   SOURCE_META,
+  SOURCE_STALE_DAYS,
+  coreBenchmarksOf,
+  portfolioFloor,
   type BenchmarkAxis,
   type BenchmarkMode,
   type BenchmarkRecord,
@@ -25,7 +28,7 @@ const UI = {
     brand: "AI 模型观测站",
     search: "搜索模型或实验室",
     snapshot: "数据快照",
-    live: "价格已更新",
+    live: "已对照实时价",
     tracked: "收录模型",
     portfolio: "Benchmark 目录",
     ranking: "前沿模型排行",
@@ -63,12 +66,17 @@ const UI = {
     rubric: "规则评审",
     preference: "人工偏好",
     pricing: "Token 价格",
-    pricingDesc: "每百万 Token 的供应商价格；实时匹配失败时保留最近快照。",
+    pricingDesc: "每百万 Token 的厂商标价，取自存档、可溯源；OpenRouter 实时价仅作对照，不覆盖目录数字。",
     input: "输入",
     output: "输出",
     blended: "7:2:1 混合价",
+    liveDiffers: "OpenRouter 现价",
+    liveMatches: "与 OpenRouter 一致",
     sources: "数据来源与可比性",
-    sourceNote: "“已接入”是数出来的，不是声明的：只有当存档里确实有来自该来源的观测行时才算接入，数字即行数。“接入队列”只是下一批采集目标，不参与现有分数。Arena 衡量人工偏好，系统类结果还同时反映 harness、工具与预算。",
+    read: "读取于",
+    evaluated: "评测于",
+    aging: "待复核",
+    sourceNote: "“已接入”是数出来的，不是声明的：只有当存档里确实有来自该来源的观测行时才算接入，数字即行数。“接入队列”只是下一批采集目标，不参与现有分数。日期同样是数出来的：“读取于”是本项目最后一次抄录该来源的时间，“评测于”是该来源已发布的最新结果时间，两者不可互换。十个批次中有八个靠人工抄录、无法与上游自动比对，所以超过 30 天未读取的来源标为“待复核”——最近读过但评测日期很旧，说明的是该榜单本身没有更新。Arena 衡量人工偏好，系统类结果还同时反映 harness、工具与预算。",
     back: "返回排行 ↑",
     unavailable: "N/A",
     updated: "更新于 2026 年 7 月 31 日",
@@ -80,7 +88,7 @@ const UI = {
     brand: "AI Model Observatory",
     search: "Search model or lab",
     snapshot: "Snapshot",
-    live: "Prices updated",
+    live: "Prices compared",
     tracked: "Tracked models",
     portfolio: "Benchmarks catalogued",
     ranking: "Frontier model ranking",
@@ -118,12 +126,17 @@ const UI = {
     rubric: "Rubric / judge",
     preference: "Human preference",
     pricing: "Token economics",
-    pricingDesc: "Provider price per million tokens; the latest snapshot remains if live matching fails.",
+    pricingDesc: "Vendor list price per million tokens, taken from the archive with provenance. OpenRouter's live figure is shown for comparison and never overwrites the catalog.",
     input: "Input",
     output: "Output",
     blended: "7:2:1 blended",
+    liveDiffers: "OpenRouter now",
+    liveMatches: "matches OpenRouter",
     sources: "Sources and comparability",
-    sourceNote: "Connected is measured, not declared: a source counts only when observation rows in the archive came from it, and the number is that row count. Queued sources are ingestion targets and affect nothing. Arena measures preference; system results also reflect harness, tools and budget.",
+    read: "read",
+    evaluated: "evaluated",
+    aging: "AGING",
+    sourceNote: "Connected is measured, not declared: a source counts only when observation rows in the archive came from it, and the number is that row count. Queued sources are ingestion targets and affect nothing. The dates are measured too: read is when this project last transcribed the source, evaluated is the newest published result, and the two are never interchanged. Eight of the ten batches are hand-transcribed and cannot be diffed against upstream, so a source unread for 30 days is marked aging — a recently-read source with an old evaluation date means the leaderboard itself has been quiet. Arena measures preference; system results also reflect harness, tools and budget.",
     back: "Back to ranking ↑",
     unavailable: "N/A",
     updated: "Updated 31 Jul 2026",
@@ -196,7 +209,7 @@ const memo = <T,>(compute: (key: string) => T) => {
 
 const coreBenchmarks = memo((key: string) => {
   const [axis, mode] = key.split("|");
-  return BENCHMARKS.filter(b => b.tier === "core" && (mode === "system" || b.mode === "model") && (axis === "*" || b.axis === axis));
+  return coreBenchmarksOf(axis as BenchmarkAxis | "*", mode as BenchmarkMode);
 });
 
 const axisScoreCached = memo((key: string) => {
@@ -210,15 +223,10 @@ function axisScore(modelId: string, axis: BenchmarkAxis, mode: BenchmarkMode) {
   return axisScoreCached(`${modelId}|${axis}|${mode}`);
 }
 
-// A portfolio average only compares models that were measured on comparable baskets. Averaging
-// whatever cells happen to exist put Muse Spark 1.1 first on the agent lens with 2 of 5 agent
-// benchmarks — the two generous ones — above Claude Fable 5 measured on all five. So a portfolio
-// number is published only when the model covers at least half of that axis's core benchmarks
-// and at least two of them. Below that it is N/A and drops out of the lens, exactly as a model
-// with no published cost per task is absent from the value lens rather than counted as free.
-const PORTFOLIO_MIN_RATIO = 0.5;
-const PORTFOLIO_MIN_CELLS = 2;
-
+// The coverage floor itself lives in model-data.ts, because scripts/report-gaps.mjs reads it
+// to find the models sitting one cell below it. Below the floor an axis reads N/A and drops
+// out of the lens, exactly as a model with no published cost per task is absent from the
+// value lens rather than counted as free.
 const axisCoverage = memo((key: string) => {
   const [modelId, axis, mode] = key.split("|");
   const scores = scoresFor(modelId);
@@ -232,7 +240,7 @@ function portfolioCoverage(modelId: string, axis: BenchmarkAxis) {
 
 function portfolioScore(modelId: string, axis: BenchmarkAxis) {
   const { present, total } = portfolioCoverage(modelId, axis);
-  if (!total || present < PORTFOLIO_MIN_CELLS || present / total < PORTFOLIO_MIN_RATIO) return null;
+  if (!total || present < portfolioFloor(total)) return null;
   return axisScore(modelId, axis, "system");
 }
 
@@ -310,6 +318,41 @@ function Radar({ models, activeId, mode, lang }:{ models: ModelRecord[]; activeI
   </svg>;
 }
 
+export type LivePrices = Record<string, { input: number; output: number; contextK?: number; source: string }>;
+
+// A provider quoting a different number than the archive is the interesting case, and it has two
+// causes worth telling apart by hand: the vendor changed its list price (collect it) or the
+// provider is quoting something the catalog deliberately excludes, such as the Claude Sonnet 5
+// introductory rate or a reseller's own margin (leave it). Neither is a reason to overwrite.
+//
+// The tolerance keeps float noise out of the comparison: OpenRouter returns per-token strings,
+// so $0.10 arrives as 0.09999999999999999 and would otherwise read as a disagreement.
+function priceComparison(model: ModelRecord, livePrices: LivePrices) {
+  const live = livePrices[model.id];
+  if (!live) return null;
+  const apart = (mine: number, theirs: number) => Math.abs(mine - theirs) > Math.max(0.0001, mine * 0.005);
+  return { ...live, differs: apart(model.price.input, live.input) || apart(model.price.output, live.output) };
+}
+
+// What a source card prints as its date. A hand-written label ("2026", "live") cannot go stale
+// visibly, which is the problem: it reads as current forever. So the card shows the date the rows
+// actually carry, and says which kind of date it is rather than blurring the two.
+//
+// `staleBefore` arrives from an effect rather than from render, because the page is prerendered:
+// comparing against the clock during render would make the server and the browser disagree.
+// Until it lands, nothing is marked — an unflagged card is never a false reassurance, it is a
+// card whose flag has not been computed yet.
+function freshnessOf(source: (typeof SOURCE_META)[string], lang: Lang, staleBefore: string | null) {
+  const ui = UI[lang];
+  const iso = source.lastRetrieved ?? source.lastEvaluated;
+  if (!iso) return { text: source.date, title: source.role, stale: false };
+  return {
+    text: `${source.lastRetrieved ? ui.read : ui.evaluated} ${iso}`,
+    title: `${ui.read}: ${source.lastRetrieved ?? UI[lang].unavailable} · ${ui.evaluated}: ${source.lastEvaluated ?? UI[lang].unavailable}`,
+    stale: staleBefore !== null && iso < staleBefore,
+  };
+}
+
 // The ranking cell carries its own evidence count, so a reader can see that 4/5 sits next to
 // 5/5 and that an N/A is a coverage floor rather than a missing model.
 function PortfolioCell({ modelId, axis }: { modelId: string; axis: BenchmarkAxis }) {
@@ -346,7 +389,9 @@ export default function Home() {
   const [lang,setLang] = useState<Lang>("zh");
   const [activeSection,setActiveSection] = useState("ranking");
   const [catalogOpen,setCatalogOpen] = useState(false);
-  const [models,setModels] = useState(MODELS);
+  // The catalog is not live state. Its prices are archived list prices with provenance behind
+  // them (npm run check:models), so the feed no longer writes into this array — see refresh().
+  const models = MODELS;
   const [activeId,setActiveId] = useState("gpt-5.6-sol-max");
   const [compareIds,setCompareIds] = useState<string[]>(["claude-fable-5","kimi-k3-max"]);
   const [lens,setLens] = useState<RankLens>("intelligence");
@@ -356,6 +401,7 @@ export default function Home() {
   const [maker,setMaker] = useState("All labs");
   const [openOnly,setOpenOnly] = useState(false);
   const [showAll,setShowAll] = useState(false);
+  const [livePrices,setLivePrices] = useState<LivePrices>({});
   const [live,setLive] = useState(false);
   const [updated,setUpdated] = useState("snapshot");
   const ui = UI[lang];
@@ -366,16 +412,29 @@ export default function Home() {
   const codingCoverage = portfolioCoverage(active.id, "coding");
   const agentCoverage = portfolioCoverage(active.id, "agent");
 
+  // The cutoff a source card is measured against, resolved after mount so a prerendered page
+  // and a browser three weeks later do not disagree about what "30 days ago" means.
+  const [staleBefore,setStaleBefore] = useState<string | null>(null);
+  useEffect(() => { const frame=requestAnimationFrame(() => setStaleBefore(new Date(Date.now() - SOURCE_STALE_DAYS * 86400000).toISOString().slice(0,10))); return () => cancelAnimationFrame(frame); }, []);
+  const sourceCards = useMemo(() => Object.values(SOURCE_META).map(source => ({ source, freshness: freshnessOf(source, lang, staleBefore) })), [lang, staleBefore]);
+  const agingCount = sourceCards.filter(card => card.freshness.stale).length;
+
   const lastFetch = useRef(0);
 
+  // The feed is a second opinion, not an authority. It used to overwrite `price` and `contextK`
+  // on the model record, which quietly broke two of this project's own rules: the catalog quotes
+  // list price and never a promotion (OpenRouter serves Claude Sonnet 5 at its $2/$10 introductory
+  // rate), and every catalog number is backed by an archive row (npm run check:models), which a
+  // number arriving at runtime is not. So the live figures are held beside the catalog and shown
+  // where they disagree — a disagreement is a signal to go collect, not a number to display.
   async function refresh() {
     lastFetch.current = Date.now();
     setUpdated("refreshing");
     try {
       const res = await fetch("/api/live-models",{cache:"no-store"});
       if (!res.ok) throw new Error();
-      const data = await res.json() as { prices: Record<string,{input:number;output:number;contextK?:number}> };
-      setModels(now => now.map(model => data.prices[model.id] ? {...model, price:{...model.price,input:data.prices[model.id].input,output:data.prices[model.id].output},contextK:data.prices[model.id].contextK ?? model.contextK} : model));
+      const data = await res.json() as { prices: LivePrices };
+      setLivePrices(data.prices);
       setLive(true); setUpdated("just now");
     } catch { setLive(false); setUpdated("snapshot"); }
   }
@@ -478,14 +537,14 @@ export default function Home() {
         <div className="benchmark-body"><BenchmarkChart models={compare} axis={axis} mode={profileMode} lang={lang}/></div>
       </section>
 
-      <section className="panel pricing-panel" id="pricing"><div className="section-head"><div className="section-title"><span>04</span><div><h2>{ui.pricing}</h2><p>{ui.pricingDesc}</p></div></div><button className={live?"feed-status":"feed-status offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}</button></div><div className="price-cards">{compare.map(model => { const blended=model.price.input*.7+model.price.output*.2+model.price.cache*.1; return <article key={model.id} style={{"--accent":model.color} as React.CSSProperties}><div className="card-name"><i/><span><b>{model.name}</b><small>{model.maker}</small></span></div><div className="price-pair"><div><span>{ui.input}</span><strong>${formatUsd(model.price.input)}</strong></div><div><span>{ui.output}</span><strong>${formatUsd(model.price.output)}</strong></div></div><div className="blended"><span>{ui.blended}</span><b>${formatUsd(blended)}</b><i><em style={{width:`${Math.min(100,blended/8*100)}%`}}/></i></div></article>; })}</div></section>
+      <section className="panel pricing-panel" id="pricing"><div className="section-head"><div className="section-title"><span>04</span><div><h2>{ui.pricing}</h2><p>{ui.pricingDesc}</p></div></div><button className={live?"feed-status":"feed-status offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}</button></div><div className="price-cards">{compare.map(model => { const blended=model.price.input*.7+model.price.output*.2+model.price.cache*.1; const comparison=priceComparison(model,livePrices); return <article key={model.id} style={{"--accent":model.color} as React.CSSProperties}><div className="card-name"><i/><span><b>{model.name}</b><small>{model.maker}</small></span></div><div className="price-pair"><div><span>{ui.input}</span><strong>${formatUsd(model.price.input)}</strong></div><div><span>{ui.output}</span><strong>${formatUsd(model.price.output)}</strong></div></div>{comparison&&<div className={comparison.differs?"live-compare differs":"live-compare"} title={comparison.source}>{comparison.differs?`${ui.liveDiffers} $${formatUsd(comparison.input)} / $${formatUsd(comparison.output)}`:ui.liveMatches}</div>}<div className="blended"><span>{ui.blended}</span><b>${formatUsd(blended)}</b><i><em style={{width:`${Math.min(100,blended/8*100)}%`}}/></i></div></article>; })}</div></section>
 
       <section className="panel catalog-panel">
         <div className="section-head"><div className="section-title"><span>05</span><div><h2>{ui.catalog}</h2><p>{ui.catalogDesc}</p></div></div><div className="catalog-actions"><div className="catalog-count">{BENCHMARKS.filter(b=>b.tier==="core").length} CORE · {BENCHMARKS.filter(b=>b.tier==="observe").length} OBSERVE</div><button className="catalog-toggle" type="button" aria-expanded={catalogOpen} onClick={()=>setCatalogOpen(open=>!open)}>{catalogOpen ? (lang==="zh"?"收起目录":"Collapse catalog") : (lang==="zh"?`展开 ${BENCHMARKS.length} 项`:`Show ${BENCHMARKS.length} items`)}<span>{catalogOpen?"↑":"↓"}</span></button></div></div>
         {catalogOpen && <div className="catalog-grid">{BENCHMARKS.map(b => <a className={`catalog-card ${b.tier}`} href={b.url} target="_blank" rel="noreferrer" key={b.id}><div><span className={`tier ${b.tier}`}>{ui[b.tier]}</span><span className={`method ${b.method}`}>{b.method === "execution" ? ui.exec : b.method === "exam" ? ui.exam : b.method === "rubric" ? ui.rubric : ui.preference}</span></div><h3>{b.name}</h3><p>{b[lang]}</p><footer><span>{AXES.find(a=>a.id===b.axis)?.[lang]}</span><b>{b.mode === "model" ? ui.modelMode : ui.systemMode}</b><em>{b.version} ↗</em></footer></a>)}</div>}
       </section>
 
-      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2><div className="source-summary"><b>{Object.values(SOURCE_META).filter(source=>source.status==="active").length} {lang==="zh"?"已接入":"CONNECTED"}</b><span>{Object.values(SOURCE_META).filter(source=>source.status==="queued").length} {lang==="zh"?"接入队列":"QUEUED"}</span></div></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a className={source.status} href={source.url} target="_blank" rel="noreferrer" key={source.label}><div><span>{source.date}</span><i>{source.status==="active"?`${lang==="zh"?"已接入":"CONNECTED"}${source.observations?` · ${source.observations}`:""}`:(lang==="zh"?"接入队列":"QUEUED")}</i></div><b>{source.label}</b><small>{source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
+      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2><div className="source-summary"><b>{sourceCards.filter(card=>card.source.status==="active").length} {lang==="zh"?"已接入":"CONNECTED"}</b><span>{sourceCards.filter(card=>card.source.status==="queued").length} {lang==="zh"?"接入队列":"QUEUED"}</span>{agingCount>0&&<span className="aging">{agingCount} {ui.aging}</span>}</div></div><div className="source-grid">{sourceCards.map(({source,freshness})=><a className={source.status} href={source.url} target="_blank" rel="noreferrer" key={source.label}><div><span className={freshness.stale?"aging":undefined} title={freshness.title}>{freshness.text}</span><i>{source.status==="active"?`${lang==="zh"?"已接入":"CONNECTED"}${source.observations?` · ${source.observations}`:""}`:(lang==="zh"?"接入队列":"QUEUED")}</i></div><b>{source.label}</b><small>{source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
       <footer className="site-footer"><div><i/>VERSIONED SNAPSHOT · 2026-07-31</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
     </div>
   </main>;
