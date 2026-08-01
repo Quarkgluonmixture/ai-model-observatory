@@ -31,8 +31,8 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **28 model families, 68 benchmarks, 1167 observations across 907 of 1904 cells**,
-sourced benchmark-native 744 / independent 246 / vendor 177. **311 of 314 catalog numbers are
+Current scale: **28 model families, 68 benchmarks, 1153 observations across 903 of 1904 cells**,
+sourced benchmark-native 730 / independent 246 / vendor 177. **311 of 314 catalog numbers are
 backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
@@ -527,10 +527,23 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**The four scripted boards now maintain themselves; the other eleven batches cannot.** That gap is
-the whole of the remaining work, and it is not a code problem — §9 records that no other source
-publishes a data file to read. Re-probing is cheap but the answer is written down; go read it
-before spending an afternoon on it.
+**The four scripted boards now maintain themselves; the other eleven batches cannot.** Closing
+that gap is not a code problem — §9 records that no other source publishes a data file to read.
+Re-probing is cheap but the answer is written down; go read it before spending an afternoon on it.
+
+**It is no longer the whole of the remaining work, though, and the reason is worth stating plainly:
+a scripted source is not automatically a correct one.** Epoch's FrontierMath export disagreed with
+Epoch's own leaderboard by about 1.7x, and every structural check passed — the rows were
+well-formed, versioned, dated and attributed. What caught it was a second source disagreeing, and
+that only exists where a benchmark has been read twice. Four core benchmarks currently rest on one
+source (`frontiermath`, `frontiermath-t4`, `imo-answer`, `aa-lcr`); on those, nothing would
+contradict a wrong reading.
+
+So automation raised the floor without raising the ceiling. The pipeline now catches structure,
+staleness, casing, units, provenance and cross-source contradiction. It cannot catch a source that
+is internally consistent and means something other than the column it lands in — for that, someone
+still has to open the page. Adding a second reading of a single-sourced benchmark is worth more
+than adding a first reading of an uncovered one.
 
 What "maintains itself" means concretely, every day, in `.github/workflows/upstream.yml`:
 
