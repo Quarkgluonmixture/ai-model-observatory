@@ -60,7 +60,7 @@ run rather than hidden.
 | `scripts/check-price-terms.mjs` | Fails when the catalog quotes a promotion recorded in a batch meta |
 | `scripts/check-mobile.mjs` | Layout probe: overflow, type floor and tap-target floor under device emulation |
 | `.github/workflows/ci.yml` | Lint, data contract, price terms, and production build checks |
-| `.github/workflows/upstream.yml` | Weekly: re-fetch archived sources for drift, then report what was never collected |
+| `.github/workflows/upstream.yml` | Daily: re-fetch archived sources for drift, then report what was never collected |
 | `README.md` | User-facing overview and deployment instructions |
 | `AGENTS.md` | Short coding-agent operating contract |
 
@@ -385,14 +385,14 @@ npm run build
 
 `npm run check:upstream` is deliberately **not** in that list. It re-fetches an archived source
 over the network and fails for reasons unrelated to the commit under review, which is how a red
-check gets trained into background noise. It runs weekly instead, in `.github/workflows/upstream.yml`.
+check gets trained into background noise. It runs daily instead, in `.github/workflows/upstream.yml`.
 
 `npm run report:gaps` is not in that list either, for a different reason: **it can never fail.**
 An uncollected model is not a defect in the commit under review, so the report exits zero no
-matter what it finds and the finding becomes an issue instead. The weekly job publishes it to one
+matter what it finds and the finding becomes an issue instead. The daily job publishes it to one
 long-lived issue titled *Collection gaps*, edited in place and closed when the report comes back
 empty — so an open issue always means there is something to collect, and there is never a backlog
-of stale weekly issues to ignore. Add `--no-network` to run the two local sections offline.
+of stale issues to ignore. Add `--no-network` to run the two local sections offline.
 
 The data check currently enforces:
 
@@ -532,7 +532,7 @@ the whole of the remaining work, and it is not a code problem — §9 records th
 publishes a data file to read. Re-probing is cheap but the answer is written down; go read it
 before spending an afternoon on it.
 
-What "maintains itself" means concretely, weekly, in `.github/workflows/upstream.yml`:
+What "maintains itself" means concretely, every day, in `.github/workflows/upstream.yml`:
 
 | Finding | Source kind | Verdict |
 | --- | --- | --- |
@@ -570,7 +570,7 @@ stay. That is judgement, and judgement does not go in a cron job.
   catalog's own price lookups resolve into, so adding a lab to the catalog adds it to the watch
   list with no second list to maintain.
 - Upstream diffing still exists only for sources with a machine-readable feed. LiveBench is
-  re-fetched and compared cell by cell (`npm run check:upstream`, weekly in CI). The eight
+  re-fetched and compared cell by cell (`npm run check:upstream`, daily in CI). The eleven
   transcribed batches are still undiffable — nothing tells you that Terminal-Bench or Vals
   edited a number after it was archived. Each source that gains a fetcher gains a drift check.
   Until then, how long ago a source was last read is the only honest freshness signal there is,

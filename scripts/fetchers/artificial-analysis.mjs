@@ -8,11 +8,11 @@
 // task, speed, latency and price, and until now those arrived by hand-transcribing AA's model
 // pages. Now they arrive with provenance in one call.
 //
-// ## Why this is NOT in the weekly refresh
+// ## Why this is NOT in the scheduled refresh
 //
 // AA re-measures speed and latency continuously — they are live properties of a hosted endpoint,
 // not published results frozen at a version. `check:models` fails when a catalog number and its
-// archive row disagree by more than 0.005, so wiring this into `--live` would turn the weekly job
+// archive row disagree by more than 0.005, so wiring this into `--live` would turn the scheduled job
 // red every time AA re-ran a benchmark, and the fix would always be a hand edit to
 // `app/model-data.ts`. A check that is permanently red is a check nobody reads.
 //
@@ -134,7 +134,7 @@ export const artificialAnalysis = {
           "unsourced number behind a catalog field that check:models currently reports honestly. " +
           "AA's own composite coding and agentic indices are deliberately not archived, for the " +
           "same double-counting reason that dropped aa-intelligence-index. " +
-          "This batch is fetched ON DEMAND, never by the weekly refresh: AA re-measures speed and " +
+          "This batch is fetched ON DEMAND, never by the scheduled refresh: AA re-measures speed and " +
           "latency continuously, so a scheduled rewrite would fail check:models every time a " +
           "number moved and would need a hand edit to app/model-data.ts to go green again.",
       },

@@ -30,7 +30,7 @@ export const deepswe = {
     }
 
     // `generated_at` moves every time the artifact is rebuilt, whether or not a number changed,
-    // so it must not reach a row: it would make every weekly re-fetch look like new data. The
+    // so it must not reach a row: it would make every re-fetch look like new data. The
     // newest job's finish date only moves when results actually do.
     const finished = payload.latest_job?.finished_at;
     if (!finished) throw new Error("the artifact no longer names a latest job to date the rows");

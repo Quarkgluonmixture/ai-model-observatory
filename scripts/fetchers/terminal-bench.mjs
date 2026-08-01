@@ -9,7 +9,7 @@
 // the harness that check:data requires and that a transcription of this board keeps losing.
 //
 // Standing risk: this is an undocumented endpoint discovered in client code, not a promised
-// interface. It can move without notice. That is survivable here — the fetcher throws, the weekly
+// interface. It can move without notice. That is survivable here — the fetcher throws, the scheduled
 // job reports it, and the archive is left exactly as it was.
 
 const ENDPOINT = "https://ofhuhcpkvzjlejydnvyd.supabase.co/functions/v1/leaderboard-read";

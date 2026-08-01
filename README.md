@@ -24,7 +24,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - mobile layout with a labelled bottom bar, card-form ranking rows, safe-area insets, and a
   layout probe (`npm run check:mobile`) that fails on horizontal overflow
 - per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
-- four boards re-read by script, which is what gives them a weekly drift check and an automatic
+- four boards re-read by script, which is what gives them a daily drift check and an automatic
   refresh; the other eleven batches are hand-transcribed, and every source card prints how long
   ago it was last read
 - 314 catalog values audited against the archive on every run, including the context window and
@@ -78,7 +78,7 @@ DeepSWE's board loads a JSON artifact carrying every configuration it has ever r
 publishes its whole benchmark hub as one CC BY ZIP that the page never mentions, and Terminal-Bench
 answers an unauthenticated function call found in its client's source. All four are scripted
 (`npm run fetch:sources`), which is what gives them an automatic drift check and an automatic
-weekly refresh. The other nine batches have neither.
+daily refresh. The other eleven batches have neither.
 
 Model records are hand-authored, but their numbers are audited the same way. `npm run check:models`
 fails when a catalog value contradicts the archive and reports how much of the catalog nothing
@@ -113,13 +113,13 @@ npm run build
 ```
 
 `npm run check:upstream` is separate: it re-reads every scripted source over the network and
-diffs it cell by cell, so it runs weekly rather than per commit. It fails only when a **pinned**
-source moved under a frozen version; a **live** board moving is new data, and the weekly job
+diffs it cell by cell, so it runs daily rather than per commit. It fails only when a **pinned**
+source moved under a frozen version; a **live** board moving is new data, and the daily job
 rewrites that batch and merges it. `npm run fetch:sources` re-collects them all, `npm run
 fetch:sources <id>` just one.
 
 `npm run report:gaps` asks the opposite question — what exists that was never collected. It never
-fails; the weekly job turns its output into one self-updating issue. `AA_API_KEY` in the
+fails; the scheduled job turns its output into one self-updating issue. `AA_API_KEY` in the
 environment enables the Artificial Analysis source; without it that source skips itself and
 everything else still runs.
 
@@ -183,7 +183,7 @@ scripts/
   check-mobile.mjs             # layout probe under device emulation
 .github/workflows/
   ci.yml                       # the contract, on every push and pull request
-  upstream.yml                 # weekly: drift, refresh, collection gaps
+  upstream.yml                 # daily: drift, refresh, collection gaps
 docs/ARCHITECTURE.md           # diagrams, data contract, collection state, next work
 docs/UI.md                     # type scale, breakpoints, phone contract, verification
 docs/AGENT-OPERATIONS.md       # standing instructions for the scheduled agent
@@ -192,7 +192,7 @@ AGENTS.md                      # concise coding-agent handoff rules
 
 ## What maintains itself
 
-A weekly job asks three questions and gives each a different answer, because collapsing them is
+A daily job asks three questions and gives each a different answer, because collapsing them is
 how a red check becomes background noise.
 
 | Finding | Verdict |

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Publishes the collection-gap report to one long-lived issue.
 #
-# One issue, edited in place, rather than a new issue per run: a weekly job that opens a fresh
-# issue every Monday produces a backlog nobody reads, which is the same failure mode as a CI
+# One issue, edited in place, rather than a new issue per run: a scheduled job that opens a
+# fresh issue every morning produces a backlog nobody reads, which is the same failure mode as a CI
 # check that is always red. When the report comes back empty the issue is closed, so an open
 # issue always means there is something to collect.
 #

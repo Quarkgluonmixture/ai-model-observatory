@@ -4,7 +4,7 @@
 //
 // Nothing here is a failure, so nothing here exits non-zero. A missing model is not a defect
 // in the commit under review; it is a collection target. The output is a markdown report meant
-// to be read weekly and turned into a batch, not a gate that turns CI red.
+// to be read on a schedule and turned into a batch, not a gate that turns CI red.
 //
 //   node --experimental-strip-types scripts/report-gaps.mjs [--since-days 60] [--no-network]
 //
@@ -228,7 +228,7 @@ if (waitingList.length === 0) {
 // --- 3. Sources nobody has re-read ----------------------------------------------------
 // The dashboard already marks these amber, but a marker on section 06 is only seen by someone
 // who scrolls to section 06. A source that can be re-read by script never appears here, because
-// the weekly job re-reads it — so everything listed is a manual re-transcription falling due.
+// the scheduled job re-reads it — so everything listed is a manual re-transcription falling due.
 
 say("## Sources going stale");
 say();
@@ -249,7 +249,7 @@ if (aging.length === 0) {
   clipped(aging, (entry) =>
     `- **${entry.source.label}** — ${entry.source.lastRetrieved ? "read" : "evaluated"} ` +
     `${entry.iso}, ${entry.source.observations} row${entry.source.observations === 1 ? "" : "s"}` +
-    (scripted.has(entry.source.label) ? " (scripted — the weekly refresh should have covered this)" : ""),
+    (scripted.has(entry.source.label) ? " (scripted — the scheduled refresh should have covered this)" : ""),
   );
   say();
   gapCount += aging.length;

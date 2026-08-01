@@ -12,11 +12,11 @@
 //   pinned source, a cell moved     integrity failure. The archive no longer matches its source
 //                                   under a version that is supposed to be frozen. Exit 1.
 //   live source, a cell moved       new data. DataCurve appends DeepSWE runs and the pass rates
-//                                   move; that is the board working. Exit 0, and the weekly job
+//                                   move; that is the board working. Exit 0, and the scheduled job
 //                                   opens a pull request with the rewritten batch.
 //
 // Writing is idempotent on purpose. When the fetched rows equal the archived rows nothing is
-// touched — not even the sidecar's retrievedDate — so a weekly refresh of an unchanged source
+// touched — not even the sidecar's retrievedDate — so a refresh of an unchanged source
 // produces no diff and therefore no pull request.
 
 import { readFileSync, writeFileSync } from "node:fs";
@@ -37,7 +37,7 @@ const argOf = (name) => {
 const checkOnly = flag("check");
 const toStdout = flag("stdout");
 const requested = args.filter((arg) => !arg.startsWith("--") && arg !== argOf("version"));
-// --live selects only the boards that legitimately move, which is what the weekly refresh
+// --live selects only the boards that legitimately move, which is what the scheduled refresh
 // re-reads. A pinned source can only produce a drift failure there, and a failure on LiveBench
 // must not stop DeepSWE's new rows from reaching a pull request.
 const pool = flag("live") ? FETCHERS.filter((fetcher) => fetcher.versioning === "live") : FETCHERS;
@@ -64,7 +64,7 @@ let changedAny = false;
 
 for (const fetcher of selected) {
   // An on-demand source with no credential configured is not a failure: it simply has nothing
-  // to say this run. Failing here would make the weekly drift check depend on a secret that
+  // to say this run. Failing here would make the drift check depend on a secret that
   // deliberately is not part of it.
   if (fetcher.available && !fetcher.available()) {
     console.log(fetcher.unavailableReason ?? `${fetcher.label}: unavailable, skipping.`);

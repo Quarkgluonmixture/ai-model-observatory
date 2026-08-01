@@ -1,4 +1,4 @@
-# The weekly conversation with every source this project can re-read by script. Three questions,
+# The daily conversation with every source this project can re-read by script. Three questions,
 # three different verdicts, deliberately not collapsed into one:
 #
 #   drift    Has a number moved under a version that is supposed to be frozen? Ingestion is
@@ -16,7 +16,13 @@ name: Upstream
 
 on:
   schedule:
-    - cron: "0 6 * * 1"
+    # Daily, not weekly. The detection latency for a newly published model was the last thing
+    # standing between this repository and "the board keeps itself current" — a week is a long
+    # time to not know a frontier model shipped. The cost is four requests a day: three small
+    # files from LiveBench, one JSON from DeepSWE, one POST to Terminal-Bench, and Epoch's
+    # 432KB export. The refresh writes nothing on a day when nothing moved, so a quiet day
+    # produces no commit, and the gaps issue is edited in place rather than reopened.
+    - cron: "0 6 * * *"
   workflow_dispatch:
 
 permissions:

@@ -51,14 +51,14 @@ npm run build
 ```
 
 `npm run check:upstream` re-reads every scripted source and diffs it cell by cell. It needs the
-network, so it runs weekly rather than on every PR — see `.github/workflows/upstream.yml`. It
+network, so it runs daily rather than on every PR — see `.github/workflows/upstream.yml`. It
 fails only when a **pinned** source moved under a frozen version; a **live** board moving is new
-data, and the same weekly workflow rewrites that batch and opens a pull request instead.
+data, and the same daily workflow rewrites that batch and opens a pull request instead.
 
 `npm run report:gaps` asks the opposite question: what exists that was never collected. Models one
 cell below a ranking floor, archived rows still waiting on a catalog model, and models published
 in a namespace the catalog already tracks. **It never fails** — an uncollected model is not a
-defect in your commit — so it prints a report and the weekly job turns it into one self-updating
+defect in your commit — so it prints a report and the scheduled job turns it into one self-updating
 issue. Run it before deciding what to collect next; `--no-network` skips the upstream section.
 
 `npm run check:mobile` probes the built site at 320 / 390 / 430px under real device emulation and
@@ -118,7 +118,7 @@ Three failure modes that pass a naive check, all hit for real:
 To add a scripted source: write `scripts/fetchers/<id>.mjs`, list it in `scripts/fetchers/index.mjs`,
 and declare `versioning`. `"pinned"` means the source freezes a version and any movement is an
 integrity failure; `"live"` means it appends results and movement is new data. Getting that wrong
-either turns the weekly job permanently red or silently accepts a rewritten history.
+either turns the daily job permanently red or silently accepts a rewritten history.
 
 ## Adding a model
 

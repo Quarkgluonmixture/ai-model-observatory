@@ -5,7 +5,7 @@
 // AGENTS.md says to look for the page's own data file before hiring a transcriber.
 //
 // Adding one means writing scripts/fetchers/<id>.mjs and listing it here. Nothing else: the
-// runner, the drift check, the weekly refresh and the pull request all iterate this array.
+// runner, the drift check, the scheduled refresh and the pull request all iterate this array.
 
 import { artificialAnalysis } from "./artificial-analysis.mjs";
 import { deepswe } from "./deepswe.mjs";
