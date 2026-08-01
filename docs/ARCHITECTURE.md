@@ -324,6 +324,7 @@ pages are known-dead or known-empty and were already worked around.
 | 05 | Independent evaluators | Vals AI sub-benchmarks, LMArena. Complete, 538 rows. |
 | 06 | Model operating parameters | AA model pages, vendor pricing, LMArena Elo. |
 | 07 | AA leaderboard main table | Cost per task, which batch 06 could not reach. |
+| 08 | Operating parameters, second pass | AA model pages plus Anthropic, Google, DeepSeek, Alibaba, Z.AI and Thinking Machines pricing. Took catalog provenance from 67% to 97% and corrected 43 values. |
 
 Known-dead or known-empty, with the workaround already applied:
 
@@ -351,11 +352,13 @@ same cell, so those columns would silently mix two different metrics.
 
 - Upstream diffing is still manual. The pipeline re-ingests deterministically, but nothing
   yet tells you that a leaderboard changed a number after it was archived.
-- A third of the catalog's numbers still have no archive row: 22 speed, 22 latency, 28 price
-  and a handful of index values. They cluster on pre-batch-06 models and on the vendor pricing
-  pages that were never fetched — Anthropic, Google, xAI, DeepSeek and Alibaba. Batch 06 only
-  reached OpenAI, Moonshot, MiniMax, xAI and Cursor. `npm run check:models` lists every one,
-  so the next round has a precise target rather than a re-crawl.
+- Seven catalog numbers still have no archive row: cost per task for Claude Opus 4.8 and
+  GPT-5.5 (both absent from the AA leaderboard), Opus 4.8's code Elo, Inkling's speed and
+  latency, and Grok 4.3's two Elo figures. `npm run check:models` lists them.
+- Vendors price in tiers and regions and the catalog quotes one. Google publishes Standard,
+  Batch, Flex and Priority; Alibaba publishes six regions; Anthropic's Sonnet 5 price is
+  introductory through 2026-08-31. The tier archived is recorded in each batch's meta, but
+  nothing re-checks it when a promotion ends.
 - 929 archived rows are not ingested because the catalog has no model for them, almost all
   previous-generation. They are kept deliberately: adding the model is all it takes for
   `npm run ingest` to attach them, with no code change.

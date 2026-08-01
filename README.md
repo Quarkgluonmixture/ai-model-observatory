@@ -69,8 +69,8 @@ fails when a catalog value contradicts the archive and reports how much of the c
 on file supports:
 
 ```text
-Model provenance passed: 171/255 catalog values backed by data/sources (67%),
-84 with no archive row.
+Model provenance passed: 245/252 catalog values backed by data/sources (97%),
+7 with no archive row.
 ```
 
 ## Local development

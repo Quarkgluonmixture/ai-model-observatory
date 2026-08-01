@@ -85,8 +85,11 @@ Field sources are fixed:
 | price | official vendor page, else Artificial Analysis |
 | text / code Elo | LMArena |
 
-**LMArena's price column is never used.** It lists Claude Fable 5 at $10/$50 against $5/$25
-official, and GPT-5.5 at GPT-5.6 Sol's price. It is incidental metadata on a preference board.
+LMArena's price column is not used as a price source — it states no tier or region, so it
+cannot be reconciled with a vendor page that prices Standard, Batch and Priority differently.
+It is **not** unreliable: batch 06 concluded it was, on the grounds that it disagreed with the
+catalog on Claude Fable 5 and GPT-5.5. Batch 08 showed the catalog was the stale one. Prefer
+official pages for precision, not because LMArena is wrong.
 
 ## Traps this project has already hit
 
@@ -98,6 +101,11 @@ official, and GPT-5.5 at GPT-5.6 Sol's price. It is incidental metadata on a pre
   match on **model exams**. Do not "fix" a benchmark-native number toward a vendor one.
 - Sources publish a tool list where a boolean belongs, and a model string that is not a model
   at all (`Multiple`, `Best per task`). Both are handled; see `data/model-aliases.json`.
+- When a catalog number and a source disagree, check which one has a source before assuming
+  the source is wrong. Batch 08 corrected 43 catalog values this way, including two prices
+  that had been used as evidence *against* a source.
+- Vendors price in tiers and regions. Archive the tier the catalog quotes and record the
+  others in the batch meta, so a later reader does not "correct" Standard to Batch.
 
 ## High-value files
 

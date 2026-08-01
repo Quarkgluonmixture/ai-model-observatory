@@ -7,7 +7,7 @@
   "schema": "Model operating parameters, NOT benchmark scores. One row per (model, effort, source). This batch does not go through `npm run ingest`.",
   "fieldSourcePolicy": {
     "intelligence_index / output_tokens_per_s / latency_first_chunk_s": "Artificial Analysis model pages only.",
-    "price_*": "Official vendor pricing page when present, else Artificial Analysis. NEVER LMArena - its price column disagrees with both official pages and this catalog (it lists Claude Fable 5 at $10/$50 against $5/$25 official, and GPT-5.5 at $5/$30 which is GPT-5.6 Sol's price). It is incidental metadata on a preference board, not a pricing source.",
+    "price_*": "Official vendor page when present, else Artificial Analysis. LMArena is not used as a price source because it states no tier or region. CORRECTION 2026-08-01: this entry previously called LMArena's prices wrong, citing Claude Fable 5 and GPT-5.5. Batch 08 showed both LMArena figures were right and the catalog was stale.",
     "text_elo / code_elo": "LMArena only.",
     "cost_per_task_usd": "Artificial Analysis leaderboard main table - NOT CAPTURED, the page returned Internal Error. No model gets a costTask from this batch."
   },
