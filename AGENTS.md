@@ -27,8 +27,11 @@ benchmark / independent / vendor split. Adding a source card to the README moves
    and in `configurations`, never in a model id. See "Model identity" below.
 8. **Never guess an attribution.** A row whose model string has no alias is skipped and
    reported. That is the intended outcome, not a failure to paper over.
-9. Preserve Chinese/English UI parity and mobile behaviour.
-10. GitHub `main` is the source of truth, EdgeOne Pages is the production host. Do not create
+9. Preserve Chinese/English UI parity and mobile behaviour. The phone contract — type floor, tap
+   targets, scrollers, safe areas — is in `docs/UI.md`; read it before touching `app/globals.css`.
+10. A portfolio average is only published above the coverage floor: half of that axis's core
+    benchmarks, minimum two. Thin evidence reads `N/A`, it does not rank.
+11. GitHub `main` is the source of truth, EdgeOne Pages is the production host. Do not create
     a second production deployment unless asked.
 
 ## Required checks
@@ -45,6 +48,11 @@ npm run build
 
 `npm run check:upstream` re-fetches an archived source and diffs it cell by cell. It needs the
 network, so it runs weekly rather than on every PR — see `.github/workflows/upstream.yml`.
+
+`npm run check:mobile` probes the built site at 320 / 390 / 430px under real device emulation and
+fails on horizontal overflow. It needs Chrome and `PORT=3111 npm run start:next`, so it is a local
+gate. Run it after any layout change — and never judge mobile from a headless screenshot taken
+without emulation, which ignores the viewport meta tag and invents overflow.
 
 CI runs all of these, and additionally fails if `app/observations.generated.ts` differs from
 a fresh `npm run ingest` — the generated file must never be hand-edited.
@@ -132,7 +140,10 @@ official pages for precision, not because LMArena is wrong.
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |
 | `app/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
+| `app/globals.css` | Visual system, type scale, breakpoints, phone layout |
+| `scripts/check-mobile.mjs` | Layout probe: overflow, type floor, tap-target floor |
 | `docs/ARCHITECTURE.md` | Architecture, data policy, collection state, next work |
+| `docs/UI.md` | Type scale, breakpoints, phone contract, layout verification |
 | `docs/INGEST-PROMPT.md` | Transcription contract for collecting new rows |
 
 ## Safe change sequence
@@ -141,5 +152,5 @@ official pages for precision, not because LMArena is wrong.
 2. Record the editorial call in `data/model-aliases.json` with its reason.
 3. `npm run ingest` and read the skip report — it tells you what the catalog is missing.
 4. Run every required check.
-5. Review desktop and mobile on the EdgeOne preview URL.
+5. Review desktop and mobile on the EdgeOne preview URL; run `npm run check:mobile` for layout.
 6. Update `README.md` counts and `docs/ARCHITECTURE.md` if behaviour or schema changed.

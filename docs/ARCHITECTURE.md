@@ -45,10 +45,12 @@ by an archive row.
 | `data/model-aliases.json` | Every editorial decision: model mapping, benchmark splits, version and source-class overrides |
 | `scripts/ingest.mjs` | Archive + aliases → `app/observations.generated.ts` |
 | `docs/INGEST-PROMPT.md` | The transcription contract given to a browsing model |
+| `docs/UI.md` | Type scale, breakpoints, the phone contract, and how to verify a layout change |
 | `scripts/check-model-data.mjs` | Observation contract enforced in CI |
 | `scripts/check-model-provenance.mjs` | Audits every catalog number against the archive |
 | `scripts/fetch-livebench.mjs` | Collects batch 09 from LiveBench's own data files; `--check` diffs archive vs upstream |
 | `scripts/check-price-terms.mjs` | Fails when the catalog quotes a promotion recorded in a batch meta |
+| `scripts/check-mobile.mjs` | Layout probe: overflow, type floor and tap-target floor under device emulation |
 | `.github/workflows/ci.yml` | Lint, data contract, price terms, and production build checks |
 | `.github/workflows/upstream.yml` | Weekly re-fetch of archived sources to catch upstream edits |
 | `README.md` | User-facing overview and deployment instructions |
@@ -207,13 +209,39 @@ Coverage means evidence completeness, not model quality:
 Ranking lenses stay separate:
 
 - General capability: independent composite snapshot stored on the model record.
-- Coding system: available core system-level coding observations.
-- Agent system: available core system-level agent observations.
+- Coding system: core system-level coding observations, subject to the coverage floor below.
+- Agent system: core system-level agent observations, subject to the coverage floor below.
 - Human preference: Arena Elo.
 - Speed: output tokens per second.
 - Value: current capability/cost heuristic.
 
 These lenses answer different questions and must not be silently blended.
+
+### The portfolio coverage floor
+
+A portfolio average compares models only when they were measured on comparable baskets. Averaging
+whatever cells happen to exist does not: it rewards thin evidence, because a model measured only
+on the generous benchmarks of an axis outscores one measured on all of them.
+
+This was not hypothetical. On the agent lens, `Muse Spark 1.1` ranked first at 81.9 from 2 of 5
+agent benchmarks — `mcp-atlas` and `toolathlon`, where every model scores in the 70s and 80s —
+while `Claude Fable 5`, measured on all five including `osworld2` where scores collapse, sat
+fifth at 75.7. `Inkling Small` ranked second on a single cell.
+
+So `portfolioScore` publishes a number only when the model covers **at least half of that axis's
+core benchmarks and at least two of them** (`PORTFOLIO_MIN_RATIO`, `PORTFOLIO_MIN_CELLS` in
+`app/page.tsx`). Below the floor the value is `N/A` and the model leaves that ranking, the same
+way a model with no published cost per task is absent from the value lens rather than free. Each
+ranking cell and dossier KPI prints its `present/total` count, so the floor is visible rather than
+inferred.
+
+The floor applies to the ranking table and the dossier KPIs. The radar still plots every axis it
+has evidence for, because it reports one axis at a time next to an explicit coverage figure
+rather than collapsing a basket into a rank.
+
+Consequence to keep in mind: with 5 core agent benchmarks the floor needs 3, and the long-context
+axis has 2 core benchmarks that no model currently carries together. Adding a benchmark to an axis
+raises the bar for every model on it.
 
 ## 6. Runtime and deployment
 
@@ -438,5 +466,25 @@ the data file the page itself loads — that is the question batch 05 did not as
   rows on the same archive when this changed, because leaderboards publish one line per
   model, not one per effort.
 - Live price matching is substring-based and should eventually use canonical provider model IDs.
-- Pixel regression testing is not yet in CI. Add Playwright screenshots only after a stable public preview URL and baseline approval exist.
+- Pixel regression testing is not yet in CI. Add Playwright screenshots only after a stable public
+  preview URL and baseline approval exist. `npm run check:mobile` covers the part that regresses
+  silently — overflow, type floor, tap-target floor — but it needs Chrome and a running server, so
+  it is a local gate rather than a CI one.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
+
+## 11. Interface
+
+`docs/UI.md` is the contract for everything between the data and the screen: the two type scales,
+the four breakpoints, the six guarantees the phone layout makes, and how to verify a layout change
+without trusting a screenshot taken the wrong way.
+
+The short version. The desktop layout is a 72px rail plus a workspace of six sections. Below
+800px the rail becomes a labelled bottom bar, the header goes static, section heads stack so their
+control gets the full width, and ranking rows become cards carrying a three-metric strip. Nothing
+renders below 9px, no control is under 36px, wide content lives in a named scroller with
+`overscroll-behavior-x: contain`, and every fixed element pads itself with a safe-area inset.
+
+Two traps are worth repeating here because both fail silently: `overflow:hidden` on a panel turns
+it into a scroll container and kills `position:sticky` inside it (use `overflow:clip`), and
+headless Chrome without device emulation ignores the viewport meta tag and invents overflow that
+no phone shows.

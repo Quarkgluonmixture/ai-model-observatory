@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -22,6 +22,17 @@ export const metadata: Metadata = {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
   },
+};
+
+// viewportFit=cover lets the fixed bottom rail sit under the home indicator and pad itself
+// back with env(safe-area-inset-bottom). maximumScale stays above 1: pinch-zoom is the only
+// way to read a dense score table on a phone, so it must not be disabled.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#f4f3ee",
 };
 
 export default function RootLayout({

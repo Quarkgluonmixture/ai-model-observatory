@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AXES,
   BENCHMARKS,
@@ -72,6 +72,8 @@ const UI = {
     back: "返回排行 ↑",
     unavailable: "N/A",
     updated: "更新于 2026 年 7 月 31 日",
+    swipe: "表格可横向滑动查看全部指标",
+    portfolioNote: "组合分要求覆盖该能力族至少一半的核心 Benchmark（且不少于 2 项）；达不到就记 N/A 并退出该排序，而不是拿更少的证据去和别人比。",
   },
   en: {
     eyebrow: "Frontier intelligence · versioned evidence",
@@ -125,8 +127,20 @@ const UI = {
     back: "Back to ranking ↑",
     unavailable: "N/A",
     updated: "Updated 31 Jul 2026",
+    swipe: "Scroll the table sideways for every metric",
+    portfolioNote: "A portfolio score needs at least half of that family's core benchmarks, and no fewer than two. Below that it stays N/A and leaves the ranking rather than competing on thinner evidence.",
   },
 };
+
+// The rail is the only navigation on a phone, where it becomes the bottom bar. Glyphs alone
+// are unreadable there, so each entry carries a label that mobile CSS reveals.
+const NAV: { id: string; glyph: string; zh: string; en: string }[] = [
+  { id:"ranking", glyph:"⌁", zh:"排行", en:"Ranking" },
+  { id:"model-detail", glyph:"◇", zh:"能力", en:"Capability" },
+  { id:"benchmarks", glyph:"△", zh:"评测", en:"Benchmarks" },
+  { id:"pricing", glyph:"$", zh:"价格", en:"Pricing" },
+  { id:"sources", glyph:"≡", zh:"来源", en:"Sources" },
+];
 
 const LENSES: { id: RankLens; zh: string; en: string; shortZh: string; shortEn: string }[] = [
   { id:"intelligence", zh:"综合能力", en:"General capability", shortZh:"综合", shortEn:"General" },
@@ -168,24 +182,72 @@ const cellTitle = (rows: ObservationRow[], fallback: string) => {
     .join("\n");
 };
 
-function axisScore(modelId: string, axis: BenchmarkAxis, mode: BenchmarkMode) {
+// BENCHMARKS, BENCHMARK_SCORES and the axis taxonomy are module constants — a live price
+// refresh replaces model records but never a score. So every derived number below is computed
+// once and cached. Before this, one scroll-driven re-render re-filtered the 68-benchmark list
+// about 120 times (27 rows × coding + agent, plus radar and coverage).
+const memo = <T,>(compute: (key: string) => T) => {
+  const cache = new Map<string, T>();
+  return (key: string) => {
+    if (!cache.has(key)) cache.set(key, compute(key));
+    return cache.get(key) as T;
+  };
+};
+
+const coreBenchmarks = memo((key: string) => {
+  const [axis, mode] = key.split("|");
+  return BENCHMARKS.filter(b => b.tier === "core" && (mode === "system" || b.mode === "model") && (axis === "*" || b.axis === axis));
+});
+
+const axisScoreCached = memo((key: string) => {
+  const [modelId, axis, mode] = key.split("|");
   const scores = scoresFor(modelId);
-  const candidates = BENCHMARKS.filter(b => b.axis === axis && b.tier === "core" && (mode === "system" || b.mode === "model"));
-  const values = candidates.flatMap(b => typeof scores[b.id] === "number" ? [normalized(b, scores[b.id] as number)] : []);
+  const values = coreBenchmarks(`${axis}|${mode}`).flatMap(b => typeof scores[b.id] === "number" ? [normalized(b, scores[b.id] as number)] : []);
   return values.length ? values.reduce((a, b) => a + b, 0) / values.length : null;
+});
+
+function axisScore(modelId: string, axis: BenchmarkAxis, mode: BenchmarkMode) {
+  return axisScoreCached(`${modelId}|${axis}|${mode}`);
+}
+
+// A portfolio average only compares models that were measured on comparable baskets. Averaging
+// whatever cells happen to exist put Muse Spark 1.1 first on the agent lens with 2 of 5 agent
+// benchmarks — the two generous ones — above Claude Fable 5 measured on all five. So a portfolio
+// number is published only when the model covers at least half of that axis's core benchmarks
+// and at least two of them. Below that it is N/A and drops out of the lens, exactly as a model
+// with no published cost per task is absent from the value lens rather than counted as free.
+const PORTFOLIO_MIN_RATIO = 0.5;
+const PORTFOLIO_MIN_CELLS = 2;
+
+const axisCoverage = memo((key: string) => {
+  const [modelId, axis, mode] = key.split("|");
+  const scores = scoresFor(modelId);
+  const core = coreBenchmarks(`${axis}|${mode}`);
+  return { present: core.filter(b => typeof scores[b.id] === "number").length, total: core.length };
+});
+
+function portfolioCoverage(modelId: string, axis: BenchmarkAxis) {
+  return axisCoverage(`${modelId}|${axis}|system`);
 }
 
 function portfolioScore(modelId: string, axis: BenchmarkAxis) {
+  const { present, total } = portfolioCoverage(modelId, axis);
+  if (!total || present < PORTFOLIO_MIN_CELLS || present / total < PORTFOLIO_MIN_RATIO) return null;
   return axisScore(modelId, axis, "system");
 }
 
-function coverageFor(modelId: string, mode: BenchmarkMode) {
+const coverageCached = memo((key: string) => {
+  const [modelId, mode] = key.split("|");
   const scores = scoresFor(modelId);
-  const core = BENCHMARKS.filter(b => b.tier === "core" && (mode === "system" || b.mode === "model"));
+  const core = coreBenchmarks(`*|${mode}`);
   const present = core.filter(b => typeof scores[b.id] === "number").length;
   const pct = core.length ? Math.round(present / core.length * 100) : 0;
   const status = present === 0 ? "uncollected" : pct < 50 ? "partial" : "broad";
   return { present, total: core.length, pct, status } as const;
+});
+
+function coverageFor(modelId: string, mode: BenchmarkMode) {
+  return coverageCached(`${modelId}|${mode}`);
 }
 
 function coverageText(modelId: string, mode: BenchmarkMode, lang: Lang) {
@@ -213,11 +275,15 @@ function rankValue(model: ModelRecord, lens: RankLens) {
   return value.toFixed(1);
 }
 
-const center = 160;
+// The viewBox is wider than the plot so a seven-character axis label ("长上下文与记忆") has room
+// on both sides. On desktop the fixed 350px height letterboxes the SVG and hides a tight box; on
+// a phone height is auto, the box is exactly the viewBox, and anything overhanging is clipped.
+const CENTER_X = 250;
+const CENTER_Y = 160;
 const radius = 118;
 const radarPoint = (i: number, value: number, scale = radius) => {
   const angle = Math.PI * 2 * i / AXES.length - Math.PI / 2;
-  return [center + Math.cos(angle) * scale * value / 100, center + Math.sin(angle) * scale * value / 100];
+  return [CENTER_X + Math.cos(angle) * scale * value / 100, CENTER_Y + Math.sin(angle) * scale * value / 100];
 };
 const radarPolygon = (value: number) => AXES.map((_, i) => radarPoint(i, value).join(",")).join(" ");
 
@@ -225,10 +291,10 @@ function Radar({ models, activeId, mode, lang }:{ models: ModelRecord[]; activeI
   const ui = UI[lang];
   const activeValues = AXES.map(a => axisScore(activeId, a.id, mode));
   const hasActive = activeValues.filter(v => v !== null).length >= 3;
-  return <svg className="radar" viewBox="0 0 420 340" role="img" aria-label={lang === "zh" ? "七维能力雷达图" : "Seven-axis capability radar"}>
+  return <svg className="radar" viewBox="0 0 500 340" role="img" aria-label={lang === "zh" ? "七维能力雷达图" : "Seven-axis capability radar"}>
     <g className="radar-grid">
       {[20,40,60,80,100].map(v => <polygon key={v} points={radarPolygon(v)} />)}
-      {AXES.map((_,i) => { const [x,y] = radarPoint(i,100); return <line key={i} x1={center} y1={center} x2={x} y2={y}/>; })}
+      {AXES.map((_,i) => { const [x,y] = radarPoint(i,100); return <line key={i} x1={CENTER_X} y1={CENTER_Y} x2={x} y2={y}/>; })}
     </g>
     {models.map(model => {
       const values = AXES.map(a => axisScore(model.id, a.id, mode));
@@ -240,8 +306,16 @@ function Radar({ models, activeId, mode, lang }:{ models: ModelRecord[]; activeI
       </g>;
     })}
     {AXES.map((axis,i) => { const [x,y] = radarPoint(i,113,136); return <text key={axis.id} x={x} y={y} textAnchor="middle" dominantBaseline="middle">{axis[lang]}</text>; })}
-    {!hasActive && <g className="radar-empty"><circle cx={center} cy={center} r="53"/><text x={center} y={center-5} textAnchor="middle">N/A</text><text x={center} y={center+14} textAnchor="middle">{ui.noRadar}</text></g>}
+    {!hasActive && <g className="radar-empty"><circle cx={CENTER_X} cy={CENTER_Y} r="53"/><text x={CENTER_X} y={CENTER_Y-5} textAnchor="middle">N/A</text><text x={CENTER_X} y={CENTER_Y+14} textAnchor="middle">{ui.noRadar}</text></g>}
   </svg>;
+}
+
+// The ranking cell carries its own evidence count, so a reader can see that 4/5 sits next to
+// 5/5 and that an N/A is a coverage floor rather than a missing model.
+function PortfolioCell({ modelId, axis }: { modelId: string; axis: BenchmarkAxis }) {
+  const value = portfolioScore(modelId, axis);
+  const { present, total } = portfolioCoverage(modelId, axis);
+  return <span className={value === null ? "portfolio sparse" : "portfolio"}>{value === null ? "N/A" : value.toFixed(1)}<small>{present}/{total}</small></span>;
 }
 
 function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; axis: BenchmarkAxis; mode: BenchmarkMode; lang: Lang }) {
@@ -263,6 +337,7 @@ function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; ax
         </g>;
       })}
     </svg></div>
+    <p className="scroll-hint">{ui.swipe}</p>
     <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; const rows=variantsFor(model.id, b.id); return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={cellTitle(rows, ui.notIngested)}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}{rows.length > 1 ? ` +${rows.length - 1}` : ""}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
   </div>;
 }
@@ -288,8 +363,13 @@ export default function Home() {
   const compare = [active, ...compareIds.filter(id => id !== active.id).map(id => models.find(m => m.id === id)).filter(Boolean) as ModelRecord[]].slice(0,3);
   const makers = ["All labs", ...Array.from(new Set(models.map(x => x.maker)))];
   const coverage = coverageFor(active.id, profileMode);
+  const codingCoverage = portfolioCoverage(active.id, "coding");
+  const agentCoverage = portfolioCoverage(active.id, "agent");
+
+  const lastFetch = useRef(0);
 
   async function refresh() {
+    lastFetch.current = Date.now();
     setUpdated("refreshing");
     try {
       const res = await fetch("/api/live-models",{cache:"no-store"});
@@ -300,11 +380,22 @@ export default function Home() {
     } catch { setLive(false); setUpdated("snapshot"); }
   }
 
-  useEffect(() => { const initial=setTimeout(refresh,0); const timer=setInterval(refresh,300000); return () => { clearTimeout(initial); clearInterval(timer); }; }, []);
+  // A phone keeps this tab alive in the background for a long time. Polling a price feed there
+  // spends radio and battery on a screen nobody is looking at, so the interval only fires while
+  // the document is visible, and a return to the tab refreshes only if the snapshot is stale.
+  useEffect(() => {
+    const PERIOD = 300000;
+    const tick = () => { if (document.visibilityState === "visible") refresh(); };
+    const initial = setTimeout(tick, 0);
+    const timer = setInterval(tick, PERIOD);
+    const onVisibility = () => { if (document.visibilityState === "visible" && Date.now() - lastFetch.current > PERIOD) refresh(); };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => { clearTimeout(initial); clearInterval(timer); document.removeEventListener("visibilitychange", onVisibility); };
+  }, []);
   useEffect(() => { const saved=localStorage.getItem("observatory-language"); const frame=requestAnimationFrame(() => { if(saved === "zh" || saved === "en") setLang(saved); }); return () => cancelAnimationFrame(frame); }, []);
   useEffect(() => { document.documentElement.lang = lang === "zh" ? "zh-CN" : "en"; }, [lang]);
   useEffect(() => {
-    const sectionIds = ["ranking","model-detail","benchmarks","pricing"];
+    const sectionIds = NAV.map(item => item.id);
     let frame = 0;
     const updateActiveSection = () => {
       const marker = Math.min(window.innerHeight * 0.34, 240);
@@ -343,9 +434,9 @@ export default function Home() {
   const bestValue = [...models].sort((a,b) => rankScore(b,"value")-rankScore(a,"value"))[0];
 
   return <main className="shell">
-    <aside className="rail"><div className="logo">Ø</div><nav><a className={activeSection==="ranking"?"active":""} href="#ranking" aria-label="Ranking" aria-current={activeSection==="ranking"?"page":undefined} onClick={()=>setActiveSection("ranking")}>⌁</a><a className={activeSection==="model-detail"?"active":""} href="#model-detail" aria-label="Capability" aria-current={activeSection==="model-detail"?"page":undefined} onClick={()=>setActiveSection("model-detail")}>◇</a><a className={activeSection==="benchmarks"?"active":""} href="#benchmarks" aria-label="Benchmarks" aria-current={activeSection==="benchmarks"?"page":undefined} onClick={()=>setActiveSection("benchmarks")}>△</a><a className={activeSection==="pricing"?"active":""} href="#pricing" aria-label="Pricing" aria-current={activeSection==="pricing"?"page":undefined} onClick={()=>setActiveSection("pricing")}>$</a></nav><a className="rail-source" href="#sources" aria-label="Sources">≡</a></aside>
+    <aside className="rail"><div className="logo">Ø</div><nav>{NAV.map(item => <a key={item.id} className={activeSection===item.id?"active":""} href={`#${item.id}`} aria-label={item.en} aria-current={activeSection===item.id?"page":undefined} onClick={()=>setActiveSection(item.id)}><i aria-hidden="true">{item.glyph}</i><span>{item[lang]}</span></a>)}</nav></aside>
     <div className="workspace">
-      <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span>⌕</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?"live":"live offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}<em>{updated}</em></button></div></header>
+      <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span aria-hidden="true">⌕</span><input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-label={ui.search} value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?"live":"live offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}<em>{updated}</em></button></div></header>
 
       <section className="brief">
         <div><span>{ui.tracked}</span><strong>{models.length}</strong><small>frontier models</small></div>
@@ -360,18 +451,17 @@ export default function Home() {
         <div className="rank-toolbar"><div className="metric-tabs">{LENSES.map(item => <button key={item.id} className={lens===item.id?"active":""} onClick={()=>setLens(item.id)}><span>{item[lang]}</span><b>{lang === "zh" ? item.shortZh : item.shortEn}</b></button>)}</div><div className="filters"><select value={maker} onChange={e=>setMaker(e.target.value)} aria-label="Lab filter">{makers.map(x => <option key={x} value={x}>{x === "All labs" ? ui.allLabs : x}</option>)}</select><label><input type="checkbox" checked={openOnly} onChange={e=>setOpenOnly(e.target.checked)}/>{ui.open}</label></div></div>
         <div className="rank-head"><span>#</span><span>{lang === "zh" ? "模型" : "Model"}</span><span>{lensName}</span><span>AA</span><span>Arena</span><span>{lang === "zh" ? "编程组合" : "Coding"}</span><span>Agent</span><span>{lang === "zh" ? "速度" : "Speed"}</span><span>{ui.compare}</span></div>
         <div className="rank-list">{visible.map((model,index) => {
-          const coding=portfolioScore(model.id,"coding"), agent=portfolioScore(model.id,"agent");
           return <article className={activeId===model.id?"rank-row active":"rank-row"} key={model.id}>
             <button className="rank-main" onClick={()=>selectModel(model.id)}>
               <span className="position">{String(index+1).padStart(2,"0")}</span><span className="model-id"><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}{model.open?" · OPEN":""}</small></span></span>
-              <strong className="lens-value">{rankValue(model,lens)}</strong><span>{model.intelligence}</span><span>{model.textElo ?? "N/A"}</span><span>{coding === null ? "N/A" : coding.toFixed(1)}</span><span>{agent === null ? "N/A" : agent.toFixed(1)}</span><span>{model.speed === null ? "N/A" : `${model.speed}`}</span>
+              <strong className="lens-value">{rankValue(model,lens)}</strong><span>{model.intelligence}</span><span>{model.textElo ?? "N/A"}</span><PortfolioCell modelId={model.id} axis="coding"/><PortfolioCell modelId={model.id} axis="agent"/><span>{model.speed === null ? "N/A" : `${model.speed}`}</span>
             </button>
             <div className="mobile-metrics"><span>AA {model.intelligence}</span><span>Arena {model.textElo ?? "N/A"}</span><span>{lensName} {rankValue(model,lens)}</span></div>
             <label className="compare-check"><input type="checkbox" checked={compareIds.includes(model.id)} disabled={model.id===activeId} onChange={()=>toggleCompare(model.id)}/><span>{ui.compare}</span></label>
           </article>;
         })}</div>
         {ranked.length > 10 && <button className="show-all" onClick={()=>setShowAll(x=>!x)}>{showAll?ui.hide:ui.show}<span>{showAll?"↑":"↓"}</span></button>}
-        <div className="rank-foot"><span>{ui.current}</span><strong>{lensName}</strong><p>{lens === "preference" ? (lang === "zh" ? "Arena 是人工偏好 Elo，不等同于任务正确率。" : "Arena is human-preference Elo, not task accuracy.") : (lang === "zh" ? "N/A 保持缺失，不参与当前排序。" : "N/A remains missing and does not enter this ranking.")}</p></div>
+        <div className="rank-foot"><span>{ui.current}</span><strong>{lensName}</strong><p>{lens === "preference" ? (lang === "zh" ? "Arena 是人工偏好 Elo，不等同于任务正确率。" : "Arena is human-preference Elo, not task accuracy.") : lens === "agent" || lens === "coding" ? ui.portfolioNote : (lang === "zh" ? "N/A 保持缺失，不参与当前排序。" : "N/A remains missing and does not enter this ranking.")}</p></div>
       </section>
 
       <section className="detail-grid" id="model-detail">
@@ -379,7 +469,7 @@ export default function Home() {
           <div className="section-head"><div className="section-title"><span>02</span><div><h2>{ui.capability}</h2><p>{ui.capabilityDesc}</p></div></div><div className="mode-switch"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}><b>{ui.controlled}</b><span>{ui.controlledNote}</span></button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}><b>{ui.best}</b><span>{ui.bestNote}</span></button></div></div>
           <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className={`coverage-card ${coverage.status}`}><span>{ui.coverage}</span><strong>{coverageText(active.id,profileMode,lang)}</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.status === "uncollected" ? ui.notIngested : `${coverage.present} / ${coverage.total} ${ui.coreMetrics} · ${coverage.status === "partial" ? ui.partialCoverage : ui.broadCoverage}`}</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageText(model.id,profileMode,lang)}</em></button>)}</div></div></div>
         </article>
-        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div>{active.configurations.length > 1 && <div className="configs"><span>{lang === "zh" ? "已发布的运行档位" : "Published operating points"}</span><ul>{active.configurations.map(config=><li key={config.effort ?? "default"}><b>{config.effort ?? "default"}</b><em>{config.intelligence}</em><small>{config.costTask === null ? "" : `$${formatUsd(config.costTask)}/task`}{config.latency === null ? "" : `${config.costTask === null ? "" : " · "}${config.latency}s`}</small></li>)}</ul></div>}<div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
+        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system · {codingCoverage.present}/{codingCoverage.total} core</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system · {agentCoverage.present}/{agentCoverage.total} core</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div>{active.configurations.length > 1 && <div className="configs"><span>{lang === "zh" ? "已发布的运行档位" : "Published operating points"}</span><ul>{active.configurations.map(config=><li key={config.effort ?? "default"}><b>{config.effort ?? "default"}</b><em>{config.intelligence}</em><small>{config.costTask === null ? "" : `$${formatUsd(config.costTask)}/task`}{config.latency === null ? "" : `${config.costTask === null ? "" : " · "}${config.latency}s`}</small></li>)}</ul></div>}<div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
       </section>
 
       <section className="panel benchmark-panel" id="benchmarks">

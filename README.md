@@ -17,7 +17,10 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - multi-model benchmark line charts and raw-score tables by capability family
 - model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter-backed live token pricing with snapshot fallback
-- responsive ranking cards, horizontally scrollable charts, and bottom navigation on mobile
+- portfolio ranks published only above a coverage floor, so a model measured on two of five agent
+  benchmarks reads `N/A` instead of outranking one measured on all five
+- mobile layout with a labelled bottom bar, card-form ranking rows, safe-area insets, and a
+  layout probe (`npm run check:mobile`) that fails on horizontal overflow
 - per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
 
 ## Data sources
@@ -102,6 +105,17 @@ npm run build
 diffs it cell by cell, so it runs weekly rather than per commit. `npm run fetch:livebench`
 re-collects batch 09.
 
+`npm run check:mobile` is also outside CI, because it drives headless Chrome against a running
+build. Start one first, then probe 320 / 390 / 430px:
+
+```bash
+npm run build && PORT=3111 npm run start:next
+npm run check:mobile
+```
+
+It fails on horizontal document overflow and warns on text under 9px or controls under 36px.
+Layout rules and the rest of the interface contract live in [`docs/UI.md`](docs/UI.md).
+
 Production validation (the same command EdgeOne Pages runs):
 
 ```bash
@@ -139,7 +153,9 @@ app/
   model-data.ts             # benchmark snapshots and model metadata
   page.tsx                  # ranking, radar, comparison, pricing UI
 public/                     # static assets
+scripts/check-mobile.mjs    # layout probe under device emulation
 docs/ARCHITECTURE.md        # diagrams, data contract, deployment and change playbooks
+docs/UI.md                  # type scale, breakpoints, phone contract, layout verification
 AGENTS.md                    # concise coding-agent handoff rules
 ```
 
