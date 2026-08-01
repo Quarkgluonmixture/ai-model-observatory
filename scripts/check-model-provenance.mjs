@@ -84,6 +84,29 @@ let backed = 0;
 const legacy = [];
 const disputed = [];
 
+// Case-sensitivity orphan guard. Alias resolution is case-sensitive: a model_raw that
+// differs from a mapped key only in casing silently fails to resolve and the row is
+// dropped from ingest. PR #10 caught one such case (Inkling xhigh vs xHigh) only because a
+// human noticed a score had gone missing from the generated output. This surfaces them
+// automatically — a string that matches an existing alias except for casing is almost
+// certainly a transcription error, not a deliberate unmapped model.
+const aliasRawLower = new Map([...aliasFor.keys()].map((raw) => [raw.toLowerCase(), raw]));
+for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".jsonl")).sort()) {
+  for (const line of readFileSync(join(SOURCE_DIR, file), "utf8").split("\n").filter((l) => l.trim())) {
+    let parsed;
+    try { parsed = JSON.parse(line); } catch { continue; }
+    const { model_raw } = parsed;
+    if (model_raw == null || aliasFor.has(model_raw)) continue;
+    const mapped = aliasRawLower.get(model_raw.toLowerCase());
+    if (mapped) {
+      errors.push(
+        `${file}: model_raw "${model_raw}" matches alias "${mapped}" except for casing — ` +
+        `alias resolution is case-sensitive, so this row is silently dropped from ingest.`,
+      );
+    }
+  }
+}
+
 // Prefer the row that describes the flagship configuration, then a row with no effort at
 // all, then anything. Without this the answer would depend on archive line order.
 const pickModelLevel = (model, field, allow = () => true) => {
