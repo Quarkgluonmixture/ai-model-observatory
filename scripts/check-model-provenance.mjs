@@ -98,10 +98,16 @@ for (const model of MODELS) {
   };
 
   for (const configuration of model.configurations) {
+    // A source that prints one row per model, with no effort column, still describes the
+    // configuration the catalog labels. Fall back to it rather than calling the value
+    // unsourced, the same way model-level fields resolve.
+    // Fill field by field, not row by row: a source that prints one row per model with no
+    // effort column still describes the configuration the catalog labels, but a source that
+    // does split by effort must win wherever it actually published a value.
     const key = `${model.id}|${norm(configuration.effort)}`;
-    const archive = effortIndex.get(key) ?? {};
+    const archive = { ...(effortIndex.get(`${model.id}|null`) ?? {}), ...(effortIndex.get(key) ?? {}) };
     const at = `${model.id} (${configuration.effort ?? "default"})`;
-    if (!effortIndex.has(key) && configuration.intelligence != null) {
+    if (!effortIndex.has(key) && !effortIndex.has(`${model.id}|null`) && configuration.intelligence != null) {
       legacy.push(`${at} - no archive row for this configuration`);
     }
     check(`${at} intelligence`, configuration.intelligence, archive.intelligence_index);

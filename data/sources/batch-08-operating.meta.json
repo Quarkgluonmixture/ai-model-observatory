@@ -1,0 +1,24 @@
+{
+  "batch": "08 · operating parameters, second pass",
+  "retrievedDate": "2026-08-01",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 8, browsing model",
+  "filtered": true,
+  "filterRule": "Artificial Analysis model pages archived in full for the 21 target configurations. Vendor pricing pages publish many tiers and regions; archived here is the tier the catalog quotes - Google Standard, Alibaba Singapore/International list price, Thinking Machines Serverless Inference - with the other tiers recorded in this note rather than as rows.",
+  "schema": "Model operating parameters, NOT benchmark scores. Completes the speed, latency and vendor-price fields check:models reported as unsourced.",
+  "sources": [
+    "https://artificialanalysis.ai/models",
+    "https://www.anthropic.com/pricing",
+    "https://ai.google.dev/gemini-api/docs/pricing",
+    "https://api-docs.deepseek.com/quick_start/pricing/",
+    "https://www.alibabacloud.com/help/en/model-studio/model-pricing",
+    "https://docs.z.ai/guides/overview/pricing",
+    "https://tinker-docs.thinkingmachines.ai/tinker/models/"
+  ],
+  "tiersNotArchived": {
+    "google": "Batch and Flex are half Standard; Priority is 1.8x. Gemini 3.1 Pro also prices >200k-token prompts separately at $4/$18.",
+    "alibaba": "China/HK/Frankfurt/Virginia/Tokyo regions are listed at roughly two thirds of the Singapore price. Qwen3.6 Plus prices >256k-token input at 4x.",
+    "thinkingMachines": "Tinker training/sampling pricing is a different product from Serverless Inference; only the latter is comparable to the other models here.",
+    "anthropic": "Claude Sonnet 5's $2/$10 is introductory through 2026-08-31, reverting to $3/$15. Fast mode is 2x; US-only inference is 1.1x."
+  },
+  "note": "This batch overturns an earlier conclusion. Batch 06 recorded that LMArena's price column was unreliable because it disagreed with the catalog on Claude Fable 5 ($10/$50) and GPT-5.5 ($5/$30). Artificial Analysis and Anthropic's own pricing page both confirm those figures: the catalog was stale, not LMArena. See the fieldSourcePolicy correction in this file."
+}

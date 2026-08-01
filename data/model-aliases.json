@@ -905,6 +905,26 @@
       "modelRaw": "muse-spark-1.1",
       "effort": "*",
       "modelId": "muse-spark-1.1"
+    },
+    {
+      "modelRaw": "DeepSeek V4 Flash 0731",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash"
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Flash-0731",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash"
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Pro",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro"
+    },
+    {
+      "modelRaw": "Inkling-Small",
+      "effort": "*",
+      "modelId": "inkling-small"
     }
   ],
   "benchmarkSplits": [
