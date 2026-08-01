@@ -432,6 +432,14 @@ source's drift check. Batch 09 turned LiveBench from "cannot be transcribed" int
 a weekly integrity check with one script. Before writing another transcription prompt, look for
 the data file the page itself loads — that is the question batch 05 did not ask about LiveBench.
 
+- **The coverage floor names its own collection targets.** Since a portfolio score needs half an
+  axis (§5), a model sitting one cell short is one observation away from entering a ranking, and
+  the axes are small enough that single benchmarks unlock many models at once. As of 2026-08-01
+  the two highest-leverage gaps are `mrcr`, missing for 7 models on a 2-benchmark long-context
+  axis that currently ranks nobody, and `hle-no-tools`, missing for 8 on reasoning. Recompute
+  before acting rather than trusting these counts — for each axis take
+  `max(2, ceil(core/2))` and list the models exactly one cell below it. Worth folding into
+  `check:data` as a standing report, which would make the floor self-servicing.
 - Upstream diffing now exists, but only for sources with a machine-readable feed. LiveBench is
   re-fetched and compared cell by cell (`npm run check:upstream`, weekly in CI). The eight
   transcribed batches are still undiffable — nothing tells you that Terminal-Bench or Vals
