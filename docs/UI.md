@@ -51,9 +51,18 @@ Two rules hold the scale together:
    than that takes focus, and the page never zooms back. This is why `.search input` and
    `.filters select` look larger than their neighbours; it is deliberate.
 
-Fonts: `--sans` and `--mono` are declared **on `body`**, not `:root`, because `next/font` puts
-`--font-geist-sans` / `--font-geist-mono` on the body class, and a custom property is substituted
-on the element that declares it. Declaring them at `:root` silently resolves to the fallback.
+Fonts. The interface is bilingual, and no self-hostable Latin webfont pairs convincingly with a
+CJK fallback — Geist next to PingFang read as two unrelated typefaces. So prose uses **each
+platform's own UI face** (`--sans`), which is designed alongside that platform's Chinese face: SF
+Pro with PingFang SC on Apple, Roboto with Noto Sans SC on Android. The CJK families are named
+explicitly rather than left to the generic fallback, which lands on Heiti and looks cheap.
+
+**Geist Mono is the one webfont loaded** (`--mono`). It carries the numerals the whole layout is
+built around. It also needs the CJK chain appended, because several mono labels are Chinese.
+
+`--sans` and `--mono` are declared **on `body`**, not `:root`, because `next/font` puts
+`--font-geist-mono` on the body class, and a custom property is substituted on the element that
+declares it. Declaring them at `:root` silently resolves to the fallback.
 
 ## 3. Breakpoints
 
@@ -110,10 +119,11 @@ Layout differences from desktop, beyond size:
 - **The price poll respects visibility.** The five-minute interval only fires while
   `document.visibilityState === "visible"`, and returning to a backgrounded tab refetches only if
   the snapshot is older than the period. A phone keeps this tab alive for hours.
-- **Both webfonts are used or neither is loaded.** `layout.tsx` loads Geist Sans and Geist Mono;
-  the stylesheet must reference them through `--sans` / `--mono`. For a long time it asked for
-  Inter and IBM Plex Mono — neither of which was loaded — so every mono label fell through to the
-  platform default and rendered differently on iOS, Android and macOS.
+- **A loaded webfont must be referenced, and a referenced one must be loaded.** The stylesheet
+  asked for Inter and IBM Plex Mono while `layout.tsx` loaded Geist Sans and Geist Mono: two
+  families downloaded for nothing, and every mono label falling through to the platform default —
+  Menlo on iOS, Droid Sans Mono on Android. Now only Geist Mono is loaded, and `--mono` is the
+  only thing that references it.
 - The client bundle is ~1.1MB raw / ~215KB gzipped, of which the observation archive is ~520KB
   raw but only ~36KB gzipped. It compresses well because source labels and URLs repeat; if parse
   time ever matters, dedupe them into a source table in `scripts/ingest.mjs` rather than trimming
