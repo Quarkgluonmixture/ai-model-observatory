@@ -1,0 +1,6 @@
+{
+  "batch": "01 · reasoning and math",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 1, browsing model",
+  "note": "Rows whose evaluation_date is null are pages that publish no evaluation date. They carry retrievedDate instead; the transcription date is not presented as an evaluation date."
+}

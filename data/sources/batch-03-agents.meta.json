@@ -1,0 +1,14 @@
+{
+  "batch": "03 · agents and tool use",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 3, browsing model",
+  "filtered": true,
+  "filterRule": "Archived here are the 2026-era frontier rows: every row that maps to a catalog model today plus near-misses that will map once the catalog grows. Dropped at capture: pre-2026 models the catalog will not track.",
+  "sources": [
+    "https://labs.scale.com/leaderboard/mcp_atlas",
+    "https://huggingface.co/datasets/hkust-nlp/Toolathlon-Verified_Trajectories/blob/main/README.md",
+    "https://osworld-v2.xlang.ai/",
+    "https://agents-last-exam.org/leaderboard"
+  ],
+  "note": "OSWorld 1.0 / Verified stayed stuck on 'Loading verified benchmark data...'; only OSWorld 2.0 was transcribed, from osworld-v2.xlang.ai rather than the redirecting os-world.github.io. The HLE with-tools board stayed stuck on 'Loading HLE results...', so hle-tools got no rows and the no-tools figures were correctly not substituted. BrowseComp's page only lists pre-2026 models. Seven rows for Inkling / Inkling Small / MiniMax M3 / Kimi 2.6 / Grok 4.3 were dropped in the first capture pass and restored on 2026-07-31 once those models entered the catalog."
+}

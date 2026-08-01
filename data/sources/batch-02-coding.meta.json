@@ -1,0 +1,20 @@
+{
+  "batch": "02 · coding and software engineering",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 2, browsing model",
+  "filtered": false,
+  "filterRule": "Complete 313-row transcript, supplied as a file export rather than retyped from the chat transcript.",
+  "sources": [
+    "https://www.tbench.ai/leaderboard/terminal-bench/2.1",
+    "https://www.tbench.ai/leaderboard/terminal-bench/2.0",
+    "https://www.swebench.com/",
+    "https://labs.scale.com/leaderboard/swe_bench_pro_public",
+    "https://deepswe.datacurve.ai/",
+    "https://www.swe-marathon.org/",
+    "https://www.frontierswe.com/",
+    "https://posttrainbench.com/",
+    "https://programbench.com/",
+    "https://scicode-bench.github.io/leaderboard/"
+  ],
+  "note": "SWE-bench Verified returned 14 rows but none are catalog models (all 4.5/4.6-era), so swe-verified stays empty. SWE-EVO publishes no numeric leaderboard. SciCode's rows are all pre-2026. Rows whose source publishes no benchmark version (SWE-Marathon, PostTrainBench, ProgramBench) are archived but not ingested; see data/model-aliases.json."
+}

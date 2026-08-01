@@ -7,11 +7,13 @@ import {
   BENCHMARK_OBSERVATIONS,
   BENCHMARK_SCORES,
   MODELS,
+  OBSERVATIONS_BY_CELL,
   SOURCE_META,
   type BenchmarkAxis,
   type BenchmarkMode,
   type BenchmarkRecord,
   type ModelRecord,
+  type ObservationRow,
 } from "./model-data";
 
 type Lang = "zh" | "en";
@@ -66,7 +68,7 @@ const UI = {
     output: "输出",
     blended: "7:2:1 混合价",
     sources: "数据来源与可比性",
-    sourceNote: "“已接入”表示当前页面确实使用了该来源的数据；“接入队列”只是下一批采集目标，不参与现有分数。Arena 衡量人工偏好，系统类结果还同时反映 harness、工具与预算。",
+    sourceNote: "“已接入”是数出来的，不是声明的：只有当存档里确实有来自该来源的观测行时才算接入，数字即行数。“接入队列”只是下一批采集目标，不参与现有分数。Arena 衡量人工偏好，系统类结果还同时反映 harness、工具与预算。",
     back: "返回排行 ↑",
     unavailable: "N/A",
     updated: "更新于 2026 年 7 月 31 日",
@@ -119,7 +121,7 @@ const UI = {
     output: "Output",
     blended: "7:2:1 blended",
     sources: "Sources and comparability",
-    sourceNote: "Connected sources currently feed this dashboard. Queued sources are ingestion targets only and do not affect existing scores. Arena measures preference; system results also reflect harness, tools and budget.",
+    sourceNote: "Connected is measured, not declared: a source counts only when observation rows in the archive came from it, and the number is that row count. Queued sources are ingestion targets and affect nothing. Arena measures preference; system results also reflect harness, tools and budget.",
     back: "Back to ranking ↑",
     unavailable: "N/A",
     updated: "Updated 31 Jul 2026",
@@ -143,6 +145,28 @@ const formatUsd = (value: number) => new Intl.NumberFormat("en-US", {
 const normalized = (b: BenchmarkRecord, value: number) => b.unit === "Elo" ? clamp((value - 1000) / 8) : clamp(value);
 const scoresFor = (modelId: string) => BENCHMARK_SCORES[modelId] ?? {};
 const observationsFor = (modelId: string) => BENCHMARK_OBSERVATIONS[modelId] ?? {};
+const variantsFor = (modelId: string, benchmarkId: string) => OBSERVATIONS_BY_CELL[modelId]?.[benchmarkId] ?? [];
+
+// A cell can hold several non-mergeable runs (harness, effort, tools, context length).
+// The table shows the primary value and exposes the alternates in the tooltip.
+const cellTitle = (rows: ObservationRow[], fallback: string) => {
+  if (!rows.length) return fallback;
+  return rows
+    .map((row, index) => {
+      const parts = [
+        `${index === 0 ? "▸" : "·"} ${row.score}`,
+        row.benchmarkVersion,
+        row.harness,
+        row.reasoningEffort,
+        row.contextLength,
+        row.toolsEnabled === null ? null : row.toolsEnabled ? "tools" : "no tools",
+        row.sourceLabel,
+        row.evaluationDate,
+      ].filter(Boolean);
+      return parts.join(" · ") + (row.note ? `\n   ${row.note}` : "");
+    })
+    .join("\n");
+};
 
 function axisScore(modelId: string, axis: BenchmarkAxis, mode: BenchmarkMode) {
   const scores = scoresFor(modelId);
@@ -175,7 +199,8 @@ function rankScore(model: ModelRecord, lens: RankLens) {
   if (lens === "coding") return portfolioScore(model.id, "coding") ?? -1;
   if (lens === "preference") return model.textElo ?? -1;
   if (lens === "speed") return model.speed ?? -1;
-  if (lens === "value") return model.intelligence / Math.max(0.01, model.costTask);
+  // A model with no published cost per task is absent from the value lens, not free.
+  if (lens === "value") return model.costTask === null ? -1 : model.intelligence / Math.max(0.01, model.costTask);
   return model.intelligence;
 }
 
@@ -238,7 +263,7 @@ function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; ax
         </g>;
       })}
     </svg></div>
-    <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={observation ? `${observation.sourceLabel} · ${observation.benchmarkVersion}${observation.harness ? ` · ${observation.harness}` : ""}` : ui.notIngested}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
+    <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; const rows=variantsFor(model.id, b.id); return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={cellTitle(rows, ui.notIngested)}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}{rows.length > 1 ? ` +${rows.length - 1}` : ""}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
   </div>;
 }
 
@@ -327,7 +352,7 @@ export default function Home() {
         <div><span>{ui.portfolio}</span><strong>{BENCHMARKS.length}</strong><small>7 capability families</small></div>
         <div><span>AA Intelligence</span><strong>{leader.name}</strong><small>{leader.intelligence} · {leader.maker}</small></div>
         <div><span>{lang === "zh" ? "输出速度最快" : "Fastest output"}</span><strong>{fastest.name}</strong><small>{fastest.speed} output tok/s</small></div>
-        <div><span>{lang === "zh" ? "最佳性价比" : "Best value"}</span><strong>{bestValue.name}</strong><small>${bestValue.costTask.toFixed(2)} / AA task</small></div>
+        <div><span>{lang === "zh" ? "最佳性价比" : "Best value"}</span><strong>{bestValue.name}</strong><small>{bestValue.costTask === null ? ui.unavailable : `$${bestValue.costTask.toFixed(2)} / AA task`}</small></div>
       </section>
 
       <section className="panel ranking-panel" id="ranking">
@@ -354,7 +379,7 @@ export default function Home() {
           <div className="section-head"><div className="section-title"><span>02</span><div><h2>{ui.capability}</h2><p>{ui.capabilityDesc}</p></div></div><div className="mode-switch"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}><b>{ui.controlled}</b><span>{ui.controlledNote}</span></button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}><b>{ui.best}</b><span>{ui.bestNote}</span></button></div></div>
           <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className={`coverage-card ${coverage.status}`}><span>{ui.coverage}</span><strong>{coverageText(active.id,profileMode,lang)}</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.status === "uncollected" ? ui.notIngested : `${coverage.present} / ${coverage.total} ${ui.coreMetrics} · ${coverage.status === "partial" ? ui.partialCoverage : ui.broadCoverage}`}</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageText(model.id,profileMode,lang)}</em></button>)}</div></div></div>
         </article>
-        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div><div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
+        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system average</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div>{active.configurations.length > 1 && <div className="configs"><span>{lang === "zh" ? "已发布的运行档位" : "Published operating points"}</span><ul>{active.configurations.map(config=><li key={config.effort ?? "default"}><b>{config.effort ?? "default"}</b><em>{config.intelligence}</em><small>{config.costTask === null ? "" : `$${formatUsd(config.costTask)}/task`}{config.latency === null ? "" : `${config.costTask === null ? "" : " · "}${config.latency}s`}</small></li>)}</ul></div>}<div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
       </section>
 
       <section className="panel benchmark-panel" id="benchmarks">
@@ -370,7 +395,7 @@ export default function Home() {
         {catalogOpen && <div className="catalog-grid">{BENCHMARKS.map(b => <a className={`catalog-card ${b.tier}`} href={b.url} target="_blank" rel="noreferrer" key={b.id}><div><span className={`tier ${b.tier}`}>{ui[b.tier]}</span><span className={`method ${b.method}`}>{b.method === "execution" ? ui.exec : b.method === "exam" ? ui.exam : b.method === "rubric" ? ui.rubric : ui.preference}</span></div><h3>{b.name}</h3><p>{b[lang]}</p><footer><span>{AXES.find(a=>a.id===b.axis)?.[lang]}</span><b>{b.mode === "model" ? ui.modelMode : ui.systemMode}</b><em>{b.version} ↗</em></footer></a>)}</div>}
       </section>
 
-      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2><div className="source-summary"><b>{Object.values(SOURCE_META).filter(source=>source.status==="active").length} {lang==="zh"?"已接入":"CONNECTED"}</b><span>{Object.values(SOURCE_META).filter(source=>source.status==="queued").length} {lang==="zh"?"接入队列":"QUEUED"}</span></div></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a className={source.status} href={source.url} target="_blank" rel="noreferrer" key={source.label}><div><span>{source.date}</span><i>{source.status==="active"?(lang==="zh"?"已接入":"CONNECTED"):(lang==="zh"?"接入队列":"QUEUED")}</i></div><b>{source.label}</b><small>{source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
+      <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2><div className="source-summary"><b>{Object.values(SOURCE_META).filter(source=>source.status==="active").length} {lang==="zh"?"已接入":"CONNECTED"}</b><span>{Object.values(SOURCE_META).filter(source=>source.status==="queued").length} {lang==="zh"?"接入队列":"QUEUED"}</span></div></div><div className="source-grid">{Object.values(SOURCE_META).map(source=><a className={source.status} href={source.url} target="_blank" rel="noreferrer" key={source.label}><div><span>{source.date}</span><i>{source.status==="active"?`${lang==="zh"?"已接入":"CONNECTED"}${source.observations?` · ${source.observations}`:""}`:(lang==="zh"?"接入队列":"QUEUED")}</i></div><b>{source.label}</b><small>{source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
       <footer className="site-footer"><div><i/>VERSIONED SNAPSHOT · 2026-07-31</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
     </div>
   </main>;

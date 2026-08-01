@@ -1,0 +1,13 @@
+{
+  "batch": "04 · multimodal, long context and professional work",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 4, browsing model",
+  "filtered": true,
+  "filterRule": "Archived here are the 2026-era frontier rows only. This batch had the lowest yield of the four: MMMU returned 74 models, CharXiv 97 and VideoMMMU 24, but almost all are pre-2026 vision models the catalog does not track.",
+  "sources": [
+    "https://artificialanalysis.ai/evaluations/gdpval-aa",
+    "https://www.mercor.com/apex/apex-agents-leaderboard/",
+    "https://mmmu-benchmark.github.io/"
+  ],
+  "note": "Zero catalog rows from CharXiv (newest entry is Claude 3.7 / o3 era), VideoMMMU (newest is Claude 3.5 Sonnet), OmniDocBench (an OCR-system board, no catalog models) and AA-LCR (only 3 of 29 rows rendered, all pre-2026). MRCR's dataset card publishes no score table. The MMLU-Pro HF Space did not render. GDPval-AA rendered 20 of 25 rows and APEX 5 of an unknown total behind a 'View results for all models' control, so both remain partial."
+}

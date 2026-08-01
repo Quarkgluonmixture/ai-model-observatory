@@ -1,0 +1,8 @@
+{
+  "batch": "05 · independent evaluators",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 5, browsing model",
+  "filtered": false,
+  "sources": ["https://www.vals.ai/home", "https://www.vals.ai/benchmarks", "https://artificialanalysis.ai/leaderboards/models", "https://lmarena.ai/leaderboard/text"],
+  "note": "Complete transcript as returned, including the 383 LMArena rows and the composite indices, which are archived but deliberately not ingested — see _droppedBenchmarks in data/model-aliases.json."
+}

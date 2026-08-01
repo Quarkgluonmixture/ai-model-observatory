@@ -8,12 +8,12 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 
 ## Features
 
-- 22 frontier and open-weight model configurations
+- 27 frontier and open-weight model families, each with its published operating points
 - Chinese / English interface with persistent language preference
 - separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
 - evidence-backed seven-axis capability radar with explicit `Not ingested` / partial / broad coverage states
-- 31-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
+- 45-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
 - multi-model benchmark line charts and raw-score tables by capability family
 - model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter-backed live token pricing with snapshot fallback
@@ -22,30 +22,56 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 
 ## Data sources
 
-The source registry distinguishes data that already feeds the dashboard from the next ingestion targets. A queued source is visible for transparency but does not affect scores or coverage.
+The source registry distinguishes data that already feeds the dashboard from the next ingestion targets. **A source counts as connected only when observation rows in `data/sources/` actually came from it** — the status is measured, not declared, so a source card can never imply coverage it does not have. A queued source stays visible for transparency and affects nothing.
 
 ### Connected
 
 - [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) — independent capability, speed, price, long-context and GDPval references
-- [LM Arena](https://arena.ai/leaderboard/text) — large-scale human-preference signal, kept separate from objective capability
+- [Vals AI](https://www.vals.ai/benchmarks) — independent finance, legal, medical and coding evaluations
+- [Epoch AI](https://epoch.ai/frontiermath) — FrontierMath Tiers 1-3 and Tier 4, plus an independent GPQA Diamond run
+- [ARC Prize](https://arcprize.org/leaderboard) — verified ARC-AGI-2 results across reasoning efforts
+- [Terminal-Bench](https://www.tbench.ai/leaderboard/terminal-bench/2.1) — 2.1 and 2.0, one row per harness
 - [DeepSWE v1.1](https://deepswe.datacurve.ai/) — benchmark-native long-horizon coding results
-- [Google DeepMind model cards](https://deepmind.google/models/gemini/flash/) — vendor results and harness notes
-- [DeepSeek V4 model cards](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) — vendor results and reasoning-effort settings
-- [Kimi K3 release table](https://github.com/MoonshotAI/Kimi-K3) — comparison seed only, not the global standard
-- [Qwen3.7 release](https://qwen.ai/blog?id=qwen3.7) — vendor results and harness notes
-- [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties) — live provider pricing and context metadata
+- [Scale Labs](https://labs.scale.com/leaderboard) — MCP-Atlas and SWE-Bench Pro
+- [OSWorld 2.0](https://osworld-v2.xlang.ai/) · [Agents' Last Exam](https://agents-last-exam.org/leaderboard) · [FrontierSWE](https://www.frontierswe.com/) · [Toolathlon-Verified](https://github.com/hkust-nlp/Toolathlon)
+- [Mercor APEX-Agents](https://www.mercor.com/apex/apex-agents-leaderboard/) · [MMMU](https://mmmu-benchmark.github.io/)
+- [LM Arena](https://arena.ai/leaderboard/text) — human preference, kept separate from capability and used only for Elo
+- [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties) — live provider pricing
+- Vendor material: [Google DeepMind](https://deepmind.google/models/gemini/flash/) · [DeepSeek V4](https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro) · [Qwen3.7](https://qwen.ai/blog?id=qwen3.7) · [Kimi K3](https://github.com/MoonshotAI/Kimi-K3) (comparison seed only, not the global standard)
 
 ### Ingestion queue
 
 - [LiveBench](https://livebench.ai/) — objective, frequently refreshed general evaluation
 - [Stanford HELM](https://crfm.stanford.edu/helm/) — transparent and reproducible multi-scenario evaluation
-- [ARC Prize verified leaderboard](https://arcprize.org/leaderboard) — verified ARC-AGI results
-- [Epoch AI / FrontierMath](https://epoch.ai/frontiermath) — difficult mathematics and methodology cross-checks
-- [Terminal-Bench 2.1](https://www.tbench.ai/leaderboard/terminal-bench/2.1) — benchmark-native verified terminal-agent runs
-- [OSWorld 2.0](https://github.com/xlang-ai/OSWorld-V2) — execution-based long-horizon computer use
-- [SWE-bench](https://www.swebench.com/) — official software-engineering leaderboard and historical continuity
+- [SWE-bench](https://www.swebench.com/) — the official board returned only pre-2026 models, so nothing is ingested from it yet
 
 Benchmark observations are stored in `app/model-data.ts` as `model × benchmark × version × harness` records. The ingestion order is benchmark-native leaderboards first, vendor release material for gaps, and independent evaluations for cross-checking. A missing observation is displayed as `Not ingested`, never as a score of zero. Live provider pricing is refreshed through `app/api/live-models/route.ts`; when the upstream request fails, the UI keeps the bundled snapshot.
+
+A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
+
+```text
+442 observations across 312/1215 cells (25.7% cell coverage;
+benchmark 138 / independent 127 / vendor 177)
+```
+
+The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
+a batch that adds evidence *and* twelve new benchmark columns can lower the ratio while
+raising every absolute count. Read the three numbers together, not the percentage alone.
+
+Data is not hand-written. Raw leaderboard rows are archived verbatim in `data/sources/*.jsonl`,
+every mapping decision lives in `data/model-aliases.json` with a written reason, and
+`npm run ingest` generates the typed rows. A row whose model string has no alias is skipped
+and reported rather than guessed into place. `docs/INGEST-PROMPT.md` holds the transcription
+contract used to collect new rows.
+
+Model records are hand-authored, but their numbers are audited the same way. `npm run check:models`
+fails when a catalog value contradicts the archive and reports how much of the catalog nothing
+on file supports:
+
+```text
+Model provenance passed: 171/255 catalog values backed by data/sources (67%),
+84 with no archive row.
+```
 
 ## Local development
 

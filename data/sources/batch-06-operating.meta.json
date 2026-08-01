@@ -1,0 +1,15 @@
+{
+  "batch": "06 · model operating parameters",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "docs/INGEST-PROMPT.md batch 6, browsing model",
+  "filtered": true,
+  "filterRule": "LMArena rendered 384 text and 106 code rows; the transcript kept the ~36/34 that cover catalog models and current-generation candidates. Artificial Analysis and vendor pricing pages were transcribed in full for the target models.",
+  "schema": "Model operating parameters, NOT benchmark scores. One row per (model, effort, source). This batch does not go through `npm run ingest`.",
+  "fieldSourcePolicy": {
+    "intelligence_index / output_tokens_per_s / latency_first_chunk_s": "Artificial Analysis model pages only.",
+    "price_*": "Official vendor pricing page when present, else Artificial Analysis. NEVER LMArena - its price column disagrees with both official pages and this catalog (it lists Claude Fable 5 at $10/$50 against $5/$25 official, and GPT-5.5 at $5/$30 which is GPT-5.6 Sol's price). It is incidental metadata on a preference board, not a pricing source.",
+    "text_elo / code_elo": "LMArena only.",
+    "cost_per_task_usd": "Artificial Analysis leaderboard main table - NOT CAPTURED, the page returned Internal Error. No model gets a costTask from this batch."
+  },
+  "note": "Prices genuinely disagree across sources for GPT-5.6 Luna (AA $0.20/$1.20 vs OpenAI $1/$6), Kimi K2.7 Code, Qwen3.6 Plus/Max, MiniMax-M3 (two context tiers) and Inkling. Every variant is archived on its own row; the catalog takes the official-page figure where one exists."
+}

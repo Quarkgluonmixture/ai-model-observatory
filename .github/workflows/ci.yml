@@ -34,8 +34,17 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Rebuild observations from the archive
+        run: npm run ingest
+
+      - name: Fail if the generated observations drift from the archive
+        run: git diff --exit-code app/observations.generated.ts
+
       - name: Validate benchmark data contract
         run: npm run check:data
+
+      - name: Audit model catalog against the source archive
+        run: npm run check:models
 
       - name: Build production application
         run: npm run build

@@ -1,0 +1,10 @@
+{
+  "batch": "07 · Artificial Analysis leaderboard main table",
+  "retrievedDate": "2026-07-31",
+  "collectedWith": "direct fetch of the leaderboard page; the batch-06 browsing run had hit an Internal Error on it",
+  "filtered": true,
+  "filterRule": "The table lists ~230 rows. Archived here are the rows for catalog models and their published effort variants.",
+  "schema": "Model operating parameters, NOT benchmark scores. Supplies the Cost per Task column that batch 06 could not reach.",
+  "sources": ["https://artificialanalysis.ai/leaderboards/models"],
+  "note": "This table independently confirms every costTask, and every intelligence index, that the 17 pre-existing catalog models already carried. Those figures had no recorded provenance before this batch; they now do. An asterisk on the leaderboard's index marks an estimate and is noted per row."
+}

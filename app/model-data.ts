@@ -1,3 +1,19 @@
+import { INGESTED_ROWS } from "./observations.generated.ts";
+
+export type ModelConfiguration = {
+  /** The published operating point, e.g. "max". Null when the maker ships a single one. */
+  effort: string | null;
+  intelligence: number;
+  /** Artificial Analysis cost per task. Null when no source publishes one. */
+  costTask: number | null;
+  speed: number | null;
+  latency: number | null;
+  textElo: number | null;
+  codeElo: number | null;
+  price: { input: number; output: number; cache: number };
+  preliminary: boolean;
+};
+
 export type ModelRecord = {
   id: string;
   name: string;
@@ -5,15 +21,23 @@ export type ModelRecord = {
   color: string;
   open: boolean;
   contextK: number;
+  tags: string[];
+  /**
+   * One record per model family; reasoning effort lives here and on the observation rows,
+   * never in the model id. Leaderboards publish one line per model, so an id that encoded
+   * an effort could not receive them without guessing which effort was meant.
+   * Ordered strongest first.
+   */
+  configurations: ModelConfiguration[];
+  // Flagship view, derived from configurations[0], so rankings read one number per model.
   intelligence: number;
-  costTask: number;
+  costTask: number | null;
   speed: number | null;
   latency: number | null;
   textElo: number | null;
   codeElo: number | null;
-  preliminary?: boolean;
   price: { input: number; output: number; cache: number };
-  tags: string[];
+  preliminary: boolean;
 };
 
 export type BenchmarkAxis =
@@ -45,6 +69,20 @@ export type BenchmarkRecord = {
   en: string;
 };
 
+const cfg = (
+  effort: string | null,
+  intelligence: number,
+  costTask: number | null,
+  speed: number | null,
+  latency: number | null,
+  textElo: number | null,
+  codeElo: number | null,
+  input: number,
+  output: number,
+  preliminary = false,
+  cache: number | null = null,
+): ModelConfiguration => ({ effort, intelligence, costTask, speed, latency, textElo, codeElo, price: { input, output, cache: cache ?? input / 10 }, preliminary });
+
 const m = (
   id: string,
   name: string,
@@ -52,58 +90,130 @@ const m = (
   color: string,
   open: boolean,
   contextK: number,
-  intelligence: number,
-  costTask: number,
-  speed: number | null,
-  latency: number | null,
-  textElo: number | null,
-  codeElo: number | null,
-  input: number,
-  output: number,
   tags: string[],
-  preliminary = false,
-): ModelRecord => ({
-  id,
-  name,
-  maker,
-  color,
-  open,
-  contextK,
-  intelligence,
-  costTask,
-  speed,
-  latency,
-  textElo,
-  codeElo,
-  preliminary,
-  price: { input, output, cache: input / 10 },
-  tags,
-});
+  configurations: ModelConfiguration[],
+): ModelRecord => {
+  const [flagship] = configurations;
+  // Arena publishes no per-effort boards, so its Elo is a family-level signal: take it from
+  // whichever configuration carries one rather than losing it with a non-flagship variant.
+  const textElo = configurations.find((entry) => entry.textElo !== null)?.textElo ?? null;
+  const codeElo = configurations.find((entry) => entry.codeElo !== null)?.codeElo ?? null;
+  return {
+    id, name, maker, color, open, contextK, tags, configurations,
+    intelligence: flagship.intelligence,
+    costTask: flagship.costTask,
+    speed: flagship.speed,
+    latency: flagship.latency,
+    textElo,
+    codeElo,
+    price: flagship.price,
+    preliminary: flagship.preliminary,
+  };
+};
 
 export const MODELS: ModelRecord[] = [
-  m("claude-opus-5-max", "Claude Opus 5 · max", "Anthropic", "#c8794d", false, 1000, 61, 2.34, 54, 83.49, 1495, 1712, 5, 25, ["reasoning", "vision", "agents"], true),
-  m("claude-opus-5-xhigh", "Claude Opus 5 · xhigh", "Anthropic", "#b7643e", false, 1000, 60, 1.8, 54, 29.85, null, null, 5, 25, ["reasoning", "analysis", "agents"]),
-  m("claude-fable-5", "Claude Fable 5 · max", "Anthropic", "#9c4f35", false, 1000, 60, 3.15, 63, 89.02, 1508, 1628, 5, 25, ["knowledge work", "writing", "coding"]),
-  m("gpt-5.6-sol-max", "GPT-5.6 Sol · max", "OpenAI", "#bf8b18", false, 1000, 59, 1.86, 66, 147.3, null, null, 5, 30, ["reasoning", "coding", "presentation"]),
-  m("claude-opus-5-high", "Claude Opus 5 · high", "Anthropic", "#d18b62", false, 1000, 59, 1.23, 53, 13.3, 1493, 1669, 5, 25, ["reasoning", "webdev", "analysis"]),
-  m("gpt-5.6-sol-xhigh", "GPT-5.6 Sol · xhigh", "OpenAI", "#d39a17", false, 1000, 58, 1.17, 61, 48.54, 1485, 1623, 5, 30, ["codex", "agents", "reasoning"]),
-  m("kimi-k3-max", "Kimi K3 · max", "Moonshot", "#6d62cf", true, 1050, 57, 0.86, 36, 3.53, 1486, 1682, 3, 15, ["open weights", "webdev", "long context"], true),
-  m("gpt-5.6-sol-high", "GPT-5.6 Sol · high", "OpenAI", "#e2aa32", false, 1000, 56, 0.77, 62, 13.25, null, null, 5, 30, ["reasoning", "coding", "efficient"]),
-  m("gpt-5.6-terra-max", "GPT-5.6 Terra · max", "OpenAI", "#ecbb55", false, 1000, 55, 0.73, 132, 152.99, null, null, 2.5, 15, ["fast", "reasoning", "multimodal"]),
-  m("grok-4.5-high", "Grok 4.5 · high", "xAI", "#42576b", false, 500, 54, 0.44, 58, 8.01, null, 1550, 2, 6, ["coding", "reasoning", "realtime"]),
-  m("claude-sonnet-5-max", "Claude Sonnet 5 · max", "Anthropic", "#df9a72", false, 1000, 53, 1.72, 79, 155.55, null, 1544, 3, 15, ["coding", "agents", "fast"]),
-  m("gpt-5.6-terra-xhigh", "GPT-5.6 Terra · xhigh", "OpenAI", "#e8c36e", false, 1000, 52, 0.43, 111, 12.9, null, null, 2.5, 15, ["fast", "value", "reasoning"]),
-  m("glm-5.2-max", "GLM-5.2 · max", "Z.ai", "#177f72", true, 1000, 51, 0.29, 111, 1.43, null, 1588, 1.4, 4.4, ["open weights", "coding", "low latency"]),
-  m("muse-spark-1.1", "Muse Spark 1.1", "Meta", "#2d71b9", false, 1050, 51, 0.29, 130, 2.52, 1491, 1536, 1.25, 4.25, ["fast", "creative", "webdev"], true),
-  m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, 50, 0.69, 172, 22.42, null, null, 1.5, 9, ["fast", "vision", "long context"]),
-  m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, 50, 0.56, 217, 14.74, 1482, null, 1.5, 7.5, ["very fast", "vision", "arena"], true),
-  m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, 50, 0.03, null, null, null, null, 0.07, 0.11, ["open weights", "extreme value", "new"]),
-  m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, 46, 0.34, 123, 22.05, 1486, null, 2, 12, ["vision", "arena", "long context"]),
-  m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", true, 1000, 46, 1.28, 200, 2.41, null, null, 1.2, 6, ["open weights", "fast", "multilingual"]),
-  m("deepseek-v4-pro", "DeepSeek V4 Pro · max", "DeepSeek", "#8467d6", true, 1000, 44, 0.05, 65, 1.64, null, null, 0.14, 0.28, ["open weights", "value", "reasoning"]),
-  m("claude-opus-4.8-max", "Claude Opus 4.8 · max", "Anthropic", "#a35f42", false, 1000, 52, 1.36, 48, 18.4, 1478, 1598, 5, 25, ["reasoning", "coding", "agents"]),
-  m("gpt-5.5-xhigh", "GPT-5.5 · xhigh", "OpenAI", "#8d751e", false, 1000, 51, 0.91, 71, 20.1, 1469, 1585, 2.5, 15, ["reasoning", "codex", "long context"]),
+  m("claude-opus-5", "Claude Opus 5", "Anthropic", "#c8794d", false, 1000, ["reasoning", "vision", "agents"], [
+    cfg("max", 61, 2.34, 54, 83.49, 1495, 1712, 5, 25, true),
+    cfg("xhigh", 60, 1.8, 54, 29.85, null, null, 5, 25),
+    cfg("high", 59, 1.23, 53, 13.3, 1493, 1669, 5, 25),
+  ]),
+  m("claude-fable-5", "Claude Fable 5", "Anthropic", "#9c4f35", false, 1000, ["knowledge work", "writing", "coding"], [
+    cfg("max", 60, 3.15, 63, 89.02, 1508, 1628, 5, 25),
+  ]),
+  m("gpt-5.6-sol", "GPT-5.6 Sol", "OpenAI", "#bf8b18", false, 1000, ["reasoning", "coding", "presentation"], [
+    cfg("max", 59, 1.86, 66, 147.3, null, null, 5, 30),
+    cfg("xhigh", 58, 1.17, 61, 48.54, 1485, 1623, 5, 30),
+    cfg("high", 56, 0.77, 62, 13.25, null, null, 5, 30),
+  ]),
+  m("kimi-k3", "Kimi K3", "Moonshot", "#6d62cf", true, 1050, ["open weights", "webdev", "long context"], [
+    cfg("max", 57, 0.86, 36, 3.53, 1486, 1682, 3, 15, true),
+  ]),
+  m("gpt-5.6-terra", "GPT-5.6 Terra", "OpenAI", "#ecbb55", false, 1000, ["fast", "reasoning", "multimodal"], [
+    cfg("max", 55, 0.73, 132, 152.99, null, null, 2.5, 15),
+    cfg("xhigh", 52, 0.43, 111, 12.9, 1468, 1522, 2.5, 15),
+  ]),
+  m("grok-4.5", "Grok 4.5", "xAI", "#42576b", false, 500, ["coding", "reasoning", "realtime"], [
+    cfg("high", 54, 0.44, 58, 8.01, 1468, 1550, 2, 6),
+  ]),
+  m("claude-sonnet-5", "Claude Sonnet 5", "Anthropic", "#df9a72", false, 1000, ["coding", "agents", "fast"], [
+    cfg("max", 53, 1.72, 79, 155.55, 1460, 1544, 3, 15),
+  ]),
+  m("claude-opus-4.8", "Claude Opus 4.8", "Anthropic", "#a35f42", false, 1000, ["reasoning", "coding", "agents"], [
+    cfg("max", 52, 1.36, 48, 18.4, 1474, 1539, 5, 25),
+  ]),
+  m("glm-5.2", "GLM-5.2", "Z.ai", "#177f72", true, 1000, ["open weights", "coding", "low latency"], [
+    cfg("max", 51, 0.29, 111, 1.43, 1469, 1588, 1.4, 4.4),
+  ]),
+  m("muse-spark-1.1", "Muse Spark 1.1", "Meta", "#2d71b9", false, 1050, ["fast", "creative", "webdev"], [
+    cfg("xhigh", 51, 0.29, 130, 2.64, 1491, 1536, 1.25, 4.25, true),
+  ]),
+  m("gpt-5.5", "GPT-5.5", "OpenAI", "#8d751e", false, 1000, ["reasoning", "codex", "long context"], [
+    cfg("xhigh", 51, 0.91, 71, 20.1, 1476, 1507, 2.5, 15),
+  ]),
+  m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, ["fast", "vision", "long context"], [
+    cfg(null, 50, 0.69, 172, 22.42, 1476, 1492, 1.5, 9),
+  ]),
+  m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, ["very fast", "vision", "arena"], [
+    cfg(null, 50, 0.56, 217, 14.74, 1482, 1528, 1.5, 7.5, true),
+  ]),
+  m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, ["open weights", "extreme value", "new"], [
+    cfg(null, 50, 0.03, null, null, 1436, null, 0.07, 0.11),
+  ]),
+  m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
+    cfg(null, 46, 0.34, 123, 22.05, 1486, null, 2, 12),
+  ]),
+  m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", true, 1000, ["open weights", "fast", "multilingual"], [
+    cfg(null, 46, 1.28, 200, 2.41, 1475, 1517, 1.2, 6),
+  ]),
+  m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["open weights", "value", "reasoning"], [
+    cfg("max", 44, 0.05, 65, 1.64, 1457, 1447, 0.14, 0.28),
+  ]),
+  // --- Added from data/sources/batch-06-operating.jsonl -------------------------------
+  // Field sources: intelligence / speed / latency = Artificial Analysis model pages.
+  // Price = the official vendor page where one exists, else Artificial Analysis.
+  // Elo = LMArena. LMArena's price column is deliberately NOT used; see the batch meta.
+  // costTask comes from batch-07 (the AA leaderboard main table). Where that table has no
+  // row for a configuration the field stays null and the model is absent from the value
+  // lens, rather than being given a made-up cost.
+  m("gpt-5.6-luna", "GPT-5.6 Luna", "OpenAI", "#f0cf82", false, 1050, ["fast", "reasoning", "value"], [
+    cfg("max", 51, 0.07, 184.4, 116.5, null, null, 1, 6, false, 0.1),
+    cfg("xhigh", 49, 0.04, 181.6, 37.91, 1452, 1525, 1, 6, false, 0.1),
+    cfg("high", 46, 0.03, 163.3, 8.89, null, null, 1, 6, false, 0.1),
+    cfg("medium", 38, 0.02, 163.5, 2.38, null, null, 1, 6, false, 0.1),
+    cfg("low", 33, 0.01, 174.3, 1.53, null, null, 1, 6, false, 0.1),
+    cfg("non-reasoning", 27, 0.02, 168.1, 0.77, null, null, 1, 6, false, 0.1),
+  ]),
+  m("kimi-k2.6", "Kimi K2.6", "Moonshot", "#8b7fe0", true, 256, ["open weights", "value", "reasoning"], [
+    cfg("reasoning", 44, null, 57.9, 2.76, 1461, 1510, 0.95, 4, false, 0.16),
+    cfg("non-reasoning", 35, null, 40.5, 2.81, null, null, 0.95, 4, false, 0.16),
+  ]),
+  m("kimi-k2.7-code", "Kimi K2.7 Code", "Moonshot", "#5b4fbe", true, 256, ["open weights", "coding"], [
+    cfg(null, 42, 0.22, 51.6, 2.82, null, 1473, 0.95, 4, false, 0.19),
+  ]),
+  m("minimax-m3", "MiniMax-M3", "MiniMax", "#c2557a", true, 1000, ["open weights", "value", "fast"], [
+    cfg(null, 44, 0.14, 77.2, 1.32, 1444, 1494, 0.3, 1.2, false, 0.06),
+  ]),
+  m("inkling", "Inkling", "Thinking Machines", "#3f8f6d", true, 1000, ["open weights", "reasoning"], [
+    cfg("xhigh", 41, null, 85.1, 2.0, 1443, 1417, 1.87, 4.68, false, 0.374),
+  ]),
+  m("inkling-small", "Inkling Small", "Thinking Machines", "#6fb094", true, 1000, ["open weights", "fast"], [
+    cfg(null, 40, 0.07, 93.5, 1.64, 1431, null, 0.3, 1.2, false, 0.06),
+  ]),
+  m("qwen3.6-plus", "Qwen3.6 Plus", "Alibaba", "#4aa3b4", false, 1000, ["fast", "value", "multilingual"], [
+    cfg(null, 40, 0.36, 53.8, 2.41, 1443, 1458, 0.5, 3, false, 0.05),
+  ]),
+  m("qwen3.6-max", "Qwen3.6 Max Preview", "Alibaba", "#2a6f7d", false, 256, ["multilingual", "preview"], [
+    cfg(null, 40, null, 45.9, 3.29, 1460, 1478, 1.3, 7.8, true, 0.13),
+  ]),
+  m("grok-4.3", "Grok 4.3", "xAI", "#6b7f93", false, 1000, ["reasoning", "deprecated"], [
+    cfg("high", 38, null, 147.5, 18.88, 1443, 1358, 1.25, 2.5, false, 0.2),
+    cfg("non-reasoning", 25, 0.29, 124.7, 0.81, null, null, 1.25, 2.5, false, 0.2),
+  ]),
+  m("gemini-3-flash", "Gemini 3 Flash", "Google", "#8fb8ee", false, 1000, ["fast", "deprecated"], [
+    cfg("non-reasoning", 27, null, 176.0, 0.82, 1473, 1438, 0.5, 3, false, 0.05),
+  ]),
 ];
+
 
 export const AXES: { id: BenchmarkAxis; zh: string; en: string; weight: number }[] = [
   { id: "reasoning", zh: "推理与知识", en: "Reasoning & knowledge", weight: 18 },
@@ -121,10 +231,12 @@ export const BENCHMARKS: BenchmarkRecord[] = [
   { id:"hle-tools", name:"HLE · with tools", axis:"agent", mode:"system", tier:"core", method:"exam", unit:"%", version:"Full", source:"Humanity's Last Exam", url:"https://lastexam.ai/", zh:"允许通用工具的 HLE", en:"HLE with general tools" },
   { id:"arc-agi-2", name:"ARC-AGI-2", axis:"reasoning", mode:"model", tier:"core", method:"exam", unit:"%", version:"v2", source:"ARC Prize", url:"https://arcprize.org/arc-agi/2/", zh:"抽象模式与泛化", en:"Abstract pattern generalization" },
   { id:"critpt", name:"CritPt", axis:"math", mode:"model", tier:"core", method:"exam", unit:"%", version:"2026", source:"CritPt", url:"https://critpt.com/", zh:"研究级物理推理", en:"Research-level physics reasoning" },
-  { id:"frontiermath", name:"FrontierMath", axis:"math", mode:"model", tier:"core", method:"exam", unit:"%", version:"2026", source:"Epoch AI", url:"https://epoch.ai/frontiermath", zh:"前沿数学问题", en:"Frontier mathematics" },
+  { id:"frontiermath", name:"FrontierMath · Tiers 1-3", axis:"math", mode:"model", tier:"core", method:"exam", unit:"%", version:"Tiers 1-3 (v2)", source:"Epoch AI", url:"https://epoch.ai/benchmarks/frontiermath-tiers-1-3-v2", zh:"前沿数学问题（1-3 档）", en:"Frontier mathematics, tiers 1-3" },
+  { id:"frontiermath-t4", name:"FrontierMath · Tier 4", axis:"math", mode:"model", tier:"core", method:"exam", unit:"%", version:"Tier 4 (v2)", source:"Epoch AI", url:"https://epoch.ai/benchmarks/frontiermath-tier-4-v2", zh:"前沿数学问题（第 4 档，研究级）", en:"Frontier mathematics, research-level tier 4" },
   { id:"imo-answer", name:"IMOAnswerBench", axis:"math", mode:"model", tier:"core", method:"exam", unit:"%", version:"2026", source:"Open benchmark", url:"https://github.com/GAIR-NLP/IMOAnswerBench", zh:"开放答案奥数推理", en:"Open-answer olympiad reasoning" },
   { id:"deepswe", name:"DeepSWE", axis:"coding", mode:"system", tier:"core", method:"execution", unit:"%", version:"v1.1", source:"DataCurve", url:"https://github.com/datacurve-ai/deep-swe", zh:"原创真实仓库长时程开发", en:"Original long-horizon repository work" },
   { id:"terminal", name:"Terminal-Bench", axis:"coding", mode:"system", tier:"core", method:"execution", unit:"%", version:"2.1", source:"Harbor", url:"https://www.tbench.ai/leaderboard/terminal-bench/2.1", zh:"终端、环境与系统执行", en:"Terminal and systems execution" },
+  { id:"terminal-20", name:"Terminal-Bench 2.0", axis:"coding", mode:"system", tier:"legacy", method:"execution", unit:"%", version:"2.0", source:"Harbor", url:"https://www.tbench.ai/leaderboard/terminal-bench/2.0", zh:"终端执行（上一代任务集）", en:"Terminal execution, previous task set" },
   { id:"program", name:"ProgramBench", axis:"coding", mode:"system", tier:"observe", method:"execution", unit:"%", version:"2026", source:"Meta", url:"https://github.com/facebookresearch/programbench", zh:"由二进制与文档重建程序", en:"Rebuild programs from binaries and docs" },
   { id:"swe-pro", name:"SWE-Bench Pro", axis:"coding", mode:"system", tier:"core", method:"execution", unit:"%", version:"2026", source:"Scale AI", url:"https://openreview.net/forum?id=uEVTdoAbnK", zh:"真实代码库问题修复", en:"Real repository issue resolution" },
   { id:"swe-evo", name:"SWE-EVO", axis:"coding", mode:"system", tier:"observe", method:"execution", unit:"%", version:"2026", source:"SWE-EVO", url:"https://github.com/SWE-EVO/SWE-EVO", zh:"跨版本软件演化", en:"Multi-step software evolution" },
@@ -145,6 +257,18 @@ export const BENCHMARKS: BenchmarkRecord[] = [
   { id:"videommmu", name:"VideoMMMU", axis:"multimodal", mode:"model", tier:"observe", method:"exam", unit:"%", version:"2026", source:"VideoMMMU", url:"https://videommmu.github.io/", zh:"专业长视频理解", en:"Expert long-video understanding" },
   { id:"aa-lcr", name:"AA-LCR", axis:"context", mode:"model", tier:"core", method:"exam", unit:"%", version:"2026", source:"Artificial Analysis", url:"https://artificialanalysis.ai/evaluations/artificial-analysis-long-context-reasoning", zh:"多文档长上下文推理", en:"Multi-document long-context reasoning" },
   { id:"mrcr", name:"MRCR", axis:"context", mode:"model", tier:"core", method:"exam", unit:"%", version:"v2 · 8 needle", source:"OpenAI", url:"https://huggingface.co/datasets/openai/mrcr", zh:"按上下文长度展示检索曲线", en:"Retrieval curves by context length" },
+  { id:"vals-corpfin", name:"Vals · CorpFin v2", axis:"professional", mode:"model", tier:"observe", method:"rubric", unit:"%", version:"v2", source:"Vals AI", url:"https://www.vals.ai/benchmarks/corp_fin_v2", zh:"长上下文信贷协议问答", en:"Credit-agreement finance Q&A" },
+  { id:"vals-finance-agent", name:"Vals · Finance Agent v2", axis:"professional", mode:"system", tier:"observe", method:"rubric", unit:"%", version:"v2", source:"Vals AI", url:"https://www.vals.ai/benchmarks/fabv2", zh:"初级金融分析师代理任务", en:"Junior finance-analyst agent tasks" },
+  { id:"vals-legal-research", name:"Vals · Legal Research", axis:"professional", mode:"model", tier:"observe", method:"rubric", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/legal_research", zh:"美国法律检索与引证", en:"US legal research and citation" },
+  { id:"vals-medscribe", name:"Vals · MedScribe", axis:"professional", mode:"model", tier:"observe", method:"rubric", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/medscribe", zh:"医疗对话转 SOAP 病历", en:"Medical dialogue to SOAP notes" },
+  { id:"vals-public-benefits", name:"Vals · Public Benefits", axis:"professional", mode:"system", tier:"observe", method:"rubric", unit:"%", version:"v1.1", source:"Vals AI", url:"https://www.vals.ai/benchmarks/public_benefits", zh:"公共福利资格判定", en:"Public benefits eligibility" },
+  { id:"vals-skillsbench", name:"Vals · SkillsBench", axis:"professional", mode:"model", tier:"observe", method:"rubric", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/skillsbench", zh:"跨职业技能评测", en:"Cross-occupation skills" },
+  { id:"vals-mortgage-tax", name:"Vals · MortgageTax", axis:"multimodal", mode:"model", tier:"observe", method:"exam", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/mortgage_tax", zh:"房产税证明图片字段提取", en:"Property-tax document extraction" },
+  { id:"vals-livecodebench", name:"Vals · LiveCodeBench", axis:"coding", mode:"model", tier:"observe", method:"execution", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/livecodebench", zh:"竞赛编程实时题库", en:"Live competitive programming" },
+  { id:"vals-ioi", name:"Vals · IOI", axis:"coding", mode:"model", tier:"observe", method:"execution", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/ioi", zh:"信息学奥赛题", en:"Olympiad informatics problems" },
+  { id:"vals-code-migration", name:"Vals · Code Migration", axis:"coding", mode:"system", tier:"observe", method:"execution", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/code_migration", zh:"跨版本代码迁移", en:"Cross-version code migration" },
+  { id:"vals-vibe-code-bench", name:"Vals · Vibe Code Bench", axis:"coding", mode:"system", tier:"observe", method:"rubric", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/vibe_code_bench", zh:"从零构建可运行应用", en:"Building working apps from scratch" },
+  { id:"vals-proofbench", name:"Vals · ProofBench", axis:"math", mode:"model", tier:"observe", method:"rubric", unit:"%", version:"2026", source:"Vals AI", url:"https://www.vals.ai/benchmarks/proofbench", zh:"数学证明书写", en:"Mathematical proof writing" },
   { id:"mmlu-pro", name:"MMLU-Pro", axis:"reasoning", mode:"model", tier:"legacy", method:"exam", unit:"%", version:"2025", source:"TIGER-Lab", url:"https://github.com/TIGER-AI-Lab/MMLU-Pro", zh:"历史通用知识覆盖", en:"Historical broad knowledge coverage" },
   { id:"swe-verified", name:"SWE-bench Verified", axis:"coding", mode:"system", tier:"legacy", method:"execution", unit:"%", version:"Verified", source:"SWE-bench", url:"https://www.swebench.com/", zh:"历史软件修复指标", en:"Historical software repair metric" },
 ];
@@ -156,11 +280,16 @@ export type BenchmarkObservation = {
   sourceUrl: string;
   sourceKind: SourceKind;
   benchmarkVersion: string;
-  evaluationDate: string;
+  /** Null when the source publishes no evaluation date; `retrievedDate` then applies. */
+  evaluationDate: string | null;
+  /** When the row was transcribed. Never presented as an evaluation date. */
+  retrievedDate?: string;
   harness: string | null;
   reasoningEffort: string | null;
   toolsEnabled: boolean | null;
   contextLength?: string;
+  /** Anything that affects comparability: error bars, subset, pass@k, published model string. */
+  note?: string;
 };
 
 export type BenchmarkObservations = Record<string, BenchmarkObservation>;
@@ -200,43 +329,123 @@ const deepseek = (score: number, version: string, harness: string | null = null,
 
 // Each value is an observation with its own source, version and execution setup.
 // Vendor comparison tables are retained as evidence, but no vendor is the global backbone.
-export const BENCHMARK_OBSERVATIONS: Record<string, BenchmarkObservations> = {
-  "kimi-k3-max": { gpqa:kimi(93.5,"Diamond",null,"max",false), critpt:kimi(23.4,"2026",null,"max",false), "aa-lcr":kimi(74.7,"2026",null,"max",false), "hle-no-tools":kimi(43.5,"Full",null,"max",false), "hle-tools":kimi(56,"Full","Kimi Code","max",true), deepswe:kimi(67.5,"v1.1","Kimi Code","max",true), program:kimi(77.8,"2026","Kimi Code","max",true), terminal:kimi(88.3,"2.1","Kimi Code","max",true), frontierswe:kimi(81.2,"2026-07","Kimi Code","max",true), marathon:kimi(42,"v1.1","Kimi Code","max",true), posttrain:kimi(36.6,"v1.1","Kimi Code","max",true), scicode:kimi(58.7,"2026",null,"max",false), browsecomp:kimi(91.2,"2026","search harness","max",true), gdpval:kimi(1686,"v2",null,"max",true), toolathlon:kimi(76.5,"Verified","Kimi Code","max",true), "mcp-atlas":kimi(84.2,"2026",null,"max",true), ale:kimi(28.3,"2026",null,"max",true), apex:kimi(41,"2026",null,"max",true), osworld2:kimi(58.3,"2.0",null,"max",true), omnidoc:kimi(91.1,"1.5",null,"max",false), mmmu:kimi(81.6,"Pro",null,"max",false), charxiv:kimi(84.8,"RQ",null,"max",false) },
+//
+// This object is the seed layer only. The canonical store is OBSERVATION_ROWS below,
+// which also holds harness/effort variants that cannot fit one value per cell.
+const SEED_OBSERVATIONS: Record<string, BenchmarkObservations> = {
+  "kimi-k3": { gpqa:kimi(93.5,"Diamond",null,"max",false), critpt:kimi(23.4,"2026",null,"max",false), "aa-lcr":kimi(74.7,"2026",null,"max",false), "hle-no-tools":kimi(43.5,"Full",null,"max",false), "hle-tools":kimi(56,"Full","Kimi Code","max",true), deepswe:kimi(67.5,"v1.1","Kimi Code","max",true), program:kimi(77.8,"2026","Kimi Code","max",true), terminal:kimi(88.3,"2.1","Kimi Code","max",true), frontierswe:kimi(81.2,"2026-07","Kimi Code","max",true), marathon:kimi(42,"v1.1","Kimi Code","max",true), posttrain:kimi(36.6,"v1.1","Kimi Code","max",true), scicode:kimi(58.7,"2026",null,"max",false), browsecomp:kimi(91.2,"2026","search harness","max",true), gdpval:kimi(1686,"v2",null,"max",true), toolathlon:kimi(76.5,"Verified","Kimi Code","max",true), "mcp-atlas":kimi(84.2,"2026",null,"max",true), ale:kimi(28.3,"2026",null,"max",true), apex:kimi(41,"2026",null,"max",true), osworld2:kimi(58.3,"2.0",null,"max",true), omnidoc:kimi(91.1,"1.5",null,"max",false), mmmu:kimi(81.6,"Pro",null,"max",false), charxiv:kimi(84.8,"RQ",null,"max",false) },
   "claude-fable-5": { gpqa:kimi(92.6,"Diamond"), critpt:kimi(28.6,"2026"), "aa-lcr":kimi(70,"2026"), "hle-no-tools":kimi(53.3,"Full"), "hle-tools":kimi(63,"Full",null,null,true), deepswe:kimi(70,"v1.1","Claude Code",null,true), program:kimi(76.8,"2026","Claude Code",null,true), terminal:kimi(88,"2.1","Claude Code",null,true), frontierswe:kimi(86.6,"2026-07","Claude Code",null,true), marathon:kimi(35,"v1.1","Claude Code",null,true), posttrain:kimi(41.4,"v1.1","Claude Code",null,true), scicode:kimi(60.2,"2026"), browsecomp:kimi(88,"2026",null,null,true), gdpval:kimi(1747,"v2",null,null,true), toolathlon:kimi(77.9,"Verified",null,null,true), "mcp-atlas":kimi(84.7,"2026",null,null,true), ale:kimi(25.7,"2026",null,null,true), apex:kimi(43.3,"2026",null,null,true), osworld2:kimi(66.1,"2.0",null,null,true), omnidoc:kimi(89.8,"1.5"), mmmu:kimi(81.2,"Pro"), charxiv:kimi(88.9,"RQ") },
-  "gpt-5.6-sol-max": { gpqa:kimi(94.1,"Diamond"), critpt:kimi(32.3,"2026"), "aa-lcr":kimi(73.7,"2026"), "hle-no-tools":kimi(44.5,"Full"), "hle-tools":kimi(58,"Full",null,null,true), deepswe:kimi(73,"v1.1","Codex",null,true), program:kimi(77.6,"2026","Codex",null,true), terminal:kimi(88.8,"2.1","Codex",null,true), frontierswe:kimi(71.3,"2026-07","Codex",null,true), marathon:kimi(39,"v1.1","Codex",null,true), posttrain:kimi(34.6,"v1.1","Codex",null,true), scicode:kimi(56.1,"2026"), browsecomp:kimi(90.4,"2026",null,null,true), gdpval:kimi(1736,"v2",null,null,true), toolathlon:kimi(74.9,"Verified",null,null,true), "mcp-atlas":kimi(83.6,"2026",null,null,true), ale:kimi(29.6,"2026",null,null,true), apex:kimi(39.9,"2026",null,null,true), osworld2:kimi(62.6,"2.0",null,null,true), omnidoc:kimi(85.8,"1.5"), mmmu:kimi(83,"Pro"), charxiv:kimi(84.6,"RQ") },
-  "claude-opus-4.8-max": { gpqa:kimi(91,"Diamond"), critpt:kimi(20.9,"2026"), "aa-lcr":kimi(67.7,"2026"), "hle-no-tools":kimi(49.8,"Full"), "hle-tools":kimi(57.9,"Full",null,null,true), deepswe:kimi(59,"v1.1","Claude Code",null,true), program:kimi(71.9,"2026","Claude Code",null,true), terminal:kimi(84.6,"2.1","Claude Code",null,true), frontierswe:kimi(66.7,"2026-07","Claude Code",null,true), marathon:kimi(40,"v1.1","Claude Code",null,true), posttrain:kimi(34.1,"v1.1","Claude Code",null,true), scicode:kimi(53.5,"2026"), browsecomp:kimi(84.3,"2026",null,null,true), gdpval:kimi(1593,"v2",null,null,true), toolathlon:kimi(76.2,"Verified",null,null,true), "mcp-atlas":kimi(83.6,"2026",null,null,true), ale:kimi(27,"2026",null,null,true), apex:kimi(39.4,"2026",null,null,true), osworld2:kimi(55.7,"2.0",null,null,true), omnidoc:kimi(87.9,"1.5"), mmmu:kimi(78.9,"Pro"), charxiv:kimi(80.5,"RQ") },
-  "gpt-5.5-xhigh": { gpqa:kimi(93.5,"Diamond"), critpt:kimi(27.1,"2026"), "aa-lcr":kimi(74.3,"2026"), "hle-no-tools":kimi(41.4,"Full"), "hle-tools":kimi(52.2,"Full",null,null,true), deepswe:kimi(67,"v1.1","Codex",null,true), program:kimi(70.8,"2026","Codex",null,true), terminal:kimi(83.4,"2.1","Codex",null,true), frontierswe:kimi(64.9,"2026-07","Codex",null,true), marathon:kimi(14,"v1.1","Codex",null,true), posttrain:kimi(28.4,"v1.1","Codex",null,true), scicode:kimi(56.1,"2026"), browsecomp:kimi(84.4,"2026",null,null,true), gdpval:kimi(1491,"v2",null,null,true), toolathlon:kimi(73.5,"Verified",null,null,true), "mcp-atlas":kimi(82.8,"2026",null,null,true), ale:kimi(26.6,"2026",null,null,true), apex:kimi(38.5,"2026",null,null,true), osworld2:kimi(49.5,"2.0",null,null,true), omnidoc:kimi(89.4,"1.5"), mmmu:kimi(81.2,"Pro"), charxiv:kimi(84.1,"RQ") },
-  "glm-5.2-max": { gpqa:kimi(91.2,"Diamond"), critpt:kimi(20.9,"2026"), "aa-lcr":kimi(71.3,"2026"), deepswe:kimi(46.2,"v1.1",null,null,true), program:kimi(63.7,"2026",null,null,true), terminal:kimi(82.7,"2.1",null,null,true), frontierswe:kimi(67.3,"2026-07",null,null,true), marathon:kimi(13,"v1.1",null,null,true), posttrain:kimi(34.3,"v1.1",null,null,true), scicode:kimi(50.5,"2026"), gdpval:kimi(1510,"v2",null,null,true), toolathlon:kimi(59.9,"Verified",null,null,true), "mcp-atlas":kimi(82.6,"2026",null,null,true), ale:kimi(20.4,"2026",null,null,true), apex:kimi(35.6,"2026",null,null,true) },
+  "gpt-5.6-sol": { gpqa:kimi(94.1,"Diamond"), critpt:kimi(32.3,"2026"), "aa-lcr":kimi(73.7,"2026"), "hle-no-tools":kimi(44.5,"Full"), "hle-tools":kimi(58,"Full",null,null,true), deepswe:kimi(73,"v1.1","Codex",null,true), program:kimi(77.6,"2026","Codex",null,true), terminal:kimi(88.8,"2.1","Codex",null,true), frontierswe:kimi(71.3,"2026-07","Codex",null,true), marathon:kimi(39,"v1.1","Codex",null,true), posttrain:kimi(34.6,"v1.1","Codex",null,true), scicode:kimi(56.1,"2026"), browsecomp:kimi(90.4,"2026",null,null,true), gdpval:kimi(1736,"v2",null,null,true), toolathlon:kimi(74.9,"Verified",null,null,true), "mcp-atlas":kimi(83.6,"2026",null,null,true), ale:kimi(29.6,"2026",null,null,true), apex:kimi(39.9,"2026",null,null,true), osworld2:kimi(62.6,"2.0",null,null,true), omnidoc:kimi(85.8,"1.5"), mmmu:kimi(83,"Pro"), charxiv:kimi(84.6,"RQ") },
+  "claude-opus-4.8": { gpqa:kimi(91,"Diamond"), critpt:kimi(20.9,"2026"), "aa-lcr":kimi(67.7,"2026"), "hle-no-tools":kimi(49.8,"Full"), "hle-tools":kimi(57.9,"Full",null,null,true), deepswe:kimi(59,"v1.1","Claude Code",null,true), program:kimi(71.9,"2026","Claude Code",null,true), terminal:kimi(84.6,"2.1","Claude Code",null,true), frontierswe:kimi(66.7,"2026-07","Claude Code",null,true), marathon:kimi(40,"v1.1","Claude Code",null,true), posttrain:kimi(34.1,"v1.1","Claude Code",null,true), scicode:kimi(53.5,"2026"), browsecomp:kimi(84.3,"2026",null,null,true), gdpval:kimi(1593,"v2",null,null,true), toolathlon:kimi(76.2,"Verified",null,null,true), "mcp-atlas":kimi(83.6,"2026",null,null,true), ale:kimi(27,"2026",null,null,true), apex:kimi(39.4,"2026",null,null,true), osworld2:kimi(55.7,"2.0",null,null,true), omnidoc:kimi(87.9,"1.5"), mmmu:kimi(78.9,"Pro"), charxiv:kimi(80.5,"RQ") },
+  "gpt-5.5": { gpqa:kimi(93.5,"Diamond"), critpt:kimi(27.1,"2026"), "aa-lcr":kimi(74.3,"2026"), "hle-no-tools":kimi(41.4,"Full"), "hle-tools":kimi(52.2,"Full",null,null,true), deepswe:kimi(67,"v1.1","Codex",null,true), program:kimi(70.8,"2026","Codex",null,true), terminal:kimi(83.4,"2.1","Codex",null,true), frontierswe:kimi(64.9,"2026-07","Codex",null,true), marathon:kimi(14,"v1.1","Codex",null,true), posttrain:kimi(28.4,"v1.1","Codex",null,true), scicode:kimi(56.1,"2026"), browsecomp:kimi(84.4,"2026",null,null,true), gdpval:kimi(1491,"v2",null,null,true), toolathlon:kimi(73.5,"Verified",null,null,true), "mcp-atlas":kimi(82.8,"2026",null,null,true), ale:kimi(26.6,"2026",null,null,true), apex:kimi(38.5,"2026",null,null,true), osworld2:kimi(49.5,"2.0",null,null,true), omnidoc:kimi(89.4,"1.5"), mmmu:kimi(81.2,"Pro"), charxiv:kimi(84.1,"RQ") },
+  "glm-5.2": { gpqa:kimi(91.2,"Diamond"), critpt:kimi(20.9,"2026"), "aa-lcr":kimi(71.3,"2026"), deepswe:kimi(46.2,"v1.1",null,null,true), program:kimi(63.7,"2026",null,null,true), terminal:kimi(82.7,"2.1",null,null,true), frontierswe:kimi(67.3,"2026-07",null,null,true), marathon:kimi(13,"v1.1",null,null,true), posttrain:kimi(34.3,"v1.1",null,null,true), scicode:kimi(50.5,"2026"), gdpval:kimi(1510,"v2",null,null,true), toolathlon:kimi(59.9,"Verified",null,null,true), "mcp-atlas":kimi(82.6,"2026",null,null,true), ale:kimi(20.4,"2026",null,null,true), apex:kimi(35.6,"2026",null,null,true) },
 
   "gemini-3.5-flash": { "hle-no-tools":google35(40.2,"Full",null,false), "arc-agi-2":google35(72.1,"v2",null,false), "swe-pro":google36(55.1,"Public",null,true), deepswe:google36(37,"v1.1",null,true), terminal:google36(76.2,"2.1","Terminus-2",true), gdpval:google36(1349,"v2",null,true), charxiv:google36(84.2,"RQ",null,false), mmmu:google35(83.6,"Pro",null,false), mrcr:google36(77.3,"v2 · 8 needle",null,false,"128K average") },
   "gemini-3.6-flash": { "swe-pro":google36(58.7,"Public",null,true), deepswe:google36(49,"v1.1",null,true), terminal:google36(78,"2.1","Terminus-2",true), gdpval:google36(1421,"v2",null,true), charxiv:google36(85.2,"RQ",null,false), mrcr:google36(91.8,"v2 · 8 needle",null,false,"128K average") },
   "gemini-3.1-pro": { "hle-no-tools":google35(44.4,"Full",null,false), "arc-agi-2":google35(77.1,"v2",null,false), "swe-pro":google36(54.2,"Public",null,true), deepswe:google36(12,"v1.1",null,true), terminal:google36(73.8,"2.1","Terminus-2",true), gdpval:google36(965,"v2",null,true), charxiv:google36(83.3,"RQ",null,false), mmmu:google35(80.5,"Pro",null,false), mrcr:google36(84.9,"v2 · 8 needle",null,false,"128K average") },
-  "claude-sonnet-5-max": { "swe-pro":google36(63.2,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(80.4,"2.1","Terminus-2",true), gdpval:google36(1607,"v2",null,true), charxiv:google36(77,"RQ",null,false), mrcr:google36(71.6,"v2 · 8 needle",null,false,"128K average") },
-  "grok-4.5-high": { "swe-pro":google36(64.7,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(83.3,"2.1","Terminus-2",true), gdpval:google36(1535,"v2",null,true), charxiv:google36(81.6,"RQ",null,false), mrcr:google36(81.4,"v2 · 8 needle",null,false,"128K average") },
+  "claude-sonnet-5": { "swe-pro":google36(63.2,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(80.4,"2.1","Terminus-2",true), gdpval:google36(1607,"v2",null,true), charxiv:google36(77,"RQ",null,false), mrcr:google36(71.6,"v2 · 8 needle",null,false,"128K average") },
+  "grok-4.5": { "swe-pro":google36(64.7,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(83.3,"2.1","Terminus-2",true), gdpval:google36(1535,"v2",null,true), charxiv:google36(81.6,"RQ",null,false), mrcr:google36(81.4,"v2 · 8 needle",null,false,"128K average") },
   "deepseek-v4-pro": { gpqa:deepseek(90.1,"Diamond",null,false), "hle-no-tools":deepseek(37.7,"Full",null,false), "imo-answer":deepseek(89.8,"2026",null,false), "hle-tools":deepseek(48.2,"Full",null,true), "swe-pro":deepseek(55.4,"2026",null,true), browsecomp:deepseek(83.4,"2026",null,true), "mcp-atlas":deepseek(73.6,"Public",null,true), toolathlon:deepseek(51.8,"Verified",null,true), gdpval:deepseek(1554,"v2",null,true), apex:deepseek(38.3,"2026",null,true), mrcr:deepseek(83.5,"v2 · 8 needle",null,false,"1M") },
   "deepseek-v4-flash": { terminal:observation(82.7,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","2.1","2026-07-31",null,"published setting",true), deepswe:observation(54.4,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","v1.1","2026-07-31",null,"published setting",true), toolathlon:observation(70.3,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","Verified","2026-07-31",null,"published setting",true), ale:observation(25.2,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","2026","2026-07-31",null,"published setting",true) },
-  "claude-opus-5-max": { deepswe:observation(74,"deepswe-v1.1","DeepSWE leaderboard",DEEPSWE_URL,"benchmark","v1.1","2026-07-25","public leaderboard","max",true), gdpval:observation(1860,"gdpval-aa-v2","GDPval-AA v2 leaderboard",GDPVAL_URL,"independent","v2","2026-07-31",null,"max",true) },
+  "claude-opus-5": { gdpval:observation(1860,"gdpval-aa-v2","GDPval-AA v2 leaderboard",GDPVAL_URL,"independent","v2","2026-07-31",null,"max",true) },
   "qwen3.7-max": { "mcp-atlas":observation(76.4,"qwen3.7-release","Qwen3.7 release",QWEN_URL,"vendor","Public","2026-05-19",null,"published setting",true) },
 };
+
+// --- Canonical observation store -------------------------------------------------
+// One cell (model × benchmark) can legitimately hold several observations that must
+// not be merged: different harness, reasoning effort, tool setting or context length.
+// OBSERVATION_ROWS is the source of truth; every other export is derived from it.
+
+export type ObservationRow = BenchmarkObservation & { modelId: string; benchmarkId: string };
+
+const seedRows: ObservationRow[] = Object.entries(SEED_OBSERVATIONS).flatMap(([modelId, values]) =>
+  Object.entries(values).map(([benchmarkId, observation]) => ({ ...observation, modelId, benchmarkId })),
+);
+
+export const OBSERVATION_ROWS: ObservationRow[] = [...seedRows, ...INGESTED_ROWS];
+
+const SOURCE_RANK: Record<SourceKind, number> = { benchmark: 0, independent: 1, vendor: 2 };
+const BENCHMARK_MODE = new Map(BENCHMARKS.map((benchmark) => [benchmark.id, benchmark.mode]));
+
+// Primary = strongest source first. Within one source class, a system benchmark reports the
+// best available scaffold, while a model benchmark reports the most recent evaluation.
+const byPrimaryPreference = (benchmarkId: string) => (a: ObservationRow, b: ObservationRow) => {
+  const rank = SOURCE_RANK[a.sourceKind] - SOURCE_RANK[b.sourceKind];
+  if (rank !== 0) return rank;
+  if (BENCHMARK_MODE.get(benchmarkId) === "system" && a.score !== b.score) return b.score - a.score;
+  const dateA = a.evaluationDate ?? "";
+  const dateB = b.evaluationDate ?? "";
+  if (dateA !== dateB) return dateA < dateB ? 1 : -1;
+  // Effort variants of one model on one date: report its best published configuration.
+  return b.score - a.score;
+};
+
+export const OBSERVATIONS_BY_CELL: Record<string, Record<string, ObservationRow[]>> = (() => {
+  const grouped: Record<string, Record<string, ObservationRow[]>> = {};
+  for (const row of OBSERVATION_ROWS) {
+    ((grouped[row.modelId] ??= {})[row.benchmarkId] ??= []).push(row);
+  }
+  for (const [, cells] of Object.entries(grouped)) {
+    for (const [benchmarkId, rows] of Object.entries(cells)) rows.sort(byPrimaryPreference(benchmarkId));
+  }
+  return grouped;
+})();
+
+export const BENCHMARK_OBSERVATIONS: Record<string, BenchmarkObservations> = Object.fromEntries(
+  Object.entries(OBSERVATIONS_BY_CELL).map(([modelId, cells]) => [
+    modelId,
+    Object.fromEntries(Object.entries(cells).map(([benchmarkId, rows]) => [benchmarkId, rows[0]])),
+  ]),
+);
 
 export const BENCHMARK_SCORES: Record<string, BenchmarkScores> = Object.fromEntries(
   Object.entries(BENCHMARK_OBSERVATIONS).map(([modelId, values]) => [modelId, Object.fromEntries(Object.entries(values).map(([benchmarkId, value]) => [benchmarkId, value.score]))]),
 );
 
-export const SOURCE_META = {
-  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent capability, speed, price and GDPval index", status: "active", category: "independent" },
-  arena: { label: "LM Arena", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", role: "large-scale human preference signal", status: "active", category: "preference" },
-  livebench: { label: "LiveBench", date: "rolling", url: "https://livebench.ai/", role: "objective, contamination-limited general evaluation", status: "queued", category: "benchmark" },
-  helm: { label: "Stanford HELM", date: "living", url: "https://crfm.stanford.edu/helm/", role: "transparent and reproducible multi-scenario evaluation", status: "queued", category: "independent" },
-  arc: { label: "ARC Prize verified", date: "2026", url: "https://arcprize.org/leaderboard", role: "verified ARC-AGI fluid-intelligence results", status: "queued", category: "benchmark" },
-  epoch: { label: "Epoch AI", date: "v2 · 2026", url: "https://epoch.ai/frontiermath", role: "FrontierMath and benchmark methodology cross-checks", status: "queued", category: "independent" },
-  terminal: { label: "Terminal-Bench 2.1", date: "live", url: "https://www.tbench.ai/leaderboard/terminal-bench/2.1", role: "benchmark-native verified terminal-agent runs", status: "queued", category: "benchmark" },
-  osworld: { label: "OSWorld 2.0", date: "2026.06", url: "https://github.com/xlang-ai/OSWorld-V2", role: "execution-based long-horizon computer use", status: "queued", category: "benchmark" },
-  swebench: { label: "SWE-bench", date: "live", url: "https://www.swebench.com/", role: "official software-engineering leaderboard and archive", status: "queued", category: "benchmark" },
-  openrouter: { label: "OpenRouter Models API", date: "live feed", url: "https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties", role: "provider pricing and context-window metadata", status: "active", category: "pricing" },
-  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", status: "active", category: "vendor" },
-  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", status: "active", category: "vendor" },
-  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native long-horizon coding runs", status: "active", category: "benchmark" },
-  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", status: "active", category: "vendor" },
-  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results with harness notes", status: "active", category: "vendor" },
+// The registry declares what a source *is*. Whether it is actually connected is not
+// declared - it is measured, by looking for observation rows that came from it. Listing a
+// source is not coverage; that confusion is what this dashboard exists to avoid.
+//
+// `match` is tested against each row's sourceUrl. `feeds` marks a source that legitimately
+// supplies something other than observation rows - live pricing, or Arena Elo on the model
+// record - and must say what, so it cannot be used to quietly promote an unused source.
+const SOURCE_REGISTRY = {
+  aa: { label: "Artificial Analysis", date: "31 Jul 2026", url: "https://artificialanalysis.ai/leaderboards/models", role: "independent capability, speed, price and GDPval index", category: "independent", match: "artificialanalysis.ai" },
+  arena: { label: "LM Arena", date: "27 Jul 2026", url: "https://arena.ai/leaderboard/text", role: "large-scale human preference signal", category: "preference", match: "lmarena.ai", feeds: "Arena Elo on the model records" },
+  vals: { label: "Vals AI", date: "23 Jul 2026", url: "https://www.vals.ai/benchmarks", role: "independent professional-work evaluations", category: "independent", match: "vals.ai" },
+  epoch: { label: "Epoch AI", date: "v2 · 2026", url: "https://epoch.ai/frontiermath", role: "FrontierMath and benchmark methodology cross-checks", category: "independent", match: "epoch.ai" },
+  arc: { label: "ARC Prize verified", date: "2026", url: "https://arcprize.org/leaderboard", role: "verified ARC-AGI fluid-intelligence results", category: "benchmark", match: "arcprize.org" },
+  terminal: { label: "Terminal-Bench", date: "live", url: "https://www.tbench.ai/leaderboard/terminal-bench/2.1", role: "benchmark-native verified terminal-agent runs", category: "benchmark", match: "tbench.ai" },
+  deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native long-horizon coding runs", category: "benchmark", match: "deepswe.datacurve.ai" },
+  scale: { label: "Scale Labs", date: "2026", url: "https://labs.scale.com/leaderboard", role: "MCP-Atlas and SWE-Bench Pro leaderboards", category: "benchmark", match: "labs.scale.com" },
+  osworld: { label: "OSWorld 2.0", date: "2026.06", url: "https://osworld-v2.xlang.ai/", role: "execution-based long-horizon computer use", category: "benchmark", match: "osworld" },
+  ale: { label: "Agents' Last Exam", date: "2026", url: "https://agents-last-exam.org/leaderboard", role: "verifiable real-world professional tasks", category: "benchmark", match: "agents-last-exam.org" },
+  frontierswe: { label: "FrontierSWE", date: "2026-07", url: "https://www.frontierswe.com/", role: "frontier engineering tasks, Mean@5", category: "benchmark", match: "frontierswe.com" },
+  apex: { label: "Mercor APEX-Agents", date: "2026", url: "https://www.mercor.com/apex/apex-agents-leaderboard/", role: "banking, consulting and legal deliverables", category: "benchmark", match: "mercor.com" },
+  toolathlon: { label: "Toolathlon-Verified", date: "2026", url: "https://github.com/hkust-nlp/Toolathlon", role: "long-horizon cross-application tool use", category: "benchmark", match: "Toolathlon" },
+  mmmu: { label: "MMMU", date: "2026", url: "https://mmmu-benchmark.github.io/", role: "expert multimodal reasoning", category: "benchmark", match: "mmmu-benchmark.github.io" },
+  swebench: { label: "SWE-bench", date: "live", url: "https://www.swebench.com/", role: "official software-engineering leaderboard and archive", category: "benchmark", match: "swebench.com" },
+  livebench: { label: "LiveBench", date: "rolling", url: "https://livebench.ai/", role: "objective, contamination-limited general evaluation", category: "benchmark", match: "livebench.ai" },
+  helm: { label: "Stanford HELM", date: "living", url: "https://crfm.stanford.edu/helm/", role: "transparent and reproducible multi-scenario evaluation", category: "independent", match: "crfm.stanford.edu" },
+  openrouter: { label: "OpenRouter Models API", date: "live feed", url: "https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties", role: "provider pricing and context-window metadata", category: "pricing", match: "openrouter.ai", feeds: "the live price route" },
+  deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", category: "vendor", match: "deepmind.google" },
+  deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", category: "vendor", match: "DeepSeek-V4" },
+  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", category: "vendor", match: "MoonshotAI/Kimi-K3" },
+  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results with harness notes", category: "vendor", match: "qwen.ai" },
 } as const;
+
+export type SourceStatus = "active" | "queued";
+
+export const SOURCE_META = Object.fromEntries(
+  Object.entries(SOURCE_REGISTRY).map(([key, entry]) => {
+    const observations = OBSERVATION_ROWS.filter((row) => row.sourceUrl.includes(entry.match)).length;
+    const feeds = "feeds" in entry ? entry.feeds : null;
+    return [key, {
+      ...entry,
+      observations,
+      // Connected means rows in the store, or a stated non-observation contribution.
+      status: (observations > 0 || feeds ? "active" : "queued") as SourceStatus,
+    }];
+  }),
+);
+
