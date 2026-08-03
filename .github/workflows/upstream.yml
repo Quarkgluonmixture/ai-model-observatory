@@ -139,10 +139,22 @@ jobs:
       - name: Run the contract
         if: steps.diff.outputs.class != 'none'
         run: |
+          # pipefail is load-bearing, not hygiene. Without it the exit status of `{ … } | tee`
+          # is tee's, so every check below could fail and this step would still pass — which is
+          # how 4239916 committed a red `check:models` straight to main on 2026-08-03.
+          set -o pipefail
           {
             npm run --silent lint && echo "lint ok"
             npm run --silent check:data
-            npm run --silent check:models | head -1
+            # Capture instead of `| head -1`: piping into head made the inner pipeline's status
+            # head's, hiding the failure, and would also risk a SIGPIPE 141 once pipefail is on.
+            # One line when green, the whole report when red.
+            if models_out="$(npm run --silent check:models 2>&1)"; then
+              echo "$models_out" | head -1
+            else
+              echo "$models_out"
+              exit 1
+            fi
             npm run --silent check:prices
             npm run --silent build > /dev/null && echo "build ok"
           } 2>&1 | tee checks.txt
