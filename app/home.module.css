@@ -13,7 +13,7 @@
   --h-dim: #8a887f;
   --h-hair: #e6e2d6;
   --h-hair2: #d8d3c4;
-  --h-acc: #9c7f22;
+  --h-acc: #7a6318;
   --h-acc-lt: #c9a63a;
   --h-wash: #fbf4e0;
   --h-accline: #e0cd97;
@@ -58,7 +58,7 @@
   font: 11px/1 var(--h-mono); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
   background: var(--h-acc); color: #fff; padding: 10px 14px; border-radius: 99px;
 }
-.cv:hover { background: #836a1b; }
+.cv:hover { background: #5f4d10; }
 @media (max-width: 700px) { .nav { display: none; } .cv { margin-left: auto; } }
 @media (max-width: 640px) { .barIn { padding: 0 12px; } }
 
@@ -158,7 +158,7 @@ a.t:hover .h2, a.t:hover .go { color: var(--h-acc); }
 }
 .btn:hover { border-color: var(--h-acc); color: var(--h-acc); }
 .pri { background: var(--h-acc); border-color: var(--h-acc); color: #fff; font-weight: 700; }
-.pri:hover { background: #836a1b; }
+.pri:hover { background: #5f4d10; }
 .ink .btn { background: transparent; border-color: #3d424a; color: #cdcabf; }
 .ink .btn:hover { border-color: var(--h-acc-lt); color: var(--h-acc-lt); }
 .ink .pri { background: var(--h-acc-lt); border-color: var(--h-acc-lt); color: #201c08; }

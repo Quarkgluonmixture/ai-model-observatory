@@ -77,7 +77,7 @@ function ScoreChart() {
         <line x1="0" y1="56" x2="240" y2="56" stroke="#d7d3c8" />
         <line x1="0" y1="31" x2="240" y2="31" stroke="#e8e5db" />
         <line x1="0" y1="6" x2="240" y2="6" stroke="#e8e5db" />
-        <polyline points={scoreLine} fill="none" stroke="#9c7f22" strokeWidth="2.2"
+        <polyline points={scoreLine} fill="none" stroke="#7a6318" strokeWidth="2.2"
           vectorEffect="non-scaling-stroke" />
         <circle cx="188.4" cy="6" r="3.2" fill="#15161a" />
       </svg>
