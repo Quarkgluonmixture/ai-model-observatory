@@ -3,8 +3,13 @@
 // the legibility floor, and controls below the tap-target floor.
 //
 //   npm run build && PORT=3111 npm run start:next
-//   npm run check:mobile                          # 320 / 390 / 430 against localhost:3111
-//   node scripts/check-mobile.mjs http://localhost:3111 390 --shot=/tmp/shot.png
+//   npm run check:mobile                          # 320 / 390 / 430 against /models
+//   node scripts/check-mobile.mjs http://localhost:3111/models 390 --shot=/tmp/shot.png
+//   node scripts/check-mobile.mjs http://localhost:3111/         # the personal site instead
+//
+// The default target is /models, not /. The observatory moved there when the root became the
+// personal site, and this probe exists to guard the observatory's phone contract — pointed at /
+// it would pass happily while a phone regression sat unnoticed one route over.
 //
 // Device emulation is the point. Headless Chrome sized with --window-size ignores the viewport
 // meta tag entirely and reports overflow that no phone would ever show, which is how a "broken"
@@ -24,7 +29,7 @@ const MIN_TAP_PX = 36;
 const FONT_EXEMPT = [".score-table td.sourced small", ".axis-version", ".live", ".live em"];
 
 const args = process.argv.slice(2);
-const url = args.find(a => a.startsWith("http")) ?? "http://localhost:3111/";
+const url = args.find(a => a.startsWith("http")) ?? "http://localhost:3111/models";
 const shot = args.find(a => a.startsWith("--shot="))?.slice(7);
 const widths = args.filter(a => /^\d+$/.test(a)).map(Number);
 const WIDTHS = widths.length ? widths : [320, 390, 430];

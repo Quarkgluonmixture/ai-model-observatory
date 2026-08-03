@@ -57,9 +57,13 @@
 }
 .nav a:hover { color: var(--h-acc); }
 .nav .sub { color: #a8a69d; }
+/* inline-flex + min-height, not padding: 11px text with 10px padding measured 31px, under the
+   36px tap floor that scripts/check-mobile.mjs enforces (docs/UI.md §4). This is the resume
+   button on a phone — the one control that must be easy to hit. */
 .cv {
+  display: inline-flex; align-items: center; min-height: 38px;
   font: 11px/1 var(--h-mono); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
-  background: var(--h-acc); color: #fff; padding: 10px 14px; border-radius: 99px;
+  background: var(--h-acc); color: #fff; padding: 0 16px; border-radius: 99px;
 }
 .cv:hover { background: #5f4d10; }
 @media (max-width: 700px) { .nav { display: none; } .cv { margin-left: auto; } }
