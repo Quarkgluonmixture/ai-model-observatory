@@ -264,7 +264,8 @@ npm run check:prices
 npm run build
 ```
 
-`npm run check:mobile` additionally if you touched `app/globals.css` or `app/page.tsx`. It needs
+`npm run check:mobile` additionally if you touched `app/globals.css` or `app/models/page.tsx`. Its
+default target is `/models`; pass a URL to probe the personal site at `/` instead. It needs
 Chrome and a running server; if you cannot run it, say so in the PR rather than claiming it passed.
 
 Never report a check as passing that you did not run.

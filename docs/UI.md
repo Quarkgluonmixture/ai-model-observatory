@@ -9,7 +9,7 @@ font size — the sizes here are a scale, not local decisions.
 
 ## 1. What the UI is
 
-One client component (`app/page.tsx`) rendering six stacked sections into a fixed rail:
+One client component (`app/models/page.tsx`) rendering six stacked sections into a fixed rail:
 
 ```text
 rail (nav)   workspace
@@ -147,9 +147,10 @@ phantom overflow — a screenshot taken that way is not evidence. Emulate proper
 
 ```bash
 npm run build && PORT=3111 npm run start:next     # test the production build, not the dev server
-npm run check:mobile                              # 320 / 390 / 430
-node scripts/check-mobile.mjs http://localhost:3111/ 390 --shot=/tmp/shot.png
-node scripts/check-mobile.mjs http://localhost:3111/ 1024 1440   # overflow only
+npm run check:mobile                              # 320 / 390 / 430 against /models
+node scripts/check-mobile.mjs http://localhost:3111/models 390 --shot=/tmp/shot.png
+node scripts/check-mobile.mjs http://localhost:3111/models 1024 1440   # overflow only
+node scripts/check-mobile.mjs http://localhost:3111/            # the personal site at the root
 ```
 
 `scripts/check-mobile.mjs` sets `Emulation.setDeviceMetricsOverride` with `mobile: true`, then

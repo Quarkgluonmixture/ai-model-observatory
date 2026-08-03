@@ -26,6 +26,14 @@ have already been made here — all of which passed every automated check.
   `check:data` and `check:models` and update `home-content.ts` before publishing. This already
   bit once: the page shipped 27 models / 1,162 observations / 49.1% when the real values were
   28 / 1,154 / 47.4%.
+- ⚠ **The coupling runs the other way too.** The daily refresh in `.github/workflows/upstream.yml`
+  runs `npm run build` before it will commit or open a pull request, and that build now includes
+  the personal site. A type error in `app/page.tsx` therefore blocks the data refresh — nothing
+  reaches `main`, and no PR is opened either. Failing closed is right, but know the direction:
+  the portfolio can stop the pipeline. Send personal-site changes through a pull request and read
+  CI before merging; EdgeOne publishes on merge regardless of what CI said.
+- `scripts/check-mobile.mjs` defaults to `/models` for this reason — pointed at `/` it would pass
+  on the personal site while a phone regression sat one route over. Pass a URL to probe `/`.
 
 ## Mission
 
@@ -211,7 +219,8 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |
-| `app/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
+| `app/models/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
+| `app/page.tsx`, `app/home-content.ts`, `app/home.module.css` | The personal site at `/` — no data files, see above |
 | `app/globals.css` | Visual system, type scale, breakpoints, phone layout |
 | `scripts/check-mobile.mjs` | Layout probe: overflow, type floor, tap-target floor |
 | `docs/ARCHITECTURE.md` | Architecture, data policy, collection state, next work |

@@ -41,7 +41,9 @@ run rather than hidden.
 | Path | Responsibility |
 | --- | --- |
 | `app/model-data.ts` | Model metadata, benchmark taxonomy, observations, derived scores, source cards |
-| `app/page.tsx` | Client state, rankings, coverage, radar, line charts, tables, language switching |
+| `app/models/page.tsx` | The observatory itself: client state, rankings, coverage, radar, line charts, tables, language switching |
+| `app/models/layout.tsx` | Its title — the page is a client component and cannot export metadata |
+| `app/page.tsx` + `app/home-content.ts` + `app/home.module.css` | The owner's personal site at `/`. Reads no data file; see AGENTS.md "Two sites share this repo" |
 | `app/api/live-models/route.ts` | OpenRouter price/context lookup and short-lived cache |
 | `app/globals.css` | Light visual system and responsive layout |
 | `data/sources/*.jsonl` | Append-only raw transcription archive, one row per published result |
