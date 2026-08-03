@@ -6,6 +6,27 @@ Read `docs/ARCHITECTURE.md` before making structural or data changes.
 what may be done unsupervised, what must be handed back for approval, and the five mistakes that
 have already been made here — all of which passed every automated check.
 
+## Two sites share this repo
+
+- **`/` is the owner's personal site** (job-hunting portfolio). Its files are `app/page.tsx`,
+  `app/home-content.ts`, `app/home.module.css`, `public/shots/`. Copy lives in
+  `home-content.ts`; the wording rules and the fuller source of truth are in
+  `../quark-space/content/projects.json`.
+- **`/models` is the observatory** — `app/models/page.tsx` (+ `app/models/layout.tsx` for its
+  title, since the page is a client component). Everything else in this file is about the
+  observatory.
+- The personal site touches **no** data file: not `data/sources/`, not
+  `observations.generated.ts`, not `model-data.ts`. Changing it does not require
+  `check:data` / `check:models` / `check:prices` — only `lint` and `build`.
+- It must never put styles in `app/globals.css`. That file owns the observatory's phone
+  contract (type floor, tap targets, safe areas — `docs/UI.md`). The personal site is scoped
+  under `.home` in its own CSS module with `--h-*` prefixed properties, because globals.css
+  styles bare elements (`header`, `h1`) and hangs `--ink` / `--sans` / `--mono` on `body`.
+- ⚠ Any observatory number quoted on the personal site is a **copy**, and copies go stale. Re-run
+  `check:data` and `check:models` and update `home-content.ts` before publishing. This already
+  bit once: the page shipped 27 models / 1,162 observations / 49.1% when the real values were
+  28 / 1,154 / 47.4%.
+
 ## Mission
 
 Maintain a bilingual, mobile-first AI model observatory with honest evidence semantics. The
