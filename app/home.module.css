@@ -33,7 +33,10 @@
   background-size: 52px 52px;
   background-position: -1px -1px;
 }
-.home a { text-decoration: none; color: inherit; }
+/* No `color: inherit` here. As a class-plus-element selector it outranks .pri and .cv and
+   silently repainted the filled buttons body-grey on gold (2.5:1). globals.css already
+   has a{color:inherit} at lower specificity, which is what we actually want. */
+.home a { text-decoration: none; }
 .home p { margin: 0 0 11px; }
 
 /* ── sticky bar ── */
