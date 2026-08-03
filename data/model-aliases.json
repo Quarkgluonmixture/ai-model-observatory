@@ -229,6 +229,11 @@
       "modelId": "gpt-5.5"
     },
     {
+      "modelRaw": "GPT 5.5 (xhigh)",
+      "effort": "*",
+      "modelId": "gpt-5.5"
+    },
+    {
       "modelRaw": "gpt-5-5",
       "effort": "*",
       "modelId": "gpt-5.5"

@@ -89,24 +89,33 @@ const disputed = [];
 
 const { supersededBy } = buildResolvers(config);
 
-// Case-sensitivity orphan guard. Alias resolution is case-sensitive: a model_raw that
-// differs from a mapped key only in casing silently fails to resolve and the row is
-// dropped from ingest. PR #10 caught one such case (Inkling xhigh vs xHigh) only because a
-// human noticed a score had gone missing from the generated output. This surfaces them
-// automatically — a string that matches an existing alias except for casing is almost
-// certainly a transcription error, not a deliberate unmapped model.
-const aliasRawLower = new Map([...aliasFor.keys()].map((raw) => [raw.toLowerCase(), raw]));
+// Spelling-orphan guard. Alias resolution is exact, so a model_raw that differs from a mapped
+// key only in how it is *written* silently fails to resolve and the row is dropped from ingest.
+// PR #10 caught one such case (Inkling xhigh vs xHigh) only because a human noticed a score had
+// gone missing. This surfaces them automatically — a string that matches an existing alias except
+// for spelling is almost certainly a transcription artefact, not a deliberate unmapped model.
+//
+// Casing alone was too narrow. It missed "GPT 5.5 (xhigh)" against "GPT-5.5 (xhigh)" — a space
+// where the alias has a hyphen — and that row sat dropped in batch-02-coding until an audit
+// looked for it. So the key also ignores spaces, hyphens and underscores.
+//
+// Dots, parentheses and slashes are deliberately KEPT. A dot separates a version (5.5 is not 55)
+// and a slash namespaces a publisher (zai-org/glm-4.7 is a different string from glm-4.7 on
+// purpose); folding either would invent collisions between models that really are distinct.
+const spell = (raw) => raw.toLowerCase().replace(/[\s\-_]+/g, "");
+const aliasRawLower = new Map([...aliasFor.keys()].map((raw) => [spell(raw), raw]));
 for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".jsonl")).sort()) {
   for (const line of readFileSync(join(SOURCE_DIR, file), "utf8").split("\n").filter((l) => l.trim())) {
     let parsed;
     try { parsed = JSON.parse(line); } catch { continue; }
     const { model_raw } = parsed;
     if (model_raw == null || aliasFor.has(model_raw)) continue;
-    const mapped = aliasRawLower.get(model_raw.toLowerCase());
+    const mapped = aliasRawLower.get(spell(model_raw));
     if (mapped) {
       caseErrors.push(
-        `${file}: model_raw "${model_raw}" matches alias "${mapped}" except for casing — ` +
-        `alias resolution is case-sensitive, so this row is silently dropped from ingest.`,
+        `${file}: model_raw "${model_raw}" matches alias "${mapped}" except for spelling ` +
+        `(casing, spaces or hyphens) — alias resolution is exact, so this row is silently ` +
+        `dropped from ingest.`,
       );
     }
   }
