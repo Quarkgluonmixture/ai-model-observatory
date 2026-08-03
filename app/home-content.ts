@@ -42,7 +42,7 @@ export const profile = {
     { value: ".71–.75", label: "判官 recall,上游同批 .247" },
     { value: "103", label: "个验证过的红队 plugin" },
     { value: "11", label: "个本地攻击引擎" },
-    { value: "1,155", label: "条模型观测" },
+    { value: "1,145", label: "条模型观测" },
   ],
   nav: [
     { href: "#work", label: "项目" },
@@ -157,7 +157,7 @@ export const featured: Featured[] = [
       { label: "已填充 / 总格数", value: "904 / 1904", pct: 47.5, tone: "a" },
     ],
     points: [
-      "1,155 条观测,每条都带来源、版本、日期和 harness,能一路查回去。目录里的数字有 99% 能对上源归档(311 / 314)。",
+      "1,145 条观测,每条都带来源、版本、日期和 harness,能一路查回去。目录里的数字有 99% 能对上源归档(311 / 314)。",
       "证据不够就不排名:五个 agent benchmark 只测了两个的模型显示 N/A —— 不拿更少的证据去和别人比。",
     ],
     stack: "TypeScript · Next.js · 双语 · 移动优先 · EdgeOne Pages",

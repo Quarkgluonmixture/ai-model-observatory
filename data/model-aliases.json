@@ -12,7 +12,9 @@
     "Deliberately absent, with reasons, so nobody re-adds them by accident:",
     "  Muse Spark (no version)         - a different model from Muse Spark 1.1",
     "  GPT-5.5 Pro / 5.2 Pro / 5.4 Pro - Pro is a different model from the base",
-    "  DeepSeek v4 (max)               - ambiguous between DeepSeek V4 Pro and base V4",
+    "  DeepSeek v4 (max)               - a superseded duplicate, not an ambiguity: this catalog maps",
+    "                                    DeepSeek V4 to deepseek-v4-pro, and the row is batch 01's",
+    "                                    eye-read 89.6 of batch 12's 89.65. See supersededRows.",
     "  GPT 5.6 Sol (Max + Pro)         - a two-model system, not a model configuration",
     "  Fable 5 (1M) on PostTrainBench  - the page says failed cells fell back to Opus 4.8",
     "  Multiple / Best per task       - leaderboard aggregate rows, not a model at all",
@@ -1352,6 +1354,13 @@
       "field": "context_k",
       "supersededBy": "batch-15-model-config",
       "reason": "Same as Inkling above: 256K is the Serverless Inference serving limit, not the context window. config.json model_max_length is 1,048,576 (batch-15). Both stay in the archive; this entry routes the provenance check to batch-15 for this field."
+    },
+    {
+      "file": "batch-01-reasoning-math",
+      "benchmark": "gpqa",
+      "benchmarkVersion": "Diamond",
+      "supersededBy": "batch-12-epoch",
+      "reason": "Batch 01 transcribed the Epoch GPQA Diamond board by eye: 20 rows with the reasoning effort folded into the model string and scores rounded to one decimal. Batch 12 reads Epoch's own hub export and gets the same board at full precision with effort in its own field. One measurement read twice, so only the scripted reading is ingested -- gpt-5.5 (xhigh) 94.0 is batch 12's 94, GPT-5.5 Pro (xhigh) 93.9 is 93.92, GPT-5.5 (low) 90.7 is 90.66, and DeepSeek v4 (max) 89.6 is deepseek-v4-pro's 89.65. Comparing the two batches by model string understates the overlap, because only batch 01 writes the effort into the name; the correspondence is by model plus effort. The rows stay in the archive unchanged."
     }
   ]
 }
