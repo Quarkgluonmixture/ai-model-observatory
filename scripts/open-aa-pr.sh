@@ -71,11 +71,11 @@ if [ -n "$existing" ]; then
 # "Allow GitHub Actions to create and approve pull requests". That setting is off by default, and
 # the work is already safe on a branch by this point, so losing the whole job over the last step
 # would throw away a good fetch. Report the branch and let a human open it.
-elif url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>/dev/null)"; then
+elif url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>pr-error.txt)"; then
   echo "$url"
 else
   url="$repo_url/compare/$BRANCH?expand=1"
-  echo "::warning::GitHub Actions may not open pull requests here; the branch is pushed. Open it at $url"
+  echo "::warning::Could not open the pull request ($(tr '\n' ' ' < pr-error.txt)); the branch is pushed. Open it at $url"
 fi
 
 {
