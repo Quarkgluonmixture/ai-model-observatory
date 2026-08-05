@@ -64,12 +64,26 @@ jobs:
         id: drift
         env:
           AA_API_KEY: ${{ secrets.AA_API_KEY }}
+          # Two sources are read through a browser. This job diffs *every* source, so it needs
+          # Chrome exactly as much as the refresh job does — an omission that made GDPval and MMMU
+          # unreadable here while they worked there.
+          CHROME_PATH: /usr/bin/google-chrome
         # pipefail so the step's verdict stays check:upstream's and not tee's. The log is kept
         # because the steps below have to report *which* cells moved, and a failure that says
         # only "exit code 1" is the kind nobody acts on.
         run: |
           set -o pipefail
-          npm run check:upstream 2>&1 | tee drift.log
+          npm run check:upstream 2>&1 | tee drift.log || status=$?
+          if grep -q "no longer matches its archive" drift.log; then
+            echo "integrity=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "integrity=no" >> "$GITHUB_OUTPUT"
+          fi
+          if grep -q "could not be read" drift.log; then
+            echo "::warning::A source could not be read at all. That is an availability problem, not an integrity one:"
+            grep "could not be read" drift.log >&2 || true
+          fi
+          exit "${status:-0}"
 
       # Runs even when drift failed above: the two findings are independent, and suppressing the
       # gap report because a cell moved would hide a week of collection targets behind one number.
@@ -93,15 +107,23 @@ jobs:
       # The tier-C destination the charter was missing. An integrity failure opens an issue —
       # opening notifies, editing a body does not — and pushes to WeChat. It closes itself when
       # the archive matches again, so an open issue always means a live failure.
+      # The condition is the log, not the exit code. `check:upstream` exits non-zero for two
+      # unrelated reasons — a frozen source rewrote history, and a source could not be read at all
+      # — and only the first is what this issue and its ⚠ notification mean. On the first live run
+      # a missing Chrome binary sent "归档完整性失败" to a phone, which is the same mistake as the
+      # pull-request notification that announced a PR it had not opened: an alarm that fires for
+      # something it does not name spends the credit the channel runs on.
       - name: Report an integrity failure
-        if: always() && steps.drift.outcome == 'failure'
+        if: always() && steps.drift.outcome == 'failure' && contains(steps.drift.outputs.integrity, 'yes')
         env:
           GH_TOKEN: ${{ github.token }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: bash scripts/publish-integrity-issue.sh open drift.log || echo "::warning::Could not publish the integrity issue; drift.log is in this run."
 
+      # Cleared when nothing in the log claims history moved — including runs that failed only
+      # because a source was unreachable, which must not leave a stale integrity issue open.
       - name: Clear the integrity issue
-        if: always() && steps.drift.outcome == 'success'
+        if: always() && contains(steps.drift.outputs.integrity, 'no')
         env:
           GH_TOKEN: ${{ github.token }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
