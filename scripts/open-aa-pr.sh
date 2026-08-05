@@ -13,6 +13,11 @@ BRANCH="auto/refresh-aa"
 TITLE="Refresh Artificial Analysis parameters"
 DIR="$(dirname "$0")"
 
+# Describe the change before committing it: this compares the working tree against HEAD, so it
+# has to run while the change is still uncommitted. It goes at the top of the pull request body,
+# where a reviewer who cannot check an alias mapping can still check a score.
+node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
+
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -26,7 +31,9 @@ catalog is only wrong where check:models says so.
 "
 git push --force origin "$BRANCH"
 
-body="An on-demand re-read of Artificial Analysis. AA is not part of the daily refresh because it
+body="$(sed '/^<!--/d' change.md)
+
+An on-demand re-read of Artificial Analysis. AA is not part of the daily refresh because it
 re-measures continuously; this branch exists so that adding a model does not require a person with
 the API key at a terminal.
 

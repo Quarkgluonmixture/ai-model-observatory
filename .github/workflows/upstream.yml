@@ -225,8 +225,25 @@ jobs:
           } 2>&1 | tee checks.txt
 
       - name: Commit a tier-A refresh straight to main
+        id: commit
         if: steps.diff.outputs.class == 'auto'
         run: bash scripts/commit-refresh.sh fetch.log
+
+      # The message a person can actually check. "Qwen3.8 Max gained 12 cells: GPQA 92.6, ..." is
+      # something the owner can sanity-check in ten seconds; "batch-19-gdpval.jsonl | 175 +++" is
+      # not, and a notification nobody can act on trains the habit of not opening it.
+      - name: Tell WeChat what changed on the board
+        if: steps.commit.outcome == 'success'
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          {
+            echo "已自动合并到 main,站点随后重建。"
+            echo
+            sed '/^<!--/d' change.md
+            echo
+            echo "数字看着不对就说一声,回滚是一个 revert 的事。"
+          } | node scripts/notify-pushplus.mjs "观测台 · 数据已更新"
 
       # Sent after the commit, so the snapshot that suppresses a repeat has already landed. If the
       # push happened first and the commit then failed, the same posts would be pushed tomorrow.

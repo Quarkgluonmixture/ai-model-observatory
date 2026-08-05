@@ -6,7 +6,9 @@ import {
   OBSERVATION_ROWS,
   OBSERVATIONS_BY_CELL,
 } from "../app/model-data.ts";
+import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
 
+const aliasConfig = loadAliasConfig();
 const errors = [];
 const modelIds = new Set(MODELS.map((model) => model.id));
 const benchmarkIds = new Set(BENCHMARKS.map((benchmark) => benchmark.id));
@@ -136,7 +138,23 @@ if (!multiHarness) errors.push("expected at least one model with multiple Termin
 // This cannot be a failure: legitimate disagreements exist and resolving them is research, not a
 // code fix. Grouping by harness AND effort matters — without it, a model's max and low runs read
 // as a contradiction between sources.
+//
+// UPDATE 2026-08-05: this now fails. It was report-only on the reasoning above, and the reasoning
+// was wrong in a way that cost this project a wrong number on the live site for days. When the
+// catalog merged DeepSeek V4 Flash's preview and its post-trained 0731 release into one record,
+// this check printed `deepseek-v4-flash/critpt: 7.14 vs 16.57` every single day and nothing
+// happened, because a line that never fails is a line nobody reads. The disagreement was not
+// research to be resolved — it was two different models in one cell, which rule 4 forbids.
+//
+// A genuine disagreement is still allowed, but it has to be written down: add an entry to
+// `acknowledgedDisagreements` in data/model-aliases.json naming the cell and why the two sources
+// differ. That is the same shape as `allowVariant` on an alias — the exception is cheap, and
+// having to type a reason is what stops it from being reflexive.
+const acknowledged = new Map(
+  (aliasConfig.acknowledgedDisagreements ?? []).map((entry) => [`${entry.modelId}/${entry.benchmark}`, entry]),
+);
 const disagreements = [];
+const unacknowledged = [];
 for (const [modelId, cells] of Object.entries(OBSERVATIONS_BY_CELL)) {
   for (const [benchmarkId, variants] of Object.entries(cells)) {
     const byConfiguration = new Map();
@@ -151,12 +169,62 @@ for (const [modelId, cells] of Object.entries(OBSERVATIONS_BY_CELL)) {
       const low = Math.min(...rows.map((row) => row.score));
       const high = Math.max(...rows.map((row) => row.score));
       if (high - low <= 0.2 * Math.max(high, 1)) continue;
-      disagreements.push(
+      const line =
         `${modelId}/${benchmarkId} [${configuration}]: ${low} vs ${high} — ` +
-        [...new Set(rows.map((row) => row.sourceLabel))].join(" | "),
+        [...new Set(rows.map((row) => row.sourceLabel))].join(" | ");
+      const note = acknowledged.get(`${modelId}/${benchmarkId}`);
+      if (note) disagreements.push(`${line} — acknowledged: ${note.reason}`);
+      else unacknowledged.push(line);
+    }
+  }
+}
+
+// One board, one model, one cell. A source that publishes two entries thinks they are two
+// models; if the catalog maps both to one record they collide, and the reader sees a cell whose
+// primary was chosen by source precedence between two different products.
+//
+// This is the check that would have caught the DeepSeek V4 Flash merge on its own, and it catches
+// the case the disagreement gate cannot: two models whose scores happen to agree. Keyed on
+// harness and effort because a board legitimately publishes one row per operating point, and on
+// the batch file because two *different* sources naming the same model differently is exactly
+// what the alias table is for.
+{
+  const { resolveModelId, isDropped } = buildResolvers(aliasConfig);
+  const exempt = new Set((aliasConfig.mergedInOneSource ?? []).map((entry) => `${entry.file}|${entry.modelId}`));
+  const { batches } = readArchiveFiles();
+  for (const { file, rows } of batches) {
+    const byCell = new Map();
+    for (const { raw } of rows) {
+      if (!raw.benchmark || isDropped(raw.benchmark)) continue;
+      const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file);
+      if (!modelId) continue;
+      const key = `${modelId}|${raw.benchmark}|${raw.harness ?? "-"}|${raw.reasoning_effort ?? "-"}`;
+      (byCell.get(key) ?? byCell.set(key, new Set()).get(key)).add(raw.model_raw);
+    }
+    const reported = new Set();
+    for (const [key, strings] of byCell) {
+      if (strings.size < 2) continue;
+      const [modelId] = key.split("|");
+      if (exempt.has(`${file.replace(/\.jsonl$/, "")}|${modelId}`) || reported.has(modelId)) continue;
+      reported.add(modelId);
+      errors.push(
+        `${file}: ${[...strings].map((name) => `"${name}"`).join(" and ")} both resolve to ` +
+        `${modelId} in one cell (${key.split("|").slice(1).join(" / ")}).\n  One source publishing ` +
+        `two entries is one source saying they are two models. If they really are one, add ` +
+        `{ file, modelId, reason } to mergedInOneSource in data/model-aliases.json; if they are ` +
+        `not, one of the strings needs its own catalog record or no alias at all.`,
       );
     }
   }
+}
+
+for (const entry of unacknowledged.sort()) {
+  errors.push(
+    `${entry}\n  Two sources disagree by more than 20% about one configuration. Either they are ` +
+    `measuring different things — in which case say so in acknowledgedDisagreements — or two ` +
+    `models are sharing a cell, which is how a preview release once published its scores under ` +
+    `the name of the model that replaced it.`,
+  );
 }
 
 if (errors.length) {
@@ -170,8 +238,8 @@ const byKind = OBSERVATION_ROWS.reduce((counts, row) => ({ ...counts, [row.sourc
 
 if (disagreements.length) {
   console.log(
-    `\n${disagreements.length} configuration(s) measured by two sources that disagree by more than 20% ` +
-      "(reported, not failed — one of them is measuring something else):",
+    `\n${disagreements.length} acknowledged disagreement(s) — each has a written reason in ` +
+      "data/model-aliases.json:",
   );
   for (const entry of disagreements.sort()) console.log(`  ${entry}`);
   console.log("");

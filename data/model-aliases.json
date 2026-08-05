@@ -16,7 +16,23 @@
     "Scoping is the last resort, not the first: a string that means one model everywhere gets one",
     "global entry, and a string nobody can attribute stays unmapped and reported.",
     "",
+    "Two escape hatches, both deliberately requiring a written reason:",
+    "  acknowledgedDisagreements - {modelId, benchmark, reason} for a cell where two sources really do",
+    "                              measure different things. Without an entry, a disagreement above",
+    "                              20% fails check:data. It used to be reported and ignored, which is",
+    "                              how a preview release published its scores under the name of the",
+    "                              model that replaced it for a week.",
+    "  mergedInOneSource         - {file, modelId, reason} for a batch where two published strings",
+    "                              really are one model. Without an entry, one source resolving two",
+    "                              strings into one cell fails: a board publishing two entries is that",
+    "                              board saying they are two models.",
+    "",
     "Deliberately absent, with reasons, so nobody re-adds them by accident:",
+    "  Claude Sonnet 5 (Non-reasoning, High Effort) - reasoning and non-reasoning are different modes,",
+    "                                    but both parse to effort \"high\", so mapping both put two",
+    "                                    operating modes in one cell. Caught by the one-source-one-cell",
+    "                                    gate the day it was added. The plain (Non-reasoning) string",
+    "                                    carries no effort token and does not collide, so it stays.",
     "  Muse Spark (no version)         - a different model from Muse Spark 1.1",
     "  GPT-5.5 Pro / 5.2 Pro / 5.4 Pro - Pro is a different model from the base",
     "  DeepSeek v4 (max)               - a superseded duplicate, not an ambiguity: this catalog maps",
@@ -1279,12 +1295,6 @@
       "reason": "Same family, effort printed in the name and kept on the row."
     },
     {
-      "modelRaw": "Claude Sonnet 5 (Non-reasoning, High Effort)",
-      "effort": "*",
-      "modelId": "claude-sonnet-5",
-      "reason": "Non-reasoning is an operating mode of the same family; the catalog already maps the plain Non-reasoning row."
-    },
-    {
       "modelRaw": "DeepSeek V4 Pro (Reasoning, Max Effort)",
       "effort": "*",
       "modelId": "deepseek-v4-pro",
@@ -1607,5 +1617,7 @@
       "supersededBy": "batch-19-gdpval",
       "reason": "Batch 04 hand-read 14 rows off the GDPval-AA board. Batch 19 renders the same page and reads all 175 configurations, and it re-reads the harness and tool setting from the page text every run instead of carrying the transcriptions assumption forward. One measurement read twice; the transcribed rows stay in the archive as evidence of what the board showed on 2026-07-31."
     }
-  ]
+  ],
+  "acknowledgedDisagreements": [],
+  "mergedInOneSource": []
 }

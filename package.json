@@ -27,7 +27,8 @@
     "db:generate": "bash scripts/sites-env.sh -- drizzle-kit generate",
     "report:gaps": "node --experimental-strip-types scripts/report-gaps.mjs",
     "fetch:sources": "node scripts/fetch-source.mjs",
-    "probe:releases": "node scripts/release-probe.mjs"
+    "probe:releases": "node scripts/release-probe.mjs",
+    "describe-change": "node scripts/describe-change.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",
