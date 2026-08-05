@@ -575,6 +575,21 @@ What "maintains itself" means concretely, every day, in `.github/workflows/upstr
 | Anything never collected at all | any | The collection-gaps issue |
 | A model appeared upstream that was not in yesterday's report | any | Pushed to WeChat via PushPlus, diffed against the previous issue body |
 | A maker published a release post | `npm run probe:releases` | Reported, and pushed to WeChat when the title looks like a launch |
+| Artificial Analysis measured a model the catalog lacks | `npm run aa:new` | Dispatches the AA refresh, which opens a pull request carrying the parameters **and a drafted catalog record** |
+
+That last row is the one that used to be a person. AA is excluded from the daily refresh for a good
+reason — it re-measures speed, latency and cost continuously, so a scheduled rewrite would fail
+`check:models` every morning — but "not daily" had quietly become "somebody has to sit at a machine
+with the API key", which was the last manual step between a model being published and a catalog
+record existing. Qwen3.8 Max waited behind exactly that. The fix is to separate the two things AA
+does: a re-measurement is noise, and a *new model appearing* is signal. Only the second triggers
+anything, and what it triggers is the same on-demand workflow, dispatched by the daily job instead
+of by a person.
+
+`npm run draft:model` writes the record's numbers from the archive and leaves blank what nothing
+sources — display name, colour, tags — with the reason next to each. It never writes to
+`app/model-data.ts`: placing a record is a new mapping, and the reviewer's job is exactly the part
+the draft cannot do.
 
 The release probe exists because the other two detectors watch the wrong surface. `check:upstream`
 asks whether an archived number moved; the namespace watch asks whether a provider started

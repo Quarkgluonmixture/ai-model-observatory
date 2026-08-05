@@ -36,6 +36,10 @@ jobs:
     permissions:
       contents: read
       issues: write
+      # To dispatch the Artificial Analysis refresh when AA has measured something new. The
+      # refresh itself needs contents: write, which is why it stays a separate workflow rather
+      # than becoming a step here.
+      actions: write
 
     steps:
       - name: Check out repository
@@ -102,6 +106,36 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: bash scripts/publish-integrity-issue.sh close || true
+
+      # AA is excluded from the daily refresh because it re-measures continuously and a scheduled
+      # rewrite would fail check:models every morning. That is right, and it quietly turned into
+      # "somebody has to sit at a machine with the API key" — the last manual step between a model
+      # being published and a catalog record existing. This separates the two things AA does: a
+      # re-measurement is noise, a new model is signal, and only the second triggers anything.
+      - name: Ask whether AA has measured a model the catalog lacks
+        if: always()
+        id: aanew
+        env:
+          AA_API_KEY: ${{ secrets.AA_API_KEY }}
+        run: |
+          node scripts/aa-new-models.mjs > aa-new.md || true
+          sed -n 's/.*<!-- aa-new-models: \([0-9]*\) -->.*/count=\1/p' aa-new.md >> "$GITHUB_OUTPUT"
+          cat aa-new.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Collect the new models' parameters
+        if: always() && steps.aanew.outputs.count != '' && steps.aanew.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          gh workflow run aa-refresh.yml || echo "::warning::Could not dispatch the AA refresh; run it from the Actions tab."
+          {
+            echo "AA 开始测量目录还没有的模型:"
+            echo
+            sed '/^<!--/d;/^$/d' aa-new.md | head -12
+            echo
+            echo "参数刷新已自动触发,PR 会自己出现 —— 不用你去点。"
+          } | node scripts/notify-pushplus.mjs "观测台 · AA 收录了新模型"
 
       # Silence has to be distinguishable from a dead pipeline. Without a heartbeat, "no WeChat
       # message" reads as "nothing was published upstream" — which is exactly the assumption that
