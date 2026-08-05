@@ -82,11 +82,51 @@ for (const [key, row] of cellsAfter) {
   moved.push({ ...row, was: was.score });
 }
 
+// The catalog's own numbers — intelligence, cost, speed, latency, Elo, price — are not
+// observations and so are invisible to everything above. That gap mattered the moment this
+// report became a merge condition: an Artificial Analysis refresh changes speed and price on
+// every model and would have been described as "nothing changed". Read textually from both
+// versions of the file, because the base revision is TypeScript that cannot simply be imported.
+const CFG_FIELDS = ["effort", "intelligence", "cost/task", "speed", "latency", "text Elo", "code Elo", "$in", "$out"];
+const RECORD = /m\("([^"]+)",\s*"([^"]+)"[\s\S]{0,400}?cfg\(([^)]*)\)/g;
+const parseCatalog = (text) => {
+  const records = new Map();
+  for (const [, id, name, argsRaw] of text.matchAll(RECORD)) {
+    const args = argsRaw.split(",").map((arg) => arg.trim());
+    records.set(id, { name, args });
+  }
+  return records;
+};
+
+const catalogBefore = (() => {
+  try {
+    return parseCatalog(execSync(`git show ${baseRef}:app/model-data.ts`, { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 }));
+  } catch {
+    return new Map();
+  }
+})();
+const catalogAfter = parseCatalog(readFileSync(join(ROOT, "app/model-data.ts"), "utf8"));
+
+const catalogChanges = [];
+for (const [id, record] of catalogAfter) {
+  const was = catalogBefore.get(id);
+  if (!was) { catalogChanges.push(`新增目录记录 **${record.name}**`); continue; }
+  for (const [index, field] of CFG_FIELDS.entries()) {
+    const before = was.args[index];
+    const after = record.args[index];
+    if (before === undefined || after === undefined || before === after) continue;
+    catalogChanges.push(`${record.name} · ${field}: ${before} → ${after}`);
+  }
+}
+for (const [id, record] of catalogBefore) {
+  if (!catalogAfter.has(id)) catalogChanges.push(`⚠ 目录记录被移除 **${record.name}**`);
+}
+
 const label = (modelId) => modelName.get(modelId) ?? modelId;
 const cell = (row) => `${benchmarkName.get(row.benchmarkId) ?? row.benchmarkId} ${row.score}`;
 const out = [];
 
-if (gained.size === 0 && lost.size === 0 && moved.length === 0) {
+if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges.length === 0) {
   out.push("这次改动不改变任何已发布的数字。");
 } else {
   for (const [modelId, rows] of [...gained].sort((a, b) => b[1].length - a[1].length)) {
@@ -111,5 +151,12 @@ if (gained.size === 0 && lost.size === 0 && moved.length === 0) {
   }
 }
 
+if (catalogChanges.length) {
+  out.push("");
+  out.push(`**目录记录里有 ${catalogChanges.length} 处数字变化**(速度、价格这类不是观测行,上面那几节看不到):`);
+  for (const line of catalogChanges.slice(0, 14)) out.push(`- ${line}`);
+  if (catalogChanges.length > 14) out.push(`- …另有 ${catalogChanges.length - 14} 处,未列出`);
+}
+
 process.stdout.write(out.join("\n") + "\n");
-console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length} moved -->`);
+console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length} moved -->`);

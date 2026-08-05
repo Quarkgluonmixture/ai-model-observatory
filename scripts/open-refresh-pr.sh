@@ -57,8 +57,8 @@ if [ -n "$existing" ]; then
 # See scripts/open-aa-pr.sh: a repository can forbid Actions from opening pull requests, and this
 # path had never run — every refresh so far was tier A and went straight to main — so the one
 # branch that exists specifically to be reviewed by a human was the one that would have failed.
-elif gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>/dev/null; then
+elif gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>pr-error.txt; then
   :
 else
-  echo "::warning::GitHub Actions may not open pull requests here; the branch is pushed. Open it at ${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/compare/$BRANCH?expand=1"
+  echo "::warning::Could not open the pull request ($(tr '\n' ' ' < pr-error.txt)); the branch is pushed. Open it at ${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/compare/$BRANCH?expand=1"
 fi

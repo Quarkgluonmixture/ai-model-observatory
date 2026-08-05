@@ -172,7 +172,7 @@ export const MODELS: ModelRecord[] = [
     cfg(null, 46, 1.28, 199.6, 2.45, 1475, 1517, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
-    cfg(null, 39, 0.2263, 53.37, 2.6, null, null, 0.4, 1.6, false, 0.04),
+    cfg(null, 39, 0.2263, 53.31, 2.35, null, null, 0.4, 1.6, false, 0.04),
   ]),
   m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["open weights", "value", "reasoning"], [
     cfg("max", 44, 0.05, 64.4, 1.68, 1457, 1447, 0.435, 0.87, false, 0.004),
