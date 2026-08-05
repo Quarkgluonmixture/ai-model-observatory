@@ -30,7 +30,8 @@
     "probe:releases": "node scripts/release-probe.mjs",
     "describe-change": "node scripts/describe-change.mjs",
     "draft:model": "node scripts/draft-model-record.mjs",
-    "aa:new": "node scripts/aa-new-models.mjs"
+    "aa:new": "node scripts/aa-new-models.mjs",
+    "capture:release": "node scripts/capture-release-tables.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.2",

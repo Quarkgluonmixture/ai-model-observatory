@@ -296,8 +296,8 @@ function report() {
     lines.push("");
     lines.push("A release post is where a maker publishes its benchmark table, and that table is where core");
     lines.push("cells come from — Qwen's carried 12 of them. Capture one with");
-    lines.push("`node scripts/capture-qwen-release.mjs` (per-source label mapping lives in the script), then");
-    lines.push("archive it as its own batch. Nothing is collected automatically: which published label belongs");
+    lines.push("`node scripts/capture-release-tables.mjs <id>` — its per-source label mapping is judgement and");
+    lines.push("lives in the script. Nothing is collected automatically: which published label belongs");
     lines.push("in which catalog column is judgement.");
     lines.push("");
   }

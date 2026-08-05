@@ -266,7 +266,7 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/check-model-provenance.mjs` | Catalog numbers vs the archive |
 | `scripts/fetchers/*.mjs` | One module per source that can be re-read by script |
 | `scripts/fetch-source.mjs` | Runs them; `--check` diffs, `--live` refreshes the moving boards |
-| `scripts/capture-qwen-release.mjs` | Renders a Qwen release post over CDP and archives its tables — per release, not daily |
+| `scripts/capture-release-tables.mjs` | Renders a maker's release post over CDP and archives its tables — per release, not daily |
 | `scripts/release-probe.mjs` | Watches every maker's release index for a post that was not there yesterday |
 | `scripts/aa-new-models.mjs` | Asks whether AA has measured a model the catalog lacks — the one signal in AA worth acting on |
 | `scripts/draft-model-record.mjs` | Drafts a catalog record from the archive, and names what it could not source |
