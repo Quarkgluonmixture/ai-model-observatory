@@ -1,0 +1,11 @@
+{
+  "batch": "20 · MMMU-Pro leaderboard",
+  "collectedWith": "scripts/fetchers/mmmu.mjs",
+  "filtered": true,
+  "release": "Pro",
+  "sources": [
+    "https://mmmu-benchmark.github.io/"
+  ],
+  "note": "MMMU 官方榜,渲染后读取(页面是客户端渲染的)。取 MMMU-Pro Overall 一列，Vision 与 Standard 两个划分留在 note 里 —— 它们回答不同问题，合进一格会互相竞争。⭐ 关键区别：榜单图例写明「*: results provided by the authors」，因此带星的行是厂商自报，source_kind 记为 vendor；不带星的是榜方验证，记为 benchmark。批次 04 眼抄的两行 note 里写了「Author-reported result」却填成 benchmark，等于让自报结果拿到最高源优先级、在格子里压过验证过的读数 —— 那两行由本批取代，见 model-aliases.json 的 supersededRows。每次运行都重新校验图例文案，页面不再这么写时 fetcher 拒绝写入而不是沿用旧假设。Human Expert 基线行被过滤：人不是模型，不能进目录。",
+  "retrievedDate": "2026-08-05"
+}
