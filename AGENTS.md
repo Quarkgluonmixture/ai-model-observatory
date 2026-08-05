@@ -122,7 +122,13 @@ Never hand-write a score into `app/model-data.ts`.
 `docs/INGEST-PROMPT.md` is the transcription contract to hand a browsing model. It is written
 to be pasted whole, one batch at a time.
 
-**Check for a data file before hiring a transcriber.** Batch 05 recorded LiveBench as
+**Check for a data file before hiring a transcriber, and check the page's own JavaScript.** Batch
+18 found ALE's endpoint at `/api/demo/leaderboard` — 689 rows where two hand-reads had produced 19
+— and that path exists nowhere except the leaderboard's client chunk. `/api/leaderboard` and
+`/data/leaderboard.json` are both 404, which is exactly how batch 03 concluded the board "publishes
+nothing machine-readable". Grep the chunk for `fetch(` before believing a source is untranscribable.
+
+Batch 05 recorded LiveBench as
 UNAVAILABLE because the page renders client-side — but the page fetches its own CSV and JSON.
 DeepSWE was transcribed by eye into 18 rounded rows while the page was loading a JSON artifact
 with all 50 configurations at full precision. A scripted batch beats a transcribed one on every

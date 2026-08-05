@@ -1217,6 +1217,36 @@
       "file": "batch-17-qwen3.8-release",
       "modelId": null,
       "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT-5.6-Sol",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "Agents Last Exam (batch 18) spells families its own way: capitalised with dots for OpenAI, provider-prefixed for Anthropic, and doubled for Qwen (qwen-qwen3-7-max). Same families the catalog already holds; the operating point arrives in harnessVariant and stays on the row."
+    },
+    {
+      "modelRaw": "GPT-5.6-Luna",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "Agents Last Exam (batch 18) spells families its own way: capitalised with dots for OpenAI, provider-prefixed for Anthropic, and doubled for Qwen (qwen-qwen3-7-max). Same families the catalog already holds; the operating point arrives in harnessVariant and stays on the row."
+    },
+    {
+      "modelRaw": "GPT-5.6-Terra",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "Agents Last Exam (batch 18) spells families its own way: capitalised with dots for OpenAI, provider-prefixed for Anthropic, and doubled for Qwen (qwen-qwen3-7-max). Same families the catalog already holds; the operating point arrives in harnessVariant and stays on the row."
+    },
+    {
+      "modelRaw": "anthropic-claude-fable-5",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "Agents Last Exam (batch 18) spells families its own way: capitalised with dots for OpenAI, provider-prefixed for Anthropic, and doubled for Qwen (qwen-qwen3-7-max). Same families the catalog already holds; the operating point arrives in harnessVariant and stays on the row."
+    },
+    {
+      "modelRaw": "qwen-qwen3-7-max",
+      "effort": "*",
+      "modelId": "qwen3.7-max",
+      "reason": "Agents Last Exam (batch 18) spells families its own way: capitalised with dots for OpenAI, provider-prefixed for Anthropic, and doubled for Qwen (qwen-qwen3-7-max). Same families the catalog already holds; the operating point arrives in harnessVariant and stays on the row."
     }
   ],
   "benchmarkSplits": [
@@ -1498,6 +1528,18 @@
       "benchmarkVersion": "Diamond",
       "supersededBy": "batch-12-epoch",
       "reason": "Batch 01 transcribed the Epoch GPQA Diamond board by eye: 20 rows with the reasoning effort folded into the model string and scores rounded to one decimal. Batch 12 reads Epoch's own hub export and gets the same board at full precision with effort in its own field. One measurement read twice, so only the scripted reading is ingested -- gpt-5.5 (xhigh) 94.0 is batch 12's 94, GPT-5.5 Pro (xhigh) 93.9 is 93.92, GPT-5.5 (low) 90.7 is 90.66, and DeepSeek v4 (max) 89.6 is deepseek-v4-pro's 89.65. Comparing the two batches by model string understates the overlap, because only batch 01 writes the effort into the name; the correspondence is by model plus effort. The rows stay in the archive unchanged."
+    },
+    {
+      "file": "batch-03-agents",
+      "benchmark": "ale",
+      "supersededBy": "batch-18-ale",
+      "reason": "Batch 03 hand-read the ALE board on the stated grounds that it publishes nothing machine-readable. It does: the leaderboard page calls /api/demo/leaderboard, which returns every run with pass rate, partial credit, task counts and cost. One measurement read twice -- the endpoint gives GPT-5.6 Sol under Codex a passRate of 0.30592 where the transcription recorded 30.6, and an avgScore of 0.53616 where the note recorded 53.6% -- so ingesting both would put a rounded row and an exact row in one cell. The transcribed rows stay in the archive as evidence of what the page showed on 2026-07-31."
+    },
+    {
+      "file": "batch-16-ale-supplement",
+      "benchmark": "ale",
+      "supersededBy": "batch-18-ale",
+      "reason": "Batch 16 hand-read three ALE rows to patch what batch 03 missed. Batch 18 reads the endpoint and carries 57 configurations across 24 models, including all three. Superseded for the same reason as batch 03: same measurement, more digits."
     }
   ]
 }
