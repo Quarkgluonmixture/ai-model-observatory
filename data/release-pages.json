@@ -1,0 +1,91 @@
+{
+  "_doc": [
+    "The release index of every maker whose namespace the catalog already resolves.",
+    "",
+    "This answers a question no other check can. `check:upstream` asks whether an archived number",
+    "moved; the namespace watch in report:gaps asks whether a provider started *serving* a model.",
+    "Neither looks at the page where a maker publishes its benchmark table. Qwen3.8 Max was served,",
+    "detected and filed in the gaps issue on 2026-08-03 while its ~80-benchmark release table went",
+    "unread, because nothing here was watching the page.",
+    "",
+    "The probe reports that a post exists. It never reads scores: turning a post into rows means",
+    "deciding which published label belongs in which catalog column, and that is judgement.",
+    "",
+    "Two modes, feed first. A feed is a data file — no JavaScript, no bot challenge, no layout to",
+    "break — and it beat the browser on the two sites that block one. `render` drives headless",
+    "Chrome and is only for makers who publish no feed.",
+    "",
+    "`verdict` records what was measured on 2026-08-05, so an unreadable source is not",
+    "re-investigated by every person who opens this file. Four of these have no working path, and",
+    "saying so is the point: a blank entry reads as 'nobody tried'."
+  ],
+  "pages": [
+    {
+      "id": "openai",
+      "maker": "OpenAI",
+      "mode": "feed",
+      "url": "https://openai.com/news/rss.xml",
+      "verdict": "Feed works. The HTML index does not: headless Chrome gets Cloudflare's 'Just a moment...' interstitial and zero links. Do not switch this one to render. The feed also carries /academy/ course pages, so it is filtered to /index/, where launches live.",
+      "match": "^https://openai\\.com/index/"
+    },
+    {
+      "id": "google",
+      "maker": "Google",
+      "mode": "feed",
+      "url": "https://deepmind.google/blog/rss.xml",
+      "verdict": "RSS 2.0, valid. Covers the DeepMind side; Gemini announcements sometimes also appear on blog.google, which this does not watch."
+    },
+    {
+      "id": "anthropic",
+      "maker": "Anthropic",
+      "mode": "render",
+      "url": "https://www.anthropic.com/news",
+      "match": "^/news/",
+      "verdict": "No feed at /rss.xml or /news/rss.xml (both 404). The HTML index renders and lists posts."
+    },
+    {
+      "id": "moonshotai",
+      "maker": "Moonshot AI",
+      "mode": "render",
+      "url": "https://moonshotai.github.io/",
+      "match": "^/[a-z0-9]",
+      "verdict": "GitHub Pages site renders; /index.xml is 404 so there is no feed to prefer."
+    },
+    {
+      "id": "minimax",
+      "maker": "MiniMax",
+      "mode": "render",
+      "url": "https://www.minimax.io/news",
+      "match": "^/news/",
+      "verdict": "Renders. rss.xml does not resolve at all (connection failure, not 404)."
+    },
+    {
+      "id": "qwen",
+      "maker": "Alibaba",
+      "mode": "none",
+      "url": "https://qwen.ai/blog",
+      "verdict": "NO PATH. The index renders to 728 characters and one cookie link — the post list never arrives without interaction. A *post* page renders fine, which is how batch 17 was captured, so the id has to come from somewhere else: the namespace watch in report:gaps sees a new Qwen model the day it is served, and the release post is then at https://qwen.ai/blog?id=<family>. The qwenlm.github.io feed is a trap: it parses, it has 44 entries, and its newest post is Qwen3Guard — it stopped mirroring a generation ago, exactly like lmarena/arena-catalog."
+    },
+    {
+      "id": "deepseek",
+      "maker": "DeepSeek",
+      "mode": "none",
+      "url": "https://api-docs.deepseek.com/news",
+      "verdict": "NO PATH. Renders to 314 characters of navigation; /rss.xml returns 200 with no items. Release notes exist on this site but are not reachable this way."
+    },
+    {
+      "id": "x-ai",
+      "maker": "xAI",
+      "mode": "none",
+      "url": "https://x.ai/news",
+      "verdict": "NO PATH. Cloudflare challenges the browser ('Attention Required') and returns 403 for /news/rss.xml. Both doors are shut."
+    },
+    {
+      "id": "z-ai",
+      "maker": "Z.AI",
+      "mode": "none",
+      "url": "https://z.ai/blog",
+      "verdict": "NO PATH. 404 — this is not the right URL, and the right one has not been found. Unlike the three above, this is unfinished rather than blocked."
+    }
+  ]
+}

@@ -42,14 +42,21 @@ $(cat "$CHECKS")
 Checks ran inside the workflow because a pull request opened with \`GITHUB_TOKEN\` does not trigger
 CI. Push any commit to this branch to get a real CI run."
 
+repo_url="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}"
 existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
 if [ -n "$existing" ]; then
   gh pr edit "$existing" --title "$TITLE" --body "$body" >/dev/null
   url="$(gh pr view "$existing" --json url --jq .url)"
   echo "Updated PR #$existing"
-else
-  url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body "$body")"
+# A repository can forbid Actions from opening pull requests — Settings → Actions → General →
+# "Allow GitHub Actions to create and approve pull requests". That setting is off by default, and
+# the work is already safe on a branch by this point, so losing the whole job over the last step
+# would throw away a good fetch. Report the branch and let a human open it.
+elif url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>/dev/null)"; then
   echo "$url"
+else
+  url="$repo_url/compare/$BRANCH?expand=1"
+  echo "::warning::GitHub Actions may not open pull requests here; the branch is pushed. Open it at $url"
 fi
 
 {

@@ -569,6 +569,23 @@ What "maintains itself" means concretely, every day, in `.github/workflows/upstr
 | A newer release exists | pinned, append-only | Reported only. Collecting it changes 23 benchmark version fields and is a catalog decision |
 | Anything never collected at all | any | The collection-gaps issue |
 | A model appeared upstream that was not in yesterday's report | any | Pushed to WeChat via PushPlus, diffed against the previous issue body |
+| A maker published a release post | `npm run probe:releases` | Reported, and pushed to WeChat when the title looks like a launch |
+
+The release probe exists because the other two detectors watch the wrong surface. `check:upstream`
+asks whether an archived number moved; the namespace watch asks whether a provider started
+*serving* a model. Neither looks at the page where a maker publishes its benchmark table — and that
+table is where core cells come from: Qwen's carried twelve of them, four in columns that had no
+archived source at all. It reports that a post exists and never reads a score, because deciding
+which published label belongs in which catalog column is judgement.
+
+Feeds first, browser second, and both were necessary. OpenAI's HTML index answers headless Chrome
+with a Cloudflare interstitial and zero links while its RSS answers 200 with the full list;
+Anthropic publishes no feed at all and only renders. Four makers — Alibaba, DeepSeek, xAI, Z.AI —
+have **no readable index**, each for a different reason recorded in `data/release-pages.json`,
+including one trap worth naming: `qwenlm.github.io` publishes a feed that parses cleanly, carries
+44 entries, and stopped mirroring a generation ago. Qwen's own index renders to a cookie banner.
+So a Qwen release is still found the way this one was — the namespace watch names the model, and
+the post is then at `qwen.ai/blog?id=<family>`.
 
 Notification is separate from record-keeping because the two want opposite things. The gaps issue
 is edited in place — it is a standing work queue, and a new issue every morning is a backlog nobody
