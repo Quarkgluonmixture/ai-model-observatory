@@ -42,8 +42,16 @@ const TRACKED = new Set(MODELS.map((model) => model.maker.toLowerCase()));
 
 const { resolveModelId } = buildResolvers(loadAliasConfig());
 
-// What the archive already holds. A model AA added last month and we chose not to catalog must not
-// be reported every morning for the rest of time; it is in batch 14, so it is not new.
+// What the archive already holds — used to decide whether to *trigger* a refresh, never to decide
+// what to report.
+//
+// This filter used to suppress the report as well, on the reasoning that a model AA added last
+// month and "we chose not to catalog" should not be raised every morning. That reasoning was
+// wrong, and wrong in the way that matters: nobody chose. Batch 14 carries AA's entire list, so
+// suppressing everything archived suppressed exactly the actionable set — models AA has already
+// measured, whose parameters are already on disk, that need nothing but a catalog record. Gemini
+// 3.5 Flash Lite sat in that blind spot with an intelligence index and three batches of benchmark
+// evidence, invisible to the one check built to find it.
 const archived = new Set();
 try {
   const file = join(ROOT, `data/sources/${artificialAnalysis.batch}.jsonl`);
@@ -54,10 +62,19 @@ try {
 
 const { rows } = await artificialAnalysis.fetch();
 
+// Published recently. Without this the report is 213 models long and includes GPT-3.5 Turbo:
+// "Artificial Analysis measured it and the catalog has no alias for it" is true of most of the
+// last three years. The window matches the namespace watch and the release probe, so the three
+// detectors agree on what "new" means. AA states the date in each row's own note.
+const WINDOW_DAYS = 90;
+const cutoff = new Date(Date.now() - WINDOW_DAYS * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const publishedOn = (row) => /发布 (\d{4}-\d{2}-\d{2})/.exec(row.note ?? "")?.[1] ?? null;
+
 const fresh = new Map();
 for (const row of rows) {
-  if (archived.has(row.model_raw)) continue;
   if (!TRACKED.has(String(row.maker ?? "").toLowerCase())) continue;
+  const published = publishedOn(row);
+  if (!published || published < cutoff) continue;
   // An alias that already resolves means the catalog knows this family under another spelling —
   // AA adding a second effort variant of a model we carry is not a new model.
   if (resolveModelId(row.model_raw, row.effort, artificialAnalysis.batch)) continue;
@@ -70,17 +87,28 @@ for (const row of rows) {
 const ready = [...fresh.values()].filter((row) => Number.isFinite(row.intelligence_index));
 const waiting = [...fresh.values()].filter((row) => !Number.isFinite(row.intelligence_index));
 
+// Only a model AA has measured *since the archive was written* needs a fetch. The rest are ready
+// to record right now, which is a different sentence and a different action.
+const needsFetch = ready.filter((row) => !archived.has(row.model_raw));
+
 if (ready.length) {
   say("## Artificial Analysis has measured models this catalog does not carry");
   say();
   for (const row of ready.sort((a, b) => b.intelligence_index - a.intelligence_index)) {
     const price = row.price_input_per_m != null ? `$${row.price_input_per_m}/$${row.price_output_per_m}` : "price not published";
-    say(`- **${row.model_raw}** (${row.maker}) — intelligence ${row.intelligence_index}, ${price}` +
+    say(`- **${row.model_raw}** (${row.maker}, 发布 ${publishedOn(row) ?? "?"}) — intelligence ${row.intelligence_index}, ${price}` +
       `${row.effort ? `, effort ${row.effort}` : ""}${row.note ? ` · ${row.note}` : ""}`);
   }
   say();
   say("Their operating parameters are what a catalog record needs and cannot get anywhere else.");
-  say("Run `node scripts/fetch-source.mjs aa` to archive them, then write the record.");
+  if (needsFetch.length) {
+    say(`${needsFetch.length} of them are newer than the archive and need \`node scripts/fetch-source.mjs aa\` first.`);
+  }
+  const ready_now = ready.length - needsFetch.length;
+  if (ready_now > 0) {
+    say(`**${ready_now} need nothing fetched** — their parameters are already archived. ` +
+      "`npm run draft:model -- --all-new` drafts the record; what is missing is the record, not the data.");
+  }
   say();
 }
 
@@ -91,3 +119,6 @@ if (waiting.length) {
 }
 
 console.log(`<!-- aa-new-models: ${ready.length} -->`);
+// The workflow dispatches a refresh on this one: fetching AA again for a model already archived
+// would re-read 591 configurations to learn nothing.
+console.log(`<!-- aa-needs-fetch: ${needsFetch.length} -->`);
