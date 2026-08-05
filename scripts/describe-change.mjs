@@ -26,16 +26,16 @@ const modelName = new Map(MODELS.map((model) => [model.id, model.name]));
 const benchmarkName = new Map(BENCHMARKS.map((benchmark) => [benchmark.id, benchmark.name]));
 
 // One row per line in the generated file, so a line-wise regex is exact rather than hopeful.
-const ROW = /modelId: "([^"]+)", benchmarkId: "([^"]+)", score: ([-\d.]+)[\s\S]*?harness: (null|"[^"]*")[\s\S]*?reasoningEffort: (null|"[^"]*")/;
+const ROW = /modelId: "([^"]+)", benchmarkId: "([^"]+)", score: ([-\d.]+)[\s\S]*?sourceKind: "([^"]+)"[\s\S]*?harness: (null|"[^"]*")[\s\S]*?reasoningEffort: (null|"[^"]*")/;
 
 const parse = (text) => {
   const rows = new Map();
   for (const line of text.split("\n")) {
     const match = ROW.exec(line);
     if (!match) continue;
-    const [, modelId, benchmarkId, score, harness, effort] = match;
+    const [, modelId, benchmarkId, score, sourceKind, harness, effort] = match;
     const key = `${modelId}|${benchmarkId}|${harness}|${effort}`;
-    rows.set(key, { modelId, benchmarkId, score: Number(score) });
+    rows.set(key, { modelId, benchmarkId, score: Number(score), sourceKind });
   }
   return rows;
 };
@@ -49,11 +49,18 @@ const before = (() => {
 })();
 const after = parse(readFileSync(join(ROOT, STORE), "utf8"));
 
+// Source class per cell, not only the score. A cell's displayed number is chosen by source
+// precedence — benchmark-native over independent over vendor — so a row changing class can change
+// what the site shows without any score moving. That went unreported twice in one day: once when
+// an Artificial Analysis refresh moved catalog numbers this report could not see, and once when a
+// self-report filed as benchmark-native was corrected to vendor. Both times it said "nothing
+// changed", both times it was wrong in the same direction.
 const cellsOf = (rows) => {
   const cells = new Map();
   for (const row of rows.values()) {
     const key = `${row.modelId}|${row.benchmarkId}`;
-    if (!cells.has(key)) cells.set(key, row);
+    if (!cells.has(key)) cells.set(key, { ...row, kinds: new Set() });
+    cells.get(key).kinds.add(row.sourceKind);
   }
   return cells;
 };
@@ -76,10 +83,14 @@ for (const [key, row] of cellsBefore) {
 // cell is an addition somebody chose, a moved number is the board changing its mind about a model
 // that is already on the site.
 const moved = [];
+const reclassified = [];
 for (const [key, row] of cellsAfter) {
   const was = cellsBefore.get(key);
-  if (!was || was.score === row.score) continue;
-  moved.push({ ...row, was: was.score });
+  if (!was) continue;
+  if (was.score !== row.score) moved.push({ ...row, was: was.score });
+  const before = [...was.kinds].sort().join("+");
+  const after = [...row.kinds].sort().join("+");
+  if (before !== after) reclassified.push({ ...row, from: before, to: after });
 }
 
 // The catalog's own numbers — intelligence, cost, speed, latency, Elo, price — are not
@@ -126,7 +137,7 @@ const label = (modelId) => modelName.get(modelId) ?? modelId;
 const cell = (row) => `${benchmarkName.get(row.benchmarkId) ?? row.benchmarkId} ${row.score}`;
 const out = [];
 
-if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges.length === 0) {
+if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges.length === 0 && reclassified.length === 0) {
   out.push("这次改动不改变任何已发布的数字。");
 } else {
   for (const [modelId, rows] of [...gained].sort((a, b) => b[1].length - a[1].length)) {
@@ -151,6 +162,15 @@ if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges
   }
 }
 
+if (reclassified.length) {
+  out.push("");
+  out.push(`**${reclassified.length} 个格子的证据等级变了**(分数没动,但「谁测的」变了 —— 这会改变格子里哪一行当 primary):`);
+  for (const row of reclassified.slice(0, 10)) {
+    out.push(`- ${label(row.modelId)} · ${benchmarkName.get(row.benchmarkId) ?? row.benchmarkId}: ${row.from} → ${row.to}`);
+  }
+  if (reclassified.length > 10) out.push(`- …另有 ${reclassified.length - 10} 个,未列出`);
+}
+
 if (catalogChanges.length) {
   out.push("");
   out.push(`**目录记录里有 ${catalogChanges.length} 处数字变化**(速度、价格这类不是观测行,上面那几节看不到):`);
@@ -159,4 +179,4 @@ if (catalogChanges.length) {
 }
 
 process.stdout.write(out.join("\n") + "\n");
-console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length} moved -->`);
+console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length + reclassified.length} moved -->`);
