@@ -113,6 +113,20 @@ Any of the three false: push the branch, open the PR, notify, stop. Do not argue
 exemption — leaving a row unmapped costs nothing and a wrong attribution costs the project its
 credibility (see the attribution rule).
 
+**What these three do not cover, stated plainly so nobody assumes otherwise.** The disagreement
+gate needs two sources to disagree. The one-source-one-cell gate needs one board to publish two
+strings. Neither fires when a single alias puts a single string into a column that has only one
+source — mapping `qwen-qwen3-7-max` to the wrong family would pass every check here. A gate for
+that was measured and rejected: 46 of 68 columns have a single source, so blocking on it would
+stop almost every addition, and a check that is always red is a check nobody reads.
+
+So `describe-change` prints how many added cells land in single-source columns, and the residual
+control is the reader. That is not a formality: a wrong attribution almost always produces a score
+that looks wrong for the model it is filed under — GPQA 92.6 under a small open model reads as
+obviously off — and that is a judgement a person can make in ten seconds even though the alias
+table is opaque to them. Write the report so it can be made: name the model, name the benchmark,
+give the number.
+
 Exception, unchanged: **when the user asks for a specific model by name, they have supplied the
 judgement.** "Add GPT-5.7" is an instruction; your cron noticing GPT-5.7 is not.
 

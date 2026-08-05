@@ -26,16 +26,16 @@ const modelName = new Map(MODELS.map((model) => [model.id, model.name]));
 const benchmarkName = new Map(BENCHMARKS.map((benchmark) => [benchmark.id, benchmark.name]));
 
 // One row per line in the generated file, so a line-wise regex is exact rather than hopeful.
-const ROW = /modelId: "([^"]+)", benchmarkId: "([^"]+)", score: ([-\d.]+)[\s\S]*?sourceKind: "([^"]+)"[\s\S]*?harness: (null|"[^"]*")[\s\S]*?reasoningEffort: (null|"[^"]*")/;
+const ROW = /modelId: "([^"]+)", benchmarkId: "([^"]+)", score: ([-\d.]+)[\s\S]*?sourceLabel: "([^"]*)"[\s\S]*?sourceKind: "([^"]+)"[\s\S]*?harness: (null|"[^"]*")[\s\S]*?reasoningEffort: (null|"[^"]*")/;
 
 const parse = (text) => {
   const rows = new Map();
   for (const line of text.split("\n")) {
     const match = ROW.exec(line);
     if (!match) continue;
-    const [, modelId, benchmarkId, score, sourceKind, harness, effort] = match;
+    const [, modelId, benchmarkId, score, sourceLabel, sourceKind, harness, effort] = match;
     const key = `${modelId}|${benchmarkId}|${harness}|${effort}`;
-    rows.set(key, { modelId, benchmarkId, score: Number(score), sourceKind });
+    rows.set(key, { modelId, benchmarkId, score: Number(score), sourceLabel, sourceKind });
   }
   return rows;
 };
@@ -133,6 +133,32 @@ for (const [id, record] of catalogBefore) {
   if (!catalogAfter.has(id)) catalogChanges.push(`⚠ 目录记录被移除 **${record.name}**`);
 }
 
+// The hole the other gates cannot see.
+//
+// The disagreement gate needs two sources to disagree; the one-source-one-cell gate needs one
+// board to publish two strings. Neither fires when a single alias puts a single string into a
+// column that has only one source — mapping `qwen-qwen3-7-max` to the wrong family would pass
+// every check this project has, because nothing exists that could contradict it.
+//
+// Reported, NOT a merge condition — and the measurement is why. 46 of 68 columns in the generated
+// store have a single source, so blocking on this would stop almost every addition, and a check
+// that is always red is a check nobody reads. It is printed because knowing "nothing here can
+// contradict this number" changes how hard a reader looks at it, which is the point of the whole
+// report. The residual control is the reader: a wrong attribution usually produces a score that
+// looks wrong for the model it is filed under, and that is a judgement a person can actually make.
+const sourcesPerBenchmark = new Map();
+for (const row of after.values()) {
+  (sourcesPerBenchmark.get(row.benchmarkId) ?? sourcesPerBenchmark.set(row.benchmarkId, new Set()).get(row.benchmarkId))
+    .add(row.sourceLabel);
+}
+const unverifiable = [];
+for (const rows of gained.values()) {
+  for (const row of rows) {
+    if ((sourcesPerBenchmark.get(row.benchmarkId)?.size ?? 0) > 1) continue;
+    unverifiable.push(row);
+  }
+}
+
 const label = (modelId) => modelName.get(modelId) ?? modelId;
 const cell = (row) => `${benchmarkName.get(row.benchmarkId) ?? row.benchmarkId} ${row.score}`;
 const out = [];
@@ -162,6 +188,16 @@ if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges
   }
 }
 
+if (unverifiable.length) {
+  out.push("");
+  out.push(`⚠ **${unverifiable.length} 格落在只有单一来源的列上** —— 没有第二个源能反驳这些数,` +
+    "跨源分歧闸门在这些列上不会响。归属对不对,这里没有任何检查看得出来:");
+  for (const row of unverifiable.slice(0, 10)) {
+    out.push(`- ${label(row.modelId)} · ${benchmarkName.get(row.benchmarkId) ?? row.benchmarkId} ${row.score}`);
+  }
+  if (unverifiable.length > 10) out.push(`- …另有 ${unverifiable.length - 10} 格,未列出`);
+}
+
 if (reclassified.length) {
   out.push("");
   out.push(`**${reclassified.length} 个格子的证据等级变了**(分数没动,但「谁测的」变了 —— 这会改变格子里哪一行当 primary):`);
@@ -180,3 +216,5 @@ if (catalogChanges.length) {
 
 process.stdout.write(out.join("\n") + "\n");
 console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length + reclassified.length} moved -->`);
+// Read by the charter's fourth merge condition: an addition nothing can contradict stops.
+console.log(`<!-- unverifiable-cells: ${unverifiable.length} -->`);
