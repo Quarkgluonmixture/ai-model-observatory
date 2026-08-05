@@ -97,6 +97,11 @@ fails on horizontal overflow. It needs Chrome and `PORT=3111 npm run start:next`
 gate. Run it after any layout change — and never judge mobile from a headless screenshot taken
 without emulation, which ignores the viewport meta tag and invents overflow.
 
+**Stop that server when you are done.** Nothing here stops it for you, and it holds `node_modules`.
+One left running on 2026-08-01 was still holding the directory four days later, where it surfaced
+as an `npm ci` failure on a different machine's first run — packages on disk, `.bin` shims never
+linked, so every `node` script passed and `lint` and `build` reported `not found`.
+
 CI runs all of these, and additionally fails if `app/observations.generated.ts` differs from
 a fresh `npm run ingest` — the generated file must never be hand-edited.
 
