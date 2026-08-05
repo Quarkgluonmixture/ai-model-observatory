@@ -52,7 +52,7 @@ export async function GET() {
       cf: { cacheTtl: 240, cacheEverything: true },
     } as RequestInit & { cf: { cacheTtl: number; cacheEverything: boolean } });
     if (!response.ok) throw new Error(`upstream ${response.status}`);
-    const payload = await response.json() as { data?: Array<{ id:string; name?:string; context_length?:number; pricing?:{prompt?:string;completion?:string} }> };
+    const payload = await response.json() as { data?: Array<{ id:string; name?:string; created?:number; context_length?:number; pricing?:{prompt?:string;completion?:string} }> };
     const list = payload.data ?? [];
     const byId = new Map(list.map(item => [item.id.toLowerCase(), item]));
     const prices: Record<string, {input:number;output:number;contextK?:number;source:string}> = {};
@@ -65,7 +65,27 @@ export async function GET() {
       const n = found.context_length ?? 0;
       prices[key] = { input, output, contextK: n ? Math.round(n/1000) : undefined, source: found.id };
     }
-    return Response.json({ prices, updatedAt: new Date().toISOString(), provider: "OpenRouter" }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=240" } });
+    // The same request already carries every model this provider serves, and until now all but
+    // 27 of them were thrown away. A model published in a namespace the catalog already resolves
+    // is the earliest signal that exists that something new shipped — earlier than the daily job,
+    // which finds it tomorrow morning. So it is reported here too.
+    //
+    // Reported, never ingested. A runtime number has no archive row behind it and can never
+    // become a catalog number; this is the same rule the price card follows when it shows a
+    // provider figure beside the archived one instead of overwriting it. What the reader gets is
+    // "something is missing here", which is true, and a date they can check.
+    const tracked = new Set(Object.values(PROVIDER_LOOKUPS));
+    const namespaces = new Set(Object.values(PROVIDER_LOOKUPS).map(id => id.split("/")[0]));
+    const cutoff = Date.now() / 1000 - 60 * 24 * 60 * 60;
+    const fresh = list
+      .filter(item => namespaces.has(item.id.split("/")[0]))
+      .filter(item => !tracked.has(item.id.toLowerCase()))
+      .filter(item => typeof item.created === "number" && item.created >= cutoff)
+      .sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
+      .slice(0, 8)
+      .map(item => ({ id: item.id, name: item.name ?? item.id, published: new Date((item.created ?? 0) * 1000).toISOString().slice(0, 10) }));
+
+    return Response.json({ prices, fresh, updatedAt: new Date().toISOString(), provider: "OpenRouter" }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=240" } });
   } catch {
     return Response.json({ error: "Live price feed unavailable" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }

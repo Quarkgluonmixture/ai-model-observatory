@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  LAST_RETRIEVED,
   AXES,
   BENCHMARKS,
   BENCHMARK_OBSERVATIONS,
@@ -27,8 +28,10 @@ const UI = {
     eyebrow: "前沿智能 · 版本化观测",
     brand: "AI 模型观测站",
     search: "搜索模型或实验室",
-    snapshot: "数据快照",
+    snapshot: "价格未对照",
     live: "已对照实时价",
+    liveFresh: (n: number) => `实时:${n} 个新模型 · 价格已对照`,
+    freshNote: "上游已在提供、目录还没有的模型:",
     tracked: "收录模型",
     portfolio: "Benchmark 目录",
     ranking: "前沿模型排行",
@@ -41,10 +44,10 @@ const UI = {
     current: "当前视图",
     capability: "七维能力画像",
     capabilityDesc: "雷达图只使用有公开分数的能力轴；缺失数据保持 N/A，不做补零或估算。",
-    controlled: "模型能力",
-    best: "最佳系统",
-    controlledNote: "优先单轮、无工具或统一设置的结果",
-    bestNote: "允许模型使用公开最佳 Agent scaffold 与工具",
+    controlled: "裸模型能力",
+    best: "带 harness",
+    controlledNote: "模型自己:单轮、无工具或统一设置",
+    bestNote: "模型 + 最佳公开 scaffold + 工具",
     coverage: "数据覆盖",
     notIngested: "尚未接入",
     partialCoverage: "部分覆盖",
@@ -52,6 +55,8 @@ const UI = {
     coreMetrics: "项核心指标",
     observations: "条公开观测",
     noRadar: "该模型尚无足够的兼容 Benchmark 数据",
+    hiddenBenchmarks: (n: number) => `已隐藏 ${n} 项:对比中的模型都还没有它的数据 · `,
+    noBenchmarkData: "对比中的模型在这条能力轴上都还没有数据 · ",
     benchmark: "Benchmark 组合面板",
     benchmarkDesc: "按能力族查看原始分数、版本、评测对象与评分方法；最多对比三个模型。",
     catalog: "评测目录",
@@ -79,7 +84,7 @@ const UI = {
     sourceNote: "“已接入”是数出来的，不是声明的：只有当存档里确实有来自该来源的观测行时才算接入，数字即行数。“接入队列”只是下一批采集目标，不参与现有分数。日期同样是数出来的：“读取于”是本项目最后一次抄录该来源的时间，“评测于”是该来源已发布的最新结果时间，两者不可互换。十六个批次中有十一个靠人工抄录、无法与上游自动比对，所以超过 30 天未读取的来源标为“待复核”——最近读过但评测日期很旧，说明的是该榜单本身没有更新。Arena 衡量人工偏好，系统类结果还同时反映 harness、工具与预算。",
     back: "返回排行 ↑",
     unavailable: "N/A",
-    updated: "更新于 2026 年 7 月 31 日",
+    updated: (date: string) => `更新于 ${date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, "$1 年 $2 月 $3 日").replace(/ 0/g, " ")}`,
     swipe: "表格可横向滑动查看全部指标",
     portfolioNote: "组合分要求覆盖该能力族至少一半的核心 Benchmark（且不少于 2 项）；达不到就记 N/A 并退出该排序，而不是拿更少的证据去和别人比。",
   },
@@ -87,8 +92,10 @@ const UI = {
     eyebrow: "Frontier intelligence · versioned evidence",
     brand: "AI Model Observatory",
     search: "Search model or lab",
-    snapshot: "Snapshot",
+    snapshot: "Prices not compared",
     live: "Prices compared",
+    liveFresh: (n: number) => `Live · ${n} new upstream · prices compared`,
+    freshNote: "Served upstream, not yet in this catalog: ",
     tracked: "Tracked models",
     portfolio: "Benchmarks catalogued",
     ranking: "Frontier model ranking",
@@ -101,10 +108,10 @@ const UI = {
     current: "Current lens",
     capability: "Seven-axis capability profile",
     capabilityDesc: "Radar axes use published scores only. Missing evidence remains N/A—never zero-filled or estimated.",
-    controlled: "Model capability",
-    best: "Best system",
-    controlledNote: "Prioritises single-step, no-tool or controlled results",
-    bestNote: "Allows each model's strongest public agent scaffold and tools",
+    controlled: "Model alone",
+    best: "With harness",
+    controlledNote: "The model itself: single-step, no tools, controlled setting",
+    bestNote: "Model + its strongest public scaffold + tools",
     coverage: "Coverage",
     notIngested: "Not ingested",
     partialCoverage: "Partial",
@@ -112,6 +119,8 @@ const UI = {
     coreMetrics: "core metrics",
     observations: "public observations",
     noRadar: "Not enough compatible benchmark evidence for this model yet",
+    hiddenBenchmarks: (n: number) => `${n} hidden — no compared model has data for them yet: `,
+    noBenchmarkData: "No compared model has data on this axis yet: ",
     benchmark: "Benchmark portfolio",
     benchmarkDesc: "Inspect raw scores, versions, evaluated object and scoring method by capability family. Compare up to three models.",
     catalog: "Evaluation catalog",
@@ -139,7 +148,7 @@ const UI = {
     sourceNote: "Connected is measured, not declared: a source counts only when observation rows in the archive came from it, and the number is that row count. Queued sources are ingestion targets and affect nothing. The dates are measured too: read is when this project last transcribed the source, evaluated is the newest published result, and the two are never interchanged. Eleven of the sixteen batches are hand-transcribed and cannot be diffed against upstream, so a source unread for 30 days is marked aging — a recently-read source with an old evaluation date means the leaderboard itself has been quiet. Arena measures preference; system results also reflect harness, tools and budget.",
     back: "Back to ranking ↑",
     unavailable: "N/A",
-    updated: "Updated 31 Jul 2026",
+    updated: (date: string) => `Updated ${date}`,
     swipe: "Scroll the table sideways for every metric",
     portfolioNote: "A portfolio score needs at least half of that family's core benchmarks, and no fewer than two. Below that it stays N/A and leaves the ranking rather than competing on thinner evidence.",
   },
@@ -306,11 +315,20 @@ function Radar({ models, activeId, mode, lang }:{ models: ModelRecord[]; activeI
     </g>
     {models.map(model => {
       const values = AXES.map(a => axisScore(model.id, a.id, mode));
-      if (values.some(v => v === null)) return values.map((v,i) => v === null ? null : (() => { const [x,y] = radarPoint(i,v); return <circle className="radar-dot-only" key={`${model.id}-${i}`} cx={x} cy={y} r={model.id === activeId ? 4 : 3} fill={model.color}><title>{AXES[i][lang]}: {v.toFixed(1)}</title></circle>; })());
-      const points = values.map((v,i) => radarPoint(i,v as number).join(",")).join(" ");
+      const points = values.map((v,i) => v === null ? null : radarPoint(i, v));
+      const complete = values.every(v => v !== null);
+      // A missing axis used to collapse the whole series to loose dots, which made the model-alone
+      // lens — the one with the sparser evidence — look broken rather than partial. Now the outline
+      // is drawn between axes that BOTH have a score and simply breaks where one does not, so the
+      // shape is readable without any segment implying a number nobody published. The fill stays
+      // for complete series only: shading a broken outline would state an area that is not measured.
+      const edges = AXES.map((_,i) => [points[i], points[(i + 1) % AXES.length]] as const)
+        .filter((edge): edge is readonly [number[], number[]] => Boolean(edge[0] && edge[1]));
       return <g key={model.id} className={model.id === activeId ? "radar-series active" : "radar-series"}>
-        <polygon points={points} fill={model.color} stroke={model.color}/>
-        {values.map((v,i) => { const [x,y] = radarPoint(i,v as number); return <circle key={i} cx={x} cy={y} r={model.id === activeId ? 4 : 3} fill={model.color}><title>{AXES[i][lang]}: {(v as number).toFixed(1)}</title></circle>; })}
+        {complete
+          ? <polygon points={points.map(p => p!.join(",")).join(" ")} fill={model.color} stroke={model.color}/>
+          : edges.map(([a,b],i) => <line key={i} className="radar-edge" x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={model.color}/>)}
+        {points.map((p,i) => p && <circle key={i} cx={p[0]} cy={p[1]} r={model.id === activeId ? 4 : 3} fill={model.color}><title>{AXES[i][lang]}: {(values[i] as number).toFixed(1)}</title></circle>)}
       </g>;
     })}
     {AXES.map((axis,i) => { const [x,y] = radarPoint(i,113,136); return <text key={axis.id} x={x} y={y} textAnchor="middle" dominantBaseline="middle">{axis[lang]}</text>; })}
@@ -319,6 +337,7 @@ function Radar({ models, activeId, mode, lang }:{ models: ModelRecord[]; activeI
 }
 
 export type LivePrices = Record<string, { input: number; output: number; contextK?: number; source: string }>;
+export type FreshModel = { id: string; name: string; published: string };
 
 // A provider quoting a different number than the archive is the interesting case, and it has two
 // causes worth telling apart by hand: the vendor changed its list price (collect it) or the
@@ -363,10 +382,19 @@ function PortfolioCell({ modelId, axis }: { modelId: string; axis: BenchmarkAxis
 
 function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; axis: BenchmarkAxis; mode: BenchmarkMode; lang: Lang }) {
   const ui = UI[lang];
-  const metrics = BENCHMARKS.filter(b => b.axis === axis && b.tier !== "legacy" && (mode === "system" || b.mode === "model"));
+  const inAxis = BENCHMARKS.filter(b => b.axis === axis && b.tier !== "legacy" && (mode === "system" || b.mode === "model"));
+  // A column no compared model has any score for contributes nothing but width: it stretches the
+  // x-axis and flattens every line on the chart, which is the opposite of what the panel is for.
+  // Hidden, not silently — an uncollected benchmark is a fact about this catalog and it is named
+  // below the chart. Nothing here is zero-filled; the column simply is not drawn.
+  const metrics = inAxis.filter(b => models.some(model => typeof scoresFor(model.id)[b.id] === "number"));
+  const hidden = inAxis.filter(b => !metrics.includes(b));
   const width = Math.max(780, metrics.length * 126 + 90);
   const x = (i: number) => 66 + i * ((width - 110) / Math.max(1, metrics.length - 1));
   const y = (value: number) => 24 + (100 - value) * 1.72;
+  if (metrics.length === 0) {
+    return <div className="benchmark-chart-shell"><p className="chart-empty">{ui.noBenchmarkData}<span>{inAxis.map(b => b.name).join(" · ")}</span></p></div>;
+  }
   return <div className="benchmark-chart-shell">
     <div className="chart-scroll"><svg className="benchmark-chart" viewBox={`0 0 ${width} 240`} style={{width}} role="img" aria-label={lang === "zh" ? "Benchmark 原始分数折线图" : "Raw benchmark score line chart"}>
       {[0,25,50,75,100].map(v => <g className="line-grid" key={v}><line x1="52" x2={width-30} y1={y(v)} y2={y(v)}/><text x="43" y={y(v)} textAnchor="end" dominantBaseline="middle">{v}</text></g>)}
@@ -381,6 +409,7 @@ function BenchmarkChart({ models, axis, mode, lang }:{ models: ModelRecord[]; ax
       })}
     </svg></div>
     <p className="scroll-hint">{ui.swipe}</p>
+    {hidden.length > 0 && <p className="chart-hidden">{ui.hiddenBenchmarks(hidden.length)}<span>{hidden.map(b => b.name).join(" · ")}</span></p>}
     <div className="score-table-wrap"><table className="score-table"><thead><tr><th>{lang === "zh" ? "模型" : "Model"}</th>{metrics.map(b => <th key={b.id}>{b.name}<small>{b.version}</small></th>)}</tr></thead><tbody>{models.map(model => <tr key={model.id}><th><i style={{background:model.color}}/>{model.name}</th>{metrics.map(b => { const v=scoresFor(model.id)[b.id]; const observation=observationsFor(model.id)[b.id]; const rows=variantsFor(model.id, b.id); return <td key={b.id} className={observation ? `sourced ${observation.sourceKind}` : "missing"} title={cellTitle(rows, ui.notIngested)}>{typeof v === "number" ? <>{v}{b.unit}<small>{observation?.sourceKind}{rows.length > 1 ? ` +${rows.length - 1}` : ""}</small></> : ui.unavailable}</td>; })}</tr>)}</tbody></table></div>
   </div>;
 }
@@ -402,6 +431,10 @@ export default function Home() {
   const [openOnly,setOpenOnly] = useState(false);
   const [showAll,setShowAll] = useState(false);
   const [livePrices,setLivePrices] = useState<LivePrices>({});
+  // Models a provider is already serving that this catalog has never heard of. The daily job finds
+  // them tomorrow morning; this finds them now, and says so rather than pretending the board is
+  // complete. It is a pointer, not data: nothing here reaches a cell.
+  const [fresh,setFresh] = useState<FreshModel[]>([]);
   const [live,setLive] = useState(false);
   const [updated,setUpdated] = useState("snapshot");
   const ui = UI[lang];
@@ -433,8 +466,9 @@ export default function Home() {
     try {
       const res = await fetch("/api/live-models",{cache:"no-store"});
       if (!res.ok) throw new Error();
-      const data = await res.json() as { prices: LivePrices };
+      const data = await res.json() as { prices: LivePrices; fresh?: FreshModel[] };
       setLivePrices(data.prices);
+      setFresh(data.fresh ?? []);
       setLive(true); setUpdated("just now");
     } catch { setLive(false); setUpdated("snapshot"); }
   }
@@ -495,7 +529,7 @@ export default function Home() {
   return <main className="shell">
     <aside className="rail"><div className="logo">Ø</div><nav>{NAV.map(item => <a key={item.id} className={activeSection===item.id?"active":""} href={`#${item.id}`} aria-label={item.en} aria-current={activeSection===item.id?"page":undefined} onClick={()=>setActiveSection(item.id)}><i aria-hidden="true">{item.glyph}</i><span>{item[lang]}</span></a>)}</nav></aside>
     <div className="workspace">
-      <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span aria-hidden="true">⌕</span><input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-label={ui.search} value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?"live":"live offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}<em>{updated}</em></button></div></header>
+      <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span aria-hidden="true">⌕</span><input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-label={ui.search} value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?(fresh.length?"live has-fresh":"live"):"live offline"} onClick={refresh}><i/>{live?(fresh.length?ui.liveFresh(fresh.length):ui.live):ui.snapshot}<em>{updated}</em></button></div></header>
 
       <section className="brief">
         <div><span>{ui.tracked}</span><strong>{models.length}</strong><small>frontier models</small></div>
@@ -506,7 +540,8 @@ export default function Home() {
       </section>
 
       <section className="panel ranking-panel" id="ranking">
-        <div className="section-head"><div className="section-title"><span>01</span><div><h2>{ui.ranking}</h2><p>{ui.rankingDesc}</p></div></div><div className="source-stamp"><i/>{ui.updated}</div></div>
+        <div className="section-head"><div className="section-title"><span>01</span><div><h2>{ui.ranking}</h2><p>{ui.rankingDesc}</p></div></div><div className="source-stamp"><i/>{ui.updated(LAST_RETRIEVED)}</div></div>
+          {fresh.length > 0 && <p className="fresh-note">{ui.freshNote}{fresh.map(model => <span key={model.id}>{model.name}<small>{model.published}</small></span>)}</p>}
         <div className="rank-toolbar"><div className="metric-tabs">{LENSES.map(item => <button key={item.id} className={lens===item.id?"active":""} onClick={()=>setLens(item.id)}><span>{item[lang]}</span><b>{lang === "zh" ? item.shortZh : item.shortEn}</b></button>)}</div><div className="filters"><select value={maker} onChange={e=>setMaker(e.target.value)} aria-label="Lab filter">{makers.map(x => <option key={x} value={x}>{x === "All labs" ? ui.allLabs : x}</option>)}</select><label><input type="checkbox" checked={openOnly} onChange={e=>setOpenOnly(e.target.checked)}/>{ui.open}</label></div></div>
         <div className="rank-head"><span>#</span><span>{lang === "zh" ? "模型" : "Model"}</span><span>{lensName}</span><span>AA</span><span>Arena</span><span>{lang === "zh" ? "编程组合" : "Coding"}</span><span>Agent</span><span>{lang === "zh" ? "速度" : "Speed"}</span><span>{ui.compare}</span></div>
         <div className="rank-list">{visible.map((model,index) => {
@@ -545,7 +580,7 @@ export default function Home() {
       </section>
 
       <section className="sources" id="sources"><div><span>06</span><h2>{ui.sources}</h2><div className="source-summary"><b>{sourceCards.filter(card=>card.source.status==="active").length} {lang==="zh"?"已接入":"CONNECTED"}</b><span>{sourceCards.filter(card=>card.source.status==="queued").length} {lang==="zh"?"接入队列":"QUEUED"}</span>{agingCount>0&&<span className="aging">{agingCount} {ui.aging}</span>}</div></div><div className="source-grid">{sourceCards.map(({source,freshness})=><a className={source.status} href={source.url} target="_blank" rel="noreferrer" key={source.label}><div><span className={freshness.stale?"aging":undefined} title={freshness.title}>{freshness.text}</span><i>{source.status==="active"?`${lang==="zh"?"已接入":"CONNECTED"}${source.observations?` · ${source.observations}`:""}`:(lang==="zh"?"接入队列":"QUEUED")}</i></div><b>{source.label}</b><small>{source.role}</small><em>↗</em></a>)}</div><p>{ui.sourceNote}</p></section>
-      <footer className="site-footer"><div><i/>VERSIONED SNAPSHOT · 2026-07-31</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
+      <footer className="site-footer"><div><i/>{lang === "zh" ? "每日自动刷新 · 最后读取" : "REFRESHED DAILY · LAST READ"} {LAST_RETRIEVED}</div><span>AI Model Observatory</span><a href="#ranking">{ui.back}</a></footer>
     </div>
   </main>;
 }

@@ -498,7 +498,7 @@ const SOURCE_REGISTRY = {
   deepswe: { label: "DeepSWE official leaderboard", date: "25 Jul 2026", url: DEEPSWE_URL, role: "benchmark-native long-horizon coding runs", category: "benchmark", match: "deepswe.datacurve.ai" },
   scale: { label: "Scale Labs", date: "2026", url: "https://labs.scale.com/leaderboard", role: "MCP-Atlas and SWE-Bench Pro leaderboards", category: "benchmark", match: "labs.scale.com" },
   osworld: { label: "OSWorld 2.0", date: "2026.06", url: "https://osworld-v2.xlang.ai/", role: "execution-based long-horizon computer use", category: "benchmark", match: "osworld" },
-  ale: { label: "Agents' Last Exam", date: "2026", url: "https://agents-last-exam.org/leaderboard", role: "verifiable real-world professional tasks", category: "benchmark", match: "agents-last-exam.org" },
+  ale: { label: "Agents' Last Exam", date: "5 Aug 2026", url: "https://agents-last-exam.org/leaderboard", role: "verifiable real-world professional tasks, read by script", category: "benchmark", match: "agents-last-exam.org" },
   frontierswe: { label: "FrontierSWE", date: "2026-07", url: "https://www.frontierswe.com/", role: "frontier engineering tasks, Mean@5", category: "benchmark", match: "frontierswe.com" },
   apex: { label: "Mercor APEX-Agents", date: "2026", url: "https://www.mercor.com/apex/apex-agents-leaderboard/", role: "banking, consulting and legal deliverables", category: "benchmark", match: "mercor.com" },
   toolathlon: { label: "Toolathlon-Verified", date: "2026", url: "https://github.com/hkust-nlp/Toolathlon", role: "long-horizon cross-application tool use", category: "benchmark", match: "Toolathlon" },
@@ -513,7 +513,7 @@ const SOURCE_REGISTRY = {
   deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", category: "vendor", match: "deepmind.google" },
   deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", category: "vendor", match: "DeepSeek-V4" },
   kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", category: "vendor", match: "MoonshotAI/Kimi-K3" },
-  qwen: { label: "Qwen3.7 release", date: "19 May 2026", url: QWEN_URL, role: "vendor results with harness notes", category: "vendor", match: "qwen.ai" },
+  qwen: { label: "Qwen release tables", date: "3 Aug 2026", url: "https://qwen.ai/blog?id=qwen3.8", role: "vendor results, captured per release", category: "vendor", match: "qwen.ai" },
 } as const;
 
 export type SourceStatus = "active" | "queued";
@@ -528,6 +528,20 @@ export const SOURCE_STALE_DAYS = 30;
 
 const latestDate = (values: (string | null | undefined)[]) =>
   values.filter((value): value is string => typeof value === "string").sort().at(-1) ?? null;
+
+/**
+ * When this project last read any source, measured from the rows rather than typed into the UI.
+ *
+ * The page used to print "Updated 31 Jul 2026" in three hand-written places — two languages and a
+ * footer — which is the same failure as the observation counts that sat five batches out of date
+ * in the README. A stamp that says a date is making a claim; if nothing recomputes it, the claim
+ * quietly becomes false, and this one is the first thing a reader sees.
+ *
+ * `retrievedDate`, not `evaluationDate`: this answers "when did you last look", which is what an
+ * "updated" stamp means. A benchmark that has not published since June is not stale data on our
+ * side, and conflating the two would make a quiet leaderboard look like a neglected pipeline.
+ */
+export const LAST_RETRIEVED = latestDate(OBSERVATION_ROWS.map((row) => row.retrievedDate)) ?? "";
 
 export const SOURCE_META = Object.fromEntries(
   Object.entries(SOURCE_REGISTRY).map(([key, entry]) => {
