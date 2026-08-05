@@ -1147,6 +1147,15 @@
       "https://deepmind.google/blog/were-launching-lyria-35-in-google-flow-music-with-advances-across-musicality-lyrics-vocals-and-creative-control/",
       "https://deepmind.google/blog/were-launching-the-google-deepmind-accelerator-program-in-asia-pacific-to-tackle-environmental-risks/"
     ],
+    "thinkingmachines": [
+      "https://thinkingmachines.ai/blog/a-safe-path-to-open-weights/",
+      "https://thinkingmachines.ai/blog/defeating-nondeterminism-in-llm-inference/",
+      "https://thinkingmachines.ai/blog/interaction-models/",
+      "https://thinkingmachines.ai/blog/lora/",
+      "https://thinkingmachines.ai/blog/modular-manifolds/",
+      "https://thinkingmachines.ai/blog/on-policy-distillation/",
+      "https://thinkingmachines.ai/blog/the-future-worth-building-is-human/"
+    ],
     "anthropic": [
       "/news/announcing-our-updated-responsible-scaling-policy",
       "/news/anthropic-economic-index-connector",
@@ -1197,6 +1206,16 @@
       "/news/minimax-m25",
       "/news/minimax-m27-en",
       "/news/minimax-speech-28"
+    ],
+    "meta": [
+      "/blog/alta-daily-fashion-app-segment-anything/",
+      "/blog/assistive-robotics-university-of-pittsburgh-sam-dino/",
+      "/blog/brain2qwerty-brain-ai-human-communication/",
+      "/blog/genesis-mission-lawrence-berkeley-national-laboratory-segment-anything-dino/",
+      "/blog/introducing-muse-image-muse-video-msl/",
+      "/blog/introducing-muse-spark-meta-model-api/",
+      "/blog/introducing-muse-spark-msl/",
+      "/blog/scaling-how-we-build-test-advanced-ai/"
     ]
   }
 }

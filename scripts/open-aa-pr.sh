@@ -18,6 +18,12 @@ DIR="$(dirname "$0")"
 # where a reviewer who cannot check an alias mapping can still check a score.
 node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
 
+# Every AA model the catalog does not carry, drafted from the archive that just landed. The
+# numbers in a model record all have a source; only the display name, colour and tags do not, and
+# those are what the draft leaves blank. Without this the pull request says "AA has new
+# parameters" and the reader still has to write the record from scratch.
+node scripts/draft-model-record.mjs --all-new > drafts.md 2>/dev/null || echo "(could not draft records)" > drafts.md
+
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -47,7 +53,13 @@ $(cat "$CHECKS")
 \`\`\`
 
 Checks ran inside the workflow because a pull request opened with \`GITHUB_TOKEN\` does not trigger
-CI. Push any commit to this branch to get a real CI run."
+CI. Push any commit to this branch to get a real CI run.
+
+---
+
+## Catalog records this makes possible
+
+$(cat drafts.md)"
 
 repo_url="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}"
 existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"

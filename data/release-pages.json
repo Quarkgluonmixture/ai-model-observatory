@@ -17,7 +17,7 @@
     "",
     "`verdict` records what was measured on 2026-08-05, so an unreadable source is not",
     "re-investigated by every person who opens this file. Four of these have no working path, and",
-    "saying so is the point: a blank entry reads as 'nobody tried'."
+    "`verdict` records what was measured on 2026-08-05, so an unreadable source is not re-investigated by every person who opens this file. Three of these have no working path and one has none yet, and saying so is the point: a blank entry reads as \"nobody tried\"."
   ],
   "pages": [
     {
@@ -71,21 +71,36 @@
       "maker": "DeepSeek",
       "mode": "none",
       "url": "https://api-docs.deepseek.com/news",
-      "verdict": "NO PATH. Renders to 314 characters of navigation; /rss.xml returns 200 with no items. Release notes exist on this site but are not reachable this way."
+      "verdict": "NO PATH, re-checked 2026-08-05. The docs site renders to 314 characters of navigation; /rss.xml and /news/rss return 200 with no items, and github.com/deepseek-ai.atom carries no entries either."
     },
     {
       "id": "x-ai",
       "maker": "xAI",
       "mode": "none",
       "url": "https://x.ai/news",
-      "verdict": "NO PATH. Cloudflare challenges the browser ('Attention Required') and returns 403 for /news/rss.xml. Both doors are shut."
+      "verdict": "NO PATH, re-checked 2026-08-05. Cloudflare challenges the browser and returns 403 for /news/rss.xml, /rss.xml and /blog/rss.xml alike. Both doors are shut and neither is a URL problem."
     },
     {
       "id": "z-ai",
       "maker": "Z.AI",
       "mode": "none",
       "url": "https://z.ai/blog",
-      "verdict": "NO PATH. 404 — this is not the right URL, and the right one has not been found. Unlike the three above, this is unfinished rather than blocked."
+      "verdict": "NO PATH, re-checked 2026-08-05. z.ai/blog is 404 and the root renders to 153 characters of app shell whose only links are the terms of service and the privacy policy — it is a product surface, not a publication one. /rss.xml, /blog/index.xml and docs.z.ai/rss.xml are all 404. GLM releases have to be found another way; the namespace watch still sees them the day a provider serves them."
+    },
+    {
+      "id": "meta",
+      "maker": "Meta",
+      "mode": "render",
+      "url": "https://ai.meta.com/blog/",
+      "match": "^/blog/.+",
+      "verdict": "No feed at /blog/rss/ or /blog/feed/ (both 404). The index renders and lists posts; the top item on 2026-08-05 was Introducing Muse Spark 1.1, which is a catalog model, so this is a live surface and not an archive."
+    },
+    {
+      "id": "thinkingmachines",
+      "maker": "Thinking Machines",
+      "mode": "feed",
+      "url": "https://thinkingmachines.ai/index.xml",
+      "verdict": "Feed at /index.xml (7 entries). /blog/rss.xml and /feed.xml are 404 — the Hugo default path is the one that works."
     }
   ]
 }
