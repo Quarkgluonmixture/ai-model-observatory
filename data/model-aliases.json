@@ -1616,6 +1616,12 @@
       "benchmark": "gdpval",
       "supersededBy": "batch-19-gdpval",
       "reason": "Batch 04 hand-read 14 rows off the GDPval-AA board. Batch 19 renders the same page and reads all 175 configurations, and it re-reads the harness and tool setting from the page text every run instead of carrying the transcriptions assumption forward. One measurement read twice; the transcribed rows stay in the archive as evidence of what the board showed on 2026-07-31."
+    },
+    {
+      "file": "batch-04-professional",
+      "benchmark": "mmmu",
+      "supersededBy": "batch-20-mmmu",
+      "reason": "Batch 04 hand-read two rows off the MMMU board. Batch 20 reads all 71 that carry an MMMU-Pro Overall score, and reads the one thing the transcription got wrong: the board's legend says '*: results provided by the authors', so a starred score is a vendor self-report. Both transcribed rows recorded 'Author-reported result' in their note and were filed as source_kind benchmark anyway — the highest precedence this project has — so a self-report was outranking every verified reading in its cell. The transcribed rows also carry benchmark_version 'MMMU-Pro · Overall' where the column is 'Pro', which would put two versions in one cell."
     }
   ],
   "acknowledgedDisagreements": [],

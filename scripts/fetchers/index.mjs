@@ -13,8 +13,9 @@ import { deepswe } from "./deepswe.mjs";
 import { epoch } from "./epoch.mjs";
 import { gdpval } from "./gdpval.mjs";
 import { livebench } from "./livebench.mjs";
+import { mmmu } from "./mmmu.mjs";
 import { terminalBench } from "./terminal-bench.mjs";
 
-export const FETCHERS = [livebench, deepswe, epoch, terminalBench, ale, gdpval, artificialAnalysis];
+export const FETCHERS = [livebench, deepswe, epoch, terminalBench, ale, gdpval, mmmu, artificialAnalysis];
 
 export const fetcherById = (id) => FETCHERS.find((fetcher) => fetcher.id === id);
