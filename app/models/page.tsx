@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  DEFAULT_ACTIVE_ID,
+  DEFAULT_COMPARE_IDS,
   LAST_RETRIEVED,
   AXES,
   BENCHMARKS,
@@ -421,8 +423,8 @@ export default function Home() {
   // The catalog is not live state. Its prices are archived list prices with provenance behind
   // them (npm run check:models), so the feed no longer writes into this array — see refresh().
   const models = MODELS;
-  const [activeId,setActiveId] = useState("gpt-5.6-sol-max");
-  const [compareIds,setCompareIds] = useState<string[]>(["claude-fable-5","kimi-k3-max"]);
+  const [activeId,setActiveId] = useState(DEFAULT_ACTIVE_ID);
+  const [compareIds,setCompareIds] = useState<string[]>(DEFAULT_COMPARE_IDS);
   const [lens,setLens] = useState<RankLens>("intelligence");
   const [profileMode,setProfileMode] = useState<BenchmarkMode>("system");
   const [axis,setAxis] = useState<BenchmarkAxis>("coding");

@@ -541,6 +541,20 @@ const latestDate = (values: (string | null | undefined)[]) =>
  * "updated" stamp means. A benchmark that has not published since June is not stale data on our
  * side, and conflating the two would make a quiet leaderboard look like a neglected pipeline.
  */
+/**
+ * What the panel opens on. These live here, next to MODELS, because they are model ids and
+ * `check:data` can only hold them to that if it can see them.
+ *
+ * They were `"gpt-5.6-sol-max"` and `"kimi-k3-max"` inline in the page — ids that have never
+ * existed in this catalog, presumably typed when the records still carried the effort in the id.
+ * Nothing complained: the page falls back to `models[0]` for an unknown active id and silently
+ * drops an unknown compare id. So the board opened on whichever model happens to sort first,
+ * which is Claude Opus 5 — and Opus 5 has evidence on five of the seven axes, so the radar drew a
+ * broken outline and the panel looked wrong rather than sparse.
+ */
+export const DEFAULT_ACTIVE_ID = "gpt-5.6-sol";
+export const DEFAULT_COMPARE_IDS = ["claude-fable-5", "kimi-k3"];
+
 export const LAST_RETRIEVED = latestDate(OBSERVATION_ROWS.map((row) => row.retrievedDate)) ?? "";
 
 export const SOURCE_META = Object.fromEntries(

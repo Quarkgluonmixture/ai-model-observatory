@@ -5,6 +5,8 @@ import {
   MODELS,
   OBSERVATION_ROWS,
   OBSERVATIONS_BY_CELL,
+  DEFAULT_ACTIVE_ID,
+  DEFAULT_COMPARE_IDS,
 } from "../app/model-data.ts";
 import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
 
@@ -112,6 +114,13 @@ for (const [modelId, scores] of Object.entries(BENCHMARK_SCORES)) {
 }
 
 if (MODELS.length < 15) errors.push(`expected at least 15 models, found ${MODELS.length}`);
+// The panel's opening selection. An id that no longer exists does not throw — the page falls back
+// to models[0] and drops unknown compare ids — so this went unnoticed until the radar looked
+// broken for a model that was merely sparse. A default is a reference like any other.
+for (const [what, id] of [["DEFAULT_ACTIVE_ID", DEFAULT_ACTIVE_ID], ...DEFAULT_COMPARE_IDS.map((id) => ["DEFAULT_COMPARE_IDS", id])]) {
+  if (!modelIds.has(id)) errors.push(`${what} references "${id}", which is not a catalog model`);
+}
+
 if (BENCHMARKS.length < 20) errors.push(`expected at least 20 benchmarks, found ${BENCHMARKS.length}`);
 if (!BENCHMARK_OBSERVATIONS["gemini-3.5-flash"]?.terminal) {
   errors.push("Gemini 3.5 Flash must retain its official Terminal-Bench observation");
