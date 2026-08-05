@@ -30,6 +30,8 @@ const UI = {
     search: "搜索模型或实验室",
     snapshot: "价格未对照",
     live: "已对照实时价",
+    liveFresh: (n: number) => `实时:${n} 个新模型 · 价格已对照`,
+    freshNote: "上游已在提供、目录还没有的模型:",
     tracked: "收录模型",
     portfolio: "Benchmark 目录",
     ranking: "前沿模型排行",
@@ -92,6 +94,8 @@ const UI = {
     search: "Search model or lab",
     snapshot: "Prices not compared",
     live: "Prices compared",
+    liveFresh: (n: number) => `Live · ${n} new upstream · prices compared`,
+    freshNote: "Served upstream, not yet in this catalog: ",
     tracked: "Tracked models",
     portfolio: "Benchmarks catalogued",
     ranking: "Frontier model ranking",
@@ -333,6 +337,7 @@ function Radar({ models, activeId, mode, lang }:{ models: ModelRecord[]; activeI
 }
 
 export type LivePrices = Record<string, { input: number; output: number; contextK?: number; source: string }>;
+export type FreshModel = { id: string; name: string; published: string };
 
 // A provider quoting a different number than the archive is the interesting case, and it has two
 // causes worth telling apart by hand: the vendor changed its list price (collect it) or the
@@ -426,6 +431,10 @@ export default function Home() {
   const [openOnly,setOpenOnly] = useState(false);
   const [showAll,setShowAll] = useState(false);
   const [livePrices,setLivePrices] = useState<LivePrices>({});
+  // Models a provider is already serving that this catalog has never heard of. The daily job finds
+  // them tomorrow morning; this finds them now, and says so rather than pretending the board is
+  // complete. It is a pointer, not data: nothing here reaches a cell.
+  const [fresh,setFresh] = useState<FreshModel[]>([]);
   const [live,setLive] = useState(false);
   const [updated,setUpdated] = useState("snapshot");
   const ui = UI[lang];
@@ -457,8 +466,9 @@ export default function Home() {
     try {
       const res = await fetch("/api/live-models",{cache:"no-store"});
       if (!res.ok) throw new Error();
-      const data = await res.json() as { prices: LivePrices };
+      const data = await res.json() as { prices: LivePrices; fresh?: FreshModel[] };
       setLivePrices(data.prices);
+      setFresh(data.fresh ?? []);
       setLive(true); setUpdated("just now");
     } catch { setLive(false); setUpdated("snapshot"); }
   }
@@ -519,7 +529,7 @@ export default function Home() {
   return <main className="shell">
     <aside className="rail"><div className="logo">Ø</div><nav>{NAV.map(item => <a key={item.id} className={activeSection===item.id?"active":""} href={`#${item.id}`} aria-label={item.en} aria-current={activeSection===item.id?"page":undefined} onClick={()=>setActiveSection(item.id)}><i aria-hidden="true">{item.glyph}</i><span>{item[lang]}</span></a>)}</nav></aside>
     <div className="workspace">
-      <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span aria-hidden="true">⌕</span><input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-label={ui.search} value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?"live":"live offline"} onClick={refresh}><i/>{live?ui.live:ui.snapshot}<em>{updated}</em></button></div></header>
+      <header><div><p>{ui.eyebrow}</p><h1>{ui.brand}</h1></div><div className="header-actions"><label className="search"><span aria-hidden="true">⌕</span><input type="search" inputMode="search" enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false} aria-label={ui.search} value={query} onChange={e=>setQuery(e.target.value)} placeholder={ui.search}/></label><div className="lang-switch" aria-label="Language"><button className={lang==="zh"?"active":""} onClick={()=>changeLang("zh")}>中</button><button className={lang==="en"?"active":""} onClick={()=>changeLang("en")}>EN</button></div><button className={live?(fresh.length?"live has-fresh":"live"):"live offline"} onClick={refresh}><i/>{live?(fresh.length?ui.liveFresh(fresh.length):ui.live):ui.snapshot}<em>{updated}</em></button></div></header>
 
       <section className="brief">
         <div><span>{ui.tracked}</span><strong>{models.length}</strong><small>frontier models</small></div>
@@ -531,6 +541,7 @@ export default function Home() {
 
       <section className="panel ranking-panel" id="ranking">
         <div className="section-head"><div className="section-title"><span>01</span><div><h2>{ui.ranking}</h2><p>{ui.rankingDesc}</p></div></div><div className="source-stamp"><i/>{ui.updated(LAST_RETRIEVED)}</div></div>
+          {fresh.length > 0 && <p className="fresh-note">{ui.freshNote}{fresh.map(model => <span key={model.id}>{model.name}<small>{model.published}</small></span>)}</p>}
         <div className="rank-toolbar"><div className="metric-tabs">{LENSES.map(item => <button key={item.id} className={lens===item.id?"active":""} onClick={()=>setLens(item.id)}><span>{item[lang]}</span><b>{lang === "zh" ? item.shortZh : item.shortEn}</b></button>)}</div><div className="filters"><select value={maker} onChange={e=>setMaker(e.target.value)} aria-label="Lab filter">{makers.map(x => <option key={x} value={x}>{x === "All labs" ? ui.allLabs : x}</option>)}</select><label><input type="checkbox" checked={openOnly} onChange={e=>setOpenOnly(e.target.checked)}/>{ui.open}</label></div></div>
         <div className="rank-head"><span>#</span><span>{lang === "zh" ? "模型" : "Model"}</span><span>{lensName}</span><span>AA</span><span>Arena</span><span>{lang === "zh" ? "编程组合" : "Coding"}</span><span>Agent</span><span>{lang === "zh" ? "速度" : "Speed"}</span><span>{ui.compare}</span></div>
         <div className="rank-list">{visible.map((model,index) => {
