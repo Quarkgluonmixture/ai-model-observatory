@@ -1,0 +1,88 @@
+# Artificial Analysis, on demand.
+#
+# AA is `versioning: "manual"` and deliberately absent from the daily refresh: it re-measures
+# speed and latency continuously, so a scheduled rewrite would turn `check:models` red every time
+# a number drifted, and a check that is always red is a check nobody reads.
+#
+# But "not daily" was being read as "not automated", and the practical effect was that adding a
+# model required somebody to sit at a machine that had AA_API_KEY in its environment and run the
+# fetch by hand. The key is already a repository secret. So this runs the same fetch here, on
+# request, and opens a pull request with it.
+#
+# It does not commit to main and it does not fail on a red `check:models`. A catalog value that no
+# longer matches AA is the expected outcome of a re-measure, and reconciling it — deciding whether
+# the catalog or the source is stale — is the reviewer's job, which is why the check output is
+# pasted into the pull request body rather than used as a gate.
+name: Refresh Artificial Analysis
+
+on:
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    name: Re-read AA and open a pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      # Without the key this is a no-op that says so, rather than a failure: the same contract
+      # every other AA-touching step in this repository follows.
+      - name: Re-read Artificial Analysis
+        id: fetch
+        env:
+          AA_API_KEY: ${{ secrets.AA_API_KEY }}
+        run: |
+          if [ -z "${AA_API_KEY:-}" ]; then
+            echo "::warning::AA_API_KEY is not set; nothing to refresh."
+            echo "skipped=1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node scripts/fetch-source.mjs aa | tee fetch.log
+
+      - name: Rebuild the observation store
+        if: steps.fetch.outputs.skipped != '1'
+        run: npm run ingest
+
+      - name: Stop if nothing moved
+        if: steps.fetch.outputs.skipped != '1'
+        id: diff
+        run: |
+          if [ -z "$(git diff --name-only)" ]; then
+            echo "AA has not re-measured anything since the archive was written." >> "$GITHUB_STEP_SUMMARY"
+            echo "unchanged=1" >> "$GITHUB_OUTPUT"
+          fi
+
+      # Reported, never gated. check:models comparing the catalog against a just-re-measured AA
+      # is exactly the conversation this pull request exists to start.
+      - name: Run the contract
+        if: steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1'
+        run: |
+          {
+            npm run --silent lint && echo "lint ok"
+            npm run --silent check:data || echo "check:data FAILED"
+            npm run --silent check:models || echo "check:models FAILED — a catalog value disagrees with the re-measured source; decide which one is stale"
+            npm run --silent check:prices || echo "check:prices FAILED"
+          } 2>&1 | tee checks.txt
+
+      - name: Open a pull request
+        if: steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          bash scripts/open-aa-pr.sh checks.txt

@@ -57,9 +57,15 @@ jobs:
       # this job, never on the refresh job below, so an AA re-measurement can never rewrite the
       # archive on its own — see scripts/fetchers/artificial-analysis.mjs.
       - name: Diff every scripted source against its archive
+        id: drift
         env:
           AA_API_KEY: ${{ secrets.AA_API_KEY }}
-        run: npm run check:upstream
+        # pipefail so the step's verdict stays check:upstream's and not tee's. The log is kept
+        # because the steps below have to report *which* cells moved, and a failure that says
+        # only "exit code 1" is the kind nobody acts on.
+        run: |
+          set -o pipefail
+          npm run check:upstream 2>&1 | tee drift.log
 
       # Runs even when drift failed above: the two findings are independent, and suppressing the
       # gap report because a cell moved would hide a week of collection targets behind one number.
@@ -77,7 +83,43 @@ jobs:
         if: always() && steps.gaps.outputs.count != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: bash scripts/publish-gaps-issue.sh gaps.md "${{ steps.gaps.outputs.count }}" || echo "::warning::Could not publish the gap issue; the report is in the step summary."
+
+      # The tier-C destination the charter was missing. An integrity failure opens an issue —
+      # opening notifies, editing a body does not — and pushes to WeChat. It closes itself when
+      # the archive matches again, so an open issue always means a live failure.
+      - name: Report an integrity failure
+        if: always() && steps.drift.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: bash scripts/publish-integrity-issue.sh open drift.log || echo "::warning::Could not publish the integrity issue; drift.log is in this run."
+
+      - name: Clear the integrity issue
+        if: always() && steps.drift.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: bash scripts/publish-integrity-issue.sh close || true
+
+      # Silence has to be distinguishable from a dead pipeline. Without a heartbeat, "no WeChat
+      # message" reads as "nothing was published upstream" — which is exactly the assumption that
+      # let Qwen3.8 Max sit in the gaps issue unnoticed. Mondays only, so it stays a signal.
+      - name: Weekly heartbeat
+        if: always()
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          [ "$(date -u +%u)" = "1" ] || { echo "Not Monday; no heartbeat."; exit 0; }
+          {
+            echo "每周心跳:每日巡检在跑。"
+            echo
+            echo "- 归档完整性:${{ steps.drift.outcome }}"
+            echo "- 当前收集缺口:${{ steps.gaps.outputs.count }} 项"
+            echo
+            echo "这条如果某周没来,是通道或者工作流出了问题,不是上游没动静。"
+          } | node scripts/notify-pushplus.mjs "观测台 · 每周心跳"
 
   refresh:
     name: Re-read live boards and open a pull request

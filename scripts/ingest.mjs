@@ -64,7 +64,7 @@ for (const { file, meta, rows: lines } of batches) {
       continue;
     }
 
-    const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort);
+    const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file);
 
     if (!modelId) {
       skipped.push({ file, line, modelRaw: raw.model_raw, effort: raw.reasoning_effort, benchmark: raw.benchmark });

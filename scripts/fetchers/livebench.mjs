@@ -68,9 +68,14 @@ export const livebench = {
   batch: "batch-09-livebench",
 
   // LiveBench replaces the question set between releases, so a release is a version and the
-  // archive is pinned to one. A number that moves *under* a pinned version is drift, and drift
-  // is an integrity failure — see scripts/fetch-source.mjs.
-  versioning: "pinned",
+  // archive is frozen to one. But a release is not a closed guest list: LiveBench keeps running
+  // newly published models against a release long after it ships — on 2026-08-04 it added
+  // DeepSeek V4 Flash 0731 and Qwen3.8 Max to release 2026-06-25, 46 cells, all of them new,
+  // none of the existing numbers touched. So this source is append-only, not pinned: a row that
+  // appears is new data, a row that changed or vanished is still an integrity failure. Read
+  // `versioning: "pinned"` as "this board publishes once and never revisits" — LiveBench does
+  // not, and calling it pinned made the daily job red for two days over data working as designed.
+  versioning: "append-only",
   archiveVersion: (rows) => rows[0].benchmark_version,
 
   latestVersion: async () => {

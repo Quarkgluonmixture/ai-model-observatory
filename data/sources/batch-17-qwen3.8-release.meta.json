@@ -1,0 +1,11 @@
+{
+  "batch": "17 · Qwen3.8 release tables",
+  "collectedWith": "scripts/capture-qwen-release.mjs",
+  "filtered": false,
+  "release": "qwen3.8",
+  "sources": [
+    "https://qwen.ai/blog?id=qwen3.8"
+  ],
+  "note": "Qwen3.8-Max 发布页(2026-08-03)的两张性能表,整表抄录:465 行,8 个已发布模型列,86 个 benchmark 标签,9 个分区。页面是客户端渲染的——直接取 HTML 只得到一个词「Qwen」——所以采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。厂商发布材料:全表没有标注 harness、reasoning effort 或运行日期,evaluation_date 记的是发布日。表里含 Opus4.8 / Fable5 / GPT5.6 Sol / Gemini3.1-Pro / Qwen3.7-Max / Qwen3.7-Plus 等竞品列,一并归档为证据,但只有 Qwen3.8-Max 会被 alias 采纳——竞争对手发布的竞品分数没有 harness、effort、版本,源优先级低于任何一个给出这些信息的榜单。双数字格取第一个数为指标、第二个进 note,这一口径是核对过的而非假设:页面写 GPT-5.6 Sol 的 ALE 为 30.6 / 53.6、Opus 4.8 的 OSWorld 2.0 为 20.6 / 54.8,而两个官方榜的归档行正是 30.6 与 20.6,partial score 53.6 / 54.8。12 行落进目录已有的列(terminal、swe-pro、deepswe、ale、toolathlon、hle-tools、gpqa、hle-no-tools、mrcr、mmmu、charxiv、osworld2),其余 74 个标签目录没有对应 benchmark,记在 model-aliases.json 的 droppedBenchmarks 里,免得下一代发布时重新推导一遍。注意 OSWorld-Verified 86.1 与 OSWorld 2.0 19.4 是同表两行、差四倍,只有后者进 osworld2 列。",
+  "retrievedDate": "2026-08-05"
+}

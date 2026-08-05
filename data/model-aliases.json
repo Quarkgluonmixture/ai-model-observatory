@@ -9,6 +9,13 @@
     "family, and whatever effort the source printed is stored on the row. Add an effort-specific",
     "entry only if a maker ever ships two records for one family again.",
     "",
+    "An alias may carry \"file\": \"<batch>\", which scopes it to one archive file and wins over a",
+    "global entry for the same string. Use it only when a published model string means different",
+    "models in different sources -- see the deepseek-v4-flash entry, where the bare string is the",
+    "0731 release on Artificial Analysis and the earlier preview on LiveBench, Epoch and LMArena.",
+    "Scoping is the last resort, not the first: a string that means one model everywhere gets one",
+    "global entry, and a string nobody can attribute stays unmapped and reported.",
+    "",
     "Deliberately absent, with reasons, so nobody re-adds them by accident:",
     "  Muse Spark (no version)         - a different model from Muse Spark 1.1",
     "  GPT-5.5 Pro / 5.2 Pro / 5.4 Pro - Pro is a different model from the base",
@@ -927,8 +934,10 @@
     },
     {
       "modelRaw": "deepseek-v4-flash",
-      "effort": "*",
-      "modelId": "deepseek-v4-flash"
+      "effort": null,
+      "file": "batch-14-aa-parameters",
+      "modelId": "deepseek-v4-flash",
+      "reason": "DeepSeek shipped V4 Flash twice: a preview, then the post-trained 0731 release, whose scores are much higher. LiveBench, Epoch and LMArena publish both and print -0731 for the official one, so the bare string there is the preview and must not reach this record. Artificial Analysis never renamed its slug: the bare string with no effort is 'DeepSeek V4 Flash 0731 (Reasoning, Max Effort)', published 2026-07-31, per the row's own note. Hence the file scope. AA's non-reasoning row under the same string is the 2026-04-24 preview and stays unmapped."
     },
     {
       "modelRaw": "qwen3.7-max-preview",
@@ -1159,6 +1168,55 @@
       "modelRaw": "gemini-3-flash-preview",
       "effort": "*",
       "modelId": "gemini-3-flash"
+    },
+    {
+      "modelRaw": "Opus4.8",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Fable5",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT5.6 Sol (max)",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Qwen3.7-Max",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Gemini3.1-Pro",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT5.6-Sol",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Qwen3.7-Plus",
+      "effort": "*",
+      "file": "batch-17-qwen3.8-release",
+      "modelId": null,
+      "reason": "Batch 17 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
     }
   ],
   "benchmarkSplits": [
@@ -1287,6 +1345,85 @@
     {
       "benchmark": "vals-cyberbench-poc / vals-cyberbench-patch / vals-web-search-index*",
       "reason": "Two to three rows each and tool-dependent definitions; not enough to form a comparable column yet. Archived for later."
+    },
+    {
+      "benchmarks": [
+        "NL2Repo-Bench",
+        "FrontierSWE",
+        "MLS-Bench-Lite",
+        "PaperBench",
+        "AndroidBench",
+        "QwenSWEBench",
+        "QwenQoderBench",
+        "QwenReactBench",
+        "QwenSVGBench",
+        "CoWorkBench",
+        "WorkSpaceBench",
+        "JobBench",
+        "SkillsBench",
+        "Automation-Bench (Pass@1)",
+        "WideSearch",
+        "IFBench",
+        "$OneMillion-Bench (expert score)",
+        "HealthBench",
+        "PLawBench",
+        "PRBench-Legal",
+        "PRBench-Finance",
+        "LongBench v2",
+        "MathVision",
+        "BabyVision",
+        "HLE-VL (w/ Tools)",
+        "ZeroBench (Pass@5)",
+        "ZeroBench-Sub",
+        "LogicVista",
+        "HiPhO",
+        "PhyX",
+        "SLAKE",
+        "MedXpertQA-MM",
+        "PMC-VQA",
+        "OSWorld-Verified",
+        "ScreenSpot Pro",
+        "WebArena-Verified",
+        "AndroidWorld",
+        "MobileWorld",
+        "ClawEval-MM",
+        "Vision2Web",
+        "QwenBlenderBench",
+        "Parametric CAD Bench",
+        "RecreationBench",
+        "PresentBench",
+        "OmniDocBench 1.5",
+        "OCR-Bench-V2 (EN/ZH)",
+        "CC-OCR-Bench-V2",
+        "MTVQA-Test",
+        "MADQA",
+        "QwenVisualOffice",
+        "RealWorldQA",
+        "ERQA",
+        "LingoQA",
+        "SURDS",
+        "SimpleVQA",
+        "WorldVQA",
+        "MMStar",
+        "PerceptionBench",
+        "CountQA",
+        "RefAdv-S",
+        "Dense200",
+        "COCO",
+        "VisFactor",
+        "VLMsAreBiased",
+        "VideoMME (w/ Sub.)",
+        "VideoMME v2 (w/ Sub.)",
+        "VideoMMMU",
+        "MMVU",
+        "MLVU (M-Avg)",
+        "TVBench",
+        "LVBench",
+        "LVBench (w/ Mem.)",
+        "EgoLife (w/ Mem.)",
+        "VideoDR (w/ Search)"
+      ],
+      "reason": "Published in the Qwen3.8 release tables (batch 17) and archived there as evidence, but the catalog has no record for these benchmarks. Most are Qwen-authored (QwenSWEBench, QwenReactBench, QwenVisualOffice), vision or video suites the dashboard does not track, or a benchmark whose only reading anywhere is this vendor table -- a column built from one maker's numbers about its own release would rank nothing. Listed in full so the next release is not re-derived from scratch. OSWorld-Verified is here on purpose: it is a different evaluation from OSWorld 2.0, which is carried, and the same table prints 86.1 against 19.4 for one model."
     }
   ],
   "versionFallbacks": [

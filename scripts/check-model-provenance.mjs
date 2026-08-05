@@ -22,6 +22,10 @@ const SOURCE_DIR = join(ROOT, "data/sources");
 const config = JSON.parse(readFileSync(join(ROOT, "data/model-aliases.json"), "utf8"));
 
 const aliasFor = new Map(config.aliases.map((alias) => [alias.modelRaw, alias.modelId]));
+// The same resolver ingestion uses, so a file-scoped alias means the same thing to the audit as
+// it does to the observation store. Reading `aliasFor` here instead would ignore the scope and
+// audit the catalog against a row the dashboard never accepted.
+const { resolveModelId, supersededBy } = buildResolvers(config);
 const norm = (value) => (value == null ? null : String(value).toLowerCase());
 
 // Promotional prices recorded in batch metas. The rows stay in the archive because a published
@@ -62,7 +66,7 @@ const isArena = (row) => row.source_url?.includes("lmarena.ai");
 const effortIndex = new Map();
 const modelIndex = new Map();
 for (const row of rows) {
-  const modelId = aliasFor.get(row.model_raw);
+  const modelId = resolveModelId(row.model_raw, row.effort, row.file);
   if (!modelId) continue;
 
   const perEffort = effortIndex.get(`${modelId}|${norm(row.effort)}`) ?? {};
@@ -87,7 +91,6 @@ let backed = 0;
 const legacy = [];
 const disputed = [];
 
-const { supersededBy } = buildResolvers(config);
 
 // Spelling-orphan guard. Alias resolution is exact, so a model_raw that differs from a mapped
 // key only in how it is *written* silently fails to resolve and the row is dropped from ingest.
@@ -139,6 +142,7 @@ const VARIANT_TIERS = ["pro", "lite", "mini", "nano", "small", "air", "turbo", "
 const words = (value) => new Set(value.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
 for (const alias of config.aliases) {
   if (alias.allowVariant) continue; // an explicit, reasoned exception on the alias entry
+  if (alias.modelId == null) continue; // a scoped refusal maps to nothing, so there is no tier to compare
   const raw = words(alias.modelRaw);
   const target = words(alias.modelId);
   const extra = VARIANT_TIERS.filter((tier) => raw.has(tier) && !target.has(tier));

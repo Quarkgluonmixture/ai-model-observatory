@@ -35,9 +35,40 @@ Nothing here is a build failure — each line is a collection target. Close the 
 # --force keeps the step idempotent on a repository that has never had this label.
 gh label create "$LABEL" --color BFD4F2 --description "Weekly report of uncollected models and cells" --force >/dev/null
 
+# The models named under "Published upstream" in a report. Used to tell a model that appeared
+# today from the ones that have been sitting in this issue for a week.
+upstream_models() {
+  sed -n '/^## Published upstream/,/^## /p' | sed -n 's/^- `\([^`]*\)`.*/\1/p' | sort
+}
+
 if [ -n "$existing" ]; then
+  # Editing an issue body sends no notification — that is the whole reason this project
+  # published a new model for two days and nobody heard about it. So the diff against
+  # yesterday's body is what gets pushed, and only when it is non-empty.
+  previous="$(gh issue view "$existing" --json body --jq .body 2>/dev/null || true)"
+  fresh="$(comm -13 <(printf '%s\n' "$previous" | upstream_models) <(printf '%s\n' "$body" | upstream_models))"
+
   gh issue edit "$existing" --body "$body" >/dev/null
   echo "Refreshed #$existing with $COUNT gap(s)."
+
+  if [ -n "$fresh" ]; then
+    count="$(printf '%s\n' "$fresh" | grep -c .)"
+    {
+      echo "上游新出现 ${count} 个目录还没有的模型:"
+      echo
+      printf '%s\n' "$fresh" | sed 's/^/- /'
+      echo
+      echo "证据可能已经在归档里了(脚本源每天重读整块板子)。要收的话回一句「收 <模型名>」。"
+      echo
+      echo "完整报告:${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/issues/${existing}"
+    } | node "$(dirname "$0")/notify-pushplus.mjs" "观测台 · 上游新模型 ×${count}"
+  else
+    echo "No model appeared since the last report; nothing pushed."
+  fi
 else
-  gh issue create --title "$TITLE" --label "$LABEL" --body "$body"
+  created="$(gh issue create --title "$TITLE" --label "$LABEL" --body "$body")"
+  echo "$created"
+  # A first run has no previous body to diff against, so it reports the count rather than a list.
+  printf '收集缺口报告已开:%s\n\n共 %s 项。\n' "$created" "$COUNT" |
+    node "$(dirname "$0")/notify-pushplus.mjs" "观测台 · 缺口报告已建立"
 fi

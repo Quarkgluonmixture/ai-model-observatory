@@ -81,8 +81,9 @@ npm run build
 
 `npm run check:upstream` re-reads every scripted source and diffs it cell by cell. It needs the
 network, so it runs daily rather than on every PR — see `.github/workflows/upstream.yml`. It
-fails only when a **pinned** source moved under a frozen version; a **live** board moving is new
-data, and the same daily workflow rewrites that batch and opens a pull request instead.
+fails only when an **already-published number** moved under a frozen version; a **live** board
+moving, and an **append-only** board gaining a row it never had, are both new data, and the same
+daily workflow rewrites that batch and opens a pull request instead.
 
 `npm run report:gaps` asks the opposite question: what exists that was never collected. Models one
 cell below a ranking floor, archived rows still waiting on a catalog model, and models published
@@ -146,8 +147,16 @@ Three failure modes that pass a naive check, all hit for real:
 
 To add a scripted source: write `scripts/fetchers/<id>.mjs`, list it in `scripts/fetchers/index.mjs`,
 and declare `versioning`. `"pinned"` means the source freezes a version and any movement is an
-integrity failure; `"live"` means it appends results and movement is new data. Getting that wrong
-either turns the daily job permanently red or silently accepts a rewritten history.
+integrity failure; `"live"` means it appends results and movement is new data; `"append-only"`
+(LiveBench) means the version is frozen but the guest list is not — a cell that **appears** is new
+data, a cell that **changed or vanished** is still an integrity failure. Getting that wrong either
+turns the daily job permanently red or silently accepts a rewritten history.
+
+Ask which one you are declaring by asking what the version freezes. LiveBench was `pinned` for two
+months on the reasoning that a release freezes the question set — true, but a release does not
+freeze *who has been run against it*. LiveBench added two models to release 2026-06-25 on
+2026-08-04, seven weeks after publishing it, and the daily job stayed red until someone read the 46
+cells and saw that every one of them said `appeared`.
 
 ## Adding a model
 
@@ -197,6 +206,16 @@ official pages for precision, not because LMArena is wrong.
   that had been used as evidence *against* a source.
 - Vendors price in tiers and regions. Archive the tier the catalog quotes and record the
   others in the batch meta, so a later reader does not "correct" Standard to Batch.
+- **One published model string can mean two different models, and which one depends on the
+  source.** DeepSeek shipped V4 Flash as a preview and then as the post-trained 0731 release,
+  whose scores are far higher. LiveBench, Epoch and LMArena publish both and print `-0731` for the
+  official one; Artificial Analysis never renamed its slug, so there the bare string *is* 0731.
+  A single global alias therefore reported the preview's LiveBench numbers — 49.25 where the
+  official model scores 100 — under the 0731 record, and nothing failed: `check:data` only
+  *reports* a cross-source disagreement, and a mis-attribution inside one model looks identical to
+  a benchmark being hard. Aliases may carry `"file"` to scope them to one batch; scoping is the
+  last resort, and an unattributable string stays unmapped. Effort cannot substitute for it — on
+  LiveBench both releases carry no effort at all.
 - **A substring lookup will find the wrong model, and a wrong price looks exactly like a right
   one.** `list.find(id => id.includes("gpt-5.6"))` returned `openai/gpt-5.6-luna-pro`, so the
   GPT-5.6 Sol price card rendered $0.10/$0.60 instead of $5/$30 — and six other lookups landed on
@@ -215,6 +234,9 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/check-model-provenance.mjs` | Catalog numbers vs the archive |
 | `scripts/fetchers/*.mjs` | One module per source that can be re-read by script |
 | `scripts/fetch-source.mjs` | Runs them; `--check` diffs, `--live` refreshes the moving boards |
+| `scripts/capture-qwen-release.mjs` | Renders a Qwen release post over CDP and archives its tables — per release, not daily |
+| `scripts/notify-pushplus.mjs` | One WeChat push; silently skips itself without `PUSHPLUS_TOKEN` |
+| `scripts/publish-integrity-issue.sh` | Opens/closes the `source-integrity` issue — the tier-C report's destination |
 | `scripts/report-gaps.mjs` | What was never collected — floors, unaliased rows, new upstream models |
 | `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |

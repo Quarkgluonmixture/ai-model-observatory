@@ -101,12 +101,25 @@ Exception: **when the user explicitly asks for a specific model by name, they ha
 judgement.** Carry it through to a merged state if the contract is green. "Add GPT-5.7" is an
 instruction; your cron noticing GPT-5.7 is not.
 
-### C — a pinned source no longer matches its archive → stop and report
+### C — a frozen source no longer matches its archive → stop and report
 
-`npm run check:upstream` failed on a `versioning: "pinned"` source. That means a leaderboard edited
-a number under a version that is supposed to be frozen. Do not re-fetch, do not "fix" the archive,
-do not open a PR. Report it with the exact cells. This is the one signal the whole drift system
-exists to produce and it needs a human.
+`npm run check:upstream` failed on a `versioning: "pinned"` or `"append-only"` source. That means a
+leaderboard **edited or withdrew a number** under a version that is supposed to be frozen. Do not
+re-fetch, do not "fix" the archive, do not open a PR. Report it with the exact cells. This is the
+one signal the whole drift system exists to produce and it needs a human.
+
+**Reporting now has a destination, and it is not you.** The daily workflow opens a
+`source-integrity` issue and pushes to WeChat on its own, and closes both when the archive matches
+again. That runs on GitHub, so it works when your machine does not. Your job on a tier-C finding is
+to investigate and propose, not to deliver the news — and if you find yourself about to write a
+status message, check whether the workflow already sent it.
+
+Read the cells before you believe the heading. A frozen source *gaining* rows is not this — an
+append-only board runs newly published models against a frozen question set and those rows say
+`appeared`, which the check now passes and the refresh collects. A run where every difference is an
+addition and the job is still red means the source is declared with the wrong `versioning`, not that
+history was rewritten. That is a one-line fetcher fix, and it is tier B because it changes what the
+integrity check will accept from then on.
 
 ---
 
@@ -186,6 +199,15 @@ A wrong alias silently reports one model's score as another's. No check catches 
   gap to close.
 - When unsure, leave it unmapped and say why in the PR. The row stays in the archive and costs
   nothing; a wrong attribution costs the project its credibility.
+- **A string can mean one model on one board and a different model on another.** When a maker
+  re-releases a name — a preview, then the post-trained version — some sources add a date suffix
+  and some keep the old slug. DeepSeek V4 Flash did exactly this: `deepseek-v4-flash` is the
+  preview on LiveBench, Epoch and LMArena, which also publish `deepseek-v4-flash-0731`, and is the
+  0731 release on Artificial Analysis, which never renamed. An alias may carry
+  `"file": "<batch>"` for that case and it beats the global entry. Before using it, confirm the
+  meaning from the row's own note or evaluation date — an Arena score dated before the release
+  existed is not that release. If a board publishes two strings for one family, assume they are
+  two models until the dates say otherwise.
 
 ---
 
