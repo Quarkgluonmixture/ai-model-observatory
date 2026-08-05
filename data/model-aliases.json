@@ -1247,6 +1247,66 @@
       "effort": "*",
       "modelId": "qwen3.7-max",
       "reason": "Agents Last Exam (batch 18) spells families its own way: capitalised with dots for OpenAI, provider-prefixed for Anthropic, and doubled for Qwen (qwen-qwen3-7-max). Same families the catalog already holds; the operating point arrives in harnessVariant and stays on the row."
+    },
+    {
+      "modelRaw": "Qwen3.7 Plus",
+      "effort": "*",
+      "modelId": "qwen3.7-plus",
+      "reason": "GDPval prints the family with a space where LiveBench uses a hyphen. Alias resolution is exact, so both spellings need an entry -- check:models flagged this row as silently dropped."
+    },
+    {
+      "modelRaw": "Claude Opus 5 (Adaptive Reasoning, Low Effort)",
+      "effort": "*",
+      "modelId": "claude-opus-5",
+      "reason": "AA publishes one row per effort and the catalog holds one record per family; Max, Xhigh, High and Medium are already mapped."
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Adaptive Reasoning, High Effort)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5",
+      "reason": "Same family, effort printed in the name and kept on the row."
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Adaptive Reasoning, Medium Effort)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5",
+      "reason": "Same family, effort printed in the name and kept on the row."
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Adaptive Reasoning, Low Effort)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5",
+      "reason": "Same family, effort printed in the name and kept on the row."
+    },
+    {
+      "modelRaw": "Claude Sonnet 5 (Non-reasoning, High Effort)",
+      "effort": "*",
+      "modelId": "claude-sonnet-5",
+      "reason": "Non-reasoning is an operating mode of the same family; the catalog already maps the plain Non-reasoning row."
+    },
+    {
+      "modelRaw": "DeepSeek V4 Pro (Reasoning, Max Effort)",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "AA spells the effort out where the DeepSWE board abbreviates it."
+    },
+    {
+      "modelRaw": "DeepSeek V4 Pro (Reasoning, High Effort)",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "AA spells the effort out where the DeepSWE board abbreviates it."
+    },
+    {
+      "modelRaw": "DeepSeek V4 Flash 0731 (Reasoning, Max Effort)",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash",
+      "reason": "0731 ONLY. The bare \"DeepSeek V4 Flash (Reasoning, ...)\" rows on the same board are the earlier preview and stay unmapped -- see the file-scoped deepseek-v4-flash entry for why that distinction is load-bearing."
+    },
+    {
+      "modelRaw": "GLM-5.2 (Non-reasoning)",
+      "effort": "*",
+      "modelId": "glm-5.2",
+      "reason": "Operating mode of the family the catalog already holds."
     }
   ],
   "benchmarkSplits": [
@@ -1540,6 +1600,12 @@
       "benchmark": "ale",
       "supersededBy": "batch-18-ale",
       "reason": "Batch 16 hand-read three ALE rows to patch what batch 03 missed. Batch 18 reads the endpoint and carries 57 configurations across 24 models, including all three. Superseded for the same reason as batch 03: same measurement, more digits."
+    },
+    {
+      "file": "batch-04-professional",
+      "benchmark": "gdpval",
+      "supersededBy": "batch-19-gdpval",
+      "reason": "Batch 04 hand-read 14 rows off the GDPval-AA board. Batch 19 renders the same page and reads all 175 configurations, and it re-reads the harness and tool setting from the page text every run instead of carrying the transcriptions assumption forward. One measurement read twice; the transcribed rows stay in the archive as evidence of what the board showed on 2026-07-31."
     }
   ]
 }
