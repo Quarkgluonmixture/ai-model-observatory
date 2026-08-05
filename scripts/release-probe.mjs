@@ -40,7 +40,11 @@ if (!all.length) throw new Error(`no release page with id "${only}"`);
 const selected = all.filter((page) => page.mode !== "none");
 const noPath = all.filter((page) => page.mode === "none");
 const feeds = selected.filter((page) => page.mode === "feed");
-const rendered = selected.filter((page) => page.mode === "render");
+// Server-rendered HTML: the links are in the bytes, so no browser and no wait. Three of the four
+// makers that looked shut turned out to publish exactly this — on a *documentation* host rather
+// than the marketing site that was blocking us.
+const plain = selected.filter((page) => page.mode === "html");
+const rendered = selected.filter((page) => page.mode === "render" || page.mode === "render-cards");
 
 const previous = (() => {
   try { return JSON.parse(readFileSync(SNAPSHOT, "utf8")); } catch { return { pages: {} }; }
@@ -71,7 +75,10 @@ const unreadable = [];
 //
 // It is a heuristic and it will miss one eventually — which is exactly why the full list stays in
 // the gaps issue and the push says how many other posts it did not mention.
-const RELEASE_SIGNAL = /introduc|releas|launch|announc|now available|发布|上线|开源|\b(gpt|claude|gemini|grok|kimi|glm|minimax|qwen|deepseek|llama)\b[- ]?[0-9]/i;
+// The trailing \b was a bug worth keeping the scar for: "Qwen3.8-Max" has no word boundary
+// between the name and the version, so the one post this whole probe exists to catch would have
+// been filed as routine and never pushed. Names run into their numbers as often as not.
+const RELEASE_SIGNAL = /introduc|releas|launch|announc|now available|发布|上线|开源|\b(gpt|claude|gemini|grok|kimi|glm|minimax|qwen|deepseek|llama|muse|inkling)[- ]?[0-9]/i;
 const looksLikeRelease = (post) => RELEASE_SIGNAL.test(`${post.title} ${post.path}`);
 
 // Feeds first, and without a browser. A feed is a data file: no JavaScript to run, no layout to
@@ -105,6 +112,33 @@ for (const page of feeds) {
     const before = new Set(previous.pages?.[page.id] ?? []);
     if (before.size === 0) continue;
     for (const item of kept) if (!before.has(item.path)) findings.push({ ...page, post: item });
+  } catch (error) {
+    unreadable.push({ ...page, reason: error.message });
+  }
+}
+
+const HREF = /href="([^"]+)"/g;
+for (const page of plain) {
+  try {
+    const response = await fetch(page.url, { headers: { "user-agent": "Mozilla/5.0 (ai-model-observatory release probe)" } });
+    if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
+    const html = await response.text();
+    const pattern = new RegExp(page.match);
+    const posts = new Map();
+    for (const [, href] of html.matchAll(HREF)) {
+      let url;
+      try { url = new URL(href, page.url); } catch { continue; }
+      // Absolute and relative forms of one link must compare equal: xAI's release notes link out
+      // to x.ai/news/... while its own navigation is relative.
+      const path = url.pathname + url.search;
+      if (!pattern.test(path) || posts.has(path)) continue;
+      posts.set(path, { path, href: url.href, title: path.split("/").filter(Boolean).at(-1).replace(/-/g, " ") });
+    }
+    if (posts.size === 0) throw new Error(`fetched, but no link matched ${page.match}`);
+    snapshot.pages[page.id] = [...posts.keys()].sort();
+    const before = new Set(previous.pages?.[page.id] ?? []);
+    if (before.size === 0) continue;
+    for (const post of posts.values()) if (!before.has(post.path)) findings.push({ ...page, post });
   } catch (error) {
     unreadable.push({ ...page, reason: error.message });
   }
@@ -164,7 +198,49 @@ const LINKS = (base) => `(() => {
   return JSON.stringify([...seen.entries()].map(([path, value]) => ({ path, ...value })));
 })()`;
 
+// Some indexes are not made of links at all. Qwen's renders nine cards and exactly one anchor,
+// which is the cookie notice — the cards are divs with a router click handler. Their class names
+// carry a build hash (`Advancement__Date--cJPvS7WW`) and would break on the next deploy, so this
+// keys on structure instead: a leaf element whose whole text is a date, walked up to the nearest
+// ancestor big enough to be the card.
+const CARDS = `(() => {
+  const out = [];
+  for (const el of document.querySelectorAll("*")) {
+    if (el.children.length !== 0) continue;
+    const text = (el.textContent || "").trim();
+    if (!/^20\\d\\d[\\/-]\\d\\d[\\/-]\\d\\d$/.test(text)) continue;
+    let card = el;
+    while (card.parentElement && (card.innerText || "").trim().length < 60) card = card.parentElement;
+    const lines = (card.innerText || "").split("\\n").map((line) => line.trim()).filter(Boolean);
+    const title = lines.find((line) => line.length > 12 && !/^20\\d\\d[\\/-]/.test(line)) ?? lines[0];
+    if (title) out.push({ date: text.replace(/\\//g, "-"), title: title.slice(0, 120) });
+  }
+  const seen = new Set();
+  return JSON.stringify(out.filter((entry) => !seen.has(entry.title) && seen.add(entry.title)));
+})()`;
+
 for (const page of rendered) {
+  if (page.mode === "render-cards") {
+    try {
+      await send("Page.navigate", { url: page.url });
+      await sleep(12000);
+      const { result } = await send("Runtime.evaluate", { expression: CARDS, returnByValue: true });
+      const cards = JSON.parse(result.result.value ?? "[]");
+      if (cards.length === 0) throw new Error("rendered, but no dated card was found");
+      // The title is the identity: this index publishes no per-post URL, and the date moves
+      // between the card and the article by a day.
+      snapshot.pages[page.id] = cards.map((card) => card.title).sort();
+      const before = new Set(previous.pages?.[page.id] ?? []);
+      if (before.size === 0) continue;
+      for (const card of cards) {
+        if (!before.has(card.title)) findings.push({ ...page, post: { path: card.title, href: page.url, title: `${card.title} (${card.date})` } });
+      }
+    } catch (error) {
+      unreadable.push({ ...page, reason: error.message });
+    }
+    continue;
+  }
+
   let links = [];
   try {
     await send("Page.navigate", { url: page.url });

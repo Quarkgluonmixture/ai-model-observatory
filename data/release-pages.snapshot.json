@@ -1156,6 +1156,49 @@
       "https://thinkingmachines.ai/blog/on-policy-distillation/",
       "https://thinkingmachines.ai/blog/the-future-worth-building-is-human/"
     ],
+    "deepseek": [
+      "/news/news0725",
+      "/news/news0802",
+      "/news/news1226",
+      "/news/news250120",
+      "/news/news250929",
+      "/news/news251201",
+      "/news/news260424"
+    ],
+    "x-ai": [
+      "/news/grok-4-1-fast",
+      "/news/grok-4-5",
+      "/news/grok-custom-voices",
+      "/news/grok-voice-think-fast-1",
+      "/news/grok-voice-think-fast-2"
+    ],
+    "z-ai": [
+      "/cn/guide/models/free/glm-4-flash-250414",
+      "/cn/guide/models/free/glm-4.7-flash",
+      "/cn/guide/models/free/glm-z1-flash",
+      "/cn/guide/models/sound-and-video/glm-asr",
+      "/cn/guide/models/sound-and-video/glm-asr-2512",
+      "/cn/guide/models/sound-and-video/glm-tts",
+      "/cn/guide/models/sound-and-video/glm-tts-clone",
+      "/cn/guide/models/text/glm-4",
+      "/cn/guide/models/text/glm-4.5",
+      "/cn/guide/models/text/glm-4.6",
+      "/cn/guide/models/text/glm-4.7",
+      "/cn/guide/models/text/glm-5",
+      "/cn/guide/models/text/glm-5-turbo",
+      "/cn/guide/models/text/glm-5.1",
+      "/cn/guide/models/text/glm-5.2",
+      "/cn/guide/models/text/glm-z1",
+      "/cn/guide/models/video-generation/cogvideox-3",
+      "/cn/guide/models/video-generation/vidu2",
+      "/cn/guide/models/video-generation/viduq1",
+      "/cn/guide/models/vlm/autoglm-phone",
+      "/cn/guide/models/vlm/glm-4.1v-thinking",
+      "/cn/guide/models/vlm/glm-4.5v",
+      "/cn/guide/models/vlm/glm-4.6v",
+      "/cn/guide/models/vlm/glm-5v-turbo",
+      "/cn/guide/models/vlm/glm-ocr"
+    ],
     "anthropic": [
       "/news/announcing-our-updated-responsible-scaling-policy",
       "/news/anthropic-economic-index-connector",
@@ -1206,6 +1249,13 @@
       "/news/minimax-m25",
       "/news/minimax-m27-en",
       "/news/minimax-speech-28"
+    ],
+    "qwen": [
+      "Qwen-AgentWorld: Language World Models for General Agents",
+      "Qwen-Image-3.0: Rich Content, Authentic Details, Deep Knowledge",
+      "Qwen-Robot Suite: A Foundation Model Suite for Physical World Intelligence",
+      "Qwen-RobotNav: A Scalable Navigation Model Designed for an Agentic Navigation System",
+      "Qwen3.8-Max: A New Bar for Coding and Cowork"
     ],
     "meta": [
       "/blog/alta-daily-fashion-app-segment-anything/",
