@@ -280,6 +280,26 @@ and the release probe. Set `CHROME_PATH` if Chrome is not where the scripts expe
 is fatal without it: the fetch runner isolates each source's failure, and the probe falls back to
 the feed-based sources and says which ones it lost.
 
+A sixth, learned on the first activation attempt: **`npm ci` fails under a Windows file lock, and
+it fails destructively.** It deletes `node_modules` before reinstalling, so a process still holding
+a handle makes the retry fail the same way *and* takes the partially-working install with it.
+
+The culprit has a name, and it is this repository's own doing. `npm run check:mobile` needs a
+server — `PORT=3111 npm run start:next` — and **nothing in this repo stops it again**. The one that
+broke the first activation had been running since 2026-08-01, four days, holding `node_modules`
+the whole time. Stop that server when the probe is done; if `npm ci` fails on this machine, look
+for `next start -p 3111` before looking anywhere else.
+
+The signature is diagnostic and worth recognising rather than re-deriving. Everything that runs
+through `node` directly passes — `ingest`, `check:data`, `check:models`, `check:prices` — and
+everything that needs a `.bin` shim reports `not found`: `lint` exits 127, `build` exits 1. That
+split says *interrupted link phase*, not broken repository, and it is invisible if you only look at
+whether a command failed.
+
+So the order is: find what holds the handle, stop **that** process by pid, then re-run `npm ci`.
+Never kill a node process you cannot identify — on that machine one of them is the agent's own
+gateway, and killing it disconnects the thing doing the work.
+
 1. **Paths.** Scripts resolve the repo root with `fileURLToPath`, not a file URL's `.pathname` —
    on Windows the latter yields `/C:/...`, a leading slash `fs` cannot resolve. If you add a
    script, do the same. This is a hard failure, not a warning.
