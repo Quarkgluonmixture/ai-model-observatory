@@ -160,14 +160,28 @@ may have moved it since you started.
 Only after the activation check has passed once, and only when a trigger fired.
 
 1. `git pull`, `npm ci`.
-2. Read the open **Collection gaps** issue *and the previous run's release-probe output*
-   (`npm run probe:releases`, printed in the daily job's summary). Between them they are your work
-   queue — it is written by
+2. Read the open **Collection gaps** issue. It carries the release-probe findings too, so it is
+   the whole queue — you do not need to open a workflow run, and nobody needs to forward a
+   notification to you. The WeChat push and this issue are two consumers of one detection; the
+   owner gets awareness, you get work — it is written by
    `npm run report:gaps` and it lists, in priority order: models one observation short of entering
    a ranking, archived rows waiting on a catalog model, sources going stale, and models published
    upstream that the catalog has never heard of.
 3. Pick the highest-value item you can complete **fully**, including its provenance. One finished
    item beats three half-done ones.
+
+   **A maker's release post is almost always worth capturing, and the reason is not the model it
+   announces.** Those posts carry benchmark tables, and the tables land in columns that have
+   nothing else: `hle-no-tools`, `hle-tools`, `mrcr` and `charxiv` are held up entirely by vendor
+   rows today, and `frontiermath`, `imo-answer` and `aa-lcr` rest on a single source each. A column
+   with one source is a column where the cross-source disagreement gate cannot fire — which is the
+   check that caught Epoch's FrontierMath export disagreeing with Epoch's own page by 1.7x. So a
+   second maker's table is worth more than its own cells: it gives those columns a second reading.
+
+   The cost is a `carried` map in `scripts/capture-release-tables.mjs`, written once per maker and
+   reused by that maker's next release. Judgement stays yours: Qwen's post carried 86 labels and 12
+   belonged in a catalog column. Not worth capturing: a post that announces a feature rather than a
+   model, or a maker whose models this catalog does not track.
 
    The unlock list is split into **Worth collecting** and **High reach, no path**. Take work only
    from the first. The second exists so the same dead ends are not rediscovered every day: those

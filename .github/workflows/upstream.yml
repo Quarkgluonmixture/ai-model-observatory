@@ -87,11 +87,22 @@ jobs:
 
       # Runs even when drift failed above: the two findings are independent, and suppressing the
       # gap report because a cell moved would hide a week of collection targets behind one number.
+      # The release probe runs here too, read-only. It writes its snapshot in the refresh job; this
+      # pass exists so its findings land in the *gaps issue*, which is the scheduled agent's work
+      # queue. Before this they went only to a workflow summary and to WeChat — so a release post
+      # reached the owner's phone and never reached the agent, and the loop was closed by a person
+      # forwarding it by hand. One detection, two consumers, neither of them a message bus.
+      #
+      # Both jobs read the same committed snapshot, so both see the same posts; the refresh job is
+      # the one that records them as seen.
       - name: Report what the catalog has not collected
         if: always()
         id: gaps
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
         run: |
           npm run --silent report:gaps > gaps.md
+          node scripts/release-probe.mjs >> gaps.md || echo "_The release probe could not run this time._" >> gaps.md
           sed -n 's/.*<!-- gaps: \([0-9]*\) -->.*/count=\1/p' gaps.md >> "$GITHUB_OUTPUT"
           cat gaps.md >> "$GITHUB_STEP_SUMMARY"
 
