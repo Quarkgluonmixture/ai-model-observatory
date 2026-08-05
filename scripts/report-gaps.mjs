@@ -60,7 +60,7 @@ const clipped = (items, render) => {
 // models a cell would admit, and without this it would send an agent after cells that nobody
 // publishes. A batch whose meta names a fetcher was collected by script; re-running it adds
 // nothing until the source itself evaluates more models.
-const { resolveModelId, isDropped } = buildResolvers(loadAliasConfig());
+const { resolveModelId, isDropped, isRefused } = buildResolvers(loadAliasConfig());
 const { batches } = readArchiveFiles();
 
 const collectability = (() => {
@@ -198,7 +198,10 @@ const waiting = new Map();
 for (const { file, rows } of batches) {
   for (const { raw } of rows) {
     if (isDropped(raw.benchmark)) continue;
-    if (resolveModelId(raw.model_raw, raw.reasoning_effort)) continue;
+    if (resolveModelId(raw.model_raw, raw.reasoning_effort, file)) continue;
+    // A per-file refusal is a decision already made, not an uncollected model. Listing it here
+    // would put a permanent, un-actionable line in the gaps issue every release.
+    if (isRefused(raw.model_raw, raw.reasoning_effort, file)) continue;
     const entry = waiting.get(raw.model_raw) ?? { rows: 0, files: new Set() };
     entry.rows += 1;
     entry.files.add(file.replace(/\.jsonl$/, ""));

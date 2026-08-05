@@ -141,6 +141,16 @@ alias entry is **skipped and reported**, never guessed into place, and it stays 
 archive so it can be ingested later when the catalog gains that model. `npm run ingest`
 prints every skipped row, so the cost of a missing catalog entry is always visible.
 
+Resolution is `(model_raw, effort)` and, since 2026-08-05, optionally the batch file: an alias may
+carry `"file"` and a file-scoped entry beats a global one. It exists because a published string is
+not always one model. DeepSeek shipped V4 Flash as a preview and then as the post-trained 0731
+release; LiveBench, Epoch and LMArena publish both under `deepseek-v4-flash` and
+`deepseek-v4-flash-0731`, while Artificial Analysis kept the bare slug for the *official* model.
+One global mapping cannot express that, and the one that existed put the preview's LiveBench
+scores in the 0731 record — half the real numbers, on 23 cells, with every check green. Effort
+cannot stand in for the scope: on LiveBench neither release carries one. Scope is a last resort;
+a string nobody can attribute stays unmapped, which is what rule 8 asks for.
+
 Values in the archive are never altered, but a batch may be **filtered at capture**: batches
 02-04 kept the 2026-era frontier rows and dropped the long tail of pre-2026 models the
 catalog will not track. Each batch's `.meta.json` records `filtered`, the rule used, and the
@@ -152,7 +162,7 @@ each with a written reason:
 
 | Key | Decides |
 | --- | --- |
-| `aliases` | which published model string is which catalog model, at which effort |
+| `aliases` | which published model string is which catalog model, at which effort — and, where a string means different models in different sources, in which batch file |
 | `benchmarkSplits` | when a published "version" is really a different problem set |
 | `versionAliases` | when two sources spell the same version differently |
 | `benchmarkAliases` | when an evaluator uses its own name for a benchmark already catalogued |
@@ -446,6 +456,7 @@ pages are known-dead or known-empty and were already worked around.
 | 14 | Artificial Analysis | 590 configurations of operating parameters from the REST API. Not observations — this batch feeds `check:models`. On demand, needs `AA_API_KEY`. |
 | 15 | Model config.json | Context windows read from each model's own Hugging Face `config.json`. Two rows, added to settle whether Inkling's window is a serving limit or an architectural maximum. |
 | 16 | ALE supplement | Three rows batch 03 missed despite promising every row that maps to a catalog model. Hand-read; ALE publishes nothing machine-readable. |
+| 17 | Qwen3.8 release tables | Both performance tables from the 2026-08-03 release post, 465 rows: 86 benchmark labels × 8 published model columns. Captured by rendering the page, not by eye — `scripts/capture-qwen-release.mjs`. Only Qwen3.8-Max is mapped; the competitor columns are archived and refused per-file. 12 rows land in a catalog column, and they wait on a catalog record. |
 
 ### Which sources can be re-read by script
 
@@ -465,6 +476,7 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | Epoch AI | `epoch.ai/data/benchmark_data.zip` — 76 CSVs, CC BY. Invisible from the page. **Scripted, batch 12** — but not every CSV is usable: the FrontierMath files disagree with Epoch's own leaderboard by about 1.7x and are excluded. An export being official does not make it the same measurement as the page. |
 | Terminal-Bench | An unauthenticated Supabase Edge Function the page calls, found in Harbor's client source. **Scripted, batch 13.** |
 | Artificial Analysis | A documented REST API at `/api/v2`. **Scripted, batch 14**, on demand with `AA_API_KEY`. The free tier carries intelligence index, cost per task, speed, latency and pricing; GDPval-AA and AA-LCR return 403 behind the Pro tier, so those two core benchmarks still have no scripted path. |
+| Qwen release posts | No data file found: `?id=` returns the SPA shell, `/api/blog?id=` returns the same, and there is no `qwenlm.github.io` mirror. But the tables are real DOM once the app runs, so they are captured by rendering the page over CDP — **scripted, batch 17**, `scripts/capture-qwen-release.mjs`, run per release rather than daily. A release post is frozen after publication, so there is nothing for a drift check to watch. |
 | LM Arena | `lmarena/arena-catalog` publishes `data/leaderboard-text.json`, and it decodes — but it is **stale**: 282 models topped by `gemini-3-pro` at 1487, with no Fable 5, Opus 5, GPT-5.6 or Kimi K3. Nothing in the repo says it stopped syncing. |
 | SWE-bench | `swe-bench.github.io/data/leaderboards.json`, 180 Verified entries, genuinely fetchable — and useless: the newest entry is Opus 4.5 from 2025-12, and `swe-verified` is a legacy column. The HELM situation exactly. |
 | Scale, MMMU, Mercor APEX, HLE | Hugging Face's `/api/datasets/{id}/leaderboard` returns 200 for all four, which is a trap: every record is a **vendor self-report scraped from the model's own card**, `verified:false`, with no version, harness, effort or date. SWE-bench Pro's mixes 19 model-card claims with 6 official rows and nothing distinguishes them. |
@@ -551,10 +563,22 @@ What "maintains itself" means concretely, every day, in `.github/workflows/upstr
 
 | Finding | Source kind | Verdict |
 | --- | --- | --- |
-| A cell moved under a frozen version | pinned (LiveBench) | Integrity failure, job red, a human decides |
+| A published cell changed or vanished under a frozen version | pinned, append-only (LiveBench) | Integrity failure, job red, a human decides |
+| A cell *appeared* under a frozen version | append-only (LiveBench) | New data → the batch is rewritten. A release freezes the question set, not the list of models run against it |
 | A cell moved on a live board | live (DeepSWE, Epoch, Terminal-Bench) | New data → the batch is rewritten and a pull request opens |
-| A newer release exists | pinned | Reported only. Collecting it changes 23 benchmark version fields and is a catalog decision |
+| A newer release exists | pinned, append-only | Reported only. Collecting it changes 23 benchmark version fields and is a catalog decision |
 | Anything never collected at all | any | The collection-gaps issue |
+| A model appeared upstream that was not in yesterday's report | any | Pushed to WeChat via PushPlus, diffed against the previous issue body |
+
+Notification is separate from record-keeping because the two want opposite things. The gaps issue
+is edited in place — it is a standing work queue, and a new issue every morning is a backlog nobody
+reads. But **editing an issue body sends no notification**, which is why Qwen3.8 Max sat in that
+issue from 2026-08-03 and the first person to notice was the owner, two days later, by asking. So
+the daily job diffs the "Published upstream" section against the previous body and pushes only what
+is new; an integrity failure opens a *separate* issue, because opening one does notify; and a
+Monday heartbeat states that the pipeline ran at all, so silence can be told apart from a dead
+workflow. `PUSHPLUS_TOKEN` is a repository secret and, like `AA_API_KEY`, is optional everywhere:
+without it every check still runs and the reports still land in their issues.
 
 The refresh is idempotent: an unchanged board writes nothing, not even a new `retrievedDate`, so
 a quiet week produces no pull request. And the pull request carries its own check output, because

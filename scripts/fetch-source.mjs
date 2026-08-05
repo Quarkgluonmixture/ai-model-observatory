@@ -11,6 +11,11 @@
 //
 //   pinned source, a cell moved     integrity failure. The archive no longer matches its source
 //                                   under a version that is supposed to be frozen. Exit 1.
+//   append-only source, a cell       integrity failure, same as pinned. The frozen part of an
+//   changed or vanished              append-only source is the numbers it already published.
+//   append-only source, a cell       new data. The question set is frozen, but the board keeps
+//   appeared                         running new models against it, so a row that did not exist
+//                                   before contradicts nothing. Exit 0, batch rewritten.
 //   live source, a cell moved       new data. DataCurve appends DeepSWE runs and the pass rates
 //                                   move; that is the board working. Exit 0, and the scheduled job
 //                                   opens a pull request with the rewritten batch.
@@ -37,10 +42,18 @@ const argOf = (name) => {
 const checkOnly = flag("check");
 const toStdout = flag("stdout");
 const requested = args.filter((arg) => !arg.startsWith("--") && arg !== argOf("version"));
-// --live selects only the boards that legitimately move, which is what the scheduled refresh
-// re-reads. A pinned source can only produce a drift failure there, and a failure on LiveBench
-// must not stop DeepSWE's new rows from reaching a pull request.
-const pool = flag("live") ? FETCHERS.filter((fetcher) => fetcher.versioning === "live") : FETCHERS;
+// A source whose archive is re-read at the version it already holds, rather than at whatever is
+// newest: comparing two different question sets and calling the difference drift is not a check.
+const FROZEN = new Set(["pinned", "append-only"]);
+
+// --live selects the boards that can legitimately gain rows, which is what the scheduled refresh
+// re-reads. A strictly pinned source can only produce a drift failure there, and a failure on it
+// must not stop DeepSWE's new rows from reaching a pull request. An append-only source is in the
+// pool because an appended row *is* the refresh case; if one of its published numbers moved
+// instead, the verdict below refuses the write and the drift job goes red on the same cells.
+const pool = flag("live")
+  ? FETCHERS.filter((fetcher) => fetcher.versioning === "live" || fetcher.versioning === "append-only")
+  : FETCHERS;
 const selected = requested.length ? requested.map((id) => {
   const fetcher = fetcherById(id);
   if (!fetcher) throw new Error(`unknown source "${id}" — known: ${FETCHERS.map((f) => f.id).join(", ")}`);
@@ -75,10 +88,10 @@ for (const fetcher of selected) {
     try { return readArchive(fetcher); } catch { return null; }
   })();
 
-  // A pinned source is re-read at the version the archive holds, so the comparison is faithful:
+  // A frozen source is re-read at the version the archive holds, so the comparison is faithful:
   // fetching whatever is newest would compare two different question sets and call it drift.
   const target = argOf("version")
-    ?? (fetcher.versioning === "pinned" && archived ? fetcher.archiveVersion(archived) : null);
+    ?? (FROZEN.has(fetcher.versioning) && archived ? fetcher.archiveVersion(archived) : null);
 
   const { rows, version, summary, meta } = await fetcher.fetch(target);
 
@@ -149,13 +162,23 @@ for (const fetcher of selected) {
   const listing = differences.slice(0, 40).map((entry) => `  ${entry}`).join("\n") +
     (differences.length > 40 ? `\n  … ${differences.length - 40} more` : "");
 
-  if (fetcher.versioning === "pinned") {
+  // The distinction an append-only board needs: a cell that changed or vanished is the archive
+  // being contradicted, a cell that appeared is not. LiveBench added two models to release
+  // 2026-06-25 seven weeks after publishing it — 46 cells, every one of them `appeared`, no
+  // published number touched — and a rule that reads any difference as drift turned the daily job
+  // red for it. A permanently red integrity check is a broken integrity check.
+  const rewritten = changed.length > 0 || gone.length > 0;
+
+  if (fetcher.versioning === "pinned" || (fetcher.versioning === "append-only" && rewritten)) {
     console.error(`\n${label} no longer matches its archive — ${differences.length} cell(s):\n${listing}`);
     failed = true;
     continue;
   }
 
-  console.log(`\n${label}: ${differences.length} cell(s) moved upstream — this board is live, so this is new data:\n${listing}`);
+  const verdict = fetcher.versioning === "append-only"
+    ? "rows appended under a frozen release, so this is new data"
+    : "this board is live, so this is new data";
+  console.log(`\n${label}: ${differences.length} cell(s) moved upstream — ${verdict}:\n${listing}`);
   changedAny = true;
 
   if (checkOnly) continue;

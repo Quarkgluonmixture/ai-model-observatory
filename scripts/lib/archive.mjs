@@ -27,14 +27,26 @@ const aliasKey = (modelRaw, effort) => `${modelRaw}|${effort ?? "null"}`;
 export const buildResolvers = (config) => {
   const aliasIndex = new Map();
   const wildcardIndex = new Map();
+  // An alias may name the batch file it applies to, because one published model string does not
+  // always mean one model. `deepseek-v4-flash` is the post-trained 0731 release on Artificial
+  // Analysis, which kept its slug when the model was re-trained, and the earlier preview on
+  // LiveBench, Epoch and LMArena, all of which print `deepseek-v4-flash-0731` for the official
+  // one. Effort cannot separate them — on LiveBench both carry none — so the source has to.
+  // A file-scoped entry wins over a global one; without this, whichever meaning was mapped
+  // globally reported the other model's numbers under it, and nothing failed.
   for (const alias of config.aliases) {
-    if (alias.effort === "*") wildcardIndex.set(alias.modelRaw, alias.modelId);
-    else aliasIndex.set(aliasKey(alias.modelRaw, alias.effort), alias.modelId);
+    const scope = alias.file ? `${alias.file}|` : "";
+    if (alias.effort === "*") wildcardIndex.set(scope + alias.modelRaw, alias.modelId);
+    else aliasIndex.set(scope + aliasKey(alias.modelRaw, alias.effort), alias.modelId);
   }
 
   // Transcribed benchmarks the dashboard deliberately does not carry, each with a reason.
+  // `benchmark` is a "/"-separated list, which cannot express a published label that contains a
+  // slash — and they exist: "HLE-VL (w/ Tools)", "OCR-Bench-V2 (EN/ZH)", "VideoMME (w/ Sub.)".
+  // Split on "/" those become fragments matching nothing, so the rows stay live and land in
+  // ingest as unknown benchmark ids. `benchmarks` takes an array and is exact.
   const droppedBenchmarks = new Map((config.droppedBenchmarks ?? []).flatMap((entry) =>
-    entry.benchmark.split("/").map((name) => [name.trim().replace(/\*$/, ""), entry.reason]),
+    (entry.benchmarks ?? entry.benchmark.split("/")).map((name) => [name.trim().replace(/\*$/, ""), entry.reason]),
   ));
 
   // A transcription that a scripted fetch later read faithfully from the same page. Both are
@@ -55,8 +67,35 @@ export const buildResolvers = (config) => {
   }));
 
   return {
-    resolveModelId: (modelRaw, effort) =>
-      aliasIndex.get(aliasKey(modelRaw, effort)) ?? wildcardIndex.get(modelRaw),
+    /**
+     * `file` is optional; pass it and a file-scoped alias is preferred over the global one.
+     * A scoped entry with `"modelId": null` is a deliberate refusal — the string resolves
+     * globally but must not resolve *here*, which is how a vendor's table of its competitors'
+     * scores stays archived without being ingested. `has` rather than `??`, because the whole
+     * point of such an entry is that its value is empty.
+     */
+    resolveModelId: (modelRaw, effort, file) => {
+      const scope = file ? `${String(file).replace(/\.jsonl$/, "")}|` : null;
+      if (scope) {
+        const exact = scope + aliasKey(modelRaw, effort);
+        if (aliasIndex.has(exact)) return aliasIndex.get(exact) ?? undefined;
+        if (wildcardIndex.has(scope + modelRaw)) return wildcardIndex.get(scope + modelRaw) ?? undefined;
+      }
+      return aliasIndex.get(aliasKey(modelRaw, effort)) ?? wildcardIndex.get(modelRaw);
+    },
+    /**
+     * True when this file deliberately refuses the string, rather than the catalog simply not
+     * holding the model. The gap report must not list a refusal as "waiting on a catalog model":
+     * the model is in the catalog, the decision was to not take these rows.
+     */
+    isRefused: (modelRaw, effort, file) => {
+      if (!file) return false;
+      const scope = `${String(file).replace(/\.jsonl$/, "")}|`;
+      const exact = scope + aliasKey(modelRaw, effort);
+      if (aliasIndex.has(exact)) return aliasIndex.get(exact) == null;
+      if (wildcardIndex.has(scope + modelRaw)) return wildcardIndex.get(scope + modelRaw) == null;
+      return false;
+    },
     isDropped: (benchmark) =>
       droppedBenchmarks.has(benchmark) ||
       [...droppedBenchmarks.keys()].some((key) => key.endsWith("-") && benchmark.startsWith(key)),

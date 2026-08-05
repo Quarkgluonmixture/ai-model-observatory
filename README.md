@@ -60,8 +60,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-1153 observations across 903/1904 cells (47.4% cell coverage;
-benchmark 730 / independent 246 / vendor 177)
+1163 observations across 907/1904 cells (47.6% cell coverage;
+benchmark 730 / independent 256 / vendor 177)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so

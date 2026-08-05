@@ -159,8 +159,11 @@ export const MODELS: ModelRecord[] = [
   m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, ["very fast", "vision", "arena"], [
     cfg("high", 50, 0.56, 217.2, 15.11, 1482, 1528, 1.5, 7.5, true, 0.15),
   ]),
+  // textElo is null, not 1436: that Arena score was measured 2026-07-27, four days before this
+  // model existed, and belongs to the V4 Flash preview. LMArena has not published the 0731
+  // release yet. An empty cell is the honest answer until it does.
   m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, ["open weights", "extreme value", "new"], [
-    cfg(null, 50, 0.03, null, null, 1436, null, 0.14, 0.28, false, 0.003),
+    cfg(null, 50, 0.03, null, null, null, null, 0.14, 0.28, false, 0.003),
   ]),
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
     cfg(null, 46, 0.34, 123.3, 25.39, 1486, null, 2, 12, false, 0.2),
