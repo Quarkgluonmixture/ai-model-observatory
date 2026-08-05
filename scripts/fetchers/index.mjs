@@ -7,12 +7,13 @@
 // Adding one means writing scripts/fetchers/<id>.mjs and listing it here. Nothing else: the
 // runner, the drift check, the scheduled refresh and the pull request all iterate this array.
 
+import { ale } from "./ale.mjs";
 import { artificialAnalysis } from "./artificial-analysis.mjs";
 import { deepswe } from "./deepswe.mjs";
 import { epoch } from "./epoch.mjs";
 import { livebench } from "./livebench.mjs";
 import { terminalBench } from "./terminal-bench.mjs";
 
-export const FETCHERS = [livebench, deepswe, epoch, terminalBench, artificialAnalysis];
+export const FETCHERS = [livebench, deepswe, epoch, terminalBench, ale, artificialAnalysis];
 
 export const fetcherById = (id) => FETCHERS.find((fetcher) => fetcher.id === id);
