@@ -24,9 +24,11 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - mobile layout with a labelled bottom bar, card-form ranking rows, safe-area insets, and a
   layout probe (`npm run check:mobile`) that fails on horizontal overflow
 - per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
-- four boards re-read by script, which is what gives them a daily drift check and an automatic
-  refresh; the other eleven batches are hand-transcribed, and every source card prints how long
-  ago it was last read
+- seven boards re-read by script, which is what gives them a daily drift check and an automatic
+  refresh; the rest are hand-transcribed, and every source card prints how long ago it was
+  last read
+- a release probe that watches nine makers' announcement pages, and a WeChat notification that
+  fires on what is new rather than on what is merely still open
 - 314 catalog values audited against the archive on every run, including the context window and
   open-weights flag; whatever is unsourced is listed rather than hidden
 
@@ -60,8 +62,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-1163 observations across 907/1904 cells (47.6% cell coverage;
-benchmark 730 / independent 256 / vendor 177)
+1224 observations across 919/1904 cells (48.3% cell coverage;
+benchmark 753 / independent 294 / vendor 177)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -76,18 +78,28 @@ contract used to collect new rows — but check for a published data file first:
 client-side and looked untranscribable until it turned out the page fetches its own CSV, and
 DeepSWE's board loads a JSON artifact carrying every configuration it has ever run. Epoch AI
 publishes its whole benchmark hub as one CC BY ZIP that the page never mentions, and Terminal-Bench
-answers an unauthenticated function call found in its client's source. All four are scripted
+answers an unauthenticated function call found in its client's source. Agents' Last Exam was
+recorded as publishing nothing machine-readable through two hand-reads; its leaderboard calls
+`/api/demo/leaderboard`, a path that appears only inside the page's own JavaScript bundle. And
+GDPval-AA sits behind Artificial Analysis' Pro tier in the API while the leaderboard page is
+public — so that one is read by rendering the page. All seven are scripted
 (`npm run fetch:sources`), which is what gives them an automatic drift check and an automatic
-daily refresh. The other eleven batches have neither.
+daily refresh. The remaining batches have neither.
 
 Model records are hand-authored, but their numbers are audited the same way. `npm run check:models`
 fails when a catalog value contradicts the archive and reports how much of the catalog nothing
 on file supports:
 
 ```text
-Model provenance passed: 247/252 catalog values backed by data/sources (98%),
-5 with no archive row.
+Model provenance passed: 310/313 catalog values backed by data/sources (99%),
+3 with no archive row.
 ```
+
+Three checks fail on things that used to be printed and ignored: a cross-source disagreement
+above 20% about one configuration, two published strings from one batch resolving into one cell,
+and a frozen source whose every difference is an addition. Each has an escape hatch that costs a
+written reason. The first two exist because a preview release once published its scores under the
+name of the model that replaced it, in plain view of a report nobody read.
 
 ## Local development
 

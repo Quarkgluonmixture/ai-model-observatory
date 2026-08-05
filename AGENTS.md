@@ -25,7 +25,8 @@ have already been made here — all of which passed every automated check.
 - ⚠ Any observatory number quoted on the personal site is a **copy**, and copies go stale. Re-run
   `check:data` and `check:models` and update `home-content.ts` before publishing. This already
   bit once: the page shipped 27 models / 1,162 observations / 49.1% when the real values were
-  28 / 1,154 / 47.4%.
+  28 / 1,154 / 47.4%. Re-check before publishing: as of 2026-08-05 the real values are
+  28 / 1,224 / 48.3%.
 - ⚠ **The coupling runs the other way too.** The daily refresh in `.github/workflows/upstream.yml`
   runs `npm run build` before it will commit or open a pull request, and that build now includes
   the personal site. A type error in `app/page.tsx` therefore blocks the data refresh — nothing

@@ -31,8 +31,8 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **28 model families, 68 benchmarks, 1153 observations across 903 of 1904 cells**,
-sourced benchmark-native 730 / independent 246 / vendor 177. **311 of 314 catalog numbers are
+Current scale: **28 model families, 68 benchmarks, 1224 observations across 919 of 1904 cells**,
+sourced benchmark-native 753 / independent 294 / vendor 177. **310 of 313 catalog numbers are
 backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
