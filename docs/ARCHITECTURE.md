@@ -32,7 +32,7 @@ The application has two data paths:
    a number to display. See §6.
 
 Current scale: **28 model families, 68 benchmarks, 1224 observations across 919 of 1904 cells**,
-sourced benchmark-native 753 / independent 294 / vendor 177. **310 of 313 catalog numbers are
+sourced benchmark-native 752 / independent 294 / vendor 178. **310 of 313 catalog numbers are
 backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
@@ -548,9 +548,25 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**The four scripted boards now maintain themselves; the other eleven batches cannot.** Closing
-that gap is not a code problem — §9 records that no other source publishes a data file to read.
-Re-probing is cheap but the answer is written down; go read it before spending an afternoon on it.
+**Eight of twenty batches now maintain themselves; the other twelve cannot.** This paragraph used
+to say four of fifteen, and — more usefully — it used to say that closing the gap was not a code
+problem, because "§9 records that no other source publishes a data file to read". That was wrong,
+and it was wrong in the most expensive way a written-down answer can be: it told the next person
+not to look.
+
+Three sources were added on 2026-08-05 that this document had recorded as unreachable.
+Agents' Last Exam was hand-read twice on the stated grounds that it publishes nothing
+machine-readable; its leaderboard calls `/api/demo/leaderboard`, a path that exists only inside
+the page's own JavaScript bundle, and it returns 689 rows. GDPval-AA sits behind Artificial
+Analysis' Pro tier in the API while the leaderboard page is public and free — so it is read by
+rendering it. MMMU is read the same way, and its legend turned out to carry the thing the
+transcription had lost: `*: results provided by the authors`, which decides `source_kind`.
+
+So the standing instruction is now the opposite. **Re-probe before believing a "no path" verdict,
+including one in this file**, and record what you tried. The same reversal happened to the release
+pages on the same day: four makers were recorded as having no readable index and all four had one,
+three of them on a documentation host while the marketing site blocked. A verdict that says "no
+path" is a claim about the search, not about the source.
 
 **It is no longer the whole of the remaining work, though, and the reason is worth stating plainly:
 a scripted source is not automatically a correct one.** Epoch's FrontierMath export disagreed with
