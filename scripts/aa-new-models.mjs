@@ -23,7 +23,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODELS } from "../app/model-data.ts";
 import { artificialAnalysis } from "./fetchers/artificial-analysis.mjs";
-import { buildResolvers, loadAliasConfig } from "./lib/archive.mjs";
+import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const quiet = process.argv.includes("--quiet");
@@ -81,6 +81,25 @@ for (const row of rows) {
   if (!fresh.has(row.model_raw)) fresh.set(row.model_raw, row);
 }
 
+// How much benchmark evidence is already archived for each candidate. This is the number that
+// decides whether a record is worth writing, and the report did not carry it: "Artificial Analysis
+// measured it" says a record is *possible*, not that it is *useful*. A record with two cells draws
+// an empty row across sixty-eight columns and lowers cell coverage — the catalog already carries
+// three models like that, and they are a debt rather than a precedent.
+const evidenceCount = (() => {
+  const { batches } = readArchiveFiles();
+  const norm = (value) => String(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  const byModel = new Map();
+  for (const { rows: archiveRows } of batches) {
+    for (const { raw } of archiveRows) {
+      if (!raw.benchmark) continue;
+      const key = norm(raw.model_raw);
+      (byModel.get(key) ?? byModel.set(key, new Set()).get(key)).add(raw.benchmark);
+    }
+  }
+  return (modelRaw) => byModel.get(norm(modelRaw))?.size ?? 0;
+})();
+
 // A model with no intelligence index cannot become a catalog record — `cfg()` requires one and
 // its field source is fixed to AA. Reporting it as collectable would send somebody after a record
 // they cannot write, so it is counted separately and named.
@@ -96,8 +115,10 @@ if (ready.length) {
   say();
   for (const row of ready.sort((a, b) => b.intelligence_index - a.intelligence_index)) {
     const price = row.price_input_per_m != null ? `$${row.price_input_per_m}/$${row.price_output_per_m}` : "price not published";
+    const cells = evidenceCount(row.model_raw);
     say(`- **${row.model_raw}** (${row.maker}, 发布 ${publishedOn(row) ?? "?"}) — intelligence ${row.intelligence_index}, ${price}` +
-      `${row.effort ? `, effort ${row.effort}` : ""}${row.note ? ` · ${row.note}` : ""}`);
+      `${row.effort ? `, effort ${row.effort}` : ""} · **归档证据 ${cells} 格**` +
+      `${cells < 8 ? " ⚠ 太薄,建档会画出一整行空格并拉低覆盖率" : ""}`);
   }
   say();
   say("Their operating parameters are what a catalog record needs and cannot get anywhere else.");
