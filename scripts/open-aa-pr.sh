@@ -74,14 +74,32 @@ if [ -n "$existing" ]; then
 elif url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>pr-error.txt)"; then
   echo "$url"
 else
+  opened="no"
+  reason="$(tr '\n' ' ' < pr-error.txt)"
   url="$repo_url/compare/$BRANCH?expand=1"
-  echo "::warning::Could not open the pull request ($(tr '\n' ' ' < pr-error.txt)); the branch is pushed. Open it at $url"
+  echo "::warning::Could not open the pull request ($reason); the branch is pushed. Open it at $url"
 fi
 
-{
-  echo "AA 参数已重读,PR 在等你看一眼。"
-  echo
-  echo "重点看 \`check:models\`:它报红不代表这次改动有问题 —— AA 持续重测,要判断的是目录和源哪边过期了。"
-  echo
-  echo "$url"
-} | node "$DIR/notify-pushplus.mjs" "观测台 · AA 参数刷新 PR"
+# The message has to describe what happened, not what was meant to happen. The first real run of
+# this workflow could not open its pull request, and the notification still announced one waiting
+# for review, with a link to a compare view for a branch that was deleted an hour later. A
+# notification that is wrong about its own outcome is worse than none: it spends the one thing
+# this whole channel runs on, which is being believed.
+if [ "${opened:-yes}" = "yes" ]; then
+  {
+    echo "AA 参数已重读,PR 在等你看一眼。"
+    echo
+    echo "重点看 \`check:models\`:它报红不代表这次改动有问题 —— AA 持续重测,要判断的是目录和源哪边过期了。"
+    echo
+    echo "$url"
+  } | node "$DIR/notify-pushplus.mjs" "观测台 · AA 参数刷新 PR"
+else
+  {
+    echo "AA 参数已重读并推到分支 \`$BRANCH\`,但 **PR 没能自动创建**。"
+    echo
+    echo "原因:$reason"
+    echo
+    echo "数据是安全的,分支还在。手动开:"
+    echo "$url"
+  } | node "$DIR/notify-pushplus.mjs" "⚠ 观测台 · AA 已刷新,PR 未创建"
+fi
