@@ -93,7 +93,19 @@ for (const fetcher of selected) {
   const target = argOf("version")
     ?? (FROZEN.has(fetcher.versioning) && archived ? fetcher.archiveVersion(archived) : null);
 
-  const { rows, version, summary, meta } = await fetcher.fetch(target);
+  // One source failing must not take the others with it. Until batch 19 every fetcher read a
+  // file, so a throw meant the network was down and losing the run cost nothing; a fetcher that
+  // drives a browser can fail because a page was restyled, and that must not stop DeepSWE's new
+  // rows from being written. The failure is still reported and still sets the exit code.
+  let fetched;
+  try {
+    fetched = await fetcher.fetch(target);
+  } catch (error) {
+    console.error(`\n${fetcher.label}: could not be read — ${error.message}`);
+    failed = true;
+    continue;
+  }
+  const { rows, version, summary, meta } = fetched;
 
   if (toStdout) {
     process.stdout.write(serialise(rows));

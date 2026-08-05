@@ -150,7 +150,13 @@ jobs:
       # never selects it, because AA re-measures speed and latency continuously — a scheduled
       # rewrite would fail check:models every time a number moved. It is read by the drift job
       # above, which reports and changes nothing.
+      # CHROME_PATH because batch 19 reads a page rather than a file: AA keeps GDPval-AA behind
+      # the Pro tier in its API but publishes the leaderboard for free, and the leaderboard is
+      # client-rendered. A runner without Chrome loses that one source and no others — the runner
+      # isolates each fetcher's failure.
       - name: Re-read the live boards
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
         run: node scripts/fetch-source.mjs --live | tee fetch.log
 
       # Detection only. The probe reports that a maker published a post; it never reads a score,
