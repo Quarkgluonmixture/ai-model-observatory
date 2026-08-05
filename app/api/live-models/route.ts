@@ -52,7 +52,7 @@ export async function GET() {
       cf: { cacheTtl: 240, cacheEverything: true },
     } as RequestInit & { cf: { cacheTtl: number; cacheEverything: boolean } });
     if (!response.ok) throw new Error(`upstream ${response.status}`);
-    const payload = await response.json() as { data?: Array<{ id:string; name?:string; created?:number; context_length?:number; pricing?:{prompt?:string;completion?:string} }> };
+    const payload = await response.json() as { data?: Array<{ id:string; name?:string; created?:number; context_length?:number; architecture?:{output_modalities?:string[]}; pricing?:{prompt?:string;completion?:string} }> };
     const list = payload.data ?? [];
     const byId = new Map(list.map(item => [item.id.toLowerCase(), item]));
     const prices: Record<string, {input:number;output:number;contextK?:number;source:string}> = {};
@@ -80,6 +80,14 @@ export async function GET() {
     const fresh = list
       .filter(item => namespaces.has(item.id.split("/")[0]))
       .filter(item => !tracked.has(item.id.toLowerCase()))
+      // This catalog measures models that answer in text. An image generator served by a maker we
+      // track is not a gap in it — Nano Banana 2 Lite sitting in a list headed "not yet in this
+      // catalog" reads as work outstanding, and it is not. The provider states the modality, so
+      // this is a fact rather than a guess about the name.
+      .filter(item => {
+        const out = item.architecture?.output_modalities;
+        return !out || (out.includes("text") && !out.includes("image"));
+      })
       .filter(item => typeof item.created === "number" && item.created >= cutoff)
       .sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
       .slice(0, 8)
