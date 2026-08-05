@@ -120,6 +120,7 @@ jobs:
         run: |
           node scripts/aa-new-models.mjs > aa-new.md || true
           sed -n 's/.*<!-- aa-new-models: \([0-9]*\) -->.*/count=\1/p' aa-new.md >> "$GITHUB_OUTPUT"
+          sed -n 's/.*<!-- aa-needs-fetch: \([0-9]*\) -->.*/fetch=\1/p' aa-new.md >> "$GITHUB_OUTPUT"
           cat aa-new.md >> "$GITHUB_STEP_SUMMARY"
 
       - name: Collect the new models' parameters
@@ -128,7 +129,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
-          gh workflow run aa-refresh.yml || echo "::warning::Could not dispatch the AA refresh; run it from the Actions tab."
+          # Only when AA has measured something the archive does not already hold. Re-reading 591
+          # configurations to learn nothing is how a trigger becomes noise, and the models that
+          # need no fetch need a catalog record instead — which is a person's job, not a refresh.
+          if [ "${{ steps.aanew.outputs.fetch }}" != "0" ] && [ -n "${{ steps.aanew.outputs.fetch }}" ]; then
+            gh workflow run aa-refresh.yml || echo "::warning::Could not dispatch the AA refresh; run it from the Actions tab."
+          else
+            echo "Parameters are already archived for all of them; no refresh needed."
+          fi
           {
             echo "AA 开始测量目录还没有的模型:"
             echo
