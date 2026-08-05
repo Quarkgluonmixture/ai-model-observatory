@@ -235,6 +235,8 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/fetchers/*.mjs` | One module per source that can be re-read by script |
 | `scripts/fetch-source.mjs` | Runs them; `--check` diffs, `--live` refreshes the moving boards |
 | `scripts/capture-qwen-release.mjs` | Renders a Qwen release post over CDP and archives its tables — per release, not daily |
+| `scripts/release-probe.mjs` | Watches every maker's release index for a post that was not there yesterday |
+| `data/release-pages.json` | Which index to watch per maker, how to read it, and the four that cannot be read |
 | `scripts/notify-pushplus.mjs` | One WeChat push; silently skips itself without `PUSHPLUS_TOKEN` |
 | `scripts/publish-integrity-issue.sh` | Opens/closes the `source-integrity` issue — the tier-C report's destination |
 | `scripts/report-gaps.mjs` | What was never collected — floors, unaliased rows, new upstream models |

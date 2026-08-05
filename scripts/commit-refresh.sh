@@ -29,7 +29,7 @@ fi
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-git add data/sources app/observations.generated.ts
+git add data/sources app/observations.generated.ts data/release-pages.snapshot.json
 git commit -F - <<EOF
 Refresh live boards
 

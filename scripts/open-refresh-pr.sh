@@ -47,6 +47,11 @@ existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].nu
 if [ -n "$existing" ]; then
   gh pr edit "$existing" --title "$TITLE" --body "$body" >/dev/null
   echo "Updated PR #$existing"
+# See scripts/open-aa-pr.sh: a repository can forbid Actions from opening pull requests, and this
+# path had never run — every refresh so far was tier A and went straight to main — so the one
+# branch that exists specifically to be reviewed by a human was the one that would have failed.
+elif gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>/dev/null; then
+  :
 else
-  gh pr create --head "$BRANCH" --title "$TITLE" --body "$body"
+  echo "::warning::GitHub Actions may not open pull requests here; the branch is pushed. Open it at ${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/compare/$BRANCH?expand=1"
 fi

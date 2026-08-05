@@ -153,6 +153,23 @@ jobs:
       - name: Re-read the live boards
         run: node scripts/fetch-source.mjs --live | tee fetch.log
 
+      # Detection only. The probe reports that a maker published a post; it never reads a score,
+      # because deciding which published label belongs in which catalog column is judgement and
+      # belongs in a reviewed capture, not in a cron job. It exists because nothing else here was
+      # looking at a release page: Qwen3.8 Max's ~80-benchmark table went unread for two days
+      # while the model itself was detected, filed and reported on the day it shipped.
+      #
+      # `|| true` because a maker restructuring its site is not a reason to abandon a source
+      # refresh that already succeeded. The probe degrades source by source and says which ones.
+      - name: Probe the release pages
+        id: release
+        env:
+          CHROME_PATH: /usr/bin/google-chrome
+        run: |
+          node scripts/release-probe.mjs --write > release.md || true
+          sed -n 's/.*<!-- release-signals: \([0-9]*\) -->.*/signals=\1/p' release.md >> "$GITHUB_OUTPUT"
+          cat release.md >> "$GITHUB_STEP_SUMMARY"
+
       - name: Rebuild the observation store
         run: npm run ingest
 
@@ -168,7 +185,7 @@ jobs:
           if [ -z "$changed" ]; then
             echo "class=none" >> "$GITHUB_OUTPUT"
             echo "No live board moved." >> "$GITHUB_STEP_SUMMARY"
-          elif echo "$changed" | grep -qvE '^(data/sources/|app/observations\.generated\.ts$)'; then
+          elif echo "$changed" | grep -qvE '^(data/sources/|app/observations\.generated\.ts$|data/release-pages\.snapshot\.json$)'; then
             echo "class=review" >> "$GITHUB_OUTPUT"
             { echo "Change reaches outside the tier-A footprint — opening a pull request:"; echo '```'; echo "$changed"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
           else
@@ -204,6 +221,25 @@ jobs:
       - name: Commit a tier-A refresh straight to main
         if: steps.diff.outputs.class == 'auto'
         run: bash scripts/commit-refresh.sh fetch.log
+
+      # Sent after the commit, so the snapshot that suppresses a repeat has already landed. If the
+      # push happened first and the commit then failed, the same posts would be pushed tomorrow.
+      - name: Push new release posts to WeChat
+        if: always() && steps.release.outputs.signals != '' && steps.release.outputs.signals != '0'
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          {
+            echo "厂商发布页有像是模型发布的新文章:"
+            echo
+            grep 'looks like a launch' release.md | sed 's/ ⟵.*//' || true
+            echo
+            echo "发布页是厂商公布 benchmark 表的地方,核心格大多来自那里(Qwen3.8 那张带了 12 个)。"
+            echo "要收的话回一句「收 <厂商> 那篇」。"
+            echo
+            echo "完整清单(含非发布类文章)在这次运行的 summary 里:"
+            echo "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          } | node scripts/notify-pushplus.mjs "观测台 · 厂商发布页更新"
 
       # Anything that introduces a new mapping stops here for a human, however green it is.
       - name: Open a pull request for review
