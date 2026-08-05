@@ -24,11 +24,11 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - mobile layout with a labelled bottom bar, card-form ranking rows, safe-area insets, and a
   layout probe (`npm run check:mobile`) that fails on horizontal overflow
 - per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
-- seven boards re-read by script, which is what gives them a daily drift check and an automatic
+- eight boards re-read by script, which is what gives them a daily drift check and an automatic
   refresh; the rest are hand-transcribed, and every source card prints how long ago it was
   last read
-- a release probe that watches nine makers' announcement pages, and a WeChat notification that
-  fires on what is new rather than on what is merely still open
+- a release probe that watches all eleven makers the catalog carries, and a WeChat notification
+  that fires on what is new rather than on what is merely still open
 - 314 catalog values audited against the archive on every run, including the context window and
   open-weights flag; whatever is unsourced is listed rather than hidden
 
@@ -63,7 +63,7 @@ A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at
 
 ```text
 1224 observations across 919/1904 cells (48.3% cell coverage;
-benchmark 753 / independent 294 / vendor 177)
+benchmark 752 / independent 294 / vendor 178)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -82,7 +82,7 @@ answers an unauthenticated function call found in its client's source. Agents' L
 recorded as publishing nothing machine-readable through two hand-reads; its leaderboard calls
 `/api/demo/leaderboard`, a path that appears only inside the page's own JavaScript bundle. And
 GDPval-AA sits behind Artificial Analysis' Pro tier in the API while the leaderboard page is
-public — so that one is read by rendering the page. All seven are scripted
+public — so that one is read by rendering the page, and MMMU the same way. All eight are scripted
 (`npm run fetch:sources`), which is what gives them an automatic drift check and an automatic
 daily refresh. The remaining batches have neither.
 
