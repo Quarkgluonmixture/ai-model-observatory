@@ -17,7 +17,7 @@
     "",
     "`verdict` records what was measured on 2026-08-05, so an unreadable source is not",
     "re-investigated by every person who opens this file. Four of these have no working path, and",
-    "`verdict` records what was measured on 2026-08-05, so an unreadable source is not re-investigated by every person who opens this file. Three of these have no working path and one has none yet, and saying so is the point: a blank entry reads as \"nobody tried\"."
+    "`verdict` records what was measured, and what was tried and failed. Every source here was probed at least twice: the first pass declared four makers unreachable and all four turned out to be reachable — three on a documentation host rather than the marketing site, one on a different path of the same site. A verdict that says \"no path\" is a claim about the search, not about the maker."
   ],
   "pages": [
     {
@@ -62,30 +62,33 @@
     {
       "id": "qwen",
       "maker": "Alibaba",
-      "mode": "none",
-      "url": "https://qwen.ai/blog",
-      "verdict": "NO PATH. The index renders to 728 characters and one cookie link — the post list never arrives without interaction. A *post* page renders fine, which is how batch 17 was captured, so the id has to come from somewhere else: the namespace watch in report:gaps sees a new Qwen model the day it is served, and the release post is then at https://qwen.ai/blog?id=<family>. The qwenlm.github.io feed is a trap: it parses, it has 44 entries, and its newest post is Qwen3Guard — it stopped mirroring a generation ago, exactly like lmarena/arena-catalog."
+      "mode": "render-cards",
+      "url": "https://qwen.ai/research",
+      "verdict": "qwen.ai/blog is the wrong index; qwen.ai/research is the right one, and it renders — top card on 2026-08-05 is Qwen3.8-Max, 2026/08/03, the very post this project captured by hand. It publishes no per-post links: nine cards, one anchor, and that anchor is the cookie notice. Class names carry a build hash, so extraction keys on structure (a leaf whose text is a date) and identity is the title. The qwenlm.github.io feed remains a stale mirror; do not use it."
     },
     {
       "id": "deepseek",
       "maker": "DeepSeek",
-      "mode": "none",
-      "url": "https://api-docs.deepseek.com/news",
-      "verdict": "NO PATH, re-checked 2026-08-05. The docs site renders to 314 characters of navigation; /rss.xml and /news/rss return 200 with no items, and github.com/deepseek-ai.atom carries no entries either."
+      "mode": "html",
+      "url": "https://api-docs.deepseek.com/updates/",
+      "verdict": "/news renders to navigation only, but /updates/ is a server-rendered changelog that links to per-post pages (/news/news0802). Verified 2026-08-05: carries the DeepSeek-V4-Flash update of 2026-07-31. The earlier verdict probed the wrong path on this same host.",
+      "match": "^/news/news"
     },
     {
       "id": "x-ai",
       "maker": "xAI",
-      "mode": "none",
-      "url": "https://x.ai/news",
-      "verdict": "NO PATH, re-checked 2026-08-05. Cloudflare challenges the browser and returns 403 for /news/rss.xml, /rss.xml and /blog/rss.xml alike. Both doors are shut and neither is a URL problem."
+      "mode": "html",
+      "url": "https://docs.x.ai/developers/release-notes",
+      "verdict": "The marketing index at x.ai/news is shut — Cloudflare challenges the browser and 403s three feed paths. The DEVELOPER DOCS are not: docs.x.ai/developers/release-notes is server-rendered and links out to the x.ai/news/... announcements, five of them including grok-4-5 and grok-voice-think-fast-2. Verified 2026-08-05. When a maker's marketing site blocks you, try its documentation host.",
+      "match": "^/news/"
     },
     {
       "id": "z-ai",
       "maker": "Z.AI",
-      "mode": "none",
-      "url": "https://z.ai/blog",
-      "verdict": "NO PATH, re-checked 2026-08-05. z.ai/blog is 404 and the root renders to 153 characters of app shell whose only links are the terms of service and the privacy policy — it is a product surface, not a publication one. /rss.xml, /blog/index.xml and docs.z.ai/rss.xml are all 404. GLM releases have to be found another way; the namespace watch still sees them the day a provider serves them."
+      "mode": "html",
+      "url": "https://docs.bigmodel.cn/cn/update/new-releases",
+      "verdict": "z.ai is a product surface with no publication index. The open-platform docs are the real one: docs.bigmodel.cn/cn/update/new-releases is server-rendered, lists releases by date and links each to its model page. Verified 2026-08-05: GLM-5.2 (2026-06-16) and a 2026-07-10 entry. NOTE the earlier verdict called this maker stale because nothing appeared after June — wrong test. An index is stale when it misses a release that happened, not when the maker has not released.",
+      "match": "^/cn/guide/models/"
     },
     {
       "id": "meta",

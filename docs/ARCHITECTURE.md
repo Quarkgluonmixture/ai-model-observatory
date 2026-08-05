@@ -598,14 +598,23 @@ table is where core cells come from: Qwen's carried twelve of them, four in colu
 archived source at all. It reports that a post exists and never reads a score, because deciding
 which published label belongs in which catalog column is judgement.
 
+Four modes, cheapest first: **feed**, **html** (server-rendered, links in the bytes), **render**
+(browser, links), **render-cards** (browser, no links at all — Qwen's index is nine cards and one
+anchor, and that anchor is the cookie notice). All eleven makers the catalog carries are readable.
+
+Getting there took a second pass and a correction. The first pass declared four makers unreachable
+and **all four were reachable**: xAI, DeepSeek and Z.AI publish release indexes on their
+*documentation* hosts while their marketing sites block or redirect, and Qwen's index is at
+`/research`, not `/blog`. When a maker's marketing site is shut, try its docs host. The correction
+is about the staleness test itself — Z.AI was called stale because nothing appeared after June,
+which is the wrong question. **An index is stale when it misses a release that happened**, not when
+the maker has not released. `qwenlm.github.io` is stale by that test and `docs.bigmodel.cn` is not.
+
 Feeds first, browser second, and both were necessary. OpenAI's HTML index answers headless Chrome
 with a Cloudflare interstitial and zero links while its RSS answers 200 with the full list;
-Anthropic publishes no feed at all and only renders. Four makers — Alibaba, DeepSeek, xAI, Z.AI —
-have **no readable index**, each for a different reason recorded in `data/release-pages.json`,
-including one trap worth naming: `qwenlm.github.io` publishes a feed that parses cleanly, carries
-44 entries, and stopped mirroring a generation ago. Qwen's own index renders to a cookie banner.
-So a Qwen release is still found the way this one was — the namespace watch names the model, and
-the post is then at `qwen.ai/blog?id=<family>`.
+Anthropic publishes no feed at all and only renders. One trap is worth naming: `qwenlm.github.io` publishes a feed that parses cleanly, carries 44
+entries, and stopped mirroring a generation ago. It is the same failure as `lmarena/arena-catalog`
+— a source that decodes is not a source that is current.
 
 Notification is separate from record-keeping because the two want opposite things. The gaps issue
 is edited in place — it is a standing work queue, and a new issue every morning is a backlog nobody
