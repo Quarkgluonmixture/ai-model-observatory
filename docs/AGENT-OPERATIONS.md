@@ -94,12 +94,27 @@ failing. Do not duplicate its work — see "Who owns what".
 A new model record, a new alias, a new benchmark, a new source, a LiveBench release bump.
 
 **Every mistake this project has made lives in tier B.** Do the whole job — fetch, write, run the
-contract, push a branch, open a PR — then stop and let a human approve. A PR you prepared
-completely and explained well costs the reviewer one sentence; that is the intended cost.
+contract, push a branch, open a PR with `npm run describe-change` at the top of the body.
 
-Exception: **when the user explicitly asks for a specific model by name, they have supplied the
-judgement.** Carry it through to a merged state if the contract is green. "Add GPT-5.7" is an
-instruction; your cron noticing GPT-5.7 is not.
+**Changed 2026-08-05: you may merge your own tier-B pull request when all three of these hold.**
+The reason is not that tier B got safer; it is that the review it was waiting for was theatre. The
+owner cannot tell whether `qwen-qwen3-7-max` belongs to Qwen3.7 Max, and neither can you — so the
+three failures that used to be printed and ignored were turned into gates, and *those* are the
+control now. Merge only if:
+
+1. The full contract passes, including the disagreement and one-source-one-cell gates.
+2. `npm run describe-change` reports **no existing number moved**. A new cell is an addition
+   somebody chose; a moved number is the board changing its mind about a model already on the
+   site, and that is the owner's call.
+3. You did **not** need an entry in `acknowledgedDisagreements` or `mergedInOneSource` to make it
+   pass. Those exist for real exceptions, and writing one is exactly the judgement a human owes.
+
+Any of the three false: push the branch, open the PR, notify, stop. Do not argue yourself into an
+exemption — leaving a row unmapped costs nothing and a wrong attribution costs the project its
+credibility (see the attribution rule).
+
+Exception, unchanged: **when the user asks for a specific model by name, they have supplied the
+judgement.** "Add GPT-5.7" is an instruction; your cron noticing GPT-5.7 is not.
 
 ### C — a frozen source no longer matches its archive → stop and report
 
@@ -130,8 +145,10 @@ Two schedulers must not touch the same files.
 | Work | Owner |
 | --- | --- |
 | Re-reading live boards, rewriting their batches, re-ingesting | **GitHub Action** (`upstream.yml`) |
+| Watching maker release pages, notifying, opening the integrity issue | **GitHub Action** — it runs whether or not your machine is up, so do not duplicate it |
 | New models, new aliases, new sources, release bumps, investigating a tier-C failure | **You** |
-| Merging anything you produced | **The human** |
+| Merging a tier-B change that clears all three conditions above | **You** |
+| Merging anything that does not | **The human** |
 
 If you need to change a batch file as part of a tier-B task, rebase on `main` first — the Action
 may have moved it since you started.
@@ -143,7 +160,9 @@ may have moved it since you started.
 Only after the activation check has passed once, and only when a trigger fired.
 
 1. `git pull`, `npm ci`.
-2. Read the open **Collection gaps** issue. That is your work queue — it is written by
+2. Read the open **Collection gaps** issue *and the previous run's release-probe output*
+   (`npm run probe:releases`, printed in the daily job's summary). Between them they are your work
+   queue — it is written by
    `npm run report:gaps` and it lists, in priority order: models one observation short of entering
    a ranking, archived rows waiting on a catalog model, sources going stale, and models published
    upstream that the catalog has never heard of.
@@ -242,8 +261,9 @@ for an export, whether it matches the source's own page.
 
 ### The limit of the disagreement check
 
-`npm run check:data` reports two sources that disagree about the same configuration, which is what
-caught the FrontierMath problem. It can only do that where a second source exists. Four core
+`npm run check:data` **fails** on two sources that disagree by more than 20% about the same
+configuration — it used to only report, and the day it caught two DeepSeek generations sharing one
+cell it printed the line and shipped anyway. It can only do that where a second source exists. Four core
 benchmarks currently rest on a single source — `frontiermath`, `frontiermath-t4`, `imo-answer`,
 `aa-lcr` — and for those, nothing will contradict a wrong reading. Treat a change to one of them
 with the care you would give an unreviewed number, because that is what it is.
@@ -254,6 +274,11 @@ with the care you would give an unreviewed number, because that is what it is.
 
 This repository is developed on macOS and maintained by an agent on Windows. Four things differ;
 the first two are already fixed in the repo, the last two are your setup.
+
+A fifth, since 2026-08-05: two sources are read through headless Chrome — the GDPval-AA fetcher
+and the release probe. Set `CHROME_PATH` if Chrome is not where the scripts expect it. Neither
+is fatal without it: the fetch runner isolates each source's failure, and the probe falls back to
+the feed-based sources and says which ones it lost.
 
 1. **Paths.** Scripts resolve the repo root with `fileURLToPath`, not a file URL's `.pathname` —
    on Windows the latter yields `/C:/...`, a leading slash `fs` cannot resolve. If you add a
