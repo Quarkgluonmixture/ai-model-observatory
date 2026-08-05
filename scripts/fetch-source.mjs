@@ -182,7 +182,14 @@ for (const fetcher of selected) {
   const rewritten = changed.length > 0 || gone.length > 0;
 
   if (fetcher.versioning === "pinned" || (fetcher.versioning === "append-only" && rewritten)) {
-    console.error(`\n${label} no longer matches its archive — ${differences.length} cell(s):\n${listing}`);
+    // Name the likely cause instead of leaving it to be read off the cells. A frozen source whose
+    // every difference is an addition has not rewritten anything — it has been declared with the
+    // wrong `versioning`, and that is a one-line fetcher fix. LiveBench spent two days red under
+    // the other heading, and the 46 cells that said so were sitting in the log the whole time.
+    const diagnosis = rewritten
+      ? `${changed.length} value(s) changed and ${gone.length} vanished — history was rewritten under a frozen version, which needs a human.`
+      : `every difference is an addition, and nothing published has changed. That is not a rewrite: this source appends to a frozen version, so its \`versioning\` should be "append-only", not "pinned". See scripts/fetchers/livebench.mjs.`;
+    console.error(`\n${label} no longer matches its archive — ${differences.length} cell(s).\n${diagnosis}\n${listing}`);
     failed = true;
     continue;
   }

@@ -99,6 +99,26 @@ without emulation, which ignores the viewport meta tag and invents overflow.
 CI runs all of these, and additionally fails if `app/observations.generated.ts` differs from
 a fresh `npm run ingest` — the generated file must never be hand-edited.
 
+Three of the contract's failures exist because a *report* was not enough. `check:data` printed
+`deepseek-v4-flash/critpt: 7.14 vs 16.57` every day for a week while the live site showed a
+preview release's Arena score under the name of the model that replaced it. A line that never
+fails is a line nobody reads, so:
+
+- **A cross-source disagreement above 20% now fails.** Genuine ones are allowed, but they must be
+  written down in `acknowledgedDisagreements` with a reason. Most are not genuine: they are two
+  models sharing a cell.
+- **Two strings from one batch resolving to one cell now fails.** A source publishing two entries
+  is that source saying they are two models. Exempt via `mergedInOneSource`, with a reason. This
+  caught a bad alias within minutes of being written, and it catches the case the disagreement
+  gate cannot — two models whose scores happen to agree.
+- **A frozen source whose every difference is an addition** is now reported as a `versioning`
+  declaration error rather than as rewritten history, which is what it actually is.
+
+`npm run describe-change` says what a diff does to the published board — which model gained which
+cells, which existing numbers moved. It goes at the top of every automated pull request and into
+the WeChat notification, because "Qwen3.8 Max gained 12 cells: GPQA 92.6" is something a reader can
+check and `batch-19-gdpval.jsonl | 175 +++` is not.
+
 ## Model identity
 
 An id like `gpt-5.6-terra-max` cannot receive a leaderboard line that says only

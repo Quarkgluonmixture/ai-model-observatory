@@ -17,6 +17,11 @@ CHECKS="${1:?checks output file required}"
 BRANCH="auto/refresh-sources"
 TITLE="Refresh scripted sources"
 
+# Describe the change before committing it: this compares the working tree against HEAD, so it
+# has to run while the change is still uncommitted. It goes at the top of the pull request body,
+# where a reviewer who cannot check an alias mapping can still check a score.
+node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
+
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -29,7 +34,9 @@ Re-read every live board and re-ingested. Written by
 "
 git push --force origin "$BRANCH"
 
-body="A scheduled re-read of the scripted sources found new data. Only boards that publish their own
+body="$(sed '/^<!--/d' change.md)
+
+A scheduled re-read of the scripted sources found new data. Only boards that publish their own
 data file are touched here, and only when a value actually moved — an unchanged source writes
 nothing, so this pull request exists because something changed.
 

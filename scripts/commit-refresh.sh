@@ -20,11 +20,16 @@ LOG="${1:?fetch log required}"
 
 # Belt and braces: never commit anything outside the tier-A footprint from here, whatever the
 # caller believed. app/model-data.ts and data/model-aliases.json carry judgement, not measurements.
-if git diff --name-only | grep -qvE '^(data/sources/|app/observations\.generated\.ts$)'; then
+if git diff --name-only | grep -qvE '^(data/sources/|app/observations\.generated\.ts$|data/release-pages\.snapshot\.json$)'; then
   echo "Refusing to auto-commit: the change reaches outside data/sources and the generated store." >&2
   git diff --name-only >&2
   exit 1
 fi
+
+# What this does to the published board, in the board's own language. Written to change.md so the
+# workflow can push the same sentences to WeChat that go into the commit message: "Qwen3.8 Max
+# gained 12 cells" is something a person can sanity-check; "batch-19-gdpval.jsonl | 175 +++" is not.
+node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -32,6 +37,8 @@ git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 git add data/sources app/observations.generated.ts data/release-pages.snapshot.json
 git commit -F - <<EOF
 Refresh live boards
+
+$(sed '/^<!--/d' change.md)
 
 $(cat "$LOG")
 
