@@ -289,6 +289,8 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/notify-pushplus.mjs` | One WeChat push; silently skips itself without `PUSHPLUS_TOKEN` |
 | `scripts/publish-integrity-issue.sh` | Opens/closes the `source-integrity` issue — the tier-C report's destination |
 | `scripts/report-gaps.mjs` | What was never collected — floors, unaliased rows, new upstream models |
+| `scripts/propose-attribution.mjs` | Which catalog model a published string is — the alias step, unattended, with `--backtest` as its guard |
+| `scripts/attribute-and-merge.sh` | Applies those proposals and merges them only when the contract is green and no existing number moved |
 | `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |

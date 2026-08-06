@@ -49,5 +49,12 @@ jobs:
       - name: Fail on a quoted price that has outlived its published end date
         run: npm run check:prices
 
+      # The attribution gate decides which model a published string belongs to, unattended. Its
+      # test set is the decisions a human already made: a rule change that starts contradicting
+      # one of them, or that starts mapping a string somebody deliberately refused, fails here
+      # rather than shipping a wrong score under the right model's name.
+      - name: Replay the attribution gate against every human decision
+        run: npm run propose:attribution -- --backtest
+
       - name: Build production application
         run: npm run build

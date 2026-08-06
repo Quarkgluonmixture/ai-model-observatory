@@ -620,10 +620,42 @@ drops it the same way it already drops a model with no published cost per task. 
 applied to the catalog's own schema, which was the one place the codebase still required a number
 it might not have. AA's index fills itself in later, on a normal refresh, with no code change.
 
-What is left of the manual path is the part that should be manual. The maker's price still has to
-be found — for Qwen3.8 Max it was on the marketplace card three days before either list-price table
-carried it (batch 21) — and the aliases and the record itself are judgement, which is the whole
-argument of the alias mechanic in `docs/AGENT-OPERATIONS.md`.
+What is left of the manual path is the part that should be manual — and it is now smaller than
+that sentence used to imply, because the *easy half* of the alias step was measured and handed to a
+gate on 2026-08-06.
+
+`npm run propose:attribution` answers one question, "which catalog model is this published string",
+and answers it only from evidence: the string is exactly a family after stripping a closed list of
+effort tokens (tier 1), or its scores corroborate a family on two like-for-like cells or one
+agreeing to within 0.2% (tier 2). Against the 239 mappings a human had already made it reproduces
+127 and contradicts none, and it maps none of the 21 strings documented as deliberately unmapped.
+That replay is a CI step, so the test set is the project's own history rather than a fixture.
+
+Four of its refusals are worth reading as design, because each came from a measured false positive
+rather than from caution:
+
+| Refusal | The error it prevents |
+| --- | --- |
+| The family's version number must appear in the string | `gpt-5.6-sol` corroborated **`gpt-5.5`** — a generation splitting into Sol, Terra and Luna gives successors that score near the predecessor |
+| Nothing may be left over after the family's own tokens | `gpt-5.5-pro-pre-release` agreed with GPT-5.5 to within 0.2% on a cell, and is neither GPT-5.5 nor a configuration of it |
+| One source publishing a suffixed sibling | the DeepSeek V4 Flash case, where the bare string is the preview on three boards and the release on a fourth |
+| A base carrying a file-scoped alias poisons its effort variants | `deepseek-v4-flash-thinking` strips to that same ambiguous base |
+
+The gate never merges on its own authority. `scripts/attribute-and-merge.sh` applies its proposals,
+runs the contract, and merges only when nothing moved — an alias should only ever *add* cells, so a
+moved number means something attached to a cell that was already filled, and that is a person's
+call. Its first live run produced exactly that outcome: attaching Claude Opus 4.8's and GPT-5.5's
+effort-specific rows changed which row is primary in `arc-agi-2`, two published numbers moved, and
+it left the pull request open instead of merging it.
+
+The same run also produced the one rule that is not about attribution at all: the gate must be
+closed under `check:models`' own equivalence. It mapped `GPT 5.5 (high)` and left `GPT-5.5 (High)`
+behind, which is precisely the near-miss casing that check exists to catch.
+
+What remains manual after this: the maker's price still has to be found — for Qwen3.8 Max it was on
+the marketplace card three days before either list-price table carried it (batch 21) — the catalog
+record itself is still hand-placed, and everything the gate escalates is judgement, which is the
+whole argument of the alias mechanic in `docs/AGENT-OPERATIONS.md`.
 
 `npm run draft:model` writes the record's numbers from the archive and leaves blank what nothing
 sources — display name, colour, tags — with the reason next to each. It never writes to

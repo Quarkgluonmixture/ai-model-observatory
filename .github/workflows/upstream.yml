@@ -345,3 +345,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/open-refresh-pr.sh checks.txt
+
+      # The last hand step in "a board publishes a row" → "the site shows it": deciding which model
+      # a published string is. Runs after the refresh so it sees today's rows, and on a clean tree
+      # so its diff is only the aliases it wrote. It refuses everything it cannot settle on
+      # evidence, and what it does settle still has to pass the contract and move no existing
+      # number before it merges itself. See the script header for why those three are the control.
+      - name: Attribute today's new strings
+        if: always()
+        id: attribute
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git checkout -- . || true
+          git checkout main && git pull --ff-only
+          bash scripts/attribute-and-merge.sh

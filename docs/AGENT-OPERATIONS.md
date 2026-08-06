@@ -249,6 +249,21 @@ publishes 26.97 pass / 52.49 partial for that string and Qwen's own release tabl
 
 A wrong alias silently reports one model's score as another's. No check catches it. Therefore:
 
+**Since 2026-08-06 a gate does the easy half of this, and you own the rest.**
+`npm run propose:attribution` maps a string only when evidence settles it — the string is exactly a
+catalog family after stripping a closed list of effort tokens, or its scores corroborate one on two
+like-for-like cells (or one agreeing to within 0.2%). Everything else it refuses, with the reason.
+Measured against the 239 decisions in this file: 127 reproduced, **0 contradicted**, and 0 of 21
+deliberately-unmapped trap strings mapped. That replay runs in CI, so a rule change that starts
+disagreeing with a human fails the build.
+
+What lands in your queue is what it refused, and those are the real cases: a board that doubles a
+maker prefix for one family and not the next, a string one source publishes alongside a suffixed
+sibling, a pre-release that scores like the release. Do not read a refusal as a defect in the gate.
+The rules it enforces were each learned from a measured false positive — the sharpest being that
+`gpt-5.6-sol` corroborated **`gpt-5.5`** before the version number became a hard condition, which
+is the generation-split shape: one predecessor, several successors, all scoring near each other.
+
 - Map only when the identity is **unambiguous after stripping a known effort token**.
 - A size, tier or variant word is **not** an effort. `gemini-3.5-flash-lite-high` is Flash-Lite,
   a different model from Flash — not Flash at high effort. `GPT-5.5 Pro` is not `GPT-5.5`.
