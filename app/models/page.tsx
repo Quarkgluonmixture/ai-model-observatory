@@ -280,9 +280,14 @@ function rankScore(model: ModelRecord, lens: RankLens) {
   if (lens === "coding") return portfolioScore(model.id, "coding") ?? -1;
   if (lens === "preference") return model.textElo ?? -1;
   if (lens === "speed") return model.speed ?? -1;
-  // A model with no published cost per task is absent from the value lens, not free.
-  if (lens === "value") return model.costTask === null ? -1 : model.intelligence / Math.max(0.01, model.costTask);
-  return model.intelligence;
+  // A model with no published cost per task is absent from the value lens, not free — and the
+  // same holds when AA has not measured its intelligence index: value is a ratio of the two, so
+  // either half missing makes the ratio unpublishable rather than zero.
+  if (lens === "value") {
+    if (model.costTask === null || model.intelligence === null) return -1;
+    return model.intelligence / Math.max(0.01, model.costTask);
+  }
+  return model.intelligence ?? -1;
 }
 
 function rankValue(model: ModelRecord, lens: RankLens) {
@@ -524,7 +529,9 @@ export default function Home() {
   const selectModel = (id:string) => { setActiveId(id); if(window.innerWidth < 800) setTimeout(() => document.getElementById("model-detail")?.scrollIntoView({behavior:"smooth",block:"start"}),30); };
   const toggleCompare = (id:string) => setCompareIds(now => now.includes(id) ? now.filter(x => x !== id) : now.length < 2 ? [...now,id] : [now[1],id]);
   const lensName = LENSES.find(x => x.id === lens)?.[lang] ?? "";
-  const leader = [...models].sort((a,b) => b.intelligence-a.intelligence)[0];
+  // An unmeasured model cannot lead a lens it has no number on, so null sorts last here rather
+  // than arithmetic-ing itself to the top of the brief.
+  const leader = [...models].filter(m => m.intelligence !== null).sort((a,b) => (b.intelligence??0)-(a.intelligence??0))[0];
   const fastest = [...models].filter(m => m.speed !== null).sort((a,b) => (b.speed??0)-(a.speed??0))[0];
   const bestValue = [...models].sort((a,b) => rankScore(b,"value")-rankScore(a,"value"))[0];
 
@@ -550,9 +557,9 @@ export default function Home() {
           return <article className={activeId===model.id?"rank-row active":"rank-row"} key={model.id}>
             <button className="rank-main" onClick={()=>selectModel(model.id)}>
               <span className="position">{String(index+1).padStart(2,"0")}</span><span className="model-id"><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}{model.open?" · OPEN":""}</small></span></span>
-              <strong className="lens-value">{rankValue(model,lens)}</strong><span>{model.intelligence}</span><span>{model.textElo ?? "N/A"}</span><PortfolioCell modelId={model.id} axis="coding"/><PortfolioCell modelId={model.id} axis="agent"/><span>{model.speed === null ? "N/A" : `${model.speed}`}</span>
+              <strong className="lens-value">{rankValue(model,lens)}</strong><span>{model.intelligence ?? "N/A"}</span><span>{model.textElo ?? "N/A"}</span><PortfolioCell modelId={model.id} axis="coding"/><PortfolioCell modelId={model.id} axis="agent"/><span>{model.speed === null ? "N/A" : `${model.speed}`}</span>
             </button>
-            <div className="mobile-metrics"><span>AA {model.intelligence}</span><span>Arena {model.textElo ?? "N/A"}</span><span>{lensName} {rankValue(model,lens)}</span></div>
+            <div className="mobile-metrics"><span>AA {model.intelligence ?? "N/A"}</span><span>Arena {model.textElo ?? "N/A"}</span><span>{lensName} {rankValue(model,lens)}</span></div>
             <label className="compare-check"><input type="checkbox" checked={compareIds.includes(model.id)} disabled={model.id===activeId} onChange={()=>toggleCompare(model.id)}/><span>{ui.compare}</span></label>
           </article>;
         })}</div>
@@ -565,7 +572,7 @@ export default function Home() {
           <div className="section-head"><div className="section-title"><span>02</span><div><h2>{ui.capability}</h2><p>{ui.capabilityDesc}</p></div></div><div className="mode-switch"><button className={profileMode==="model"?"active":""} onClick={()=>setProfileMode("model")}><b>{ui.controlled}</b><span>{ui.controlledNote}</span></button><button className={profileMode==="system"?"active":""} onClick={()=>setProfileMode("system")}><b>{ui.best}</b><span>{ui.bestNote}</span></button></div></div>
           <div className="radar-layout"><Radar models={compare} activeId={activeId} mode={profileMode} lang={lang}/><div className="radar-side"><div className={`coverage-card ${coverage.status}`}><span>{ui.coverage}</span><strong>{coverageText(active.id,profileMode,lang)}</strong><div><i style={{width:`${coverage.pct}%`}}/></div><small>{coverage.status === "uncollected" ? ui.notIngested : `${coverage.present} / ${coverage.total} ${ui.coreMetrics} · ${coverage.status === "partial" ? ui.partialCoverage : ui.broadCoverage}`}</small></div><div className="legend">{compare.map(model => <button key={model.id} className={model.id===activeId?"active":""} onClick={()=>setActiveId(model.id)}><i style={{background:model.color}}/><span><b>{model.name}</b><small>{model.maker}</small></span><em>{coverageText(model.id,profileMode,lang)}</em></button>)}</div></div></div>
         </article>
-        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence}</strong><small>independent composite</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system · {codingCoverage.present}/{codingCoverage.total} core</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system · {agentCoverage.present}/{agentCoverage.total} core</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div>{active.configurations.length > 1 && <div className="configs"><span>{lang === "zh" ? "已发布的运行档位" : "Published operating points"}</span><ul>{active.configurations.map(config=><li key={config.effort ?? "default"}><b>{config.effort ?? "default"}</b><em>{config.intelligence}</em><small>{config.costTask === null ? "" : `$${formatUsd(config.costTask)}/task`}{config.latency === null ? "" : `${config.costTask === null ? "" : " · "}${config.latency}s`}</small></li>)}</ul></div>}<div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
+        <aside className="panel dossier"><div className="dossier-top"><span>{lang === "zh" ? "当前模型" : "Selected model"}</span><h2>{active.name}</h2><p>{active.maker} · {active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}</p></div><div className="kpis"><div><span>AA INTELLIGENCE</span><strong>{active.intelligence ?? "N/A"}</strong><small>{active.intelligence === null ? (lang === "zh" ? "AA 尚未测量" : "not measured by AA yet") : "independent composite"}</small></div><div><span>ARENA TEXT</span><strong>{active.textElo ?? "N/A"}</strong><small>human preference Elo</small></div><div><span>CODING PORTFOLIO</span><strong>{portfolioScore(active.id,"coding")?.toFixed(1) ?? "N/A"}</strong><small>best-system · {codingCoverage.present}/{codingCoverage.total} core</small></div><div><span>AGENT PORTFOLIO</span><strong>{portfolioScore(active.id,"agent")?.toFixed(1) ?? "N/A"}</strong><small>best-system · {agentCoverage.present}/{agentCoverage.total} core</small></div></div><div className="tags">{active.tags.map(tag=><span key={tag}>{tag}</span>)}</div>{active.configurations.length > 1 && <div className="configs"><span>{lang === "zh" ? "已发布的运行档位" : "Published operating points"}</span><ul>{active.configurations.map(config=><li key={config.effort ?? "default"}><b>{config.effort ?? "default"}</b><em>{config.intelligence ?? "N/A"}</em><small>{config.costTask === null ? "" : `$${formatUsd(config.costTask)}/task`}{config.latency === null ? "" : `${config.costTask === null ? "" : " · "}${config.latency}s`}</small></li>)}</ul></div>}<div className="price-strip"><div><span>{ui.input}</span><b>${formatUsd(active.price.input)}</b></div><div><span>{ui.output}</span><b>${formatUsd(active.price.output)}</b></div><div><span>CONTEXT</span><b>{active.contextK >= 1000 ? `${(active.contextK/1000).toFixed(1)}M` : `${active.contextK}K`}</b></div></div></aside>
       </section>
 
       <section className="panel benchmark-panel" id="benchmarks">

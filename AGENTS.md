@@ -25,8 +25,8 @@ have already been made here — all of which passed every automated check.
 - ⚠ Any observatory number quoted on the personal site is a **copy**, and copies go stale. Re-run
   `check:data` and `check:models` and update `home-content.ts` before publishing. This already
   bit once: the page shipped 27 models / 1,162 observations / 49.1% when the real values were
-  28 / 1,154 / 47.4%. Re-check before publishing: as of 2026-08-05 the real values are
-  28 / 1,224 / 48.3%.
+  28 / 1,154 / 47.4%. Re-check before publishing: as of 2026-08-06 the real values are
+  29 / 1,263 / 48.4%.
 - ⚠ **The coupling runs the other way too.** The daily refresh in `.github/workflows/upstream.yml`
   runs `npm run build` before it will commit or open a pull request, and that build now includes
   the personal site. A type error in `app/page.tsx` therefore blocks the data refresh — nothing
@@ -195,7 +195,7 @@ cells and saw that every one of them said `appeared`.
 Model records are hand-authored because they also carry editorial content — inclusion,
 display name, colour, tags, ordering — that has no source to generate from. Every *number*
 on them is audited instead: `npm run check:models` fails when a catalog value contradicts
-`data/sources/`, and reports how many values have no archive row at all. It audits 314 values —
+`data/sources/`, and reports how many values have no archive row at all. It audits 317 values —
 including context window and open-weights status, which nothing checked until one of them turned
 out to be inventing an open model — and it fails on a `model_raw` that differs from an existing
 alias only in casing, because alias resolution is case-sensitive and such a row is silently
@@ -216,6 +216,21 @@ Field sources are fixed:
 | intelligence, cost per task, speed, latency | Artificial Analysis — now scripted: `AA_API_KEY=… npm run fetch:sources aa` archives them with provenance before you write the record |
 | price | official vendor page, else Artificial Analysis — **list price, never a promotion** |
 | text / code Elo | LMArena |
+
+**A missing AA measurement no longer blocks a record.** `intelligence` is `number | null`, so a
+model AA has not measured yet is catalogued with `N/A` in the general-capability lens and ranks
+normally on every lens that does not read it. This was a hard block until 2026-08-06: the field
+was non-nullable, so Qwen3.8 Max sat outside the catalog with 36 fillable cells — LiveBench,
+Epoch's GPQA run, DeepSWE, ALE, GDPval-AA — because one third party had not published a composite
+of its own. Note that AA is several surfaces: its GDPval-AA board carried this model while its
+parameter index did not, so "AA has not measured it" needs to name which AA you mean. Missing evidence is `N/A` here for the same reason it is everywhere else. The rest of the
+table still holds: do not substitute another index, and do not estimate one.
+
+Price then comes from the maker rather than AA, and the maker's own store is where a new model
+appears first. Qwen3.8 Max was priced on the QwenCloud marketplace card three days before either
+list-price table carried it (batch 21). **Read the card for a model you already carry before
+trusting it**: that page prints promotional prices too, labelled `50% off` with both figures, and
+the check is to confirm the unlabelled figure matches the list price already archived.
 
 LMArena's price column is not used as a price source — it states no tier or region, so it
 cannot be reconciled with a vendor page that prices Standard, Batch and Priority differently.

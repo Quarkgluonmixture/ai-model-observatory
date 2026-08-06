@@ -1,0 +1,17 @@
+{
+  "batch": "21 · QwenCloud operating parameters",
+  "retrievedDate": "2026-08-06",
+  "collectedWith": "scripts/lib/render.mjs (headless Chrome) against the QwenCloud Model Marketplace card and the QwenCloud docs changelog. Both are client-rendered: a plain fetch of the card returns a shell with no prices.",
+  "filtered": true,
+  "filterRule": "Only qwen3.8-max is archived. The marketplace publishes one card per model and the rest either duplicate batch 08's rows or belong to models the catalog does not track; a card can be re-read at any time, so archiving them without a catalog question to answer would add rows and no cells.",
+  "schema": "Model operating parameters, NOT benchmark scores. Supplies price, cache price and context_k for Qwen3.8 Max, whose parameters Artificial Analysis has not measured — so this is the source that lets the catalog record exist without waiting on AA.",
+  "sources": [
+    "https://www.qwencloud.com/models/qwen3.8-max",
+    "https://docs.qwencloud.com/changelog/models"
+  ],
+  "tiersNotArchived": {
+    "cache": "Implicit-cache input $0.25/M and explicit cache creation $2.5/M are on the same card; the archived price_cache_per_m is explicit cache read, which is the quantity every other catalog record quotes.",
+    "region": "This is the QwenCloud international USD list. Alibaba Cloud Model Studio prices the same families per region (batch 08 archived Singapore/International, with other regions at roughly two thirds); Model Studio has no qwen3.8-max row yet, so no regional comparison exists for this model."
+  },
+  "note": "Why this source and not the two obvious ones. The catalog's price rule is 'official vendor page, else Artificial Analysis'. On 2026-08-06, three days after release, Artificial Analysis' parameter API — where price would otherwise come from, and the only source of the intelligence index — has no row for this model, although its GDPval-AA evaluation board added one the same day. The two Alibaba/Qwen pages that publish list prices in table form — alibabacloud.com/help/en/model-studio/model-pricing and docs.qwencloud.com/developer-guides/getting-started/pricing — both carry qwen3.7-max, qwen3.7-plus and qwen3.7-flash and neither carries qwen3.8-max. The marketplace card is the maker's own published price for the model. It is also the surface where a promotion would show, which is why the discount check above is recorded on the row rather than assumed: the card was read for three sibling models first, and it prints an explicit '50% off' / '20% off' label plus both figures wherever a discount runs. A fetcher for this marketplace is feasible and would give the price column its first drift check; it is not written here because a daily price refresh needs a versioning declaration and a rule for what to do when a promotion starts, and that is a separate decision."
+}

@@ -3,7 +3,15 @@ import { INGESTED_ROWS } from "./observations.generated.ts";
 export type ModelConfiguration = {
   /** The published operating point, e.g. "max". Null when the maker ships a single one. */
   effort: string | null;
-  intelligence: number;
+  /**
+   * Artificial Analysis' composite index. Null when AA has not measured the model — which is
+   * the normal state for the first weeks of a release, and used to be a hard block: the field
+   * was non-nullable, so a model with a full board of benchmark evidence could not be
+   * catalogued until a third party published a composite of its own. Missing evidence is N/A
+   * here for the same reason it is everywhere else, and the model still ranks on every lens
+   * that does not read this field.
+   */
+  intelligence: number | null;
   /** Artificial Analysis cost per task. Null when no source publishes one. */
   costTask: number | null;
   speed: number | null;
@@ -30,7 +38,7 @@ export type ModelRecord = {
    */
   configurations: ModelConfiguration[];
   // Flagship view, derived from configurations[0], so rankings read one number per model.
-  intelligence: number;
+  intelligence: number | null;
   costTask: number | null;
   speed: number | null;
   latency: number | null;
@@ -71,7 +79,7 @@ export type BenchmarkRecord = {
 
 const cfg = (
   effort: string | null,
-  intelligence: number,
+  intelligence: number | null,
   costTask: number | null,
   speed: number | null,
   latency: number | null,
@@ -167,6 +175,14 @@ export const MODELS: ModelRecord[] = [
   ]),
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
     cfg(null, 46, 0.34, 123.3, 25.39, 1486, null, 2, 12, false, 0.2),
+  ]),
+  // intelligence is null because Artificial Analysis has not measured this model, not because it
+  // is weak: 25 benchmark-native and independent rows already resolve to it (LiveBench 2026-06-25,
+  // Epoch's GPQA run, DeepSWE v1.1) plus twelve columns from Qwen's own release table. Price,
+  // cache price and context come from the QwenCloud marketplace card (batch 21) — Alibaba's
+  // Model Studio table and QwenCloud's own list-price table both still carry only the 3.7 family.
+  m("qwen3.8-max", "Qwen3.8 Max", "Alibaba", "#1c5f6e", false, 1000, ["coding", "agents", "vision"], [
+    cfg(null, null, null, null, null, null, null, 2, 6, false, 0.17),
   ]),
   m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["open weights", "fast", "multilingual"], [
     cfg(null, 46, 1.28, 199.6, 2.45, 1475, 1517, 2.5, 7.5, false, 0.25),
