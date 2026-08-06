@@ -195,7 +195,7 @@ cells and saw that every one of them said `appeared`.
 Model records are hand-authored because they also carry editorial content — inclusion,
 display name, colour, tags, ordering — that has no source to generate from. Every *number*
 on them is audited instead: `npm run check:models` fails when a catalog value contradicts
-`data/sources/`, and reports how many values have no archive row at all. It audits 317 values —
+`data/sources/`, and reports how many values have no archive row at all. It audits 321 values —
 including context window and open-weights status, which nothing checked until one of them turned
 out to be inventing an open model — and it fails on a `model_raw` that differs from an existing
 alias only in casing, because alias resolution is case-sensitive and such a row is silently
@@ -215,7 +215,7 @@ Field sources are fixed:
 | --- | --- |
 | intelligence, cost per task, speed, latency | Artificial Analysis — now scripted: `AA_API_KEY=… npm run fetch:sources aa` archives them with provenance before you write the record |
 | price | official vendor page, else Artificial Analysis — **list price, never a promotion** |
-| text / code Elo | LMArena — **derived, not typed.** `npm run ingest` reads it from the archive into `ARENA_ELO`; the catalog record carries no Elo at all |
+| text / code Elo | LMArena, **scripted since 2026-08-06** (`npm run fetch:sources arena`, daily) and **derived, not typed.** `npm run ingest` reads it from the archive into `ARENA_ELO`; the catalog record carries no Elo at all |
 
 **Arena Elo is not yours to type.** It moves with every vote, so a number written into a catalog
 record is stale the next day and a daily refresh of it would put `check:models` in permanent

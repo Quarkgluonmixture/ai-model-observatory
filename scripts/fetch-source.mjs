@@ -131,12 +131,19 @@ for (const fetcher of selected) {
   // is keyed on the configuration and compared on the whole measured row. Reusing the observation
   // key there produced "model/undefined" for every row and compared undefined to undefined.
   const isParameters = rows[0] && rows[0].benchmark === undefined;
+  // Source included for a parameter row: one model can appear on two boards of the same source in
+  // the same batch (LM Arena publishes a model on Text and on WebDev), and keying on model+effort
+  // alone silently compared one board's row against the other's.
   const cellKey = isParameters
-    ? (row) => `${row.model_raw}/${row.effort ?? "-"}`
+    ? (row) => `${row.model_raw}/${row.effort ?? "-"}/${row.source_url ?? "-"}`
     : (row) => `${row.model_raw}/${row.benchmark}/${row.harness ?? "-"}/${row.reasoning_effort ?? "-"}`;
+  // Every measured field, including the two Elos. They were missing here while the only Elo rows in
+  // the archive were hand-read, and a scripted Arena board would have been compared on seven nulls:
+  // the batch would have looked unchanged forever and never been refreshed.
   const cellValue = isParameters
     ? (row) => JSON.stringify([row.intelligence_index, row.cost_per_task_usd, row.output_tokens_per_s,
-        row.latency_first_chunk_s, row.price_input_per_m, row.price_output_per_m, row.price_cache_per_m])
+        row.latency_first_chunk_s, row.price_input_per_m, row.price_output_per_m, row.price_cache_per_m,
+        row.text_elo, row.code_elo])
     : (row) => row.score;
   const upstream = new Map(rows.map((row) => [cellKey(row), cellValue(row)]));
   const stored = new Map((archived ?? []).map((row) => [cellKey(row), cellValue(row)]));

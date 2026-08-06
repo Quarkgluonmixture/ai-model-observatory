@@ -50,7 +50,7 @@ for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".json
   }
   if (!meta.schema?.startsWith("Model operating parameters")) continue;
   for (const line of readFileSync(join(SOURCE_DIR, file), "utf8").split("\n").filter((l) => l.trim())) {
-    rows.push({ ...JSON.parse(line), file });
+    rows.push({ ...JSON.parse(line), file, retrievedDate: meta.retrievedDate ?? "" });
   }
 }
 
@@ -61,7 +61,9 @@ if (!rows.length) {
 
 // LMArena is an Elo source. Its price column disagrees with official pages and with this
 // catalog, so it must never satisfy a price check. See batch-06's fieldSourcePolicy.
-const isArena = (row) => row.source_url?.includes("lmarena.ai");
+// Both domains: lmarena.ai now redirects to arena.ai, and the scripted batch cites the new one.
+// Matching only the old host would have quietly re-opened the door this guard exists to hold shut.
+const isArena = (row) => /(^|\/\/|\.)(lm)?arena\.ai/.test(row.source_url ?? "");
 
 const effortIndex = new Map();
 const modelIndex = new Map();
@@ -162,10 +164,16 @@ for (const alias of config.aliases) {
 // `field` key) is excluded — the replacement batch carries the value the catalog should
 // see, while the original row stays in the archive untouched.
 const pickModelLevel = (model, field, allow = () => true) => {
-  const candidates = (modelIndex.get(model.id) ?? []).filter(
+  const raw = (modelIndex.get(model.id) ?? []).filter(
     (row) => row[field] != null && allow(row) && !supersededBy(row.file, null, null, field, row.model_raw),
   );
-  if (!candidates.length) return null;
+  if (!raw.length) return null;
+  // Newest first, then the three rungs. Without the sort the rungs pick by archive file order,
+  // which was harmless while a source was read once and became wrong the moment one was read
+  // twice: a re-fetched Arena board put a second row beside the hand-read one and the audit kept
+  // choosing the ten-day-old value, then reported the fresh catalog as contradicting the archive.
+  // An older reading of a moving number is simply worse — the same rule ingestion derives by.
+  const candidates = raw.slice().sort((a, b) => String(b.retrievedDate).localeCompare(String(a.retrievedDate)));
   const flagship = norm(model.configurations[0]?.effort);
   return (
     candidates.find((row) => norm(row.effort) === flagship) ??
