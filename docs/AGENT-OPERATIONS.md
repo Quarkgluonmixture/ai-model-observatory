@@ -218,6 +218,11 @@ coverage — the metric `AGENTS.md` calls the only one that matters. So:
 **Before adding a model, check whether any source has rows for it.** If nothing does, say so and
 leave it uncollected rather than publishing an empty row. It will fill later, on its own:
 
+Rows are the test, and since 2026-08-06 they are the *only* test: `intelligence` may be null, so a
+model Artificial Analysis has not measured is no longer barred from the catalog. Do not read that
+as permission to add a model early — an empty row still lowers cell coverage, which is the metric.
+It means the question is "does evidence exist", not "has AA published a composite".
+
 > Fetchers re-read the whole board every run. The moment a source publishes a row for a model
 > string that has an alias, `npm run ingest` attaches it — no code change. This is why an alias is
 > the entire gate.
@@ -232,6 +237,13 @@ cannot write them in advance:
 | AA | `claude-opus-5-xhigh` | slug, effort suffixed with `-` |
 | LiveBench | `claude-opus-5-max-effort` | effort baked into the string |
 | Terminal-Bench | `Fable 5` | human display label |
+| Agents' Last Exam | `qwen-qwen3-7-max`, `qwen-3-8-max` | **one board, two conventions** — the maker prefix is doubled for one Qwen family and not the next |
+
+The ALE row is the reason `check:models` fails on a near-miss casing or spelling: `qwen-3-8-max`
+would have been dropped silently by an alias table that only knew `qwen3-8-max`. When a board
+spells one family two ways, confirm the identity on the *number* rather than the string — ALE
+publishes 26.97 pass / 52.49 partial for that string and Qwen's own release table publishes 27 /
+52.4 for Qwen3.8-Max, which is a match no other Qwen family produces.
 
 ### The attribution rule
 

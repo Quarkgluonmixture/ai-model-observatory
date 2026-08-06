@@ -31,9 +31,9 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **28 model families, 68 benchmarks, 1224 observations across 919 of 1904 cells**,
-sourced benchmark-native 752 / independent 294 / vendor 178. **310 of 313 catalog numbers are
-backed by an archive row**; the three that are not are listed by `npm run check:models` on every
+Current scale: **29 model families, 68 benchmarks, 1262 observations across 954 of 1972 cells**,
+sourced benchmark-native 777 / independent 295 / vendor 190. **313 of 317 catalog numbers are
+backed by an archive row**; the four that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
 ## 2. Repository map
@@ -435,7 +435,7 @@ The data check currently enforces:
 
 ## 9. Collection state
 
-Ten archive batches, all under `data/sources/`. Read this before re-running a source: several
+Twenty-one archive batches, all under `data/sources/`. Read this before re-running a source: several
 pages are known-dead or known-empty and were already worked around.
 
 | Batch | Covers | Outcome |
@@ -460,6 +460,7 @@ pages are known-dead or known-empty and were already worked around.
 | 18 | Agents' Last Exam | 57 configurations across 24 models and 11 harnesses, read from the endpoint the leaderboard page calls. Supersedes the 19 rows batches 03 and 16 hand-read on the stated grounds that ALE publishes nothing machine-readable. |
 | 19 | GDPval-AA v2 | 175 configurations, rendered from the leaderboard AA publishes for free. Its API keeps this evaluation behind the Pro tier, which is why §9 listed GDPval as having no scripted path. Supersedes batch 04's 14 hand-read rows. |
 | 20 | MMMU-Pro leaderboard | 71 models carrying an MMMU-Pro Overall score, rendered from the official board. Supersedes batch 04's two hand-read rows, which filed an author-reported score as benchmark-native. |
+| 21 | QwenCloud operating parameters | Price, cache price and context for Qwen3.8 Max, read from the maker's own marketplace card and release changelog. Collected because the two list-price tables (Alibaba Model Studio, QwenCloud docs) still carried only the 3.7 family three days after release, and Artificial Analysis had not measured the model at all. |
 
 ### Which sources can be re-read by script
 
@@ -488,11 +489,13 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | SWE-bench | `swe-bench.github.io/data/leaderboards.json`, 180 Verified entries, genuinely fetchable — and useless: the newest entry is Opus 4.5 from 2025-12, and `swe-verified` is a legacy column. The HELM situation exactly. |
 | Scale, MMMU, Mercor APEX, HLE | Hugging Face's `/api/datasets/{id}/leaderboard` returns 200 for all four, which is a trap: every record is a **vendor self-report scraped from the model's own card**, `verified:false`, with no version, harness, effort or date. SWE-bench Pro's mixes 19 model-card claims with 6 official rows and nothing distinguishes them. |
 | ARC Prize | The verified board publishes nothing readable. `arcprize/arc_agi_v2_public_eval` does — and it is a **different split**: GPT-5.2 xHigh scores 64.0 there against 52.9 on the verified board. Substituting it would have moved the column ~11 points. |
-| Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. |
+| Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. (ALE was reversed on 2026-08-05 — see batch 18.) |
+| QwenCloud Model Marketplace | Client-rendered cards, one per model, carrying list price, cache prices, context and rate limits — and a labelled `50% off` / `20% off` where a promotion runs, which is what makes the unlabelled figure readable as a list price. **Read once by hand for batch 21**; a fetcher is feasible and would give the price column its first drift check, but a daily price refresh needs a `versioning` declaration and a rule for what to do when a promotion starts, which is a decision rather than a script. |
 
-Five of sixteen batches are now scripted, and only those five have a drift check or an automatic
-refresh. The rest are hand transcriptions whose only freshness signal is how long ago someone read
-them — which is why the source cards print that date (§10).
+Eight of twenty-one batches are re-read by script, and only those eight have a drift check or an
+automatic refresh. The rest are hand transcriptions whose only freshness signal is how long ago
+someone read them — which is why the source cards print that date (§10). Batch 17 is a ninth kind:
+scripted, but run per release rather than daily, because a release post is frozen once published.
 
 Batch 09 is the first batch collected by a script rather than a browsing model. LiveBench renders
 client-side and batch 05 recorded it as UNAVAILABLE for that reason, but the page loads
@@ -548,7 +551,7 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**Eight of twenty batches now maintain themselves; the other twelve cannot.** This paragraph used
+**Eight of twenty-one batches now maintain themselves; the other thirteen cannot.** This paragraph used
 to say four of fifteen, and — more usefully — it used to say that closing the gap was not a code
 problem, because "§9 records that no other source publishes a data file to read". That was wrong,
 and it was wrong in the most expensive way a written-down answer can be: it told the next person
@@ -603,6 +606,22 @@ record existing. Qwen3.8 Max waited behind exactly that. The fix is to separate 
 does: a re-measurement is noise, and a *new model appearing* is signal. Only the second triggers
 anything, and what it triggers is the same on-demand workflow, dispatched by the daily job instead
 of by a person.
+
+**That fix was necessary and it was not sufficient, and Qwen3.8 Max is the case that showed why.**
+The trigger only fires once AA has measured the model. AA had not — three days after release it
+still had not — and until 2026-08-06 `ModelConfiguration.intelligence` was `number`, so the record
+could not be written at all. A model with 35 fillable cells from LiveBench, Epoch, DeepSWE, ALE and
+the maker's own release table was outside the catalog because one third party had not published a
+composite of its own. The field is now `number | null`: the general-capability lens reads `N/A`,
+every other lens ranks the model normally, and the value lens — a ratio of intelligence to cost —
+drops it the same way it already drops a model with no published cost per task. This is rule 1
+applied to the catalog's own schema, which was the one place the codebase still required a number
+it might not have. AA's index fills itself in later, on a normal refresh, with no code change.
+
+What is left of the manual path is the part that should be manual. The maker's price still has to
+be found — for Qwen3.8 Max it was on the marketplace card three days before either list-price table
+carried it (batch 21) — and the aliases and the record itself are judgement, which is the whole
+argument of the alias mechanic in `docs/AGENT-OPERATIONS.md`.
 
 `npm run draft:model` writes the record's numbers from the archive and leaves blank what nothing
 sources — display name, colour, tags — with the reason next to each. It never writes to
@@ -680,9 +699,11 @@ stay. That is judgement, and judgement does not go in a cron job.
   which is why every source card now prints it and marks itself aging after
   `SOURCE_STALE_DAYS` (30). The card prints *read* or *evaluated* and never blurs the two: a
   recently-read source with an old evaluation date is not stale, its leaderboard is quiet.
-- Five catalog numbers still have no archive row: cost per task for Claude Opus 4.8 and
-  GPT-5.5 (both absent from the AA leaderboard), Opus 4.8's code Elo, and Inkling's speed and
-  latency. `npm run check:models` lists them. Grok 4.3's two Elo figures left this list without
+- Four catalog values still have no archive row: Claude Opus 4.8's code Elo, Qwen3.7 Plus's context
+  window, and the open-weights flag on Qwen3.7 Plus and Qwen3.8 Max. `npm run check:models` lists
+  them. The two flags are the same gap: no source consulted states the weights status either way,
+  and absence of a weights repository is not a published fact, so the catalog carries the
+  conservative `false` and the audit keeps saying it is unsourced. Grok 4.3's two Elo figures left this list without
   new collection: batch 09 added a lowercase `grok-4.3` alias, which attached LMArena rows that
   had been sitting in the archive unmatched. Check for an orphaned row before collecting again.
 - **The catalog quotes list price, never a promotion.** A temporary discount is not comparable

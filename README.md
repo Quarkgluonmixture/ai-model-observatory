@@ -8,7 +8,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 
 ## Features
 
-- 28 frontier and open-weight model families, each with its published operating points
+- 29 frontier and open-weight model families, each with its published operating points
 - Chinese / English interface with persistent language preference
 - separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
@@ -62,8 +62,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-1224 observations across 919/1904 cells (48.3% cell coverage;
-benchmark 752 / independent 294 / vendor 178)
+1262 observations across 954/1972 cells (48.4% cell coverage;
+benchmark 777 / independent 295 / vendor 190)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
