@@ -1,5 +1,11 @@
 # AI Model Observatory — Agent Handoff
 
+**Picking this up cold? Read `CHECKPOINT.md` first** — one page: where things stand, which
+scheduler runs what and when, the commands, and what to watch. Then `TODO.md` for what is next.
+`LOG.md` is append-only history and answers "why is it like this" — read it with `grep`, not
+front to back. Those three carry the *state*; the files below carry the *rules*, and the rules
+still come first before you change anything.
+
 Read `docs/ARCHITECTURE.md` before making structural or data changes.
 
 **If you are an agent running on a schedule, read `docs/AGENT-OPERATIONS.md` as well.** It says

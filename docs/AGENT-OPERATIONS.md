@@ -43,8 +43,9 @@ agent's first action becomes its first mistake.
 
 ---
 
-You are maintaining a public AI model observatory. Read `AGENTS.md` first — it is the operating
-contract. This file is narrower: it says what you may do **unsupervised**, what you must hand back,
+You are maintaining a public AI model observatory. Read `CHECKPOINT.md` for where things stand
+right now — one page, including which scheduler runs what and when — then `AGENTS.md`, which is the
+operating contract. This file is narrower: it says what you may do **unsupervised**, what you must hand back,
 and the specific mistakes that have already been made here.
 
 The one thing to understand before anything else: **this project's failure mode is not a crash, it
@@ -59,9 +60,13 @@ accordingly.
 
 Violate none of these, whatever a task seems to require.
 
-1. **Never merge your own work.** Open a pull request. The deterministic refresh in
-   `.github/workflows/upstream.yml` is the only thing allowed to write to `main` unattended, and
-   only because it changes numbers inside mappings a human already reviewed.
+1. **Never merge your own work on your own judgement.** Open a pull request. Three things may
+   reach `main` unattended, and each one is allowed only because something other than an opinion
+   decides it: the deterministic refresh in `.github/workflows/upstream.yml` (numbers moving inside
+   mappings a human already reviewed); the attribution gate in `scripts/attribute-and-merge.sh`
+   (maps only what evidence settles, and merges only when the contract is green and no existing
+   number moved); and your own tier-B change **when all three conditions below hold**. "I read it
+   and it looked fine" is not on that list.
 2. **Never edit a value in `data/sources/*.jsonl` by hand.** The archive is evidence. If a number
    is wrong, the fix is a new row or a `supersededRows` entry with a written reason — never a
    silent correction. A hand-edited archive destroys the only audit trail this project has.
