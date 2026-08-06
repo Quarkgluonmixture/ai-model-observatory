@@ -31,8 +31,8 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **29 model families, 68 benchmarks, 1262 observations across 954 of 1972 cells**,
-sourced benchmark-native 777 / independent 295 / vendor 190. **313 of 317 catalog numbers are
+Current scale: **29 model families, 68 benchmarks, 1263 observations across 955 of 1972 cells**,
+sourced benchmark-native 777 / independent 296 / vendor 190. **313 of 317 catalog numbers are
 backed by an archive row**; the four that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
@@ -608,11 +608,13 @@ anything, and what it triggers is the same on-demand workflow, dispatched by the
 of by a person.
 
 **That fix was necessary and it was not sufficient, and Qwen3.8 Max is the case that showed why.**
-The trigger only fires once AA has measured the model. AA had not — three days after release it
-still had not — and until 2026-08-06 `ModelConfiguration.intelligence` was `number`, so the record
-could not be written at all. A model with 35 fillable cells from LiveBench, Epoch, DeepSWE, ALE and
-the maker's own release table was outside the catalog because one third party had not published a
-composite of its own. The field is now `number | null`: the general-capability lens reads `N/A`,
+The trigger only fires once AA's parameter API — the sole source of the intelligence index — has
+measured the model, and three days after release it still had not. (AA is not one surface: its
+GDPval-AA evaluation board added Qwen3.8 Max in the 2026-08-06 refresh while its parameter index
+still had no row, so "AA has it" is a question that has to name which AA.) Until 2026-08-06
+`ModelConfiguration.intelligence` was `number`, so the record could not be written at all: a model
+with 36 fillable cells from LiveBench, Epoch, DeepSWE, ALE, GDPval-AA and the maker's own release
+table was outside the catalog because one third party had not published a composite of its own. The field is now `number | null`: the general-capability lens reads `N/A`,
 every other lens ranks the model normally, and the value lens — a ratio of intelligence to cost —
 drops it the same way it already drops a model with no published cost per task. This is rule 1
 applied to the catalog's own schema, which was the one place the codebase still required a number

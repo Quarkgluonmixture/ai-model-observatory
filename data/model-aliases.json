@@ -1116,6 +1116,12 @@
       "reason": "Agents' Last Exam, and not the doubled spelling it uses for the 3.7 family (qwen-qwen3-7-max) — the board is inconsistent about the prefix, so the identity was confirmed on the number rather than on the string: ALE publishes 26.97 pass rate with a 52.49 partial score under claude_code, and Qwen's own release table publishes 27 with a 52.4 partial for Qwen3.8-Max. Two readings of the same run, agreeing on both numbers, which no other Qwen string does."
     },
     {
+      "modelRaw": "Qwen3.8 Max",
+      "effort": "*",
+      "modelId": "qwen3.8-max",
+      "reason": "Artificial Analysis' GDPval-AA leaderboard (batch 19), which spells families as display labels with a space. It appeared in the 2026-08-06 refresh — AA's evaluation boards picked this model up before its parameter API did, which is why the catalog record carries a GDPval score and no intelligence index. The other Qwen string in the same batch is 'Qwen3 8B (Reasoning)' at 213 Elo, a different model entirely; this one is 1739."
+    },
+    {
       "modelRaw": "Qwen3.8-Max",
       "effort": "*",
       "modelId": "qwen3.8-max",
