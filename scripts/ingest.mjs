@@ -118,16 +118,76 @@ const serialise = (row) =>
     .join(", ") +
   " }";
 
+// Arena Elo is derived here rather than hand-carried on the catalog record, and the reason is the
+// shape of the number rather than tidiness. Elo moves continuously — every vote nudges it — so a
+// value typed into app/model-data.ts is stale the day after it is typed, and a daily refresh of it
+// would put `check:models` in permanent disagreement with the catalog, which is exactly why
+// Artificial Analysis is excluded from the daily job. Deriving it removes the conflict: the archive
+// is the only place the number lives, the catalog reads whatever the newest row says, and there is
+// nothing left for an audit to disagree with.
+//
+// It also fixes an older wart. Arena publishes no per-effort boards, so an Elo was never a property
+// of a configuration; it sat on one because that is where the field was. It is a family-level fact
+// and now lives at family level.
+//
+// Two rules, and the second one was learned by getting it wrong. Newest retrieval wins — the same
+// board re-read a week later is the same measurement with more votes behind it. But the archive
+// carries a row PER OPERATING POINT (`claude-opus-5-max` at 1495, `claude-opus-5-high` at 1493),
+// so rows also have to stay keyed by effort. Collapsing them to one row per model made "newest"
+// decide between two rows retrieved on the same day, which silently picked whichever the file
+// listed last and moved a published Elo by two points. The catalog picks the operating point; this
+// only supplies the numbers.
+const eloRows = [];
+for (const { meta, rows: lines } of parameterBatches) {
+  for (const { raw } of lines) {
+    if (raw.text_elo == null && raw.code_elo == null) continue;
+    const modelId = resolveModelId(raw.model_raw, raw.effort ?? null);
+    if (!modelId) continue;
+    eloRows.push({
+      modelId,
+      effort: raw.effort ?? null,
+      textElo: raw.text_elo ?? null,
+      codeElo: raw.code_elo ?? null,
+      sourceLabel: raw.source_label,
+      sourceUrl: raw.source_url,
+      retrievedDate: meta.retrievedDate,
+      evaluationDate: raw.evaluation_date ?? null,
+    });
+  }
+}
+eloRows.sort((a, b) => String(a.retrievedDate).localeCompare(String(b.retrievedDate)));
+
+const elo = new Map();
+for (const row of eloRows) {
+  const key = `${row.modelId}|${row.effort ?? ""}`;
+  const current = elo.get(key) ?? { modelId: row.modelId, effort: row.effort, textElo: null, codeElo: null };
+  // Each field takes the newest row that actually carries it: a source that publishes only a text
+  // Elo must not blank out a code Elo somebody else published.
+  if (row.textElo != null) {
+    Object.assign(current, { textElo: row.textElo, textSource: row.sourceLabel, textUrl: row.sourceUrl, textRetrieved: row.retrievedDate, textEvaluated: row.evaluationDate });
+  }
+  if (row.codeElo != null) {
+    Object.assign(current, { codeElo: row.codeElo, codeSource: row.sourceLabel, codeUrl: row.sourceUrl, codeRetrieved: row.retrievedDate, codeEvaluated: row.evaluationDate });
+  }
+  elo.set(key, current);
+}
+const eloEntries = [...elo.values()].sort((a, b) => a.modelId.localeCompare(b.modelId) || String(a.effort).localeCompare(String(b.effort)));
+
 writeFileSync(
   OUTPUT,
   [
     "// GENERATED FILE - do not edit by hand.",
     "// Run `npm run ingest` to rebuild from data/sources/*.jsonl and data/model-aliases.json.",
     "",
-    'import type { ObservationRow } from "./model-data";',
+    'import type { ArenaElo, ObservationRow } from "./model-data";',
     "",
     "export const INGESTED_ROWS: ObservationRow[] = [",
     ...rows.map((row) => serialise(row) + ","),
+    "];",
+    "",
+    "// Human-preference Elo, keyed by catalog model id. Derived, never typed: see scripts/ingest.mjs.",
+    "export const ARENA_ELO: ArenaElo[] = [",
+    ...eloEntries.map((row) => serialise(row) + ","),
     "];",
     "",
   ].join("\n"),
@@ -136,6 +196,7 @@ writeFileSync(
 const bySource = rows.reduce((counts, row) => ({ ...counts, [row.sourceKind]: (counts[row.sourceKind] ?? 0) + 1 }), {});
 console.log(`Ingested ${rows.length} rows from ${fileCount} batch file(s) into app/observations.generated.ts`);
 console.log(`  by source class: benchmark ${bySource.benchmark ?? 0} / independent ${bySource.independent ?? 0} / vendor ${bySource.vendor ?? 0}`);
+console.log(`  Arena Elo derived for ${new Set(eloEntries.map((e) => e.modelId)).size} model(s) across ${eloEntries.length} operating point(s)`);
 
 if (dropped.length) {
   const counts = dropped.reduce((acc, name) => ({ ...acc, [name]: (acc[name] ?? 0) + 1 }), {});
