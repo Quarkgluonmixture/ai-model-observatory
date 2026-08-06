@@ -170,31 +170,10 @@ jobs:
           else
             echo "Parameters are already archived for all of them; no refresh needed."
           fi
-          {
-            echo "AA 开始测量目录还没有的模型:"
-            echo
-            sed '/^<!--/d;/^$/d' aa-new.md | head -12
-            echo
-            echo "参数刷新已自动触发,PR 会自己出现 —— 不用你去点。"
-          } | node scripts/notify-pushplus.mjs "观测台 · AA 收录了新模型"
-
-      # Silence has to be distinguishable from a dead pipeline. Without a heartbeat, "no WeChat
-      # message" reads as "nothing was published upstream" — which is exactly the assumption that
-      # let Qwen3.8 Max sit in the gaps issue unnoticed. Mondays only, so it stays a signal.
-      - name: Weekly heartbeat
-        if: always()
-        env:
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        run: |
-          [ "$(date -u +%u)" = "1" ] || { echo "Not Monday; no heartbeat."; exit 0; }
-          {
-            echo "每周心跳:每日巡检在跑。"
-            echo
-            echo "- 归档完整性:${{ steps.drift.outcome }}"
-            echo "- 当前收集缺口:${{ steps.gaps.outputs.count }} 项"
-            echo
-            echo "这条如果某周没来,是通道或者工作流出了问题,不是上游没动静。"
-          } | node scripts/notify-pushplus.mjs "观测台 · 每周心跳"
+          # No message here. AA measuring a model is a *detection*, and detections now have a
+          # consumer that is not a person: the parameters land on their own and the scheduled
+          # agent takes the record from the gaps issue. The owner hears about it when the site
+          # actually gains the model — see the last step of ci.yml.
 
   refresh:
     name: Re-read live boards and open a pull request
@@ -304,40 +283,9 @@ jobs:
         if: steps.diff.outputs.class == 'auto'
         run: bash scripts/commit-refresh.sh fetch.log
 
-      # The message a person can actually check. "Qwen3.8 Max gained 12 cells: GPQA 92.6, ..." is
-      # something the owner can sanity-check in ten seconds; "batch-19-gdpval.jsonl | 175 +++" is
-      # not, and a notification nobody can act on trains the habit of not opening it.
-      - name: Tell WeChat what changed on the board
-        if: steps.commit.outcome == 'success'
-        env:
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        run: |
-          {
-            echo "已自动合并到 main,站点随后重建。"
-            echo
-            sed '/^<!--/d' change.md
-            echo
-            echo "数字看着不对就说一声,回滚是一个 revert 的事。"
-          } | node scripts/notify-pushplus.mjs "观测台 · 数据已更新"
-
-      # Sent after the commit, so the snapshot that suppresses a repeat has already landed. If the
-      # push happened first and the commit then failed, the same posts would be pushed tomorrow.
-      - name: Push new release posts to WeChat
-        if: always() && steps.release.outputs.signals != '' && steps.release.outputs.signals != '0'
-        env:
-          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
-        run: |
-          {
-            echo "厂商发布页有像是模型发布的新文章:"
-            echo
-            grep 'looks like a launch' release.md | sed 's/ ⟵.*//' || true
-            echo
-            echo "发布页是厂商公布 benchmark 表的地方,核心格大多来自那里(Qwen3.8 那张带了 12 个)。"
-            echo "要收的话回一句「收 <厂商> 那篇」。"
-            echo
-            echo "完整清单(含非发布类文章)在这次运行的 summary 里:"
-            echo "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          } | node scripts/notify-pushplus.mjs "观测台 · 厂商发布页更新"
+      # The release-post push is gone too. The probe still runs and still writes its findings
+      # into the gaps issue, which is where the scheduled agent looks. One detection, one
+      # consumer, and that consumer is no longer a person holding a phone.
 
       # Anything that introduces a new mapping stops here for a human, however green it is.
       - name: Open a pull request for review

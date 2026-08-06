@@ -86,13 +86,9 @@ fi
 # notification that is wrong about its own outcome is worse than none: it spends the one thing
 # this whole channel runs on, which is being believed.
 if [ "${opened:-yes}" = "yes" ]; then
-  {
-    echo "AA 参数已重读,PR 在等你看一眼。"
-    echo
-    echo "重点看 \`check:models\`:它报红不代表这次改动有问题 —— AA 持续重测,要判断的是目录和源哪边过期了。"
-    echo
-    echo "$url"
-  } | node "$DIR/notify-pushplus.mjs" "观测台 · AA 参数刷新 PR"
+  # No notification on the happy path. A pull request that exists is its own record, and the
+  # channel is now reserved for two things: the site gained a model, and something is broken.
+  echo "Opened $url"
 else
   {
     echo "AA 参数已重读并推到分支 \`$BRANCH\`,但 **PR 没能自动创建**。"

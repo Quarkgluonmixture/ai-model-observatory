@@ -119,9 +119,14 @@ const catalogBefore = (() => {
 const catalogAfter = parseCatalog(readFileSync(join(ROOT, "app/model-data.ts"), "utf8"));
 
 const catalogChanges = [];
+// Tracked separately from the other catalog changes because it is the one event the owner asked to
+// be told about: the site gained a model. Everything else — a board moving, a maker publishing, AA
+// measuring something — is now picked up by the pipeline without a person, so notifying on it
+// trained the habit of not opening the notification.
+const newModels = [];
 for (const [id, record] of catalogAfter) {
   const was = catalogBefore.get(id);
-  if (!was) { catalogChanges.push(`新增目录记录 **${record.name}**`); continue; }
+  if (!was) { catalogChanges.push(`新增目录记录 **${record.name}**`); newModels.push(record.name); continue; }
   for (const [index, field] of CFG_FIELDS.entries()) {
     const before = was.args[index];
     const after = record.args[index];
@@ -216,5 +221,6 @@ if (catalogChanges.length) {
 
 process.stdout.write(out.join("\n") + "\n");
 console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length + reclassified.length} moved -->`);
+console.log(`<!-- new-models: ${newModels.join(" · ")} -->`);
 // Read by the charter's fourth merge condition: an addition nothing can contradict stops.
 console.log(`<!-- unverifiable-cells: ${unverifiable.length} -->`);

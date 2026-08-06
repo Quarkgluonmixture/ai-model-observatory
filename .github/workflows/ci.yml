@@ -21,6 +21,10 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
+          # Two commits, so a push to main can be diffed against its parent. That diff is what
+          # decides the one notification this project sends on a good day — see the last step.
+          fetch-depth: 2
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -58,3 +62,27 @@ jobs:
 
       - name: Build production application
         run: npm run build
+
+      # The one notification this project sends when everything is working. It fires on the event
+      # the owner actually wants to know about — **the site gained a model** — and not on any of
+      # the events that lead up to it: a board moving, a maker publishing a post, Artificial
+      # Analysis measuring something new. Those used to be pushed and are now picked up by the
+      # pipeline without a person, so notifying on them only taught the habit of not opening the
+      # notification. It lives here rather than in the daily job because a catalog record can land
+      # from any direction — the attribution gate, the scheduled agent, or a hand-merged pull
+      # request — and every one of them ends in a push to main.
+      - name: Tell WeChat when the site gains a model
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          node scripts/describe-change.mjs HEAD^ > change.md || exit 0
+          models="$(sed -n 's/.*<!-- new-models: \(.*\) -->.*/\1/p' change.md)"
+          [ -n "$models" ] || { echo "No catalog record was added in this push."; exit 0; }
+          {
+            echo "站上新增模型:${models}"
+            echo
+            sed '/^<!--/d' change.md
+            echo
+            echo "数字看着不对就说一声,回滚是一个 revert 的事。"
+          } | node scripts/notify-pushplus.mjs "观测台 · 新增模型"

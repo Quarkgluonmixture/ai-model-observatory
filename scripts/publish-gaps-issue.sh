@@ -51,24 +51,16 @@ if [ -n "$existing" ]; then
   gh issue edit "$existing" --body "$body" >/dev/null
   echo "Refreshed #$existing with $COUNT gap(s)."
 
+  # This used to push the newly-appeared models to WeChat, ending with "reply 收 <model>" — an
+  # instruction nothing could carry out, because PushPlus only sends. The queue is this issue and
+  # its reader is the scheduled agent, so a model appearing upstream no longer interrupts anyone.
   if [ -n "$fresh" ]; then
-    count="$(printf '%s\n' "$fresh" | grep -c .)"
-    {
-      echo "上游新出现 ${count} 个目录还没有的模型:"
-      echo
-      printf '%s\n' "$fresh" | sed 's/^/- /'
-      echo
-      echo "证据可能已经在归档里了(脚本源每天重读整块板子)。要收的话回一句「收 <模型名>」。"
-      echo
-      echo "完整报告:${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/issues/${existing}"
-    } | node "$(dirname "$0")/notify-pushplus.mjs" "观测台 · 上游新模型 ×${count}"
+    printf '%s\n' "$fresh" | sed 's/^/New upstream model queued: /'
   else
-    echo "No model appeared since the last report; nothing pushed."
+    echo "No model appeared since the last report."
   fi
 else
   created="$(gh issue create --title "$TITLE" --label "$LABEL" --body "$body")"
   echo "$created"
-  # A first run has no previous body to diff against, so it reports the count rather than a list.
-  printf '收集缺口报告已开:%s\n\n共 %s 项。\n' "$created" "$COUNT" |
-    node "$(dirname "$0")/notify-pushplus.mjs" "观测台 · 缺口报告已建立"
+  # No notification: opening this issue is housekeeping, and GitHub already notifies on it.
 fi

@@ -690,12 +690,36 @@ entries, and stopped mirroring a generation ago. It is the same failure as `lmar
 Notification is separate from record-keeping because the two want opposite things. The gaps issue
 is edited in place — it is a standing work queue, and a new issue every morning is a backlog nobody
 reads. But **editing an issue body sends no notification**, which is why Qwen3.8 Max sat in that
-issue from 2026-08-03 and the first person to notice was the owner, two days later, by asking. So
-the daily job diffs the "Published upstream" section against the previous body and pushes only what
-is new; an integrity failure opens a *separate* issue, because opening one does notify; and a
-Monday heartbeat states that the pipeline ran at all, so silence can be told apart from a dead
-workflow. `PUSHPLUS_TOKEN` is a repository secret and, like `AA_API_KEY`, is optional everywhere:
-without it every check still runs and the reports still land in their issues.
+issue from 2026-08-03 and the first person to notice was the owner, two days later, by asking.
+
+**The channel was cut from ten push points to four on 2026-08-06, and the principle behind the cut
+is the one worth keeping.** Six of the ten announced a *detection* — a board moved, a maker
+published a post, Artificial Analysis measured something new, models appeared upstream, the gaps
+issue was created, an automatic pull request opened. Every one of those now has a consumer that is
+not a person: the gaps issue is read by the scheduled agent, the attribution gate resolves what
+evidence can settle, and the pull request is its own record. A notification whose only possible
+response is "yes, I saw it" trains the habit of not opening the next one — and this project needs
+the next one opened, because two of the four survivors are alarms.
+
+What remains:
+
+| Push | Fires when | Why it survives |
+| --- | --- | --- |
+| `观测台 · 新增模型` | A push to `main` adds a catalog record | The event the owner asked for: the site gained a model, from any direction |
+| `⚠ 观测台 · 归档完整性失败` | A frozen source rewrote a published number | The one signal the whole drift system exists to produce |
+| `观测台 · 完整性恢复` | That failure cleared | Closes the loop on the alarm above |
+| `⚠ 观测台 · AA 已刷新,PR 未创建` | Parameters were pushed to a branch but the PR could not open | Work that would otherwise be silently stranded |
+
+The first is emitted by `ci.yml`, not the daily job, because a catalog record can land from the
+attribution gate, from the scheduled agent, or from a hand-merged pull request — and all three end
+in a push to `main`. `describe-change` marks the event with a `<!-- new-models: … -->` line so the
+detection is a diff of the catalog rather than a guess about which workflow ran.
+
+The Monday heartbeat went with the rest, and that is a real trade the owner made explicitly:
+silence is no longer diagnosable from the phone. A stalled pipeline now shows up as an empty
+Actions history rather than as a missing message. `PUSHPLUS_TOKEN` is a repository secret and, like
+`AA_API_KEY`, is optional everywhere: without it every check still runs and the reports still land
+in their issues.
 
 The refresh is idempotent: an unchanged board writes nothing, not even a new `retrievedDate`, so
 a quiet week produces no pull request. And the pull request carries its own check output, because
