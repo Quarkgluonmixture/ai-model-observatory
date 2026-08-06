@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-05",
+  "checkedAt": "2026-08-06",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -1246,8 +1246,16 @@
       "/zh-cn/business"
     ],
     "minimax": [
+      "/news/a-new-era-of-ai-filmmaking",
+      "/news/from-prompting-to-directing-hailuo-ai-cuhk",
+      "/news/imagination-is-productivity",
+      "/news/minimax-at-harvard-xr-2026",
+      "/news/minimax-at-humanx-2026",
+      "/news/minimax-at-the-waytoagi-global-ai-conference",
+      "/news/minimax-h3-open-source",
       "/news/minimax-m25",
       "/news/minimax-m27-en",
+      "/news/minimax-shanghai-international-film-festival",
       "/news/minimax-speech-28"
     ],
     "qwen": [
