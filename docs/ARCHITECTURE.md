@@ -32,8 +32,8 @@ The application has two data paths:
    a number to display. See §6.
 
 Current scale: **29 model families, 68 benchmarks, 1263 observations across 955 of 1972 cells**,
-sourced benchmark-native 777 / independent 296 / vendor 190. **313 of 317 catalog numbers are
-backed by an archive row**; the four that are not are listed by `npm run check:models` on every
+sourced benchmark-native 777 / independent 296 / vendor 190. **318 of 321 catalog numbers are
+backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
 ## 2. Repository map
@@ -444,7 +444,7 @@ The data check currently enforces:
 
 ## 9. Collection state
 
-Twenty-one archive batches, all under `data/sources/`. Read this before re-running a source: several
+Twenty-two archive batches, all under `data/sources/`. Read this before re-running a source: several
 pages are known-dead or known-empty and were already worked around.
 
 | Batch | Covers | Outcome |
@@ -469,6 +469,7 @@ pages are known-dead or known-empty and were already worked around.
 | 18 | Agents' Last Exam | 57 configurations across 24 models and 11 harnesses, read from the endpoint the leaderboard page calls. Supersedes the 19 rows batches 03 and 16 hand-read on the stated grounds that ALE publishes nothing machine-readable. |
 | 19 | GDPval-AA v2 | 175 configurations, rendered from the leaderboard AA publishes for free. Its API keeps this evaluation behind the Pro tier, which is why §9 listed GDPval as having no scripted path. Supersedes batch 04's 14 hand-read rows. |
 | 20 | MMMU-Pro leaderboard | 71 models carrying an MMMU-Pro Overall score, rendered from the official board. Supersedes batch 04's two hand-read rows, which filed an author-reported score as benchmark-native. |
+| 22 | LMArena Elo | 493 rows across two boards, read from the pages' own server-rendered payload. Not observations: Arena Elo is human preference, not task accuracy (rule 5), so it stays a model parameter. This is the batch `ARENA_ELO` derives from, which is why the catalog no longer carries an Elo at all. |
 | 21 | QwenCloud operating parameters | Price, cache price and context for Qwen3.8 Max, read from the maker's own marketplace card and release changelog. Collected because the two list-price tables (Alibaba Model Studio, QwenCloud docs) still carried only the 3.7 family three days after release, and Artificial Analysis had not measured the model at all. |
 
 ### Which sources can be re-read by script
@@ -494,14 +495,14 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | Agents' Last Exam | `/api/demo/leaderboard` — 689 rows, 25 models, 15 harnesses, 12 splits, with pass rate, partial credit, task counts and cost. **Scripted, batch 18.** The path appears only inside the leaderboard page's client chunk; `/api/leaderboard` and `/data/leaderboard.json` are both 404, which is how two passes concluded the board publishes nothing machine-readable. |
 | Humanity's Last Exam | `lastexam.ai` server-renders its table, so it *could* be scripted — but re-reading it on 2026-08-05 returned the same nine models and the same scores batch 01 transcribed, down to the decimal. The source has not published a frontier model in a generation. Scripting it would buy a drift check on a board that does not move, not new cells. |
 | Qwen release posts | No data file found: `?id=` returns the SPA shell, `/api/blog?id=` returns the same, and there is no `qwenlm.github.io` mirror. But the tables are real DOM once the app runs, so they are captured by rendering the page over CDP — **scripted, batch 17**, `scripts/capture-release-tables.mjs`, run per release rather than daily. A release post is frozen after publication, so there is nothing for a drift check to watch. |
-| LM Arena | `lmarena/arena-catalog` publishes `data/leaderboard-text.json`, and it decodes — but it is **stale**: 282 models topped by `gemini-3-pro` at 1487, with no Fable 5, Opus 5, GPT-5.6 or Kimi K3. Nothing in the repo says it stopped syncing. |
+| LM Arena | **Scripted, batch 22** — and the sixth "no path" verdict in this table to be overturned by looking again. The old entry was true about what it named: `lmarena/arena-catalog` decodes perfectly and stopped syncing a generation ago. It was never a claim about the site. `lmarena.ai` now redirects to `arena.ai`, which serves each board **server-rendered** with the whole snapshot embedded as JSON — no browser, no key, a plain fetch. The `/api/` path answers 403 "Route not allowed", so the page's own payload is the published artefact. Two boards: `text-overall-style_control` → `text_elo`, `webdev-overall-raw` → `code_elo`. |
 | SWE-bench | `swe-bench.github.io/data/leaderboards.json`, 180 Verified entries, genuinely fetchable — and useless: the newest entry is Opus 4.5 from 2025-12, and `swe-verified` is a legacy column. The HELM situation exactly. |
 | Scale, MMMU, Mercor APEX, HLE | Hugging Face's `/api/datasets/{id}/leaderboard` returns 200 for all four, which is a trap: every record is a **vendor self-report scraped from the model's own card**, `verified:false`, with no version, harness, effort or date. SWE-bench Pro's mixes 19 model-card claims with 6 official rows and nothing distinguishes them. |
 | ARC Prize | The verified board publishes nothing readable. `arcprize/arc_agi_v2_public_eval` does — and it is a **different split**: GPT-5.2 xHigh scores 64.0 there against 52.9 on the verified board. Substituting it would have moved the column ~11 points. |
 | Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. (ALE was reversed on 2026-08-05 — see batch 18.) |
 | QwenCloud Model Marketplace | Client-rendered cards, one per model, carrying list price, cache prices, context and rate limits — and a labelled `50% off` / `20% off` where a promotion runs, which is what makes the unlabelled figure readable as a list price. **Read once by hand for batch 21**; a fetcher is feasible and would give the price column its first drift check, but a daily price refresh needs a `versioning` declaration and a rule for what to do when a promotion starts, which is a decision rather than a script. |
 
-Eight of twenty-one batches are re-read by script, and only those eight have a drift check or an
+Nine of twenty-two batches are re-read by script, and only those nine have a drift check or an
 automatic refresh. The rest are hand transcriptions whose only freshness signal is how long ago
 someone read them — which is why the source cards print that date (§10). Batch 17 is a ninth kind:
 scripted, but run per release rather than daily, because a release post is frozen once published.
@@ -560,7 +561,7 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**Eight of twenty-one batches now maintain themselves; the other thirteen cannot.** This paragraph used
+**Nine of twenty-two batches now maintain themselves; the other thirteen cannot.** This paragraph used
 to say four of fifteen, and — more usefully — it used to say that closing the gap was not a code
 problem, because "§9 records that no other source publishes a data file to read". That was wrong,
 and it was wrong in the most expensive way a written-down answer can be: it told the next person
