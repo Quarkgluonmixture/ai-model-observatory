@@ -122,6 +122,15 @@ someone guessing which effort was meant, and guessing is what this project exist
 the other operating points stay visible in the model dossier. Arena Elo is taken from
 whichever configuration carries one, because Arena publishes no per-effort boards.
 
+Arena Elo is the one field on the record that is **generated rather than authored**. It moves
+continuously, so a typed value is stale immediately and a daily refresh would fight `check:models`
+every morning. `npm run ingest` emits `ARENA_ELO` from the archive's parameter batches and the
+record reads it, which leaves the archive as the only place the number lives and leaves the audit
+with nothing to disagree with. The pick is per field and follows the audit's own precedence — the
+flagship's operating point, then a row published with no operating point, then anything. That
+middle rung is load-bearing: a bare `gpt-5.5` row is the board's model-level statement (1476) and
+outranks a `gpt-5.5-high` row (1482) that merely appears earlier in the file.
+
 ### Ingestion pipeline
 
 ```text

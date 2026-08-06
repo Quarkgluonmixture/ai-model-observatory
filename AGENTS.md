@@ -215,7 +215,16 @@ Field sources are fixed:
 | --- | --- |
 | intelligence, cost per task, speed, latency | Artificial Analysis — now scripted: `AA_API_KEY=… npm run fetch:sources aa` archives them with provenance before you write the record |
 | price | official vendor page, else Artificial Analysis — **list price, never a promotion** |
-| text / code Elo | LMArena |
+| text / code Elo | LMArena — **derived, not typed.** `npm run ingest` reads it from the archive into `ARENA_ELO`; the catalog record carries no Elo at all |
+
+**Arena Elo is not yours to type.** It moves with every vote, so a number written into a catalog
+record is stale the next day and a daily refresh of it would put `check:models` in permanent
+disagreement with the catalog — the same reason Artificial Analysis is kept out of the daily job.
+`npm run ingest` derives it from the archive instead, using the same three-rung rule the audit uses
+(the flagship's operating point, then the row published with no operating point, then anything).
+Removing the hand-typed values changed exactly two numbers out of 29 models, and both were
+corrections: Claude Opus 4.8's code Elo of 1539 had no archive row behind it and is now `N/A`,
+and Gemini 3.1 Pro gained a code Elo of 1446 that had been sitting in the archive uncollected.
 
 **A missing AA measurement no longer blocks a record.** `intelligence` is `number | null`, so a
 model AA has not measured yet is catalogued with `N/A` in the general-capability lens and ranks

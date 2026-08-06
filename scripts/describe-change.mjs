@@ -98,13 +98,32 @@ for (const [key, row] of cellsAfter) {
 // report became a merge condition: an Artificial Analysis refresh changes speed and price on
 // every model and would have been described as "nothing changed". Read textually from both
 // versions of the file, because the base revision is TypeScript that cannot simply be imported.
-const CFG_FIELDS = ["effort", "intelligence", "cost/task", "speed", "latency", "text Elo", "code Elo", "$in", "$out"];
+// cfg() is positional, so this comparison is coupled to its signature — and the two revisions being
+// compared do not have to share one. When Arena Elo left the signature on 2026-08-06, a single
+// hard-coded field list read the base revision's arguments one slot off and reported `$out: 30 →
+// 0.5`. Nothing failed; the report simply lied, into the one condition that decides whether an
+// automatic change may merge itself. So each side's field list is read from its own copy of the
+// signature, which also makes the next signature change a non-event here.
+const LABELS = { costTask: "cost/task", input: "$in", output: "$out", textElo: "text Elo", codeElo: "code Elo" };
+const SIGNATURE = /const cfg = \(([\s\S]*?)\):\s*ModelConfiguration/;
+const fieldsOf = (text) => {
+  const signature = text.match(SIGNATURE);
+  if (!signature) return [];
+  return signature[1]
+    .split("\n")
+    .map((line) => line.replace(/\/\/.*/, "").trim())
+    .filter(Boolean)
+    .map((line) => line.match(/^([A-Za-z_$][\w$]*)/)?.[1])
+    .filter(Boolean)
+    .map((name) => LABELS[name] ?? name);
+};
 const RECORD = /m\("([^"]+)",\s*"([^"]+)"[\s\S]{0,400}?cfg\(([^)]*)\)/g;
 const parseCatalog = (text) => {
   const records = new Map();
+  const fields = fieldsOf(text);
   for (const [, id, name, argsRaw] of text.matchAll(RECORD)) {
     const args = argsRaw.split(",").map((arg) => arg.trim());
-    records.set(id, { name, args });
+    records.set(id, { name, args, fields });
   }
   return records;
 };
@@ -118,6 +137,52 @@ const catalogBefore = (() => {
 })();
 const catalogAfter = parseCatalog(readFileSync(join(ROOT, "app/model-data.ts"), "utf8"));
 
+// Arena Elo left the catalog text for the generated store, which put it outside this comparison —
+// and this comparison is a merge condition. A daily Arena refresh moving every model's Elo would
+// have been reported as "nothing changed", which is the exact failure this file was written to
+// prevent, one field further along. So it is read from both revisions of the generated store.
+//
+// Reported, but deliberately NOT counted as a moved number: an Elo is a live measurement that moves
+// with every vote, the same class as a cell moving on a live board. Counting it would make the
+// merge condition permanently false once the board is fetched daily, which is how a gate becomes
+// something to route around.
+const ELO_ROW = /\{ modelId: "([^"]+)", effort: ([^,]+), textElo: ([^,]+), codeElo: ([^,}]+)/g;
+const parseElo = (text) => {
+  const rows = new Map();
+  for (const [, id, effort, textElo, codeElo] of text.matchAll(ELO_ROW)) {
+    rows.set(`${id}|${effort.replace(/"/g, "")}`, { textElo: textElo.trim(), codeElo: codeElo.trim() });
+  }
+  return rows;
+};
+const baseStore = (() => {
+  try {
+    return execSync(`git show ${baseRef}:${STORE}`, { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+  } catch {
+    return "";
+  }
+})();
+const eloBefore = parseElo(baseStore);
+const eloAfter = parseElo(readFileSync(join(ROOT, STORE), "utf8"));
+const eloChanges = [];
+// The revision that introduced the block would otherwise report every row as an addition. That is
+// true and useless: it is a structural change, not 53 Elos moving.
+const eloIsNew = eloAfter.size > 0 && eloBefore.size === 0;
+for (const [key, after] of (eloIsNew ? [] : eloAfter)) {
+  const before = eloBefore.get(key);
+  const [id, effort] = key.split("|");
+  const where = `${id}${effort && effort !== "null" ? ` (${effort})` : ""}`;
+  for (const field of ["textElo", "codeElo"]) {
+    const was = before?.[field];
+    if (was === after[field]) continue;
+    if (!before) { if (after[field] !== "null") eloChanges.push(`${where} · ${field} 新增 ${after[field]}`); continue; }
+    eloChanges.push(`${where} · ${field}: ${was} → ${after[field]}`);
+  }
+}
+for (const key of eloBefore.keys()) {
+  if (!eloAfter.has(key)) eloChanges.push(`${key.split("|")[0]} · Arena 行消失`);
+}
+if (eloIsNew) eloChanges.push(`Arena Elo 首次从归档派生:${eloAfter.size} 个运行档位`);
+
 const catalogChanges = [];
 // Tracked separately from the other catalog changes because it is the one event the owner asked to
 // be told about: the site gained a model. Everything else — a board moving, a maker publishing, AA
@@ -127,8 +192,12 @@ const newModels = [];
 for (const [id, record] of catalogAfter) {
   const was = catalogBefore.get(id);
   if (!was) { catalogChanges.push(`新增目录记录 **${record.name}**`); newModels.push(record.name); continue; }
-  for (const [index, field] of CFG_FIELDS.entries()) {
-    const before = was.args[index];
+  // Compare by field NAME, not by index: the two revisions may lay their arguments out differently,
+  // and a field that exists on only one side is a signature change rather than a number moving.
+  for (const [index, field] of record.fields.entries()) {
+    const wasIndex = was.fields.indexOf(field);
+    if (wasIndex === -1) continue;
+    const before = was.args[wasIndex];
     const after = record.args[index];
     if (before === undefined || after === undefined || before === after) continue;
     catalogChanges.push(`${record.name} · ${field}: ${before} → ${after}`);
@@ -168,7 +237,7 @@ const label = (modelId) => modelName.get(modelId) ?? modelId;
 const cell = (row) => `${benchmarkName.get(row.benchmarkId) ?? row.benchmarkId} ${row.score}`;
 const out = [];
 
-if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges.length === 0 && reclassified.length === 0) {
+if (gained.size === 0 && lost.size === 0 && moved.length === 0 && catalogChanges.length === 0 && reclassified.length === 0 && eloChanges.length === 0) {
   out.push("这次改动不改变任何已发布的数字。");
 } else {
   for (const [modelId, rows] of [...gained].sort((a, b) => b[1].length - a[1].length)) {
@@ -219,8 +288,16 @@ if (catalogChanges.length) {
   if (catalogChanges.length > 14) out.push(`- …另有 ${catalogChanges.length - 14} 处,未列出`);
 }
 
+if (eloChanges.length) {
+  out.push("");
+  out.push(`**人类偏好 Elo 有 ${eloChanges.length} 处变化**(实时测量,不计入"已有数字被改动"):`);
+  for (const line of eloChanges.slice(0, 12)) out.push(`- ${line}`);
+  if (eloChanges.length > 12) out.push(`- …另有 ${eloChanges.length - 12} 处,未列出`);
+}
+
 process.stdout.write(out.join("\n") + "\n");
 console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length + reclassified.length} moved -->`);
+console.log(`<!-- elo-changes: ${eloChanges.length} -->`);
 console.log(`<!-- new-models: ${newModels.join(" · ")} -->`);
 // Read by the charter's fourth merge condition: an addition nothing can contradict stops.
 console.log(`<!-- unverifiable-cells: ${unverifiable.length} -->`);
