@@ -115,6 +115,18 @@ jobs:
             echo
             node scripts/check-heartbeat.mjs --agent 2>&1 | sed 's/^/- /' || true
           } >> gaps.md
+
+          # Every other check in this repository asks whether the repository is right. This one
+          # asks whether the thing readers open is the repository — EdgeOne publishes on merge and
+          # does not read CI, so a build that failed or never fired leaves `main` green and the
+          # site last week's. It reports rather than failing: the job's real work is refreshing the
+          # archive, and a stale deployment is a fact somebody needs, not a reason to abandon that.
+          {
+            echo
+            echo "## Is production serving what main says?"
+            echo
+            npm run --silent check:deployment 2>&1 | sed 's/^/- /' || true
+          } >> gaps.md
           sed -n 's/.*<!-- gaps: \([0-9]*\) -->.*/count=\1/p' gaps.md >> "$GITHUB_OUTPUT"
           cat gaps.md >> "$GITHUB_STEP_SUMMARY"
 

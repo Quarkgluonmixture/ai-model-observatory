@@ -1,0 +1,20 @@
+{
+  "_doc": [
+    "Where production is, so that something can check whether it serves what `main` says.",
+    "",
+    "AGENTS.md rule 11 says GitHub `main` is the source of truth and EdgeOne Pages is the",
+    "production host. Nothing verified the second half until 2026-08-07, and one reason is that",
+    "the address was written down nowhere in this repository -- you cannot verify a deployment",
+    "you cannot name. Every check here asked whether the repository was right; none asked whether",
+    "the thing readers open is the repository.",
+    "",
+    "`productionUrl` is the origin only, no path: the checker appends `/models` itself.",
+    "Null means the check reports itself as unrun, every day, in the collection-gaps issue --",
+    "loudly rather than silently, because a deployment check that quietly does nothing is",
+    "indistinguishable from a deployment that is fine.",
+    "",
+    "Read by scripts/check-deployment.mjs, which can also be pointed somewhere with --url, and",
+    "which reads SITE_URL from the environment first if that is set."
+  ],
+  "productionUrl": null
+}

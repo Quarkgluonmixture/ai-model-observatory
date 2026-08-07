@@ -13,14 +13,19 @@ the operating contract and still comes first before any change.
 
 | | |
 |---|---|
-| 目录 | 29 model families · **70** benchmarks（新增 ARC-AGI-1 `legacy` · ARC-AGI-3 `observe`） |
-| 观测 | **1391 rows · 980 / 2030 cells（48.3% cell coverage）** |
-| 源分类 | benchmark 880 / independent 321 / vendor 190 |
+| 目录 | 29 model families · **72** benchmarks（当日新增 ARC-AGI-1 `legacy` · ARC-AGI-3 `observe` · τ³-Banking `observe` · IFBench `observe`） |
+| 观测 | **1773 rows · 1090 / 2088 cells（52.2% cell coverage）** |
+| 源分类 | benchmark 880 / independent 703 / vendor 190 |
 | 溯源 | 318 / 321 catalog values backed by the archive |
-| 归档 | **25 batches，其中 12 个可脚本重读**（其余 13 个是手抄，永不自更新） |
+| 归档 | **26 batches，其中 13 个可脚本重读**（其余 13 个是手抄，永不自更新） |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
-覆盖率从 48.6% 读到 48.3% 是**分母变大**：两个新列进了 58 格网格，证据进了 22 格。三个数字一起读。
+当天覆盖率走了两步：48.6% → 48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ **52.2%**
+（AA 的第二条 API 路径，+110 格）。三个数字一起读，别只读百分比。
+
+**当天新增的自动化**：`check:mobile` 进了 CI（两条路由，找不到 Chrome 直接失败）；
+`describe-change` 多了第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
+`check:deployment` 建好但**等你填 `data/deployment.json` 的 `productionUrl`**。
 
 三个无源值（`check:models` 每次都会报，属于诚实的空缺而非错误）：`qwen3.8-max open`、
 `qwen3.7-plus contextK`、`qwen3.7-plus open`。
