@@ -16,8 +16,12 @@
 //      transcribed; only a ModelRecord and an alias entry stand between it and the store.
 //   3. Which sources has nobody re-read? Local. Eight of the ten batches are hand-transcribed
 //      and cannot be diffed, so age is the only freshness signal they have.
-//   4. Which models has a provider published that the catalog has never heard of? Needs the
-//      network, so it degrades to a note rather than failing when the feed is unreachable.
+//   4. Which models has a provider published that the catalog has never heard of, and for each
+//      one, is it even a text model and is there anything in the archive waiting for it? Needs
+//      the network, so it degrades to a note rather than failing when the feed is unreachable.
+//      Questions 2 and 4 used to be printed as unrelated lists, and the join is the whole value:
+//      "published upstream" says a lab shipped something, "rows waiting" says whether adding it
+//      would fill any cells or draw an empty row across every column.
 
 import {
   AXES,
@@ -33,6 +37,7 @@ import {
 import { FETCHERS } from "./fetchers/index.mjs";
 import { PROVIDER_LOOKUPS } from "../app/api/live-models/route.ts";
 import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
+import { buildEvidenceIndex, dilutionFloor } from "./lib/upstream-evidence.mjs";
 
 const args = process.argv.slice(2);
 const argOf = (name, fallback) => {
@@ -268,6 +273,38 @@ say();
 
 const variantOf = (id) => id.includes(":"); // ":free", ":thinking" — an operating point, not a model
 
+// An image generator is not a candidate for this catalog, and the feed says so outright:
+// `architecture.output_modalities`. Measured 2026-08-07 — Nano Banana 2, Nano Banana 2 Lite and
+// Nano Banana Pro all publish ["image","text"], while Muse Spark 1.2 and Qwen3.7 Flash publish
+// ["text"]. So this is a field lookup, not a judgement, and it belongs here rather than in a
+// reader's head: those three sat in this list for weeks as things somebody had to rule out by
+// name every time. Input modality is deliberately NOT filtered on — every current flagship
+// accepts images, and a text model that reads pictures is still a text model.
+const textOnly = (item) => {
+  const out = item?.architecture?.output_modalities;
+  if (!Array.isArray(out) || out.length === 0) return null;   // unknown shape: report, do not hide
+  return out.every((modality) => modality === "text");
+};
+
+// How many archived rows are waiting for this model, and how many cells a record would fill —
+// `scripts/lib/upstream-evidence.mjs`, which is also where the four reasons a row is not a cell
+// live. Kept there rather than here because that number is what decides whether a record should be
+// written at all, and a second copy would drift into disagreeing with this one about which models
+// are worth collecting. Self-tested against the catalog's own models: 89% mean recovery and 0
+// models credited with a cell they do not have — run it with `--self-test`.
+const lookupEvidence = buildEvidenceIndex(BENCHMARKS.map((benchmark) => benchmark.id));
+const evidenceFor = (item) => lookupEvidence([item.id.split("/").slice(1).join("/"), item.name ?? ""]);
+
+// The cells a model must bring to avoid lowering coverage. Arithmetic on the current board rather
+// than a policy, recomputed every run because it moves as the board fills.
+const floor = dilutionFloor(
+  Object.values(OBSERVATION_ROWS.reduce((cells, row) => {
+    (cells[row.modelId] ??= new Set()).add(row.benchmarkId);
+    return cells;
+  }, {})).reduce((total, set) => total + set.size, 0),
+  MODELS.length,
+)
+
 if (!useNetwork) {
   say("Skipped: --no-network.");
 } else {
@@ -295,7 +332,7 @@ if (!useNetwork) {
     const catalogNeedles = [...Object.values(PROVIDER_LOOKUPS), ...MODELS.map((model) => model.id)];
 
     const cutoff = Date.now() / 1000 - sinceDays * 86400;
-    const fresh = list
+    const candidates = list
       .filter((item) => namespaces.has(item.id.split("/")[0]))
       .filter((item) => !variantOf(item.id))
       .filter((item) => !knownIds.has(item.id))
@@ -303,21 +340,51 @@ if (!useNetwork) {
       .filter((item) => Number(item.created) > cutoff)
       .sort((a, b) => Number(b.created) - Number(a.created));
 
+    const images = candidates.filter((item) => textOnly(item) === false);
+    const fresh = candidates.filter((item) => textOnly(item) !== false);
+
     say(
       `Watching ${namespaces.size} provider namespaces the catalog already resolves to ` +
-        `(${[...namespaces].sort().join(", ")}), published in the last ${sinceDays} days.`,
+        `(${[...namespaces].sort().join(", ")}), published in the last ${sinceDays} days. ` +
+        `A model needs **more than ${floor} filled cells** to not lower cell coverage — ` +
+        `that is the current average, recomputed each run, not a policy.`,
     );
     say();
 
     if (fresh.length === 0) {
       say("Nothing new.");
     } else {
-      clipped(fresh, (item) =>
-        `- \`${item.id}\` — ${item.name ?? "unnamed"}, published ` +
-        `${new Date(Number(item.created) * 1000).toISOString().slice(0, 10)}`,
-      );
+      clipped(fresh, (item) => {
+        const evidence = evidenceFor(item);
+        const date = new Date(Number(item.created) * 1000).toISOString().slice(0, 10);
+        const modality = textOnly(item) === null ? " · ⚠ feed states no output modality" : "";
+        // Both numbers are lower bounds, and saying so is the point: a source spelling the model
+        // differently enough to survive `norm` is not counted, so "below the floor" is a claim
+        // this can make and "above the floor" is a candidate rather than a verdict.
+        const verdict = evidence.rows === 0
+          ? "**nothing in the archive waits for it** — a record today draws an empty row, so leave it uncollected"
+          : `at least ${evidence.rows} archived row(s) filling at least ${evidence.cells.length} catalog cell(s)` +
+            (evidence.cells.length > floor
+              ? ` — clears the ${floor}-cell floor, worth drafting with \`npm run draft:model\``
+              : ` — under the ${floor}-cell floor, so a record would still lower coverage`);
+        return `- \`${item.id}\` — ${item.name ?? "unnamed"}, published ${date}${modality}\n` +
+          `  ${verdict}${evidence.parameters ? " (operating parameters are archived)" : ""}` +
+          (evidence.cells.length ? `\n  cells it would fill: ${evidence.cells.sort().join(", ")}` : "");
+      });
       say();
       gapCount += fresh.length;
+    }
+
+    // Reported as a count and not as a list. They are not work, and naming them every day is how
+    // a reader ends up re-deciding a settled question — but a silent filter is how a text model
+    // gets dropped by a mis-set field, so the number stays visible.
+    if (images.length) {
+      say(
+        `${images.length} more published in these namespaces output images ` +
+          `(${images.map((item) => "`" + item.id + "`").join(", ")}) and are not candidates for a ` +
+          "capability catalog. Filtered on `architecture.output_modalities`, not on the name.",
+      );
+      say();
     }
 
     // A lookup naming an id the provider no longer serves resolves to nothing, and nothing is
