@@ -86,3 +86,30 @@ jobs:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
           bash scripts/open-aa-pr.sh checks.txt
+
+      # This workflow is dispatched by upstream.yml, which fires and forgets — `gh workflow run`
+      # returns as soon as the dispatch is accepted and nothing ever reads the outcome. So until
+      # now the only failure here that could speak was the one the last step catches itself: a
+      # pull request that would not open. Everything earlier — the fetch, `npm run ingest`, the
+      # contract — failed into an empty room.
+      #
+      # 2026-08-07 came within one step of demonstrating it. The `gh: Argument list too long`
+      # failure happened to land inside open-aa-pr.sh's own fallback, which pushed a correct
+      # notification. Had the same body killed `npm run ingest` instead, the run would have gone
+      # red and nobody would have known until somebody wondered why AA had not refreshed in a week.
+      #
+      # Not a new notification category: "something is broken" is one of the two this channel is
+      # reserved for, and this is the same event as the message below it — just the half that could
+      # not previously reach anyone.
+      - name: Say so if this failed
+        if: failure()
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          {
+            echo "AA 刷新这次跑失败了,**没有**开出 PR,归档也没有变。"
+            echo
+            echo "上一次成功的归档还在,站上的数字没有受影响——这条只是说这次自动重读没成功。"
+            echo
+            echo "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          } | node scripts/notify-pushplus.mjs "⚠ 观测台 · AA 刷新失败"

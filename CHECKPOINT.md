@@ -68,10 +68,19 @@ node scripts/fetch-source.mjs arena    # 单独重抓一个源
 **推送前**：`gh auth switch -u Quarkgluonmixture`（个人账号）。仓库密钥：`AA_API_KEY`、
 `PUSHPLUS_TOKEN`，两个都是可选的——缺了对应步骤跳过自己，不会让任何检查变红。
 
-**微信推送**：GitHub 侧 4 条——站上新增模型 / 归档完整性失败 / 完整性恢复 / AA 刷新但 PR 没开成；
-hermes 侧 1 条——**GitHub 每日 job 超过 36h 没跑完**（`npm run check:heartbeat -- --github`）。
-第 5 条 2026-08-07 加的，因为那个 job 死的时候是攥着通知通道一起死的：前 4 条全由它或 CI 触发。
-其余全部砍掉，理由在 `docs/ARCHITECTURE.md` §10。
+**微信推送**（2026-08-07 从 4 条补到 7 条，补的三条全是「本来坏了也没人知道」）：
+
+| 何时 | 在哪 |
+|---|---|
+| 站上新增模型 | `ci.yml` |
+| 归档完整性失败 / 恢复 | `upstream.yml` |
+| AA 刷新但 PR 没开成 | `open-aa-pr.sh` |
+| **AA 刷新整体失败**（挂在开 PR 之前的任何一步） | `aa-refresh.yml` |
+| **main 检查变红**——EdgeOne 合并即发布不看 CI，所以这是「站已经上线且契约在失败」 | `ci.yml` |
+| **GitHub 每日 job 超 36h 没跑完** | hermes（`npm run check:heartbeat -- --github`） |
+
+「只在异常时说话」的策略没变，补的是这条通道**够不着的那几个异常**。
+砍掉的六条为什么砍，在 `docs/ARCHITECTURE.md` §10。
 
 **沉默现在可诊断**：两个调度器互相看守，只用已有产物。hermes 每轮开头查 GitHub（36h 阈值，
 推微信）；每日 job 查 main 上最近的非 bot 提交（3 天阈值，只写进 gaps issue、不推微信）。
@@ -87,7 +96,8 @@ hermes 侧 1 条——**GitHub 每日 job 超过 36h 没跑完**（`npm run chec
    **2026-08-07 起这个 PR 不会再被每天覆盖**：只要它带着人的 comment/review，闸门当天就不碰远端。
    所以它会一直等你，但也意味着**在你处理它之前，新的 alias 提议全部积压**——别放太久。
 2. **明早（2026-08-08）验一次改完的链路**：`auto/refresh-aa` 的 PR 应该**自己开出来**（今早是
-   `gh: Argument list too long` 开不出来）；gaps issue 末尾应该多一节「Is the queue being worked?」。
+   `gh: Argument list too long` 开不出来）；gaps issue 末尾应该多一节「Is the queue being worked?」；
+   `auto/attribution` 应该**整个跳过**并写一条 warning——因为 #45 还开着，`--any-open` 让它按兵不动。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
