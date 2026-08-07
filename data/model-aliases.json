@@ -1354,6 +1354,54 @@
       "effort": "*",
       "modelId": "glm-5.2",
       "reason": "Operating mode of the family the catalog already holds."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (High)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"Claude Opus 4.8\" is exactly claude-opus-4.8 after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (Low)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"Claude Opus 4.8\" is exactly claude-opus-4.8 after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (Medium)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"Claude Opus 4.8\" is exactly claude-opus-4.8 after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (xhigh)",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"Claude Opus 4.8\" is exactly claude-opus-4.8 after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "Gemini 3.6 Flash (high)",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"Gemini 3.6 Flash\" is exactly gemini-3.6-flash after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "GPT 5.5 (high)",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"GPT 5.5\" is exactly gpt-5.5 after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "GPT-5.5 (high)",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: the same published string as \"GPT 5.5 (high)\" up to casing and separators, which alias resolution treats as different. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "GPT-5.5 (High)",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: the same published string as \"GPT 5.5 (high)\" up to casing and separators, which alias resolution treats as different. No human read this string; the contract is what accepted it."
     }
   ],
   "benchmarkSplits": [
