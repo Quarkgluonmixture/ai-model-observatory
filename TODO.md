@@ -18,7 +18,8 @@
 - [ ] OSWorld 2.0 / Toolathlon / MCP-Atlas（agent 轴，目前全靠手抄）
 - [ ] FrontierSWE / ProgramBench（后者官方分与厂商表差 70 分，注意别混指标）
 - [ ] APEX-Agents
-- [ ] **ARC Prize verified board —— 路已经探到了（2026-08-07），下一个动手的人直接写 fetcher。**
+- [x] ~~ARC Prize verified board~~ —— **fetcher 已落地（2026-08-07，batch 23，198 行）**。剩下的三件
+      都是判断题，见下面「ARC 收尾：三个判断题」。以下探测记录保留，因为写 alias 时还要用：
 
       `https://arcprize.org/media/data/evaluations.json` · 200 · 152,870 bytes · **808 行**。
       页面是 Next.js 客户端渲染，路径不在 `_next` chunk 里，而在 `/scripts/leaderboard/data.js`
@@ -42,6 +43,27 @@
          拼写约定**，要新 alias。
       4. ⚠ **`gpt-5-5-pro-*` 不是 `gpt-5.5`**（Pro 是另一个模型，alias 文件 `_doc` 里记过）。
          `display: false` 的行要不要收也得定。
+
+## ARC 收尾：三个判断题（batch 23 已落地，这三件是它剩下的判断部分）
+
+fetcher 只做了判断无关的一半：证据落地、站上零变动（198 行里只有 2 行有 alias，`describe-change`
+报「没有任何已有模型的数字被改动」）。剩下的：
+
+- [ ] **写 alias，把那 ~196 行接上目录。** 这是**第七种拼写约定**（`anthropic-opus-4-8-high`、
+      `gpt-5-5-2026-04-22-thinking-xhigh`）。⭐ **这里有个便宜的佐证工具**：这份文件的分数和归档里
+      Epoch 镜像（batch 12）**逐格一致**，所以任何 ARC id 只要在同一格上和已归属的 Epoch 行对上数，
+      身份就被**数字**确认了 —— 正是 `AGENT-OPERATIONS.md`「用数字而不是字符串确认身份」那条规矩
+      （ALE 的 Qwen 双写法就是这么定的）。
+      ⚠ 陷阱：`gpt-5-5-pro-*` **不是** `gpt-5.5`；`-1k/-8k/-16k/-32k/-64k` 是思考 token 预算不是
+      effort；`-openrouter/-together/-bedrock` 是服务路由；`ARChitects`/`Icecuber`/`2025_human_panel`
+      /`jeremy_sept_2025` 这些**不是模型**，按铁律 8 该一直留着不映射。
+- [ ] **batch 01 的 ARC 行该不该 supersede。** 它是同一份文件被人手抄成 1 位小数的版本
+      （72.1 vs 72.08）。先例是 batch 02 的 18 行 DeepSWE 眼读被 artifact superseded。
+      ⚠ 现状：batch 01 的行**带 evaluationDate 而 batch 23 不带**，所以主行规则仍然偏向那个手抄的
+      整数版。不 supersede 的话，全精度行会一直等着。
+- [ ] **要不要收 `v1_Semi_Private`（ARC-AGI-1）和 `v3_Semi_Private`。** 两个都在同一份文件里、
+      现在就能抓，但各需要一个**新的 benchmark id** —— 那是 taxonomy 决定。fetcher 的 `fetch(target)`
+      已经接受 split 参数，加起来只是注册和 benchmark 定义。
 
 ## 小口子
 

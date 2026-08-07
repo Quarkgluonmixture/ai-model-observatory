@@ -297,6 +297,38 @@ marketplace 的模型卡有 $2/$6。**这张卡能当 list price 用是验证过
 ⚠ 时间要点：GitHub 那个每日巡检写的是 `0 6 * * *`，但实际连续五天在 **07:58–08:54 UTC** 之间才跑
 （GitHub 定时任务常态性延迟约两小时）。hermes 必须排在那之后，否则每天读到的是昨天的队列。
 
+## [2026-08-07 第四轮] ARC Prize 接成第 10 个脚本源（batch 23）  #ship #measure #deadend
+
+只做**判断无关的一半**：证据落地，站上零变动。198 行里只有 2 行已有 alias（`gemini-3.1-pro` 77.08、
+`glm-5.2` 22.78），`describe-change` 报「没有任何已有模型的数字被改动」，唯一变化是 GLM-5.2 那格
+从 `independent` 升成 `benchmark+independent` 而分数一致 —— 正是「Epoch 逐格转录 ARC」的推论。
+
+`docs/ARCHITECTURE.md` §9 那条「The verified board publishes nothing readable」被推翻，是那张表
+**第七条**被「再看一眼」推翻的判定。
+
+**三件事在写的过程中被数据否掉，每一件都会静默产出错数据：** #deadend
+
+1. **从 modelId 尾部解析 effort —— 看着安全，不是。** 尾 token 分布：`high/low/medium/xhigh/
+   minimal/max` 是档位，但 `-1k/-8k/-16k/-32k/-64k` 是 Claude 的**思考 token 预算**、
+   `-openrouter/-together/-bedrock` 是**服务路由**、还有一堆是日期和 release tag。预算写进
+   `reasoning_effort` 会同时污染漂移 key 和 alias 解析（effort 在这两处都承重）。
+   → `reasoning_effort` 全部留空，model_raw 逐字保留。LiveBench 就是这个形状（AGENTS.md 原话
+   「effort baked into the string」），解析归 alias 步骤。
+2. **`evaluation_date` 不能拿 `models.json` 的 `modelReleaseDate` 顶。** 那是**模型发布日**不是
+   评测日，而这个字段是站点排主行的排序键之一 —— 拿一个意思不同的日期喂它，会静默重排格子。留空。
+3. **冻结源必须实现 `archiveVersion()`，而漏了它只在漂移路径上炸。** fetcher 能写、能跑、能落一个
+   看起来完全健康的批次，然后**第二天早上把每日巡检弄红**。这次就是：`--check` 抛
+   `fetcher.archiveVersion is not a function`。∴ 新 fetcher 一定要单独跑一次 `--check`，
+   落完批次不等于验完。
+
+**上游自己有一条重复**：`gpt-5-2025-08-07-low` 在这个 split 上出现两次、都 display、分数都是 1.94。
+放着不管会在漂移 key（`model/benchmark/harness/effort`）上碰撞、静默只看见后一条 —— 今天无害，
+哪天 ARC 让它们不同就会藏起一个分歧。∴ 完全相同的重复收成一条并计数；**同 id 不同分则直接抛错**，
+因为静默取一条正是这个项目反复吃的那个亏。199 → 198 行，与漂移检查的 198 格对齐。
+
+验收：`check:upstream` **exit=0、零完整性失败**（`ARCHIVE_STALE=1` 来自 GDPval 这个 live 板的 Elo
+移动，不是这个源）；单源 `--check` 报 `archive matches upstream, 198 cells verified`；七项契约全绿。
+
 ## [2026-08-07 尾] 探到 ARC Prize 的第一手数据文件  #measure
 
 TODO 里「ARC Prize verified board」原本只是一行候选。按章程「动手前先重新探一遍」探了，路是通的，

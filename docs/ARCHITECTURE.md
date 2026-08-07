@@ -31,8 +31,8 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **29 model families, 68 benchmarks, 1263 observations across 955 of 1972 cells**,
-sourced benchmark-native 777 / independent 296 / vendor 190. **318 of 321 catalog numbers are
+Current scale: **29 model families, 68 benchmarks, 1294 observations across 955 of 1972 cells**,
+sourced benchmark-native 783 / independent 321 / vendor 190. **318 of 321 catalog numbers are
 backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
@@ -471,6 +471,7 @@ pages are known-dead or known-empty and were already worked around.
 | 20 | MMMU-Pro leaderboard | 71 models carrying an MMMU-Pro Overall score, rendered from the official board. Supersedes batch 04's two hand-read rows, which filed an author-reported score as benchmark-native. |
 | 22 | LMArena Elo | 493 rows across two boards, read from the pages' own server-rendered payload. Not observations: Arena Elo is human preference, not task accuracy (rule 5), so it stays a model parameter. This is the batch `ARENA_ELO` derives from, which is why the catalog no longer carries an Elo at all. |
 | 21 | QwenCloud operating parameters | Price, cache price and context for Qwen3.8 Max, read from the maker's own marketplace card and release changelog. Collected because the two list-price tables (Alibaba Model Studio, QwenCloud docs) still carried only the 3.7 family three days after release, and Artificial Analysis had not measured the model at all. |
+| 23 | ARC Prize verified leaderboard | 198 entries on the ARC-AGI-2 semi-private split, from the file the board loads. **The first-hand source batch 12 (Epoch's mirror) and batch 01 (hand-read, rounded to one decimal) both descend from** — verified to the decimal against models already in the catalog. Filtered three ways, all reported: `v2_Semi_Private` only, `display:true` only, and one exact duplicate ARC publishes collapsed. `reasoning_effort` is null on every row on purpose: the file publishes one opaque id and no effort column, and that id's trailing token is an effort for some entries but a thinking-token budget (`-1k`…`-64k`) or a serving route (`-openrouter`, `-bedrock`) for others. Interpreting it is the alias step's job; on landing, 2 of 198 rows resolved and **no published number moved**. |
 
 ### Which sources can be re-read by script
 
@@ -498,13 +499,14 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | LM Arena | **Scripted, batch 22** — and the sixth "no path" verdict in this table to be overturned by looking again. The old entry was true about what it named: `lmarena/arena-catalog` decodes perfectly and stopped syncing a generation ago. It was never a claim about the site. `lmarena.ai` now redirects to `arena.ai`, which serves each board **server-rendered** with the whole snapshot embedded as JSON — no browser, no key, a plain fetch. The `/api/` path answers 403 "Route not allowed", so the page's own payload is the published artefact. Two boards: `text-overall-style_control` → `text_elo`, `webdev-overall-raw` → `code_elo`. |
 | SWE-bench | `swe-bench.github.io/data/leaderboards.json`, 180 Verified entries, genuinely fetchable — and useless: the newest entry is Opus 4.5 from 2025-12, and `swe-verified` is a legacy column. The HELM situation exactly. |
 | Scale, MMMU, Mercor APEX, HLE | Hugging Face's `/api/datasets/{id}/leaderboard` returns 200 for all four, which is a trap: every record is a **vendor self-report scraped from the model's own card**, `verified:false`, with no version, harness, effort or date. SWE-bench Pro's mixes 19 model-card claims with 6 official rows and nothing distinguishes them. |
-| ARC Prize | The verified board publishes nothing readable. `arcprize/arc_agi_v2_public_eval` does — and it is a **different split**: GPT-5.2 xHigh scores 64.0 there against 52.9 on the verified board. Substituting it would have moved the column ~11 points. |
+| ARC Prize | ⚠ **Reversed 2026-08-07 — scripted, batch 23.** This row used to read "the verified board publishes nothing readable", which was the seventh entry in this table to be overturned by looking again. The data is at `/media/data/evaluations.json` (808 rows across 8 splits), loaded by four `d3.json()` calls in `/scripts/leaderboard/data.js`. It is not in the Next.js chunk: `/leaderboard` renders client-side, its page chunk is 6KB with no `fetch(` in it, and the HTML carries no model names — read only those two, as the first pass did, and the old verdict is what you get. **It is also the first-hand source batch 12 and batch 01 both descend from**, verified model-for-model to the decimal against Epoch's mirror. The public-split warning below still stands and is why the fetcher pins `v2_Semi_Private`. |
+| ARC Prize public eval | `arcprize/arc_agi_v2_public_eval` is a **different split** and the same file carries it as `v2_Public_Eval`: GPT-5.2 xHigh scores 64.0 there against 52.9 on the verified board. Substituting it would move the column ~11 points, so batch 23 filters to `*_Semi_Private` exactly as the site's own `data.js` does. `v1_Semi_Private` (ARC-AGI-1) and `v3_Semi_Private` are present and collectable, each needing its own benchmark id. |
 | Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. (ALE was reversed on 2026-08-05 — see batch 18.) |
 | QwenCloud Model Marketplace | Client-rendered cards, one per model, carrying list price, cache prices, context and rate limits — and a labelled `50% off` / `20% off` where a promotion runs, which is what makes the unlabelled figure readable as a list price. **Read once by hand for batch 21**; a fetcher is feasible and would give the price column its first drift check, but a daily price refresh needs a `versioning` declaration and a rule for what to do when a promotion starts, which is a decision rather than a script. |
 
-Nine of twenty-two batches are re-read by script, and only those nine have a drift check or an
+Ten of twenty-three batches are re-read by script, and only those ten have a drift check or an
 automatic refresh. The rest are hand transcriptions whose only freshness signal is how long ago
-someone read them — which is why the source cards print that date (§10). Batch 17 is a ninth kind:
+someone read them — which is why the source cards print that date (§10). Batch 17 is a tenth kind:
 scripted, but run per release rather than daily, because a release post is frozen once published.
 
 Batch 09 is the first batch collected by a script rather than a browsing model. LiveBench renders
@@ -561,8 +563,8 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**Nine of twenty-two batches now maintain themselves; the other thirteen cannot.** This paragraph used
-to say four of fifteen, and — more usefully — it used to say that closing the gap was not a code
+**Ten of twenty-three batches now maintain themselves; the other thirteen cannot.** This paragraph used
+to say four of fifteen, then nine of twenty-two, and — more usefully — it used to say that closing the gap was not a code
 problem, because "§9 records that no other source publishes a data file to read". That was wrong,
 and it was wrong in the most expensive way a written-down answer can be: it told the next person
 not to look.

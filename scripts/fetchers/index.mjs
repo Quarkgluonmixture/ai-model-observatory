@@ -8,6 +8,7 @@
 // runner, the drift check, the scheduled refresh and the pull request all iterate this array.
 
 import { ale } from "./ale.mjs";
+import { arcprize } from "./arcprize.mjs";
 import { arena } from "./arena.mjs";
 import { artificialAnalysis } from "./artificial-analysis.mjs";
 import { deepswe } from "./deepswe.mjs";
@@ -17,6 +18,6 @@ import { livebench } from "./livebench.mjs";
 import { mmmu } from "./mmmu.mjs";
 import { terminalBench } from "./terminal-bench.mjs";
 
-export const FETCHERS = [livebench, deepswe, epoch, terminalBench, ale, gdpval, mmmu, arena, artificialAnalysis];
+export const FETCHERS = [livebench, deepswe, epoch, terminalBench, ale, gdpval, mmmu, arena, arcprize, artificialAnalysis];
 
 export const fetcherById = (id) => FETCHERS.find((fetcher) => fetcher.id === id);

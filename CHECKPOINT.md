@@ -13,10 +13,10 @@ the operating contract and still comes first before any change.
 | | |
 |---|---|
 | 目录 | 29 model families · 68 benchmarks |
-| 观测 | 1286 rows · 955 / 1972 cells（48.4% cell coverage） |
-| 源分类 | benchmark 777 / independent 319 / vendor 190 |
+| 观测 | 1294 rows · 955 / 1972 cells（48.4% cell coverage） |
+| 源分类 | benchmark 783 / independent 321 / vendor 190 |
 | 溯源 | 318 / 321 catalog values backed by the archive |
-| 归档 | 22 batches，其中 **9 个可脚本重读**（其余 13 个是手抄，永不自更新） |
+| 归档 | 23 batches，其中 **10 个可脚本重读**（其余 13 个是手抄，永不自更新） |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
 三个无源值（`check:models` 每次都会报，属于诚实的空缺而非错误）：`qwen3.8-max open`、
@@ -28,7 +28,7 @@ the operating contract and still comes first before any change.
 
 | 时间（UTC） | 在哪 | 做什么 | 能不能自己合并 |
 |---|---|---|---|
-| ~08:10（cron 写 06:00，GitHub 实际延迟约两小时） | GitHub Actions `upstream.yml` | 9 个脚本源漂移检查 → 重抓 live 板 → 发布页探针 → 写 gaps issue → AA 新模型侦测 | 只碰 `data/sources/` + 生成文件 → **直推 main** |
+| ~08:10（cron 写 06:00，GitHub 实际延迟约两小时） | GitHub Actions `upstream.yml` | 10 个脚本源漂移检查 → 重抓 live 板 → 发布页探针 → 写 gaps issue → AA 新模型侦测 | 只碰 `data/sources/` + 生成文件 → **直推 main** |
 | 同上，末步 | GitHub Actions | 归属闸门 `attribute-and-merge.sh`：提议 alias → 跑契约 → 三条件满足才自合 | 有条件自合，否则留 PR |
 | 09:30（**需确认已从 07:00 改过来**） | hermes（Windows 定时任务） | 读 gaps issue → 挑一件完整做完 → 开 PR / tier-B 三条件自合 | 有条件自合 |
 | 任意 push 到 main | GitHub Actions `ci.yml` | 七项契约 + 归属闸门回测 + **站上新增模型才推微信** | — |
@@ -61,7 +61,7 @@ npm run propose:attribution            # 归属闸门今天能定多少
 npm run propose:attribution -- --backtest   # 回测 239 条人工判断（CI 里也跑）
 npm run describe-change origin/main    # 这次改动对已发布看板做了什么
 npm run report:gaps                    # 什么从来没被采集过
-npm run check:upstream                 # 9 个脚本源逐格对照
+npm run check:upstream                 # 10 个脚本源逐格对照
 node scripts/fetch-source.mjs arena    # 单独重抓一个源
 ```
 
