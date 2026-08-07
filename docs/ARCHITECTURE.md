@@ -818,8 +818,8 @@ stay. That is judgement, and judgement does not go in a cron job.
   nothing should.
 - Pixel regression testing is not yet in CI. Add Playwright screenshots only after a stable public
   preview URL and baseline approval exist. `npm run check:mobile` covers the part that regresses
-  silently — overflow, type floor, tap-target floor — but it needs Chrome and a running server, so
-  it is a local gate rather than a CI one.
+  silently — overflow, type floor, tap-target floor — and **is** in CI since 2026-08-07, on both
+  routes, using the Chrome the runner already ships.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
 - **The three conditions do not protect against an empty row, and the thing that catches it is
   incidental.** Measured 2026-08-07 by putting a zero-evidence catalog record in and running the
@@ -833,10 +833,12 @@ stay. That is judgement, and judgement does not go in a cron job.
   archived rows before it is allowed to exist**, and the count has to be measured on unaliased
   strings, because `check:models` exits 1 on an alias naming a catalog id that is not there — so
   the record must precede the alias and "rows already resolving to it" is zero by construction.
-- **`npm run check:mobile` is not in CI**, and the list of what is makes that easy to miss: CI runs
-  lint, ingest-and-diff, `check:data`, `check:models`, `check:prices`, the attribution backtest and
-  the build. The phone contract is therefore enforced only when somebody remembers to run it
-  locally, on a route (`/models`) whose table just gained two columns.
+- ~~`npm run check:mobile` is not in CI~~ **Closed 2026-08-07.** It was the only one of the seven
+  contract commands not in CI, which made it the only one that depended on somebody remembering —
+  on `/models`, the route whose table went from 68 columns to 72 in a day. It now runs on every
+  push and pull request, against both routes, and **fails the job rather than skipping itself** if
+  the runner has no Chrome: a layout check reporting green for a probe that never ran is worse than
+  no layout check. What is still not covered is pixel regression, above.
 - **Nothing verifies the deployed site.** EdgeOne publishes on merge and does not read CI, and the
   WeChat push added for this measures `main` going red — which is the repository's state, not the
   deployment's. A failed or unfired EdgeOne build is silent. The coupling also runs the other way:

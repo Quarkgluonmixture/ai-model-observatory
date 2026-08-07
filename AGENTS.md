@@ -99,9 +99,12 @@ defect in your commit — so it prints a report and the scheduled job turns it i
 issue. Run it before deciding what to collect next; `--no-network` skips the upstream section.
 
 `npm run check:mobile` probes the built site at 320 / 390 / 430px under real device emulation and
-fails on horizontal overflow. It needs Chrome and `PORT=3111 npm run start:next`, so it is a local
-gate. Run it after any layout change — and never judge mobile from a headless screenshot taken
-without emulation, which ignores the viewport meta tag and invents overflow.
+fails on horizontal overflow. **It runs in CI since 2026-08-07**, on both routes, so a phone
+regression now fails a pull request instead of waiting for somebody to remember. Run it locally too
+after a layout change — it needs Chrome and `PORT=3111 npm run start:next` — and never judge mobile
+from a headless screenshot taken without emulation, which ignores the viewport meta tag and invents
+overflow. The CI step refuses to skip itself: if no Chrome is found on the runner it fails the job,
+because a layout check that silently passes because it never ran is worse than no layout check.
 
 **Stop that server when you are done.** Nothing here stops it for you, and it holds `node_modules`.
 One left running on 2026-08-01 was still holding the directory four days later, where it surfaced
@@ -325,5 +328,6 @@ official pages for precision, not because LMArena is wrong.
 3. `npm run ingest` and read the skip report, or `npm run report:gaps` for the same thing ranked
    by what it would unlock — both tell you what the catalog is missing.
 4. Run every required check.
-5. Review desktop and mobile on the EdgeOne preview URL; run `npm run check:mobile` for layout.
+5. Review desktop and mobile on the EdgeOne preview URL. CI runs `npm run check:mobile` on both
+   routes for you; run it locally as well while iterating on a layout, rather than after.
 6. Update `README.md` counts and `docs/ARCHITECTURE.md` if behaviour or schema changed.
