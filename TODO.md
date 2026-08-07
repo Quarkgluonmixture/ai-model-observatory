@@ -22,24 +22,20 @@
 ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，见 `LOG.md` 2026-08-07 第四轮。
 探测细节住在 `scripts/fetchers/arcprize.mjs` 的头注释里，不在这。
 
-## 自动化的四个缺口（2026-08-07 实测，详情在 `docs/ARCHITECTURE.md` §10）
+## 自动化剩下的缺口（2026-08-07 第六轮后，详情在 `docs/ARCHITECTURE.md` §10）
 
-按「便宜 × 挡住的东西」排：
+三个做掉了（手机探针进 CI · 空行第四条 · 线上站验证机制），缺口 2 按你的决定跳过。剩下：
 
-- [ ] **`check:mobile` 进 CI**。现在 CI 跑 lint / ingest-diff / check:data / check:models /
-      check:prices / 回测 / build，**没有 mobile** —— 手机端回归只在有人记得跑的时候才被抓到，
-      而 `/models` 的表刚多了两列。需要 headless Chrome + 起 server 两步。
-- [ ] **hermes 心跳也推微信**。现在 GitHub 挂了 hermes 会推微信，hermes 挂了只写进 gaps issue ——
-      而那个 issue 主要是 hermes 自己读。一行的事：把 `check-heartbeat --agent` 的非零退出接上
-      `scripts/notify-pushplus.mjs`。⚠ 但先想清楚判据：`--agent` 按设计分不出 hermes 和你
-      （代码注释里写明了），所以你自己推一次就会重置那个 3 天时钟。
-- [ ] **线上站没有任何验证**。EdgeOne 合并即发布不看 CI，现有那条微信量的是 main 变红、不是部署
-      成没成。最小可做：每日 job 拉一次线上 `/models`，比对页脚或某个已知数字和 main 一致。
-- [ ] **三条件不防空行**（实测：零证据记录下 check:data / check:models / check:prices 全绿，
-      `check:models` exit=0）。真正拦住它的是 `describe-change` 把「新增目录记录」计进 `moved`，
-      属于侥幸。要建新模型自动化就得补第四条：**有证据才允许建记录**。
-      ⚠ 实现约束：`check:models` 对「alias 指向不存在的目录 id」exit=1，所以记录必须先于 alias，
-      「已解析的行数」对新模型恒为 0 —— 证据只能数**归一化后能对上的未映射字符串**。
+- [ ] ⭐ **填 `data/deployment.json` 的 `productionUrl`** —— 只有你有这个事实。填之前
+      `check:deployment` 每天在 gaps issue 里把自己报成「没跑」。填一行就激活：
+      `"productionUrl": "https://<域名>"`。机制已经验过（读 JS chunk，不依赖 DOM 显不显示）。
+- [ ] **hermes 死了没人被推送**（你说不用管，留在这里只作记录）。GitHub 挂 → hermes 推微信；
+      hermes 挂 → 只写进它自己读的那个 issue。
+- [ ] **91 格落在单源列上**（τ³-Banking 和 IFBench 按定义只有 AA 一家）。跨源分歧闸门在那些列上
+      永远不会响 —— 结构性的，不是能修的，记在这里是防止有人误以为闸门覆盖了它们。
+- [ ] **「新模型自动上板」的机器人还没建**。第四条条件（`new-models-below-floor`）已经就位，
+      是它需要的那道保护。设计：文字模型 + 真实 + 不重复 + 过地板 → 自合；实测今天两个候选
+      都过不了地板，所以它会很安静 —— 那是设计，不是坏了。
 
 ## 小口子
 
