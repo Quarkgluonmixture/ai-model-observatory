@@ -186,7 +186,8 @@ Two schedulers must not touch the same files.
 | Re-reading live boards, rewriting their batches, re-ingesting | **GitHub Action** (`upstream.yml`) |
 | Watching maker release pages, notifying, opening the integrity issue | **GitHub Action** — it runs whether or not your machine is up, so do not duplicate it |
 | Aliases **the attribution gate can settle on evidence** | **GitHub Action** (`attribute-and-merge.sh`) — see below |
-| Aliases the gate refused, and every new model, source or release bump | **You** |
+| A catalog record for an upstream model **that clears the four conditions** | **GitHub Action** (`add-model-and-merge.sh`) — text-only, published in the last 60 days, absent from the catalog, and already carrying more archived cells than the board averages. It writes the record and the aliases together, because a record without aliases is the empty row its own fourth condition forbids |
+| Aliases the gate refused, and every new model the record gate refused, every new source or release bump | **You** |
 | Investigating a tier-C failure | **You** |
 | Merging a tier-B change that clears all three conditions above | **You** |
 | Merging anything that does not | **The human** |

@@ -821,6 +821,15 @@ stay. That is judgement, and judgement does not go in a cron job.
   silently — overflow, type floor, tap-target floor — and **is** in CI since 2026-08-07, on both
   routes, using the Chrome the runner already ships.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
+- **The catalog record is no longer only hand-placed.** `scripts/add-model-and-merge.sh` adds one
+  for an upstream model that clears four conditions, and the fourth is the reason it can be
+  unattended at all. Two bugs of its own were caught by building the failure rather than reasoning
+  about it: its first run proposed Claude Sonnet 4.6 and GPT-5.2 — both deliberately absent, one
+  with 36 cells of real evidence — because the recency window `report:gaps` has always applied was
+  missing; and its first write produced a casing near-miss (`Muse Spark 1.2 (xhigh)` written,
+  `muse-spark-1.2 (xHigh)` left unmapped) that `check:models` fails on, because it scanned only
+  observation batches. Both are in the script headers. Today nothing qualifies, which is the
+  expected steady state.
 - ~~The three conditions do not protect against an empty row~~ **Closed 2026-08-07 by a fourth
   condition**: `describe-change` now counts, for every newly added catalog record, the cells it
   actually brings and compares them against the board's own average, and emits

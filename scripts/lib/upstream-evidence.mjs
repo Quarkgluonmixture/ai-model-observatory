@@ -105,21 +105,45 @@ export const buildEvidenceIndex = (benchmarkIds) => {
    * provider feed does not. Prefix is why a needle shorter than four characters is refused: `gpt`
    * would match every OpenAI model ever published.
    */
-  // A prefix match whose remainder starts with a DIGIT is a different version, not an operating
-  // point, and refusing it is not a nicety — it is the difference between this counter working and
-  // being actively dangerous. Measured before the guard: `GPT-5` normalises to `gpt5`, which
-  // prefix-matches `gpt55`, `gpt56sol`, `gpt562025…` and every other GPT-5.x string in the
-  // archive, and the counter credited it with **55 cells**. `Claude Opus 4` got 51 the same way,
-  // `kimi-k2` got 46. A floor those numbers can clear is a floor that admits a model on another
-  // model's evidence. The self-test missed it because it feeds catalog ids and names, which are
-  // long and specific; the strings a provider feed produces are not always either.
+  // What may follow the family name is an OPERATING POINT and nothing else. This is not a nicety;
+  // it is the difference between this counter working and being actively dangerous, and it took
+  // two goes to get right:
   //
-  // `gpt56sol` -> `gpt56solmax` leaves "max", which is an operating point and matches.
-  // `gpt5`     -> `gpt55`       leaves "5",   which is a version and does not.
+  //   no guard at all      `GPT-5` normalises to `gpt5` and prefix-matches `gpt55`, `gpt56sol` and
+  //                        every other GPT-5.x string. It was credited with 55 cells. `Claude Opus
+  //                        4` got 51 the same way, `kimi-k2` got 46.
+  //   digits only          fixed those and still let `gpt-5.2` collect `gpt-5.2-codex`,
+  //                        `GPT-5.2 Pro (High)` and `gpt-5.2-chat-latest-20260210`. Caught by
+  //                        `scripts/propose-model.mjs` proposing to map all three to GPT-5.2 —
+  //                        every one of them is in the alias file's deliberately-unmapped list and
+  //                        `gpt-5.2-codex` is in the attribution gate's trap set.
+  //
+  // So the rule is the project's own, borrowed rather than invented: after the family name,
+  // nothing may be left over except an effort token. `propose-attribution.mjs` states it as
+  // "nothing may be left over after stripping the effort", and a size, tier or variant word is not
+  // an effort — Pro is a different model, Codex is a different model, Flash-Lite is not Flash.
+  //
+  // The cost is real and is the right cost: a string carrying a thinking budget (`-thinking-16k`)
+  // or a serving route (`-bedrock`) no longer counts, so the number is a lower bound by more than
+  // it was. A floor that undercounts leaves a model in the queue for a person. A floor that
+  // overcounts admits a model on another model's evidence.
+  const EFFORT_TOKENS = [
+    "maxeffort", "xhigheffort", "higheffort", "mediumeffort", "loweffort", "minimaleffort",
+    "nonreasoning", "adaptivereasoning", "reasoning", "nonthinking", "thinking",
+    "max", "xhigh", "high", "medium", "low", "minimal", "none", "effort", "auto",
+  ];
   const matches = (key, needle) => {
     if (key === needle) return true;
     if (!key.startsWith(needle)) return false;
-    return !/^[0-9]/.test(key.slice(needle.length));
+    let rest = key.slice(needle.length);
+    // A remainder may be several stacked tokens: "reasoningmaxeffort", "nonreasoninghigh".
+    for (let changed = true; rest.length && changed;) {
+      changed = false;
+      for (const token of EFFORT_TOKENS) {
+        if (rest.startsWith(token)) { rest = rest.slice(token.length); changed = true; break; }
+      }
+    }
+    return rest.length === 0;
   };
 
   return (needles) => {
