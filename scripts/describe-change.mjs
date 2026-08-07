@@ -16,7 +16,7 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BENCHMARKS, MODELS } from "../app/model-data.ts";
+import { BENCHMARKS, MODELS, byPrimaryPreference } from "../app/model-data.ts";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const STORE = "app/observations.generated.ts";
@@ -26,16 +26,31 @@ const modelName = new Map(MODELS.map((model) => [model.id, model.name]));
 const benchmarkName = new Map(BENCHMARKS.map((benchmark) => [benchmark.id, benchmark.name]));
 
 // One row per line in the generated file, so a line-wise regex is exact rather than hopeful.
-const ROW = /modelId: "([^"]+)", benchmarkId: "([^"]+)", score: ([-\d.]+)[\s\S]*?sourceLabel: "([^"]*)"[\s\S]*?sourceKind: "([^"]+)"[\s\S]*?harness: (null|"[^"]*")[\s\S]*?reasoningEffort: (null|"[^"]*")/;
+// `evaluationDate` is captured because the site's primary-row rule sorts on it; without it this
+// script cannot reproduce which number a cell actually shows.
+const ROW = /modelId: "([^"]+)", benchmarkId: "([^"]+)", score: ([-\d.]+)[\s\S]*?sourceLabel: "([^"]*)"[\s\S]*?sourceKind: "([^"]+)"[\s\S]*?evaluationDate: (null|"[^"]*")[\s\S]*?harness: (null|"[^"]*")[\s\S]*?reasoningEffort: (null|"[^"]*")/;
+
+const unquote = (value) => (value === "null" ? null : value.slice(1, -1));
 
 const parse = (text) => {
   const rows = new Map();
   for (const line of text.split("\n")) {
     const match = ROW.exec(line);
     if (!match) continue;
-    const [, modelId, benchmarkId, score, sourceLabel, sourceKind, harness, effort] = match;
-    const key = `${modelId}|${benchmarkId}|${harness}|${effort}`;
-    rows.set(key, { modelId, benchmarkId, score: Number(score), sourceLabel, sourceKind });
+    const [, modelId, benchmarkId, score, sourceLabel, sourceKind, evaluationDate, harness, effort] = match;
+    // `sourceLabel` belongs in the key. Without it, two sources publishing the same operating point
+    // of the same model — which is the normal case for a board with an independent mirror — collide,
+    // and `Map.set` silently keeps whichever appears last in the file. One of the two rows then does
+    // not exist as far as this report is concerned.
+    const key = `${modelId}|${benchmarkId}|${harness}|${effort}|${sourceLabel}`;
+    rows.set(key, {
+      modelId,
+      benchmarkId,
+      score: Number(score),
+      sourceLabel,
+      sourceKind,
+      evaluationDate: unquote(evaluationDate),
+    });
   }
   return rows;
 };
@@ -55,12 +70,44 @@ const after = parse(readFileSync(join(ROOT, STORE), "utf8"));
 // an Artificial Analysis refresh moved catalog numbers this report could not see, and once when a
 // self-report filed as benchmark-native was corrected to vendor. Both times it said "nothing
 // changed", both times it was wrong in the same direction.
+//
+// ⚠ Third instance of the failure mode the two paragraphs above describe, found 2026-08-07. This
+// function used to take **whichever row it parsed first** as the cell's value. File order is not
+// the site's rule, and the two diverge exactly where it matters most: a cell holding several
+// reasoning-effort variants from two sources — a benchmark-native board plus an independent mirror
+// of that same board, which is the normal shape here.
+//
+// PR #45 was the demonstration. It reported:
+//
+//   Claude Opus 4.8 · ARC-AGI-2: 72.08 → 62.22 ↓
+//   GPT-5.5 · ARC-AGI-2: 85 → 83.33 ↓
+//
+// The site's actual values were 72.08 → 72.1 and 85 → 85. Nothing dropped ten points; the ARC
+// Prize rows simply sort earlier in the generated file than Epoch's mirror of them, so the "first
+// row" for the cell became the low-effort one. The whole finding was an artefact of line order
+// crossed with Map overwrite semantics, and it held a purely additive attribution out of `main`.
+//
+// This direction is the harmless one — a false alarm blocks a merge that was fine. The same defect
+// produces the dangerous direction just as easily: a genuinely moved number in a cell whose
+// first-parsed row does not change reports `moved: 0`, and `moved == 0` is one of the three
+// conditions under which an automated change merges itself unattended.
+//
+// So the rule is imported from the module that renders the board rather than approximated here.
 const cellsOf = (rows) => {
-  const cells = new Map();
+  const byCell = new Map();
   for (const row of rows.values()) {
-    const key = `${row.modelId}|${row.benchmarkId}`;
-    if (!cells.has(key)) cells.set(key, { ...row, kinds: new Set() });
-    cells.get(key).kinds.add(row.sourceKind);
+    if (!byCell.has(row.benchmarkId + "|" + row.modelId)) byCell.set(row.benchmarkId + "|" + row.modelId, []);
+    byCell.get(row.benchmarkId + "|" + row.modelId).push(row);
+  }
+  const cells = new Map();
+  for (const [, group] of byCell) {
+    // Same comparator, same argument, as app/model-data.ts uses to build OBSERVATIONS_BY_CELL.
+    const sorted = [...group].sort(byPrimaryPreference(group[0].benchmarkId));
+    const primary = sorted[0];
+    cells.set(`${primary.modelId}|${primary.benchmarkId}`, {
+      ...primary,
+      kinds: new Set(group.map((row) => row.sourceKind)),
+    });
   }
   return cells;
 };

@@ -462,7 +462,12 @@ const BENCHMARK_MODE = new Map(BENCHMARKS.map((benchmark) => [benchmark.id, benc
 
 // Primary = strongest source first. Within one source class, a system benchmark reports the
 // best available scaffold, while a model benchmark reports the most recent evaluation.
-const byPrimaryPreference = (benchmarkId: string) => (a: ObservationRow, b: ObservationRow) => {
+//
+// Exported since 2026-08-07 because `scripts/describe-change.mjs` needs the same rule and had
+// been guessing at it — it took whichever row it happened to parse first, so a cell holding
+// several effort variants from two sources reported a number the site does not show. See that
+// script's header.
+export const byPrimaryPreference = (benchmarkId: string) => (a: ObservationRow, b: ObservationRow) => {
   const rank = SOURCE_RANK[a.sourceKind] - SOURCE_RANK[b.sourceKind];
   if (rank !== 0) return rank;
   if (BENCHMARK_MODE.get(benchmarkId) === "system" && a.score !== b.score) return b.score - a.score;
