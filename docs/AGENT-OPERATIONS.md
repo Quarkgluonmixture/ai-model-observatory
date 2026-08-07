@@ -436,7 +436,9 @@ npm run build
 ```
 
 `npm run check:mobile` additionally if you touched `app/globals.css` or `app/models/page.tsx`. Its
-default target is `/models`; pass a URL to probe the personal site at `/` instead. It needs
-Chrome and a running server; if you cannot run it, say so in the PR rather than claiming it passed.
+default target is `/models`; pass a URL to probe the personal site at `/` instead. It needs Chrome
+and a running server; if you cannot run it, say so in the PR rather than claiming it passed —
+though since 2026-08-07 CI runs it on both routes anyway, so a machine without Chrome no longer
+means the probe went unrun, only that you did not run it.
 
 Never report a check as passing that you did not run.

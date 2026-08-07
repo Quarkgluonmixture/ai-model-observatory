@@ -63,6 +63,51 @@ jobs:
       - name: Build production application
         run: npm run build
 
+      # The phone contract, and the reason it is here rather than in the "run it locally" list it
+      # lived in until 2026-08-07: it was the ONLY one of the seven contract commands not in CI, so
+      # it was the only one that depended on somebody remembering. Six commands ran on every push
+      # and the seventh ran when a person thought of it — on `/models`, the route whose table went
+      # from 68 columns to 72 in a single day.
+      #
+      # It needs a browser and a server, which is what kept it out. Neither is expensive here:
+      # ubuntu-latest ships Chrome, and the build this job already produced is what `next start`
+      # serves. What it must NOT do is skip itself when something is missing. A layout check that
+      # silently passes because Chrome was not found is worse than no layout check — it reports
+      # green for a probe that never ran — so the lookup fails the job instead.
+      #
+      # Both routes are probed. `check-mobile` defaults to `/models` precisely because pointing it
+      # at `/` would pass on the personal site while a phone regression sat one route over; the
+      # same argument says to probe both rather than to pick one.
+      - name: Probe the phone layout at 320 / 390 / 430
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium-browser || command -v chromium || true)"
+          if [ -z "$CHROME_PATH" ]; then
+            echo "::error::no Chrome on this runner — the phone probe cannot run, and a skipped layout check must not read as a passing one."
+            exit 1
+          fi
+          export CHROME_PATH
+          echo "Chrome: $CHROME_PATH"
+
+          PORT=3111 npm run start:next > /tmp/next-start.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+
+          # Bounded wait. Without the bound a server that never comes up hangs the job until the
+          # 20-minute timeout and reports as a timeout rather than as a server that did not start.
+          for _ in $(seq 1 60); do
+            curl -sf -o /dev/null http://localhost:3111/models && break
+            sleep 1
+          done
+          if ! curl -sf -o /dev/null http://localhost:3111/models; then
+            echo "::error::next start never answered on :3111"
+            cat /tmp/next-start.log
+            exit 1
+          fi
+
+          npm run check:mobile
+          npm run check:mobile -- http://localhost:3111/
+
       # The one notification this project sends when everything is working. It fires on the event
       # the owner actually wants to know about — **the site gained a model** — and not on any of
       # the events that lead up to it: a board moving, a maker publishing a post, Artificial

@@ -57,9 +57,10 @@ npm run check:prices    # 促销价是否混进目录
 npm run build
 ```
 
-改了 `app/globals.css` 或 `app/models/page.tsx` 才需要 `npm run check:mobile`
-（要 Chrome + `PORT=3111 npm run start:next`，**跑完必须停掉那个 server**——
-`lsof -nP -iTCP:3111 -sTCP:LISTEN` 确认，别用 `pgrep -f "next start"`，它会匹配到自己那条命令）。
+`npm run check:mobile` **2026-08-07 起进了 CI**（两条路由都探，用 runner 自带的 Chrome，
+找不到 Chrome 直接失败而不是跳过）。本地改布局时照样跑，要 Chrome + `PORT=3111 npm run start:next`，
+**跑完必须停掉那个 server**——用 `lsof -nP -iTCP:3111 -sTCP:LISTEN` 确认，
+别用 `pgrep -f "next start"`，它会匹配到自己那条命令。
 
 其他常用：
 
