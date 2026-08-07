@@ -589,9 +589,11 @@ path" is a claim about the search, not about the source.
 a scripted source is not automatically a correct one.** Epoch's FrontierMath export disagreed with
 Epoch's own leaderboard by about 1.7x, and every structural check passed — the rows were
 well-formed, versioned, dated and attributed. What caught it was a second source disagreeing, and
-that only exists where a benchmark has been read twice. Four core benchmarks currently rest on one
-source (`frontiermath`, `frontiermath-t4`, `imo-answer`, `aa-lcr`); on those, nothing would
-contradict a wrong reading.
+that only exists where a benchmark has been read twice. **Measured 2026-08-07: 47 of the 70 columns
+have exactly one source**, and four of those are core (`frontiermath`, `frontiermath-t4`,
+`imo-answer`, `aa-lcr`). On any of them, nothing would contradict a wrong reading. `ARC-AGI-1` and
+`ARC-AGI-3` joined that set the day they were added — nobody else publishes those splits — which is
+why `describe-change` prints how many added cells land in a single-source column.
 
 So automation raised the floor without raising the ceiling. The pipeline now catches structure,
 staleness, casing, units, provenance and cross-source contradiction. It cannot catch a source that
@@ -764,9 +766,12 @@ stay. That is judgement, and judgement does not go in a cron job.
   catalog's own price lookups resolve into, so adding a lab to the catalog adds it to the watch
   list with no second list to maintain.
 - Upstream diffing still exists only for sources with a machine-readable feed. LiveBench is
-  re-fetched and compared cell by cell (`npm run check:upstream`, daily in CI). The eleven
-  transcribed batches are still undiffable — nothing tells you that Terminal-Bench or Vals
-  edited a number after it was archived. Each source that gains a fetcher gains a drift check.
+  re-fetched and compared cell by cell (`npm run check:upstream`, daily in CI). **Measured
+  2026-08-07: 12 scripted batches carry 3,381 archived rows and 13 transcribed ones carry 1,749,
+  so 65.9% of the archive re-reads itself and the other third is undiffable** — nothing tells you
+  that Vals or the Qwen release table edited a number after it was archived. Ranked by rows at
+  risk the undiffable ones are `batch-05-independent` (538), `batch-17-qwen3.8-release` (465) and
+  `batch-02-coding` (313), which is the order worth attacking them in. Each source that gains a fetcher gains a drift check.
   Until then, how long ago a source was last read is the only honest freshness signal there is,
   which is why every source card now prints it and marks itself aging after
   `SOURCE_STALE_DAYS` (30). The card prints *read* or *evaluated* and never blurs the two: a
@@ -792,9 +797,9 @@ stay. That is judgement, and judgement does not go in a cron job.
 - 704 archived rows are not ingested because the catalog has no model for them, almost all
   previous-generation. They are kept deliberately: adding the model is all it takes for
   `npm run ingest` to attach them, with no code change.
-- Four benchmarks are still empty: `swe-evo` (no leaderboard exists), `videommmu` (newest
-  entry is Claude 3.5 Sonnet), `mmlu-pro` (Vals has rows but labels the version by year, which
-  cannot be matched to the catalog's) and `frontiermath-t4` beyond the models already covered.
+- Three benchmarks are still empty: `swe-evo` (no leaderboard exists), `videommmu` (newest
+  entry is Claude 3.5 Sonnet) and `mmlu-pro` (Vals has rows but labels the version by year, which
+  cannot be matched to the catalog's). `frontiermath-t4` left this list; it is thin, not empty.
 - Cell coverage, not source count, is the metric that matters. `npm run check:data` prints
   filled cells and the benchmark/independent/vendor split on every run; adding a source card
   without adding rows moves neither number.
@@ -812,6 +817,32 @@ stay. That is judgement, and judgement does not go in a cron job.
   silently — overflow, type floor, tap-target floor — but it needs Chrome and a running server, so
   it is a local gate rather than a CI one.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
+- **The three conditions do not protect against an empty row, and the thing that catches it is
+  incidental.** Measured 2026-08-07 by putting a zero-evidence catalog record in and running the
+  contract: `check:data` passed, `check:models` exited **0**, `check:prices` passed. All three
+  contracts are green on a model with no evidence at all, because none of them asks "does this
+  record have any rows". What refuses the merge is that `describe-change` counts a new catalog
+  record in its `moved` tally, so `moved=1` and condition 2 fails — a side effect of how the report
+  is written, not a gate anybody designed for this. The real protection is the sentence in
+  `docs/AGENT-OPERATIONS.md` telling a reader to check for rows first, and a sentence is not a gate.
+  If new-model automation is ever built, the missing condition is explicit: **a record needs
+  archived rows before it is allowed to exist**, and the count has to be measured on unaliased
+  strings, because `check:models` exits 1 on an alias naming a catalog id that is not there — so
+  the record must precede the alias and "rows already resolving to it" is zero by construction.
+- **`npm run check:mobile` is not in CI**, and the list of what is makes that easy to miss: CI runs
+  lint, ingest-and-diff, `check:data`, `check:models`, `check:prices`, the attribution backtest and
+  the build. The phone contract is therefore enforced only when somebody remembers to run it
+  locally, on a route (`/models`) whose table just gained two columns.
+- **Nothing verifies the deployed site.** EdgeOne publishes on merge and does not read CI, and the
+  WeChat push added for this measures `main` going red — which is the repository's state, not the
+  deployment's. A failed or unfired EdgeOne build is silent. The coupling also runs the other way:
+  a type error in the personal site at `/` fails the build step that gates the daily data refresh.
+- **The two schedulers watch each other asymmetrically.** GitHub dying is pushed to WeChat by
+  hermes. hermes dying is written into the gaps issue and the step summary only — and that issue is
+  mostly read by hermes. On top of that `check-heartbeat --agent` deliberately cannot tell the agent
+  from the owner (both push as a person, and the comment says so), so it answers "is the queue being
+  worked", not "is hermes alive": an owner session resets its three-day clock. Both are defensible
+  as written; together they mean a dead hermes is the one failure with no push behind it.
 - **The generated observation store has a compiler ceiling, and the archive walked into it on
   2026-08-07.** `ObservationRow` carries four optional properties, so every emitted row literal has a
   slightly different shape and TypeScript checks the array by building a union across all of them. Past

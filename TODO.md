@@ -22,6 +22,25 @@
 ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，见 `LOG.md` 2026-08-07 第四轮。
 探测细节住在 `scripts/fetchers/arcprize.mjs` 的头注释里，不在这。
 
+## 自动化的四个缺口（2026-08-07 实测，详情在 `docs/ARCHITECTURE.md` §10）
+
+按「便宜 × 挡住的东西」排：
+
+- [ ] **`check:mobile` 进 CI**。现在 CI 跑 lint / ingest-diff / check:data / check:models /
+      check:prices / 回测 / build，**没有 mobile** —— 手机端回归只在有人记得跑的时候才被抓到，
+      而 `/models` 的表刚多了两列。需要 headless Chrome + 起 server 两步。
+- [ ] **hermes 心跳也推微信**。现在 GitHub 挂了 hermes 会推微信，hermes 挂了只写进 gaps issue ——
+      而那个 issue 主要是 hermes 自己读。一行的事：把 `check-heartbeat --agent` 的非零退出接上
+      `scripts/notify-pushplus.mjs`。⚠ 但先想清楚判据：`--agent` 按设计分不出 hermes 和你
+      （代码注释里写明了），所以你自己推一次就会重置那个 3 天时钟。
+- [ ] **线上站没有任何验证**。EdgeOne 合并即发布不看 CI，现有那条微信量的是 main 变红、不是部署
+      成没成。最小可做：每日 job 拉一次线上 `/models`，比对页脚或某个已知数字和 main 一致。
+- [ ] **三条件不防空行**（实测：零证据记录下 check:data / check:models / check:prices 全绿，
+      `check:models` exit=0）。真正拦住它的是 `describe-change` 把「新增目录记录」计进 `moved`，
+      属于侥幸。要建新模型自动化就得补第四条：**有证据才允许建记录**。
+      ⚠ 实现约束：`check:models` 对「alias 指向不存在的目录 id」exit=1，所以记录必须先于 alias，
+      「已解析的行数」对新模型恒为 0 —— 证据只能数**归一化后能对上的未映射字符串**。
+
 ## 小口子
 
 - [ ] 三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。
