@@ -296,3 +296,20 @@ marketplace 的模型卡有 $2/$6。**这张卡能当 list price 用是验证过
 
 ⚠ 时间要点：GitHub 那个每日巡检写的是 `0 6 * * *`，但实际连续五天在 **07:58–08:54 UTC** 之间才跑
 （GitHub 定时任务常态性延迟约两小时）。hermes 必须排在那之后，否则每天读到的是昨天的队列。
+
+## [2026-08-07 尾] 探到 ARC Prize 的第一手数据文件  #measure
+
+TODO 里「ARC Prize verified board」原本只是一行候选。按章程「动手前先重新探一遍」探了，路是通的，
+证据记在 TODO 那条里（fetch 了什么、状态码、拿哪个已有模型对的、对不对得上）。
+
+关键结论：`arcprize.org/media/data/evaluations.json`（808 行）**是第一手源，而归档里现有两份都是它的
+下游** —— batch-12 是 Epoch 的转录（逐格一致、2 位小数、`independent`），batch-01 是同一批数据被人
+手抄成 1 位小数。所以脚本化不是「多一个源」，是**把一个 independent 镜像换成 benchmark 原生源**，
+顺带拿到全精度和免费的漂移检查。
+
+这也解释了今天早些时候 #45 为什么会把那格从 72.08 改成 72.1：两份下游转录精度不同，谁当 primary
+取决于源等级。收了第一手源之后这个纠结就消失了。
+
+路径不在 `_next` 的 chunk 里，在 `/scripts/leaderboard/data.js` 的 `d3.json()` 调用里 —— 又一次印证
+「数据住的地方不一定是页面住的地方」。#deadend 页面 HTML 里没有模型名（客户端渲染），
+leaderboard 的 page chunk 只有 6KB、零 fetch，光看这两处会得出「抓不了」的结论。

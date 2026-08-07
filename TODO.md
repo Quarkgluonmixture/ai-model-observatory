@@ -7,16 +7,6 @@
 
 ---
 
-## 等人拍板
-
-- [ ] **PR #45 那 8 条 alias（题目已经变小了，2026-08-07 订正）。** 原本记的「会把
-      72.08→62.22、85→83.33」是 `describe-change` 的 bug，不是真的（见 `LOG.md` 第三轮）。
-      **真实影响：只有 1 个数字动，`Opus 4.8 · arc-agi-2` 72.08 → 72.1 ↑**，因为 ARC Prize 官方榜
-      （`benchmark`）正确地压过了 Epoch 镜像（`independent`）—— 同一批测量、同一个 high 档，
-      官方 1 位小数 vs 镜像 2 位小数。GPT-5.5 那格根本不动。
-      按 AGENTS.md 第 3 条源优先级，这就是它该有的行为。**合并前只需确认这一句话，不是编辑难题。**
-      ⚠ 它开着的每一天，新 alias 提议都不流（`--any-open` 的代价）。
-
 ## 继续把手抄批次变成脚本源
 
 22 个批次里 9 个可脚本重读，13 个是手抄的、只有"上次有人读它是什么时候"这一个新鲜度信号。
@@ -28,7 +18,30 @@
 - [ ] OSWorld 2.0 / Toolathlon / MCP-Atlas（agent 轴，目前全靠手抄）
 - [ ] FrontierSWE / ProgramBench（后者官方分与厂商表差 70 分，注意别混指标）
 - [ ] APEX-Agents
-- [ ] ARC Prize verified board（公开 eval 那份是**另一个切分**，高 ~11 分，别替换）
+- [ ] **ARC Prize verified board —— 路已经探到了（2026-08-07），下一个动手的人直接写 fetcher。**
+
+      `https://arcprize.org/media/data/evaluations.json` · 200 · 152,870 bytes · **808 行**。
+      页面是 Next.js 客户端渲染，路径不在 `_next` chunk 里，而在 `/scripts/leaderboard/data.js`
+      的四个 `d3.json()` 里（另三个：`models.json` 99KB、`datasets.json`、`providers.json`）。
+      记录形状：`{datasetId, modelId, score(0–1), costPerTask, resultsUrl, display}`。
+
+      ⭐ **它是第一手源，而且比我们现有两份都好。** 按 AGENTS.md 的规矩拿已有模型对过：
+      `anthropic-opus-4-8-{low,medium,high}` = 62.22 / 71.67 / 72.08，
+      `gpt-5-5-2026-04-22-thinking-{low,medium,high,xhigh}` = 33.33 / 70.42 / 83.33 / 85.00,
+      `gpt-5-5-pro-2026-04-23-{high,xhigh}` = 84.58 / 84.16 —— **和归档里 Epoch 镜像逐格一致**。
+      也就是说 batch-12 那批 `independent` 行是这个文件的转录，而 batch-01 是同一批数据被人手抄成
+      1 位小数。脚本化之后：`source_kind: benchmark`（正确压过镜像）· 全精度 · 重跑即漂移检查。
+
+      ⚠ 四个必须先处理的陷阱：
+      1. **同一个文件里混着三个切分**：`v2_Semi_Private` 才是 verified 板，`v2_Public_Eval` 就是
+         陷阱 3 那个高 ~11 分的切分。站点自己只取 `*_Semi_Private`，fetcher 必须照做。
+      2. **`v3_Semi_Private` 已经存在**（`datasets.json` 里 v1=ARC-AGI-1、v2=ARC-AGI-2）。
+         那是**另一个 benchmark**，要自己的 benchmark id，绝不能并进 `arc-agi-2`（铁律 4）。
+         顺带 v1 也能填 ARC-AGI-1，如果决定收的话。
+      3. **档位在 modelId 后缀里**（`-low/-medium/-high/-xhigh`），不是独立字段 —— 这是**第七种
+         拼写约定**，要新 alias。
+      4. ⚠ **`gpt-5-5-pro-*` 不是 `gpt-5.5`**（Pro 是另一个模型，alias 文件 `_doc` 里记过）。
+         `display: false` 的行要不要收也得定。
 
 ## 小口子
 
@@ -39,8 +52,9 @@
 
 2026-08-07 一天做完两轮，见 `LOG.md` 同日五条。**剩下的只有需要观察的，没有待做的**：
 
-- [ ] 明早（2026-08-08）验一次：`auto/refresh-aa` 的 PR 应该自己开出来；gaps issue 末尾应该多一节
-      「Is the queue being worked?」；`auto/attribution` 应该**跳过**（PR #45 还开着，`--any-open`
-      会让它按兵不动并写 warning）。
-- [ ] ⚠ **PR #45 一天不处理，alias 管线就一天不流**。这是 `--any-open` 有意的代价（卡住看得见、
-      被改写看不见），但别忘了它卡的不只是自己。
+- [ ] 明早（2026-08-08）验三件事：① `auto/refresh-aa` 的 PR **自己开出来**（8-07 是
+      `gh: Argument list too long` 开不出来）；② gaps issue 末尾多一节「Is the queue being worked?」；
+      ③ `auto/attribution` **正常跑**——#45 已于 8-07 合并，没有 open PR 了，所以 `--any-open` 不该
+      触发。要是它反而写了「Attribution paused」的 warning，就是那个判据反了。
+- [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦下的 PR）。那天起
+      **新 alias 提议会开始积压**，确认 warning 确实写进了 step summary、不是静默的。
