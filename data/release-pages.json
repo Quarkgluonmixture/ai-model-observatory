@@ -96,7 +96,7 @@
       "mode": "render",
       "url": "https://ai.meta.com/blog/",
       "match": "^/blog/.+",
-      "verdict": "No feed at /blog/rss/ or /blog/feed/ (both 404). The index renders and lists posts; the top item on 2026-08-05 was Introducing Muse Spark 1.1, which is a catalog model, so this is a live surface and not an archive."
+      "verdict": "No feed at /blog/rss/ or /blog/feed/ (both 404). The index renders and lists posts; the top item on 2026-08-05 was Introducing Muse Spark 1.1, which is a catalog model, so this is a live surface and not an archive. ⚠ MEASURED 2026-08-07: the index is worth watching but Metas posts carry NO benchmark table. Both Muse Spark posts were rendered through headless Chrome (a curl of the raw HTML is a false negative here, the page is client-rendered) and both return zero <table> elements. So a Meta post is a signal that a model shipped and never a source of cells, unlike Qwens ~80-label table. Do not write a `carried` map for this maker until a post appears that actually has one. Also measured the same day: Muse Spark 1.2 was served from 2026-08-05 and there is NO post for it on this index at all -- it shipped as an API-only refresh, and its two archived rows come from Artificial Analysis and LMArena rather than from Meta."
     },
     {
       "id": "thinkingmachines",

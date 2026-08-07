@@ -31,8 +31,8 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **29 model families, 70 benchmarks, 1391 observations across 980 of 2030 cells**,
-sourced benchmark-native 880 / independent 321 / vendor 190. **318 of 321 catalog numbers are
+Current scale: **29 model families, 72 benchmarks, 1773 observations across 1090 of 2088 cells**,
+sourced benchmark-native 880 / independent 703 / vendor 190. **318 of 321 catalog numbers are
 backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
@@ -474,6 +474,7 @@ pages are known-dead or known-empty and were already worked around.
 | 23 | ARC Prize verified leaderboard | 198 entries on the ARC-AGI-2 semi-private split, from the file the board loads. **The first-hand source batch 12 (Epoch's mirror) and batch 01 (hand-read, rounded to one decimal) both descend from** — verified to the decimal against models already in the catalog. Filtered three ways, all reported: `v2_Semi_Private` only, `display:true` only, and one exact duplicate ARC publishes collapsed. `reasoning_effort` is read off the end of the published id against a **closed list** — Epoch's, including its `none` → `non-reasoning` synonym — and is null for the 81 rows whose last token is a thinking-token budget (`-1k`…`-64k`), a serving route (`-openrouter`, `-bedrock`) or a date. It landed with the field null on every row, which turned out not to be a neutral choice: ARC publishes five entries for GPT-5.6 Sol spanning 42.5 to 92.5, and with no effort on the row they all key to one cell, so attaching them failed both the one-source-one-cell gate and the 20% disagreement gate and could only be forced through with an exemption asserting a 42.5 and a 92.5 are one measurement. The id itself is still archived verbatim, unlike Epoch's, so identity stays the alias step's decision. **52 strings were attributed on 2026-08-07** (37 of them confirmed by matching an already-attributed Epoch row to the decimal on the same model-and-effort cell), which added ARC-AGI-2 to Claude Fable 5, Gemini 3.6 Flash and Inkling Small, and replaced seven rounded hand-read numbers with the full-precision originals. |
 | 24 | ARC Prize · ARC-AGI-1 | 197 entries on the `v1_Semi_Private` split, same file and same fetcher body as batch 23 — `evaluations.json` carries all eight splits, so a second board costs an argument rather than a second scraper. Carried as a **legacy** benchmark: 16 catalog families land on it and the top is saturated (98.5 / 98 / 97.5 across three makers), so it separates the middle of the field and not the frontier, and `legacy` keeps it out of the portfolio floor. One string exists only here — `anthropic-opus-4-8-max`, which ARC never ran on ARC-AGI-2. |
 | 25 | ARC Prize · ARC-AGI-3 | 26 entries on `v3_Semi_Private`, six catalog families, every one under 8% except Claude Opus 5's 30.16. Carried as **observe** for exactly that reason — a column at the floor is not a ranking — but it is the only unsaturated ARC split, so it is where movement will show first. Two entries here are deliberately unmapped and both look mappable: `openai-gpt-5-5-2026-04-23-high` displays as plain "GPT-5.5 (High)" and `google-gemini-3-1-pro-preview` as "Gemini 3.1 Pro (Preview)", but each sits in a different `modelGroup` from the string this catalog already carries, which is the board saying they are separate dated snapshots. Cost: two cells at 0.43 and 0.42. |
+| 26 | Artificial Analysis evaluations | AA's own runs of seven benchmarks, from `/api/v2/data/llms/models` — a **different path** from batch 14's `/api/v2/language/models/free`, on the same key. Measured 2026-08-07: the free path publishes 3 `evaluations` keys and this one publishes 17. Kept a separate batch because batch 14 declares model operating parameters, which is what keeps its rows out of the observation store. Adds 110 cells, and gives `hle-no-tools` and `scicode` — until now held up entirely by one vendor release table — an independent reading. Every mapping was checked against AA's published methodology table, which is also what decides `hle` is the no-tools column (its Tool Usage entry is ✗) rather than a guess. Ten of the seventeen keys are deliberately not collected, each with a reason in the fetcher header — `terminalbench_hard` because AA itself calls it superseded and out of active reporting, `tau2` because it appears in neither the methodology nor the leaderboard. `manual`: AA re-measures continuously, so this never enters the daily refresh. |
 
 ### Which sources can be re-read by script
 
@@ -506,7 +507,7 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | Vals AI, OSWorld, FrontierSWE, ALE, MCP-Atlas | Nothing machine-readable, on either pass. Their numbers reach the catalog only by hand, or second-hand through Epoch. (ALE was reversed on 2026-08-05 — see batch 18.) |
 | QwenCloud Model Marketplace | Client-rendered cards, one per model, carrying list price, cache prices, context and rate limits — and a labelled `50% off` / `20% off` where a promotion runs, which is what makes the unlabelled figure readable as a list price. **Read once by hand for batch 21**; a fetcher is feasible and would give the price column its first drift check, but a daily price refresh needs a `versioning` declaration and a rule for what to do when a promotion starts, which is a decision rather than a script. |
 
-Twelve of twenty-five batches are re-read by script, and only those twelve have a drift check or an
+Thirteen of twenty-six batches are re-read by script, and only those twelve have a drift check or an
 automatic refresh. The rest are hand transcriptions whose only freshness signal is how long ago
 someone read them — which is why the source cards print that date (§10). Batch 17 is a tenth kind:
 scripted, but run per release rather than daily, because a release post is frozen once published.
@@ -565,7 +566,7 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**Twelve of twenty-five batches now maintain themselves; the other thirteen cannot.** This paragraph used
+**Thirteen of twenty-six batches now maintain themselves; the other thirteen cannot.** This paragraph used
 to say four of fifteen, then nine of twenty-two, then ten of twenty-three, and — more usefully — it used to say that closing the gap was not a code
 problem, because "§9 records that no other source publishes a data file to read". That was wrong,
 and it was wrong in the most expensive way a written-down answer can be: it told the next person
@@ -590,8 +591,11 @@ a scripted source is not automatically a correct one.** Epoch's FrontierMath exp
 Epoch's own leaderboard by about 1.7x, and every structural check passed — the rows were
 well-formed, versioned, dated and attributed. What caught it was a second source disagreeing, and
 that only exists where a benchmark has been read twice. **Measured 2026-08-07: 47 of the 70 columns
-have exactly one source**, and four of those are core (`frontiermath`, `frontiermath-t4`,
-`imo-answer`, `aa-lcr`). On any of them, nothing would contradict a wrong reading. `ARC-AGI-1` and
+had exactly one source**, and four of those were core (`frontiermath`, `frontiermath-t4`,
+`imo-answer`, `aa-lcr`). On any of them, nothing would contradict a wrong reading. Batch 26 moved
+`aa-lcr`, `hle-no-tools` and `scicode` off that list by giving them a second reading, and added
+two columns (`tau3-banking`, `ifbench`) that join it — the trade is deliberate and `describe-change`
+prints the count on every run. `ARC-AGI-1` and
 `ARC-AGI-3` joined that set the day they were added — nobody else publishes those splits — which is
 why `describe-change` prints how many added cells land in a single-source column.
 

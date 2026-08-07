@@ -1,0 +1,12 @@
+{
+  "batch": "26 · Artificial Analysis benchmark evaluations",
+  "collectedWith": "scripts/fetchers/aa-evaluations.mjs",
+  "filtered": true,
+  "release": "v2",
+  "sources": [
+    "https://artificialanalysis.ai/api/v2/data/llms/models",
+    "https://artificialanalysis.ai/methodology/intelligence-benchmarking"
+  ],
+  "note": "AA's per-benchmark scores, from /api/v2/data/llms/models — a DIFFERENT path from batch 14's /api/v2/language/models/free, on the same key. Measured 2026-08-07: the free path publishes 3 evaluation keys and this one publishes 17. Kept separate from batch 14 because that batch declares model operating parameters, which is what keeps its rows out of the observation store. FILTERED: 7 of the 17 keys are collected. Every mapping was checked against AA's own methodology table, which is also what decides that `hle` is the no-tools column — its Tool Usage entry is ✗. NOT collected, each for a stated reason: terminalbench_hard (AA says it is superseded by v2.1 and out of active reporting), tau2 (440 models carry it and it appears in neither the methodology nor the leaderboard, so what it measures is a guess), mmlu_pro and livecodebench (one catalog model each, and both would need a version or a harness claim the source does not state), and the three composite indices (the catalog carries composites as model parameters, not observations). harness is NULL on the two system-mode rows because AA publishes no scaffold; evaluation_date is NULL because AA publishes only the MODEL's release date. manual: AA re-measures continuously, so this is on demand and never in the daily refresh — a scheduled re-read would move published numbers every time AA re-ran an evaluation.",
+  "retrievedDate": "2026-08-07"
+}

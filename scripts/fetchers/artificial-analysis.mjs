@@ -21,8 +21,15 @@
 // whether the catalog is stale or AA has drifted. That decision is exactly the editorial work
 // AGENTS.md says model records exist to carry.
 //
-// Requires AA_API_KEY. Free tier covers everything used here. GDPval-AA and AA-LCR live behind
-// the Pro tier and return 403, so those two core benchmarks still have no scripted path.
+// Requires AA_API_KEY. Free tier covers everything used here.
+//
+// ⚠ This header used to end: "GDPval-AA and AA-LCR live behind the Pro tier and return 403, so
+// those two core benchmarks still have no scripted path." Half of that was wrong and it cost the
+// project a column. Measured 2026-08-07 on the same key: `/api/v2/data/llms/models` returns 200
+// and carries `lcr` for 488 models. What 403s is `/api/v2/language/models` (no `/free`). AA-LCR
+// now has a scripted path and it is `scripts/fetchers/aa-evaluations.mjs`, which reads the
+// seventeen-key `evaluations` object this endpoint's three-key version does not have. GDPval-AA
+// is still not in either, and is still read by rendering its board (batch 19).
 
 const API = "https://artificialanalysis.ai/api/v2/language/models/free";
 
