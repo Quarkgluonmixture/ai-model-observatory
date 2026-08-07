@@ -345,3 +345,84 @@ TODO 里「ARC Prize verified board」原本只是一行候选。按章程「动
 路径不在 `_next` 的 chunk 里，在 `/scripts/leaderboard/data.js` 的 `d3.json()` 调用里 —— 又一次印证
 「数据住的地方不一定是页面住的地方」。#deadend 页面 HTML 里没有模型名（客户端渲染），
 leaderboard 的 page chunk 只有 6KB、零 fetch，光看这两处会得出「抓不了」的结论。
+
+## [2026-08-07 第四轮] ARC 收尾：把「effort 一律留空」这个决定推翻了，因为它让归属无法进行  #decision #incident #ship
+
+接手 TODO 的「ARC 收尾：三个判断题」。三件都做完了，但**第一件一动手就发现前一轮的一个结论是错的**
+—— 错在结论，不在观察。
+
+**被推翻的是本文件上一条 #deadend 的第 1 点**（「从 modelId 尾部解析 effort —— 看着安全，不是」）。
+那条对 token 的观察全对：`-1k/-8k/…/-64k` 确实是思考预算、`-openrouter/-bedrock` 确实是服务路由。
+但从「有些尾 token 不是档位」推出「那就一个都不解析」是**多推了一步**，而代价在 alias 步骤才现形：
+
+> ARC 给 GPT-5.6 Sol 发五条，42.5 / 67.08 / 85.42 / 90 / 92.5，这是一个模型的五个操作点。
+> effort 留空的话五条 key 到同一格 —— 接目录会**同时**撞上一源两串闸门和 20% 跨源分歧闸门，
+> 而唯一的过法是写一条 `mergedInOneSource` 或 `acknowledgedDisagreements`，内容是「42.5 和 92.5
+> 是同一个测量」。它们不是。而写豁免恰好是三条件里第 3 条禁止的那件事。
+
+`scripts/fetchers/epoch.mjs` 早就从另一侧记过同一个坑：把已发布的操作点折成 null，会让它
+「和那些本来就没印 effort 的源撞在一起」。∴ 改成**对着闭合清单读尾 token**（直接用 Epoch 那份，
+含 `none → non-reasoning` 同义），清单外一律留空。117/198 行拿到 effort，81 行没有。
+**分数零变动、行数零增减**，重采只改 `reasoning_effort` 和 `note`。
+
+`model_raw` 仍然逐字保留（Epoch 是剥掉的）。理由是失败方向不同：**尾 token 读错只是给配置贴错标签，
+剥进 id 里则是把两个产品并成一个，alias 表再也分不开。** `max` 对 Anthropic/OpenAI 是档位，对阿里是
+产品档 —— 身份判断留在 alias 步骤。
+
+**判断题一：52 条 alias。** 37 条是**用数字确认的**（同一 model+effort 格上和 batch-12 里已归属的
+Epoch 行逐位对上）。剩 15 条 —— Claude Fable 5、Gemini 3.6 Flash、Inkling Small —— **没有第二个源
+测过它们的 ARC**，靠的是同批次内已被数字确认的同形字符串（`anthropic-claude-opus-5-max`、
+`anthropic-opus-4-8-high`）加读者复核。归属闸门只自己认出 4 条（`gemini-3-6-flash-*`，tier 1）；
+其余全被 maker 前缀挡下（剥完 effort 还剩 `openai`/`anthropic`/`thinky` 残余），这正是 ALE 那个形状。
+
+**判断题二：batch 01 的 95 条 ARC 行 supersede 了。** 不是编辑口味，是三条硬事实： #measure
+1. 它们已经是**字面重复**：手抄时保留了 leaderboard 自己的 URL，于是「GPT-5.5 (xHigh) 85」和
+   `gpt-5-5-2026-04-22-thinking-xhigh 85` 同源同配置同分 —— `check:data` 直接报
+   `duplicate observation`。这条是被契约逼出来的，不是我挑的。
+2. 一位小数（85.4 vs 85.42），且**同一批次里一个档位两种拼法**（results 页写 `extra high`、
+   leaderboard 页写 `xhigh`），把一个操作点分进两格。
+3. ⭐ **它的 `evaluation_date` 根本不是评测日。** 逐个对过：Sol 2026-07-09、Opus 5 2026-07-24、
+   Inkling 2026-07-15、Opus 4.8 2026-06-01、GPT-5.5 2026-04-22、Gemini 3.1 Pro 2026-02-19 ——
+   **全部等于 `models.json` 的 `modelReleaseDate`，一天不差**。而 `byPrimaryPreference` 拿这个字段
+   排序，所以**一个发布日一直在决定站上显示哪条 ARC 行，且每次都选中那个手抄的整数版**。
+   上一轮为 batch 23 留空 `evaluation_date` 是对的（第 2 点），但真正的问题不在新批次而在旧批次。
+
+∴ 「不 supersede 就让全精度行一直等着」这个顾虑连同它的前提一起消失了。
+
+**判断题三：v1/v3 收不收 —— 问了人，答复是两个都收。** 数据先摆出来再问的：ARC-AGI-1 有 197 行、
+16 个家族、77–98.5（顶部三家厂商都在 97.5 以上，饱和），ARC-AGI-3 只有 26 行、6 个家族、除 Opus 5
+的 30.16 外全在 8% 以下。∴ 分别记 `legacy` 和 `observe`，都不进 portfolio floor（实测：reasoning
+core 篮子仍是 gpqa / hle-no-tools / arc-agi-2 三项，没有任何已发布均值移动）。
+
+一份文件八个 split，所以 `arcprize.mjs` 改成工厂、导出三个 board（batch 23/24/25）。**共用函数体是
+为了不漂移**：split 过滤、display 过滤、重复规则、effort 清单、note 五处只写一遍。
+
+**三个附带发现，每个都会静默出错：** #deadend
+1. **TypeScript 有个行数天花板，而归档今天正好走进去。** `ObservationRow` 有四个可选属性，所以每行
+   字面量形状不同，TS 检查数组字面量时会对所有行做并集；**过约 1,120 行这个并集就无法表示**，
+   `npm run build` 报 *Expression produces a union type that is too complex to represent*，指向生成
+   文件第 6 行 —— 读起来像文件坏了，不像归档变大了。实测：1,116 → 1,138 行触发，砍到 1,113 通过。
+   ∴ `ingest.mjs` 改成按 300 行分块、各自标注 `ObservationRow[]` 再展开，并集从此只在块内构建。
+   **每日刷新离自己撞上它只剩几天。**
+2. **两条「看名字该映射」的字符串靠 `modelGroup` 才判掉。** `openai-gpt-5-5-2026-04-23-high` 显示名
+   就是「GPT-5.5 (High)」、不带 Pro；`google-gemini-3-1-pro-preview` 显示名就是「Gemini 3.1 Pro
+   (Preview)」。但两者的 `modelGroup` 都和目录已收的那条不同（且 04-23 正是 ARC 给 GPT-5.5 **Pro**
+   的日期）——**同名不同 group = 板子自己说这是两个带日期的快照**。∴ 都不映射，代价两格 0.43/0.42。
+   顺手把 `modelGroup` 写进每行 note：显示名撞车时它才是判身份的字段，不存就得回头重抓 models.json。
+3. **工厂参数 `dataset` 被函数内 `const dataset` 遮蔽**，于是 `fetch()` 不带参数是 TDZ 抛错 ——
+   新克隆、归档还不存在时正好走这条路。lint 的 `no-unused-vars` 逮到了这个遮蔽；崩溃会等到那天。
+
+验收：七项契约全绿（1391 观测 · 980/2030 格 · 48.3%）、归属闸门回测 300 条 0 contradicted /
+0 false positive、三个 board 各自 `--check` 报 archive matches upstream、`check:mobile` 三档无溢出
+（跑完已停 3111 端口的 server）。**`mergedInOneSource` 和 `acknowledgedDisagreements` 仍然是空的**
+—— 这次没有靠任何豁免过闸。
+
+覆盖率读数 48.6% → 48.3%：分母进了 58 格（两列 × 29 家族）而证据只进了 22 格。README 里写过这个
+方向是有意的，「三个数字一起读，别只读百分比」。
+
+⚠ **这次改动不能自合**：`describe-change` 报 7 个已有数字被改动（全是 1 位小数 → 全精度，
+最大 0.04），三条件第 2 条不满足。开 PR 等人。
+
+⚠ 顺带纠一个容易想当然的地方：`feat/arc-attribution` 开着**不会**暂停归属闸门。
+`pr-hands-off.sh` 查的是 `gh pr list --head auto/attribution`，**只看那一个分支**。
+所以两边会同时写 `data/model-aliases.json`，合之前得先 rebase。
