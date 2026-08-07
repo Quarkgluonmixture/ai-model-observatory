@@ -57,6 +57,39 @@
     "separate model, so it maps to the family and the effort stays on the observation row -- the",
     "fetcher copies it into reasoning_effort only when the token literally appears in the string.",
     "",
+    "ARC Prize (batches 23/24/25) writes <maker>-<family, dashes for dots>-<effort>, and doubles the",
+    "maker prefix for some families and not others -- the same shape as ALE. That prefix is why the",
+    "attribution gate escalates almost all of it: after stripping the effort a residual token is left,",
+    "and a residual token is a model distinction until a reader says otherwise. 37 of the 52 strings",
+    "mapped here are confirmed by the NUMBER instead: the score matches an already-attributed Epoch",
+    "row (batch 12, the same board mirrored) to the decimal on the same model-and-effort cell.",
+    "",
+    "ARC strings deliberately left unmapped, with the evidence -- two of them look mappable:",
+    "  openai-gpt-5-5-2026-04-23-high  - displayName is plainly \"GPT-5.5 (High)\", NOT Pro, so the name",
+    "                                    says map it. models.json says otherwise: its modelGroup is",
+    "                                    openai-gpt-5-5-2026-04-23-thinking, while the string this",
+    "                                    catalog already carries, gpt-5-5-2026-04-22-thinking-high, is",
+    "                                    in gpt-5-5-2026-04-22-thinking. Two modelGroups is the board",
+    "                                    saying these are two dated snapshots -- and 04-23 is the date",
+    "                                    it also gives GPT-5.5 Pro. Costs one ARC-AGI-3 cell at 0.43.",
+    "  google-gemini-3-1-pro-preview   - same shape: displayName \"Gemini 3.1 Pro (Preview)\", matching",
+    "                                    the already-mapped gemini-3-1-pro-preview, but a different",
+    "                                    modelGroup and modelReleaseDate 2026-03-05 against the",
+    "                                    other's 2026-02-19. Costs one ARC-AGI-3 cell at 0.42.",
+    "  openai-gpt-5-6-luna-*-2026-07-30  six entries the board publishes ALONGSIDE the undated Luna",
+    "                                    strings, with different scores (high 33.33 against 29.31, low",
+    "                                    3.61 against 5.14). One board, two strings, two models.",
+    "  gpt-5-5-pro-*, gemini-3-5-flash-lite-*, claude-opus-4-5/4-6/4-7-*, claude_sonnet_4_6_*,",
+    "  gpt-5-1/5-2/5-4-*, o1/o3/o4-*, gemini-2-*, gemini-3-pro-preview, gemini-3-deep-think-*,",
+    "  grok-3*, grok-4-*, grok-4.20-*, magistral-*, Llama-4-*, R1, qwen3-235b-*, kimi-k2.5,",
+    "  minimax-m2.5, deepseek-v3.2, glm-5",
+    "                                  - Pro is not the base, Flash-Lite is not Flash, and the rest are",
+    "                                    previous generation with no catalog record.",
+    "  2025_human_panel, stem_grad, ARChitects, Icecuber, NVARC_2025, trm-2025-10-07,",
+    "  jeremy_sept_2025, johan_land_gpt_5_2_refine, poetiq-arc-agi-gemini-3-d_v1",
+    "                                  - not models. Human baselines and Kaggle solutions; models.json",
+    "                                    gives the two humans providerId \"Human\". Rule 8: they stay.",
+    "",
     "LiveBench strings deliberately left unmapped, so nobody adds them by reflex:",
     "  gemini-3.5-flash-lite-high      - Flash-Lite is a different model from Flash, not an effort",
     "  claude-opus-4-5/4-6/4-7-*       - previous generation, no catalog record",
@@ -1402,6 +1435,324 @@
       "effort": "*",
       "modelId": "gpt-5.5",
       "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: the same published string as \"GPT 5.5 (high)\" up to casing and separators, which alias resolution treats as different. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-sol-low",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 42.5 at low and Epoch's independent reading of the same board publishes 42.5 for gpt-5.6-sol at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-sol-medium",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 67.08 at medium and Epoch's independent reading of the same board publishes 67.08 for gpt-5.6-sol at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-sol-high",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 85.42 at high and Epoch's independent reading of the same board publishes 85.42 for gpt-5.6-sol at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-sol-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 90 at xhigh and Epoch's independent reading of the same board publishes 90 for gpt-5.6-sol at xhigh (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-sol-max",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 92.5 at max and Epoch's independent reading of the same board publishes 92.5 for gpt-5.6-sol at max (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-terra-low",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 18.75 at low and Epoch's independent reading of the same board publishes 18.75 for gpt-5.6-terra at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-terra-medium",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 37.5 at medium and Epoch's independent reading of the same board publishes 37.5 for gpt-5.6-terra at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-terra-high",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 67.08 at high and Epoch's independent reading of the same board publishes 67.08 for gpt-5.6-terra at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-terra-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 74.17 at xhigh and Epoch's independent reading of the same board publishes 74.17 for gpt-5.6-terra at xhigh (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-terra-max",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 83.9 at max and Epoch's independent reading of the same board publishes 83.9 for gpt-5.6-terra at max (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-luna-low",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 5.14 at low and Epoch's independent reading of the same board publishes 5.14 for gpt-5.6-luna at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. This board also publishes openai-gpt-5-6-luna-<effort>-2026-07-30, a second dated snapshot with DIFFERENT scores (high 33.33 against this string's 29.31, low 3.61 against 5.14). Two strings on one board are two models until the dates say otherwise, so the dated six stay unmapped. The undated five are the ones Epoch and batch 01 both carry as GPT-5.6 Luna."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-luna-medium",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 7.36 at medium and Epoch's independent reading of the same board publishes 7.36 for gpt-5.6-luna at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. This board also publishes openai-gpt-5-6-luna-<effort>-2026-07-30, a second dated snapshot with DIFFERENT scores (high 33.33 against this string's 29.31, low 3.61 against 5.14). Two strings on one board are two models until the dates say otherwise, so the dated six stay unmapped. The undated five are the ones Epoch and batch 01 both carry as GPT-5.6 Luna."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-luna-high",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 29.31 at high and Epoch's independent reading of the same board publishes 29.31 for gpt-5.6-luna at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. This board also publishes openai-gpt-5-6-luna-<effort>-2026-07-30, a second dated snapshot with DIFFERENT scores (high 33.33 against this string's 29.31, low 3.61 against 5.14). Two strings on one board are two models until the dates say otherwise, so the dated six stay unmapped. The undated five are the ones Epoch and batch 01 both carry as GPT-5.6 Luna."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-luna-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 47.64 at xhigh and Epoch's independent reading of the same board publishes 47.64 for gpt-5.6-luna at xhigh (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. This board also publishes openai-gpt-5-6-luna-<effort>-2026-07-30, a second dated snapshot with DIFFERENT scores (high 33.33 against this string's 29.31, low 3.61 against 5.14). Two strings on one board are two models until the dates say otherwise, so the dated six stay unmapped. The undated five are the ones Epoch and batch 01 both carry as GPT-5.6 Luna."
+    },
+    {
+      "modelRaw": "openai-gpt-5-6-luna-max",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 59.54 at max and Epoch's independent reading of the same board publishes 59.54 for gpt-5.6-luna at max (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. This board also publishes openai-gpt-5-6-luna-<effort>-2026-07-30, a second dated snapshot with DIFFERENT scores (high 33.33 against this string's 29.31, low 3.61 against 5.14). Two strings on one board are two models until the dates say otherwise, so the dated six stay unmapped. The undated five are the ones Epoch and batch 01 both carry as GPT-5.6 Luna."
+    },
+    {
+      "modelRaw": "anthropic-claude-opus-5-high",
+      "effort": "*",
+      "modelId": "claude-opus-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 88.33 at high and Epoch's independent reading of the same board publishes 88.33 for claude-opus-5 at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "anthropic-claude-opus-5-max",
+      "effort": "*",
+      "modelId": "claude-opus-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 90.42 at max and Epoch's independent reading of the same board publishes 90.42 for claude-opus-5 at max (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "anthropic-claude-fable-5-low",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. No number confirms this one: ARC is the only source in the archive that has run Fable 5 on ARC-AGI-2, so this fills an empty cell rather than agreeing with an existing one. What carries it is the convention, verified inside this same batch: anthropic-claude-opus-5-max and anthropic-opus-4-8-high are the identical shape and both are confirmed to the decimal against Epoch. Read the numbers as the residual control: 76.81 / 82.5 / 87.5 / 88.33 / 89.17 rising monotonically with effort, landing just under Claude Opus 5's 88.33 / 90.42 and just over GPT-5.6 Terra's 83.9, is what this model should score. A misfiled score is normally obvious here, and this is not one."
+    },
+    {
+      "modelRaw": "anthropic-claude-fable-5-medium",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. No number confirms this one: ARC is the only source in the archive that has run Fable 5 on ARC-AGI-2, so this fills an empty cell rather than agreeing with an existing one. What carries it is the convention, verified inside this same batch: anthropic-claude-opus-5-max and anthropic-opus-4-8-high are the identical shape and both are confirmed to the decimal against Epoch. Read the numbers as the residual control: 76.81 / 82.5 / 87.5 / 88.33 / 89.17 rising monotonically with effort, landing just under Claude Opus 5's 88.33 / 90.42 and just over GPT-5.6 Terra's 83.9, is what this model should score. A misfiled score is normally obvious here, and this is not one."
+    },
+    {
+      "modelRaw": "anthropic-claude-fable-5-high",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. No number confirms this one: ARC is the only source in the archive that has run Fable 5 on ARC-AGI-2, so this fills an empty cell rather than agreeing with an existing one. What carries it is the convention, verified inside this same batch: anthropic-claude-opus-5-max and anthropic-opus-4-8-high are the identical shape and both are confirmed to the decimal against Epoch. Read the numbers as the residual control: 76.81 / 82.5 / 87.5 / 88.33 / 89.17 rising monotonically with effort, landing just under Claude Opus 5's 88.33 / 90.42 and just over GPT-5.6 Terra's 83.9, is what this model should score. A misfiled score is normally obvious here, and this is not one."
+    },
+    {
+      "modelRaw": "anthropic-claude-fable-5-xhigh",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. No number confirms this one: ARC is the only source in the archive that has run Fable 5 on ARC-AGI-2, so this fills an empty cell rather than agreeing with an existing one. What carries it is the convention, verified inside this same batch: anthropic-claude-opus-5-max and anthropic-opus-4-8-high are the identical shape and both are confirmed to the decimal against Epoch. Read the numbers as the residual control: 76.81 / 82.5 / 87.5 / 88.33 / 89.17 rising monotonically with effort, landing just under Claude Opus 5's 88.33 / 90.42 and just over GPT-5.6 Terra's 83.9, is what this model should score. A misfiled score is normally obvious here, and this is not one."
+    },
+    {
+      "modelRaw": "anthropic-claude-fable-5-max",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. No number confirms this one: ARC is the only source in the archive that has run Fable 5 on ARC-AGI-2, so this fills an empty cell rather than agreeing with an existing one. What carries it is the convention, verified inside this same batch: anthropic-claude-opus-5-max and anthropic-opus-4-8-high are the identical shape and both are confirmed to the decimal against Epoch. Read the numbers as the residual control: 76.81 / 82.5 / 87.5 / 88.33 / 89.17 rising monotonically with effort, landing just under Claude Opus 5's 88.33 / 90.42 and just over GPT-5.6 Terra's 83.9, is what this model should score. A misfiled score is normally obvious here, and this is not one."
+    },
+    {
+      "modelRaw": "anthropic-opus-4-8-low",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 62.22 at low and Epoch's independent reading of the same board publishes 62.22 for claude-opus-4.8 at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "anthropic-opus-4-8-medium",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 71.67 at medium and Epoch's independent reading of the same board publishes 71.67 for claude-opus-4.8 at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "anthropic-opus-4-8-high",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 72.08 at high and Epoch's independent reading of the same board publishes 72.08 for claude-opus-4.8 at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "gpt-5-5-2026-04-22-thinking-low",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 33.33 at low and Epoch's independent reading of the same board publishes 33.33 for gpt-5.5 at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. gpt-5-5-pro-2026-04-23-{high,xhigh} is on the same board and stays unmapped: Pro is a different model from the base, which the alias file's _doc already records for three generations of it."
+    },
+    {
+      "modelRaw": "gpt-5-5-2026-04-22-thinking-medium",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 70.42 at medium and Epoch's independent reading of the same board publishes 70.42 for gpt-5.5 at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. gpt-5-5-pro-2026-04-23-{high,xhigh} is on the same board and stays unmapped: Pro is a different model from the base, which the alias file's _doc already records for three generations of it."
+    },
+    {
+      "modelRaw": "gpt-5-5-2026-04-22-thinking-high",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 83.33 at high and Epoch's independent reading of the same board publishes 83.33 for gpt-5.5 at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. gpt-5-5-pro-2026-04-23-{high,xhigh} is on the same board and stays unmapped: Pro is a different model from the base, which the alias file's _doc already records for three generations of it."
+    },
+    {
+      "modelRaw": "gpt-5-5-2026-04-22-thinking-xhigh",
+      "effort": "*",
+      "modelId": "gpt-5.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 85 at xhigh and Epoch's independent reading of the same board publishes 85 for gpt-5.5 at xhigh (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. gpt-5-5-pro-2026-04-23-{high,xhigh} is on the same board and stays unmapped: Pro is a different model from the base, which the alias file's _doc already records for three generations of it."
+    },
+    {
+      "modelRaw": "moonshot-kimi-k3-low",
+      "effort": "*",
+      "modelId": "kimi-k3",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 12.36 at low and Epoch's independent reading of the same board publishes 12.36 for kimi-k3 at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. The trailing max here is an operating point and not a product tier — Epoch reads the same three entries the same way and its max row is the same 60.42."
+    },
+    {
+      "modelRaw": "moonshot-kimi-k3-high",
+      "effort": "*",
+      "modelId": "kimi-k3",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 55 at high and Epoch's independent reading of the same board publishes 55 for kimi-k3 at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. The trailing max here is an operating point and not a product tier — Epoch reads the same three entries the same way and its max row is the same 60.42."
+    },
+    {
+      "modelRaw": "moonshot-kimi-k3-max",
+      "effort": "*",
+      "modelId": "kimi-k3",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 60.42 at max and Epoch's independent reading of the same board publishes 60.42 for kimi-k3 at max (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. The trailing max here is an operating point and not a product tier — Epoch reads the same three entries the same way and its max row is the same 60.42."
+    },
+    {
+      "modelRaw": "xai-grok-4-5-low",
+      "effort": "*",
+      "modelId": "grok-4.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 33.06 at low and Epoch's independent reading of the same board publishes 33.06 for grok-4.5 at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. medium and high really do both score 52.64 on this board; Epoch publishes the same pair, so the two rows are one model measured twice and not a duplicate to collapse."
+    },
+    {
+      "modelRaw": "xai-grok-4-5-medium",
+      "effort": "*",
+      "modelId": "grok-4.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 52.64 at medium and Epoch's independent reading of the same board publishes 52.64 for grok-4.5 at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. medium and high really do both score 52.64 on this board; Epoch publishes the same pair, so the two rows are one model measured twice and not a duplicate to collapse."
+    },
+    {
+      "modelRaw": "xai-grok-4-5-high",
+      "effort": "*",
+      "modelId": "grok-4.5",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 52.64 at high and Epoch's independent reading of the same board publishes 52.64 for grok-4.5 at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. medium and high really do both score 52.64 on this board; Epoch publishes the same pair, so the two rows are one model measured twice and not a duplicate to collapse."
+    },
+    {
+      "modelRaw": "gemini-3-5-flash-minimal",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 8.89 at minimal and Epoch's independent reading of the same board publishes 8.89 for gemini-3.5-flash at minimal (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. gemini-3-5-flash-lite-{minimal,low,medium,high} is on the same board and stays unmapped: Flash-Lite is a different model from Flash, the catalog deliberately holds no record for it, and it is in the attribution gate's trap set. The board publishing both is what proves the bare string means Flash proper."
+    },
+    {
+      "modelRaw": "gemini-3-5-flash-high",
+      "effort": "*",
+      "modelId": "gemini-3.5-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 72.08 at high and Epoch's independent reading of the same board publishes 72.08 for gemini-3.5-flash at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. gemini-3-5-flash-lite-{minimal,low,medium,high} is on the same board and stays unmapped: Flash-Lite is a different model from Flash, the catalog deliberately holds no record for it, and it is in the attribution gate's trap set. The board publishing both is what proves the bare string means Flash proper."
+    },
+    {
+      "modelRaw": "gemini-3-6-flash-minimal",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Proposed independently by scripts/propose-attribution.mjs at tier 1 on 2026-08-07 (\"gemini-3-6-flash is exactly gemini-3.6-flash after stripping the effort\") — this board spells Google's models without a maker prefix, so the gate could reach it. Written here rather than left for the gate so the ARC batch lands attributed in one piece. No Epoch row to check against; the residual control is that 2.64 / 30.42 / 50.42 / 60.42 sits inside the range this pair already shows elsewhere — across the 29 cells Gemini 3.5 and 3.6 Flash both hold, 3.6 is ahead on 15 and behind on 14, so trailing 3.5 Flash's 72.08 here is normal variation and not the signature of a misfiled score."
+    },
+    {
+      "modelRaw": "gemini-3-6-flash-low",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Proposed independently by scripts/propose-attribution.mjs at tier 1 on 2026-08-07 (\"gemini-3-6-flash is exactly gemini-3.6-flash after stripping the effort\") — this board spells Google's models without a maker prefix, so the gate could reach it. Written here rather than left for the gate so the ARC batch lands attributed in one piece. No Epoch row to check against; the residual control is that 2.64 / 30.42 / 50.42 / 60.42 sits inside the range this pair already shows elsewhere — across the 29 cells Gemini 3.5 and 3.6 Flash both hold, 3.6 is ahead on 15 and behind on 14, so trailing 3.5 Flash's 72.08 here is normal variation and not the signature of a misfiled score."
+    },
+    {
+      "modelRaw": "gemini-3-6-flash-medium",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Proposed independently by scripts/propose-attribution.mjs at tier 1 on 2026-08-07 (\"gemini-3-6-flash is exactly gemini-3.6-flash after stripping the effort\") — this board spells Google's models without a maker prefix, so the gate could reach it. Written here rather than left for the gate so the ARC batch lands attributed in one piece. No Epoch row to check against; the residual control is that 2.64 / 30.42 / 50.42 / 60.42 sits inside the range this pair already shows elsewhere — across the 29 cells Gemini 3.5 and 3.6 Flash both hold, 3.6 is ahead on 15 and behind on 14, so trailing 3.5 Flash's 72.08 here is normal variation and not the signature of a misfiled score."
+    },
+    {
+      "modelRaw": "gemini-3-6-flash-high",
+      "effort": "*",
+      "modelId": "gemini-3.6-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Proposed independently by scripts/propose-attribution.mjs at tier 1 on 2026-08-07 (\"gemini-3-6-flash is exactly gemini-3.6-flash after stripping the effort\") — this board spells Google's models without a maker prefix, so the gate could reach it. Written here rather than left for the gate so the ARC batch lands attributed in one piece. No Epoch row to check against; the residual control is that 2.64 / 30.42 / 50.42 / 60.42 sits inside the range this pair already shows elsewhere — across the 29 cells Gemini 3.5 and 3.6 Flash both hold, 3.6 is ahead on 15 and behind on 14, so trailing 3.5 Flash's 72.08 here is normal variation and not the signature of a misfiled score."
+    },
+    {
+      "modelRaw": "gemini-3-flash-preview-thinking-minimal",
+      "effort": "*",
+      "modelId": "gemini-3-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 3.33 at minimal and Epoch's independent reading of the same board publishes 3.33 for gemini-3-flash at minimal (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Same family as the plain string and as Epoch's gemini-3-flash-preview, both already mapped; the -thinking- infix is ARC's way of writing that the effort follows."
+    },
+    {
+      "modelRaw": "gemini-3-flash-preview-thinking-low",
+      "effort": "*",
+      "modelId": "gemini-3-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 1.25 at low and Epoch's independent reading of the same board publishes 1.25 for gemini-3-flash at low (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Same family as the plain string and as Epoch's gemini-3-flash-preview, both already mapped; the -thinking- infix is ARC's way of writing that the effort follows."
+    },
+    {
+      "modelRaw": "gemini-3-flash-preview-thinking-medium",
+      "effort": "*",
+      "modelId": "gemini-3-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 12.78 at medium and Epoch's independent reading of the same board publishes 12.78 for gemini-3-flash at medium (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Same family as the plain string and as Epoch's gemini-3-flash-preview, both already mapped; the -thinking- infix is ARC's way of writing that the effort follows."
+    },
+    {
+      "modelRaw": "gemini-3-flash-preview-thinking-high",
+      "effort": "*",
+      "modelId": "gemini-3-flash",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 33.61 at high and Epoch's independent reading of the same board publishes 33.61 for gemini-3-flash at high (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. Same family as the plain string and as Epoch's gemini-3-flash-preview, both already mapped; the -thinking- infix is ARC's way of writing that the effort follows."
+    },
+    {
+      "modelRaw": "thinky-inkling",
+      "effort": "*",
+      "modelId": "inkling",
+      "reason": "ARC Prize verified leaderboard (batch 23). Confirmed by the number, not the string: this row is 36.53 at - and Epoch's independent reading of the same board publishes 36.53 for inkling at - (batch 12, already attributed by a human). ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise."
+    },
+    {
+      "modelRaw": "thinky-inkling-small-none",
+      "effort": "*",
+      "modelId": "inkling-small",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. small is a size word, which is exactly what the attribution rule says is NOT an effort — and that is the reason these map to inkling-small rather than to inkling. The board publishes thinky-inkling separately, its 36.53 confirms the thinky- prefix against Epoch, and the catalog holds both families. No Epoch row for the small one, so these six fill an empty cell; 0 / 4.03 / 4.86 / 13.61 / 33.06 / 40.14 under the same effort ladder, ending just above Inkling's single 36.53, is the shape a smaller sibling should have."
+    },
+    {
+      "modelRaw": "thinky-inkling-small-minimal",
+      "effort": "*",
+      "modelId": "inkling-small",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. small is a size word, which is exactly what the attribution rule says is NOT an effort — and that is the reason these map to inkling-small rather than to inkling. The board publishes thinky-inkling separately, its 36.53 confirms the thinky- prefix against Epoch, and the catalog holds both families. No Epoch row for the small one, so these six fill an empty cell; 0 / 4.03 / 4.86 / 13.61 / 33.06 / 40.14 under the same effort ladder, ending just above Inkling's single 36.53, is the shape a smaller sibling should have."
+    },
+    {
+      "modelRaw": "thinky-inkling-small-low",
+      "effort": "*",
+      "modelId": "inkling-small",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. small is a size word, which is exactly what the attribution rule says is NOT an effort — and that is the reason these map to inkling-small rather than to inkling. The board publishes thinky-inkling separately, its 36.53 confirms the thinky- prefix against Epoch, and the catalog holds both families. No Epoch row for the small one, so these six fill an empty cell; 0 / 4.03 / 4.86 / 13.61 / 33.06 / 40.14 under the same effort ladder, ending just above Inkling's single 36.53, is the shape a smaller sibling should have."
+    },
+    {
+      "modelRaw": "thinky-inkling-small-medium",
+      "effort": "*",
+      "modelId": "inkling-small",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. small is a size word, which is exactly what the attribution rule says is NOT an effort — and that is the reason these map to inkling-small rather than to inkling. The board publishes thinky-inkling separately, its 36.53 confirms the thinky- prefix against Epoch, and the catalog holds both families. No Epoch row for the small one, so these six fill an empty cell; 0 / 4.03 / 4.86 / 13.61 / 33.06 / 40.14 under the same effort ladder, ending just above Inkling's single 36.53, is the shape a smaller sibling should have."
+    },
+    {
+      "modelRaw": "thinky-inkling-small-high",
+      "effort": "*",
+      "modelId": "inkling-small",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. small is a size word, which is exactly what the attribution rule says is NOT an effort — and that is the reason these map to inkling-small rather than to inkling. The board publishes thinky-inkling separately, its 36.53 confirms the thinky- prefix against Epoch, and the catalog holds both families. No Epoch row for the small one, so these six fill an empty cell; 0 / 4.03 / 4.86 / 13.61 / 33.06 / 40.14 under the same effort ladder, ending just above Inkling's single 36.53, is the shape a smaller sibling should have."
+    },
+    {
+      "modelRaw": "thinky-inkling-small-xhigh",
+      "effort": "*",
+      "modelId": "inkling-small",
+      "reason": "ARC Prize verified leaderboard (batch 23). No Epoch row on this exact (model, effort) cell to check against. ARC Prize's leaderboard file is the seventh spelling convention in this archive: <maker>-<family, dashes for dots>-<operating point>. The maker prefix is why the attribution gate escalated it — after stripping the effort the string still carries a residual token, and a residual token is a model distinction until a reader says otherwise. small is a size word, which is exactly what the attribution rule says is NOT an effort — and that is the reason these map to inkling-small rather than to inkling. The board publishes thinky-inkling separately, its 36.53 confirms the thinky- prefix against Epoch, and the catalog holds both families. No Epoch row for the small one, so these six fill an empty cell; 0 / 4.03 / 4.86 / 13.61 / 33.06 / 40.14 under the same effort ladder, ending just above Inkling's single 36.53, is the shape a smaller sibling should have."
+    },
+    {
+      "modelRaw": "anthropic-opus-4-8-max",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "ARC Prize verified leaderboard, ARC-AGI-1 only (batch 24) -- ARC never ran Opus 4.8 at max on ARC-AGI-2, so this string is absent from batch 23. Same convention and same model as anthropic-opus-4-8-{low,medium,high}, all three of which are confirmed to the decimal against Epoch (62.22 / 71.67 / 72.08), and the board says so itself: models.json puts all four ids in one modelGroup, anthropic-opus-4-8, and names this one \"Claude Opus 4.8 (Max)\". max is the operating point the catalog record already carries as configurations[0]."
     }
   ],
   "benchmarkSplits": [
@@ -1707,6 +2058,12 @@
       "benchmark": "mmmu",
       "supersededBy": "batch-20-mmmu",
       "reason": "Batch 04 hand-read two rows off the MMMU board. Batch 20 reads all 71 that carry an MMMU-Pro Overall score, and reads the one thing the transcription got wrong: the board's legend says '*: results provided by the authors', so a starred score is a vendor self-report. Both transcribed rows recorded 'Author-reported result' in their note and were filed as source_kind benchmark anyway — the highest precedence this project has — so a self-report was outranking every verified reading in its cell. The transcribed rows also carry benchmark_version 'MMMU-Pro · Overall' where the column is 'Pro', which would put two versions in one cell."
+    },
+    {
+      "file": "batch-01-reasoning-math",
+      "benchmark": "arc-agi-2",
+      "supersededBy": "batch-23-arcprize",
+      "reason": "Batch 01 hand-read ARC Prize's verified board -- 77 rows off /leaderboard and 18 off three per-model /results pages -- and batch 23 reads the evaluations.json that both of those pages render. One measurement read twice, so only the scripted reading is ingested. Three things made it not a close call. (1) They are now literal duplicates: the transcription kept the leaderboard's own URL, so 'GPT-5.5 (xHigh)' 85 and gpt-5-5-2026-04-22-thinking-xhigh 85 are the same source, the same configuration and the same score, and check:data fails on the pair. (2) The transcription is rounded to one decimal (85.4 where the file says 85.42) and spells one effort two ways in one batch -- 'extra high' on the results-page rows, 'xhigh' on the leaderboard rows -- which put one model's operating point in two cells. (3) Its evaluation_date is not an evaluation date. Every value checked is models.json's modelReleaseDate to the day (Sol 2026-07-09, Opus 5 2026-07-24, Inkling 2026-07-15, Opus 4.8 2026-06-01, GPT-5.5 2026-04-22, Gemini 3.1 Pro 2026-02-19) -- when the model shipped, not when ARC ran it. That field is load-bearing: byPrimaryPreference sorts on it, so a release date was choosing which ARC row the dashboard published, and it chose the rounded one every time. ARC publishes no evaluation date anywhere in that file, which is why batch 23 carries none rather than carrying that one. Scoped to arc-agi-2: batch 01's frontiermath, hle-no-tools, critpt and imo-answer rows have no scripted replacement, and its gpqa rows were already superseded by batch 12. The 95 rows stay in the archive as evidence of what the board showed on 2026-07-31."
     }
   ],
   "acknowledgedDisagreements": [],

@@ -41,7 +41,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) — independent capability, speed, price, long-context and GDPval references
 - [Vals AI](https://www.vals.ai/benchmarks) — independent finance, legal, medical and coding evaluations
 - [Epoch AI](https://epoch.ai/frontiermath) — FrontierMath Tiers 1-3 and Tier 4, plus an independent GPQA Diamond run
-- [ARC Prize](https://arcprize.org/leaderboard) — verified ARC-AGI-2 results across reasoning efforts
+- [ARC Prize](https://arcprize.org/leaderboard) — verified ARC-AGI-1, 2 and 3 results across reasoning efforts
 - [Terminal-Bench](https://www.tbench.ai/leaderboard/terminal-bench/2.1) — 2.1 and 2.0, one row per harness
 - [DeepSWE v1.1](https://deepswe.datacurve.ai/) — benchmark-native long-horizon coding results
 - [Scale Labs](https://labs.scale.com/leaderboard) — MCP-Atlas and SWE-Bench Pro
@@ -62,8 +62,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-1294 observations across 955/1972 cells (48.4% cell coverage;
-benchmark 783 / independent 321 / vendor 190)
+1391 observations across 980/2030 cells (48.3% cell coverage;
+benchmark 880 / independent 321 / vendor 190)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so

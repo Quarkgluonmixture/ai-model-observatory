@@ -19,7 +19,7 @@ rail (nav)   workspace
   $          02 model-detail radar + coverage + model dossier
   ≡          03 benchmarks   axis tabs, line chart, raw score table
              04 pricing      per-model token economics
-             05 catalog      68 benchmark cards, collapsed by default
+             05 catalog      70 benchmark cards, collapsed by default
              06 sources      connected / queued source cards
 ```
 
