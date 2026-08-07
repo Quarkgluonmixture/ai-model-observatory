@@ -36,8 +36,6 @@
 
 ## 小口子
 
-- [ ] `qwen3.7-plus` 的 `PROVIDER_LOOKUPS` 条目——**加之前先确认 `qwen/qwen3.7-plus` 这个 id 真实存在**。
-      加了之后这个模型的目录价才会和 provider 价对照。
 - [ ] 三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
 

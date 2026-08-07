@@ -37,6 +37,8 @@ export const PROVIDER_LOOKUPS: Record<string, string> = {
   // different rows with different prices; the dated one is the one that was measured.
   "deepseek-v4-flash": "deepseek/deepseek-v4-flash-0731",
   "deepseek-v4-pro": "deepseek/deepseek-v4-pro",
+  "qwen3.8-max": "qwen/qwen3.8-max",
+  "qwen3.7-plus": "qwen/qwen3.7-plus",
   "qwen3.7-max": "qwen/qwen3.7-max",
   "qwen3.6-plus": "qwen/qwen3.6-plus",
   "qwen3.6-max": "qwen/qwen3.6-max-preview",
