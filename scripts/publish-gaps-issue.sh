@@ -41,6 +41,11 @@ upstream_models() {
   sed -n '/^## Published upstream/,/^## /p' | sed -n 's/^- `\([^`]*\)`.*/\1/p' | sort
 }
 
+# --body-file, never --body. The gap report grows with the catalog and an issue body is capped at
+# 65,536 characters by GitHub and at 128 KiB by execve, whichever comes first. See
+# scripts/gh-body.mjs, which was written after the second one stopped a pull request cold.
+printf '%s' "$body" | node "$(dirname "$0")/gh-body.mjs" gaps-body.md
+
 if [ -n "$existing" ]; then
   # Editing an issue body sends no notification — that is the whole reason this project
   # published a new model for two days and nobody heard about it. So the diff against
@@ -48,7 +53,7 @@ if [ -n "$existing" ]; then
   previous="$(gh issue view "$existing" --json body --jq .body 2>/dev/null || true)"
   fresh="$(comm -13 <(printf '%s\n' "$previous" | upstream_models) <(printf '%s\n' "$body" | upstream_models))"
 
-  gh issue edit "$existing" --body "$body" >/dev/null
+  gh issue edit "$existing" --body-file gaps-body.md >/dev/null
   echo "Refreshed #$existing with $COUNT gap(s)."
 
   # This used to push the newly-appeared models to WeChat, ending with "reply 收 <model>" — an
@@ -60,7 +65,7 @@ if [ -n "$existing" ]; then
     echo "No model appeared since the last report."
   fi
 else
-  created="$(gh issue create --title "$TITLE" --label "$LABEL" --body "$body")"
+  created="$(gh issue create --title "$TITLE" --label "$LABEL" --body-file gaps-body.md)"
   echo "$created"
   # No notification: opening this issue is housekeeping, and GitHub already notifies on it.
 fi

@@ -165,9 +165,29 @@ Two schedulers must not touch the same files.
 | --- | --- |
 | Re-reading live boards, rewriting their batches, re-ingesting | **GitHub Action** (`upstream.yml`) |
 | Watching maker release pages, notifying, opening the integrity issue | **GitHub Action** — it runs whether or not your machine is up, so do not duplicate it |
-| New models, new aliases, new sources, release bumps, investigating a tier-C failure | **You** |
+| Aliases **the attribution gate can settle on evidence** | **GitHub Action** (`attribute-and-merge.sh`) — see below |
+| Aliases the gate refused, and every new model, source or release bump | **You** |
+| Investigating a tier-C failure | **You** |
 | Merging a tier-B change that clears all three conditions above | **You** |
 | Merging anything that does not | **The human** |
+
+**`data/model-aliases.json` has two writers, and that is deliberate — read this before touching
+it.** The rule at the top of this section is that two schedulers must not touch the same file, and
+this is the one exception, so it is fenced rather than left to good intentions:
+
+- The Action writes **only** what `scripts/propose-attribution.mjs` settles on evidence, on its own
+  branch `auto/attribution`, and merges it only under the three conditions. It never writes an
+  `acknowledgedDisagreements` or `mergedInOneSource` exemption — the script fails itself if a diff
+  contains one.
+- **Everything it refuses is yours**, and its refusals are the whole reason you have a queue. Do
+  not re-derive its half; `npm run propose:attribution` prints what it would take, so you can see
+  which strings are already spoken for.
+- The two run three hours apart (the Action around 06:00–08:10 UTC, you at 09:30), so `git pull`
+  at the start of your run is what keeps this safe. **If you are writing an alias, rebase on `main`
+  immediately before you push**, not at the start of the task.
+- If you find yourself wanting to edit an entry the gate wrote, stop: that is a disagreement
+  between two automated judgements and it belongs in a pull request for a person, not in a file
+  both of you write.
 
 If you need to change a batch file as part of a tier-B task, rebase on `main` first — the Action
 may have moved it since you started.
@@ -177,6 +197,30 @@ may have moved it since you started.
 ## Your recurring task
 
 Only after the activation check has passed once, and only when a trigger fired.
+
+0. **Check that GitHub's side is still alive**, before reading anything it produced:
+
+   ```bash
+   npm run check:heartbeat -- --github
+   ```
+
+   It exits non-zero when the daily `Upstream` workflow has not completed a run in 36 hours, or
+   completed one that failed. **This is the one finding of yours that is worth a WeChat push** —
+   pipe it through `scripts/notify-pushplus.mjs` if this machine has `PUSHPLUS_TOKEN`, and say so
+   in your report if it does not.
+
+   The reason it is yours to send: when that job dies, it dies holding the notification channel.
+   The four remaining pushes are all fired from inside it or from CI, so the failure that silences
+   this project is also the failure that silences the alarm for it. You are the only other thing
+   running on a schedule, so you are the only thing that can notice. The check reads a public API
+   and needs no credentials.
+
+   It also cuts the other way, and this matters more than it looks: **a green heartbeat means the
+   queue you are about to read is today's.** Before 2026-08-07 nothing verified that. An agent
+   reading a week-old gaps issue does confident, well-formed, useless work.
+
+   If the heartbeat is missing, report it and **do not compensate**. Re-running the daily job's
+   work by hand is how two schedulers end up owning one file.
 
 1. `git pull`, `npm ci`.
 2. Read the open **Collection gaps** issue. It carries the release-probe findings too, so it is

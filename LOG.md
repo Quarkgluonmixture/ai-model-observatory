@@ -13,6 +13,72 @@ grep -n -A4 '#measure' LOG.md      # 所有数字连同出处
 
 ---
 
+## [2026-08-07] `gh --body` 撑爆 argv：一个 bug、四个调用点、两道天花板  #incident #ship
+
+今早 06:58 微信响了第四条推送「⚠ AA 已刷新，PR 未创建」。**告警本身是对的**：它准确说出自己
+失败在哪一步、没有谎称 PR 已开、分支 `f2388cc` 完好。根因在 `scripts/open-aa-pr.sh:74`：
+
+```
+/usr/bin/gh: Argument list too long
+```
+
+body 200,061 字节，作为**单个 argv 参数**传给 `gh pr create --body`。Linux 的 `MAX_ARG_STRLEN`
+把单参数卡在 128 KiB（32 页），跟总的 `ARG_MAX` 无关——所以 `execve` 直接失败，`gh` 根本没启动，
+报错来自 bash。#measure：200,061 字节里 `drafts.md` 占 200,061 中的绝大部分，`--all-new` 草拟了
+**213** 条记录，其中 **118** 条是零证据模型，每条都印着脚本自己的警告「别现在加，会拉低 cell
+coverage」。
+
+两道天花板，位置不同，**只修一道会把故障推迟四周**：argv 单参数 128 KiB；GitHub 的 issue/PR body
+上限 65,536 **字符**（不是字节）。所以 `scripts/gh-body.mjs` 两道一起收：落盘走 `--body-file`，
+按字符截断到 60,000，按行边界切、补齐落单的 ``` 围栏、写明省略了多少字并给出 run 链接。
+截断必须自报——这个项目已经学过一次「对自己的结果说谎的通知，花掉的是这条通道唯一的本钱」。
+
+四个调用点全部改掉（`open-aa-pr` / `open-refresh-pr` / `attribute-and-merge` / `publish-gaps-issue`，
+共 6 处）。只有 AA 那条现在撑爆，其余三条是同一个写法，早晚轮到。
+
+顺带砍掉噪音源：`draft-model-record.mjs --with-evidence` 只草拟归档已能填的模型。
+#measure：213 → 95 条（200,061 → 81,061 字节），零证据条目 0 漏网；被压下的 118 条**打印计数**
+并给出取回命令——不做静默截断。
+
+## [2026-08-07] 让两个调度器互相看守：沉默不再有三种含义  #decision #ship
+
+8-06 把微信从十条砍到四条是对的，但没算进去的代价是：**「手机上没消息」现在同时意味着
+一切正常 / GitHub 挂了 / hermes 没跑**。只在异常时说话的通道，只有当「没说话」本身可被检验时
+才可信。
+
+不是假想。`AGENTS.md` 自己写着：每日刷新在提交前跑 `npm run build`，而 build 现在包含个人站——
+所以 `app/page.tsx` 一个 type error 就让数据管线整条停摆，不提交、不开 PR、不推送，唯一症状是
+「什么都没发生」。反向同理：hermes 到 8-06 才装上定时任务，在那之前只在开对话框时才动，
+这件事从 GitHub 这侧完全看不见。
+
+`scripts/check-heartbeat.mjs`，两个方向，只用已有产物、不新增任何产物：
+
+- `--github`（hermes 每轮开头跑）：`Upstream` workflow 36h 内有没有跑完。阈值取 36h 不取 24h，
+  因为 GitHub 对 cron 的延迟实测在 06:56–08:10 之间飘，24h 会误报。**这是 hermes 唯一值得推微信
+  的发现**——那个 job 死的时候，它是攥着通知通道一起死的：四条推送全部由它或 CI 触发。
+- `--agent`（每日 job 跑，写进 gaps issue，**不推微信**）：main 上最近的非 bot 提交。阈值取
+  **3 天**不取 1 天，因为「今天没活干」是合法的，「三天没人动而队列非空」不是。它有意区分不了
+  hermes 和人——两者都以人的身份提交——所以它回答的是「这个队列还有没有人在做」。
+
+`--github` 顺带解决一个没人提过的问题：**绿的心跳意味着你正要读的队列是今天的**。
+8-07 之前没有任何东西验证这件事，而读着一周前的 gaps issue 的 agent 会做出自信、规范、无用的活。
+
+## [2026-08-07] 等人判断的 PR 不再被每天覆盖  #decision
+
+`attribute-and-merge.sh` 每天 force-push `auto/attribution` 并重写 PR body。**没人看的时候这是对的**
+——一个永远反映今日提议的 PR，胜过一队过期 PR。人一开始读，它就不对了：PR #45 正在问
+Opus 4.8 / GPT-5.5 的 arc-agi-2 该不该换主行（被三条件正确拦下），而明早它的内容会在**决策进行中**
+被换掉。
+
+现在：远端已有 open PR 且带非 bot 的 review/comment → 本轮完全不碰远端，写 workflow warning +
+step summary。**什么都不会丢**：gate 是确定性的，今天提的明天照提，PR 一旦合并或关闭就自动恢复。
+卡住的队列看得见，被改写的判断看不见。
+
+顺带把章程和代码对齐：`docs/AGENT-OPERATIONS.md` 的分工表原本把 alias 整体划给 hermes，而闸门在
+GitHub 上写同一个 `data/model-aliases.json`——章程第一句就是「两个调度器不许碰同一个文件」。
+现在写明这是**唯一的例外**，并围起来：闸门只写证据能定的那一半、只在自己分支上、永不写例外条目；
+它拒绝的全部归 hermes；两者错开三小时，写 alias 前必须紧挨着 rebase。
+
 ## [2026-08-07] qwen3.8-max / qwen3.7-plus 接上 provider 价对照  #ship
 
 `PROVIDER_LOOKUPS` 漏了这两个已上游的目录模型，所以它们的价格卡从不显示

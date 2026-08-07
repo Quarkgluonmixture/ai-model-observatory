@@ -1,6 +1,7 @@
 // Drafts the catalog record for a model whose parameters are already in the archive.
 //
 //   node scripts/draft-model-record.mjs --all-new       # every AA model the catalog lacks
+//   node scripts/draft-model-record.mjs --all-new --with-evidence   # only the ones worth adding
 //   node scripts/draft-model-record.mjs qwen3.8-max     # one, by its archived model_raw
 //
 // Model records are hand-authored because they carry editorial content — display name, colour,
@@ -27,6 +28,13 @@ import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const args = process.argv.slice(2);
 const allNew = args.includes("--all-new");
+// `--all-new` drafts every AA model the catalog lacks, which on 2026-08-07 was 213 records and
+// 200,061 bytes — 118 of them for models with no observation row at all, each one carrying this
+// script's own warning that a record with no evidence lowers cell coverage and should wait. That
+// output has one consumer, the AA pull-request body, and it was too large for `gh` to accept.
+// Filtering to models the archive can actually fill is both the smaller artefact and the more
+// honest one: the held-back drafts are still one command away, and the count is always printed.
+const withEvidence = args.includes("--with-evidence");
 const wanted = args.filter((arg) => !arg.startsWith("--"));
 
 const config = loadAliasConfig();
@@ -80,7 +88,25 @@ const evidenceFor = (modelRaw) => {
 
 const num = (value) => (Number.isFinite(value) ? value : "null");
 
-for (const row of candidates) {
+// No silent cap. A report that quietly drops most of its subject reads as a complete one, which is
+// how "AA has 213 new models" would become "AA has 95" without anybody deciding that.
+const drafting = withEvidence ? candidates.filter((row) => evidenceFor(row.model_raw).size > 0) : candidates;
+if (withEvidence) {
+  const held = candidates.length - drafting.length;
+  console.log(`_Drafting ${drafting.length} of ${candidates.length} untracked AA model(s) — the ones the archive can already fill._`);
+  if (held > 0) {
+    console.log(`_${held} more have parameters but no observation row yet; a record for them would render an empty ` +
+      "row and lower cell coverage. See them with `node scripts/draft-model-record.mjs --all-new`._");
+  }
+  console.log();
+}
+
+if (drafting.length === 0) {
+  console.log("No untracked Artificial Analysis model has archived evidence behind it yet — nothing worth drafting.");
+  process.exit(0);
+}
+
+for (const row of drafting) {
   // AA writes the display name into the row's note as "AA 名称 X；发布 Y" — the only place a
   // human-facing name exists in the archive at all.
   const published = /AA 名称 ([^；;]+)/.exec(row.note ?? "")?.[1]?.trim();
