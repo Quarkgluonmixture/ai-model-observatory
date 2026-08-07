@@ -821,6 +821,17 @@ stay. That is judgement, and judgement does not go in a cron job.
   silently — overflow, type floor, tap-target floor — and **is** in CI since 2026-08-07, on both
   routes, using the Chrome the runner already ships.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
+- **A refusal is now written down rather than made invisible.** Ten Artificial Analysis fields were
+  refused at the fetch layer, which meant 2,225 published numbers existed nowhere in this
+  repository — and a refusal nobody can audit is not a refusal, it is a gap that looks like a
+  decision. They are archived now under AA's own field names and blocked at ingest by
+  `droppedBenchmarks`, each with its reason: `terminalbench_hard` (AA withdrew it), `tau2` (in
+  neither the methodology nor the leaderboard), `mmlu_pro` (AA states no version and the column
+  declares 2025), `livecodebench` (the column is Vals' harness), and AIME / AIME-25 / MATH-500 (no
+  column, and adding one is a taxonomy decision). The board did not move by a single cell.
+  **Still not collected: ARC's public splits.** 363 rows, and the only ones where archiving carries
+  risk without reward — the public eval runs ~11 points above the verified board under the same
+  benchmark name, so it corroborates nothing and sits one alias mistake from the `arc-agi-2` column.
 - **The catalog record is no longer only hand-placed.** `scripts/add-model-and-merge.sh` adds one
   for an upstream model that clears four conditions, and the fourth is the reason it can be
   unattended at all. Two bugs of its own were caught by building the failure rather than reasoning

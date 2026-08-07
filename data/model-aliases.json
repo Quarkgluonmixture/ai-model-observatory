@@ -1967,6 +1967,38 @@
         "VideoDR (w/ Search)"
       ],
       "reason": "Published in the Qwen3.8 release tables (batch 17) and archived there as evidence, but the catalog has no record for these benchmarks. Most are Qwen-authored (QwenSWEBench, QwenReactBench, QwenVisualOffice), vision or video suites the dashboard does not track, or a benchmark whose only reading anywhere is this vendor table -- a column built from one maker's numbers about its own release would rank nothing. Listed in full so the next release is not re-derived from scratch. OSWorld-Verified is here on purpose: it is a different evaluation from OSWorld 2.0, which is carried, and the same table prints 86.1 against 19.4 for one model."
+    },
+    {
+      "benchmarks": [
+        "terminalbench_hard"
+      ],
+      "reason": "Artificial Analysis' own methodology page says Terminal-Bench Hard is 'Superseded by Terminal-Bench v2.1, which we use going forward' and 'no longer part of the Artificial Analysis Intelligence Index or our active reporting'. 432 models still carry a score for it in the API. The rows are archived because what a source published is a fact and a refusal nobody can audit is not a refusal; they do not reach the board because publishing a number its own publisher has withdrawn would be the project asserting something the source no longer does."
+    },
+    {
+      "benchmarks": [
+        "tau2"
+      ],
+      "reason": "440 models carry this field and it appears in NEITHER Artificial Analysis' methodology table NOR its leaderboard, both checked on 2026-08-07. What it measures is therefore a guess, and AGENTS.md rule 7 is that a source you have not opened yourself does not get added. Archived so the guess can be resolved later against real rows rather than re-collected. Not the same thing as tau_banking, which the methodology does document as the τ³-Banking the catalog carries."
+    },
+    {
+      "benchmarks": [
+        "mmlu_pro"
+      ],
+      "reason": "The catalog has an `mmlu-pro` column and it is empty, so this looks like a free fill and is not. The column declares version 2025; Artificial Analysis publishes MMLU-Pro at 12,032 questions with no version label at all, and docs/ARCHITECTURE.md already records the same problem with Vals, which 'labels the version by year, which cannot be matched to the catalog's'. Filing 346 rows into a versioned column on the strength of a name would be a version claim bought for nothing. Archived; the day someone establishes which version AA runs, one line moves them."
+    },
+    {
+      "benchmarks": [
+        "livecodebench"
+      ],
+      "reason": "The catalog's column is `vals-livecodebench`, which is Vals' run of LiveCodeBench. Artificial Analysis runs its own — 315 questions, 3 repeats, code execution pass@1 — and rule 4 forbids two harnesses in one column. A second column would be justified by evidence, not by the field existing, and one catalog model carries AA's score today. Archived until that changes."
+    },
+    {
+      "benchmarks": [
+        "aime",
+        "aime_25",
+        "math_500"
+      ],
+      "reason": "Real, documented evaluations that this catalog simply has no column for: its math axis is FrontierMath, CritPt and IMOAnswerBench. Adding a column is a taxonomy decision and 'the source publishes it' is not one. Archived so that decision can be made against rows already in hand — which is the difference between deciding and collecting."
     }
   ],
   "versionFallbacks": [

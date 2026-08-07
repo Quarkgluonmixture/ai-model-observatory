@@ -33,7 +33,14 @@
 // nothing else. Guessing it would have put a no-tools score in a with-tools column, which is the
 // shape of every wrong number this project has published.
 //
-// ## Five fields deliberately NOT mapped, each with the reason
+// ## Ten fields collected but NOT mapped, each with the reason
+//
+// Changed 2026-08-07: these used to be refused at the fetch layer, so they were never written down
+// at all. That makes a refusal invisible — nobody can audit a number that does not exist in the
+// archive, and the day a judgement changes the data has to be re-collected. They are now archived
+// under AA's own field names and blocked at ingest by `droppedBenchmarks`, which is the mechanism
+// this project already uses for 814 other rows and the same principle the ARC fetcher applies to
+// entries that are not models. +2,225 archived rows, zero change to the board.
 //
 // **`terminalbench_hard`** — AA's own methodology says it is "Superseded by Terminal-Bench v2.1,
 // which we use going forward" and "no longer part of the Artificial Analysis Intelligence Index or
@@ -128,6 +135,26 @@ const pct = (value) => (typeof value === "number" && Number.isFinite(value) ? Nu
 // so an AA row lands beside the existing rows rather than opening a second version of the column —
 // `Diamond`, `Full` and `2.1` are split names the source itself states, and `2026` is the label
 // this project already uses for the two AA-originated columns it carries.
+// Collected into the archive but NOT into the observation store. `AGENTS.md` calls the archive
+// evidence and append-only, and the ARC fetcher already archives entries that are not models at all
+// on the same principle — rule 8's "the intended outcome, not a gap". Refusing at the fetch layer
+// instead makes a refusal invisible: nobody can audit a number that was never written down, and
+// the day the judgement changes the data has to be re-collected.
+//
+// So these are archived under AA's own field name — none of which collides with a catalog column —
+// and each has a `droppedBenchmarks` entry in `data/model-aliases.json` carrying the reason it does
+// not reach the board. `check:data` fails on an unknown benchmark id, so that entry is not optional
+// paperwork; it is what keeps the archive honest and the store clean at the same time.
+const ARCHIVE_ONLY = [
+  { key: "terminalbench_hard", note: "Terminal-Bench Hard；⚠ AA 自己的方法论页写着它已被 v2.1 取代、不再属于 Intelligence Index 也不在 active reporting —— 归档是「AA 曾发布过什么」的证据，不进看板" },
+  { key: "tau2", note: "AA 的 tau2 字段；⚠ 方法论页和排行榜页都查不到它 —— 测什么不清楚，所以归档但不进看板" },
+  { key: "mmlu_pro", note: "MMLU-Pro 12,032 题 ×1 轮，10 选 1，正则抽取 pass@1；⚠ AA 不公布版本，而目录的 mmlu-pro 列声明版本 2025，对不上 —— 归档等版本问题解决" },
+  { key: "livecodebench", note: "LiveCodeBench 315 题 ×3 轮，代码执行 pass@1；⚠ 目录那列是 Vals 跑的（vals-livecodebench），AA 跑的是自己那套，两个 harness 不能进同一列（铁律 4）" },
+  { key: "aime", note: "AIME；目录没有这一列 —— 归档备用" },
+  { key: "aime_25", note: "AIME 2025；目录没有这一列 —— 归档备用" },
+  { key: "math_500", note: "MATH-500；目录没有这一列 —— 归档备用" },
+];
+
 const FIELDS = [
   { key: "gpqa", benchmark: "gpqa", version: "Diamond", tools: false, note: "198 题 ×5 轮，正则抽取 pass@1" },
   { key: "hle", benchmark: "hle-no-tools", version: "Full", tools: false, note: "2,158 题 ×1 轮，equality-checker LLM 判分；AA 方法论表 Tool Usage 列为 ✗，所以是 no-tools 那一列" },
@@ -183,13 +210,14 @@ export const aaEvaluations = {
       const effort = split.effort ?? effortFromName(model.name);
       const evaluations = model.evaluations ?? {};
 
-      for (const field of FIELDS) {
+      for (const field of [...FIELDS, ...ARCHIVE_ONLY.map((f) => ({ ...f, benchmark: f.key, version: null, tools: null }))]) {
         const score = pct(evaluations[field.key]);
         if (score === null) continue;
         rows.push({
           model_raw: modelRaw,
           benchmark: field.benchmark,
-          benchmark_version: field.version,
+          benchmark_version: field.version,   // null on the archive-only fields: AA states no version
+
           score,
           unit: "%",
           // AA states no scaffold for either of the two system-mode evaluations. Null rather than
