@@ -821,6 +821,15 @@ stay. That is judgement, and judgement does not go in a cron job.
   silently — overflow, type floor, tap-target floor — and **is** in CI since 2026-08-07, on both
   routes, using the Chrome the runner already ships.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
+- **`ArenaElo` has no harness dimension, and LMArena's WebDev board has one.** The derived Elo is
+  keyed `model|effort` only, while the board publishes entries like
+  `gpt-5.6-sol-xhigh (codex-harness)` — and for GPT-5.6 Sol that is the *only* WebDev entry, so the
+  1620 the site shows as its code Elo is really its score under the Codex scaffold. Rule 5 keeps
+  Arena out of capability tables, which limits the damage, but two harnesses for one model would
+  overwrite each other silently: the fetcher's `effortOf` strips only a *trailing* effort, so
+  `-xhigh (codex-harness)` keys as effort-null while a plain `-xhigh` keys as xhigh. Found on
+  2026-08-07 while superseding the hand-read Elo rows; recorded rather than fixed, because
+  adding a dimension moves published numbers and that is a decision, not a repair.
 - **A refusal is now written down rather than made invisible.** Ten Artificial Analysis fields were
   refused at the fetch layer, which meant 2,225 published numbers existed nowhere in this
   repository — and a refusal nobody can audit is not a refusal, it is a gap that looks like a

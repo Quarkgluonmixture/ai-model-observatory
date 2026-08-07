@@ -176,7 +176,16 @@ export const arena = {
       meta: {
         batch: "22 · LMArena human preference Elo",
         collectedWith: "scripts/fetchers/arena.mjs",
-        filtered: false,
+        filtered: true,
+        filterRule:
+          "Two of the boards arena.ai publishes. Measured 2026-08-07: /leaderboard/text carries " +
+          "text-overall-style_control, /leaderboard/code/webdev carries webdev-overall-raw, and two " +
+          "more exist that this batch does NOT take — vision-overall-style_control and " +
+          "text-hard_prompts-style_control. They are left because the catalog has nowhere to put " +
+          "them: `ArenaElo` has exactly two fields, textElo and codeElo, so a vision or " +
+          "hard-prompts Elo would need a schema change and a decision about what it means, not a " +
+          "fetch. This batch previously declared filtered:false, which was wrong — taking two of " +
+          "four boards is filtering, and a batch that does not say so reads as a complete one.",
         sources: BOARDS.map((board) => board.page),
         schema:
           "Model operating parameters, NOT benchmark scores. Supplies text_elo and code_elo, the " +

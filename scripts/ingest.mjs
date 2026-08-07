@@ -156,16 +156,24 @@ for (let index = 0; index < rows.length; index += CHUNK) chunks.push(rows.slice(
 // listed last and moved a published Elo by two points. The catalog picks the operating point; this
 // only supplies the numbers.
 const eloRows = [];
-for (const { meta, rows: lines } of parameterBatches) {
+for (const { file, meta, rows: lines } of parameterBatches) {
   for (const { raw } of lines) {
     if (raw.text_elo == null && raw.code_elo == null) continue;
     const modelId = resolveModelId(raw.model_raw, raw.effort ?? null);
     if (!modelId) continue;
+    // `supersededRows` was checked in the observation loop and not here, which left a gap the
+    // mechanism was written for: a hand-read Elo that a scripted fetch of the same board later
+    // replaced stayed live, and "newest retrievedDate wins" only hides that while the scripted
+    // batch happens to carry the same model. Checked per FIELD, like batch 08's `context_k`
+    // entries, because a batch can be the right source for one Elo and the wrong one for the other.
+    const textSuperseded = supersededBy(file, null, null, "text_elo", raw.model_raw);
+    const codeSuperseded = supersededBy(file, null, null, "code_elo", raw.model_raw);
+    if (textSuperseded && codeSuperseded) continue;
     eloRows.push({
       modelId,
       effort: raw.effort ?? null,
-      textElo: raw.text_elo ?? null,
-      codeElo: raw.code_elo ?? null,
+      textElo: textSuperseded ? null : (raw.text_elo ?? null),
+      codeElo: codeSuperseded ? null : (raw.code_elo ?? null),
       sourceLabel: raw.source_label,
       sourceUrl: raw.source_url,
       retrievedDate: meta.retrievedDate,

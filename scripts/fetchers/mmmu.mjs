@@ -114,6 +114,8 @@ export const mmmu = {
         batch: "20 · MMMU-Pro leaderboard",
         collectedWith: "scripts/fetchers/mmmu.mjs",
         filtered: true,
+        filterRule:
+          "The board publishes MMMU-Pro Overall, Vision and Standard. This batch takes Overall only: the three answer different questions and merging them would put two measurements in one column (rule 4). The other two are named in the note.",
         release: VERSION,
         sources: [PAGE],
         note:

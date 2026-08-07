@@ -254,6 +254,8 @@ export const aaEvaluations = {
         batch: "26 · Artificial Analysis benchmark evaluations",
         collectedWith: "scripts/fetchers/aa-evaluations.mjs",
         filtered: true,
+        filterRule:
+          "14 of the 17 evaluation keys AA publishes: 7 mapped to catalog columns and 7 archived under AA's own field name and blocked at ingest by droppedBenchmarks, each with a written reason. The 3 not collected are the composite indices, which are model parameters and belong in batch 14's shape rather than the observation store.",
         release: "v2",
         sources: [API, "https://artificialanalysis.ai/methodology/intelligence-benchmarking"],
         note:
@@ -261,7 +263,11 @@ export const aaEvaluations = {
           "/api/v2/language/models/free, on the same key. Measured 2026-08-07: the free path publishes 3 " +
           "evaluation keys and this one publishes 17. Kept separate from batch 14 because that batch " +
           "declares model operating parameters, which is what keeps its rows out of the observation store. " +
-          "FILTERED: 7 of the 17 keys are collected. Every mapping was checked against AA's own " +
+          "FILTERED: 14 of the 17 keys are collected -- 7 into catalog columns and 7 archived under " +
+          "AA's own field name and blocked at ingest by droppedBenchmarks, each with a written " +
+          "reason, because a refusal nobody can audit is not a refusal. The 3 left are the " +
+          "composite indices, which are model parameters and belong in batch 14's shape. " +
+          "Every mapping was checked against AA's own " +
           "methodology table, which is also what decides that `hle` is the no-tools column — its Tool " +
           "Usage entry is ✗. NOT collected, each for a stated reason: terminalbench_hard (AA says it is " +
           "superseded by v2.1 and out of active reporting), tau2 (440 models carry it and it appears in " +

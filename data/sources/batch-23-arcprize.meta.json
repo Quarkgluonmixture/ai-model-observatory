@@ -2,6 +2,7 @@
   "batch": "23 · ARC Prize verified leaderboard · ARC-AGI-2",
   "collectedWith": "scripts/fetchers/arcprize.mjs",
   "filtered": true,
+  "filterRule": "One of the 8 splits in evaluations.json: v2_Semi_Private. The same-named public split is never taken -- for v2 it runs ~11 points above the verified board -- nor are the two *_Private_Eval splits, which are 3 rows between them and by construction uncheckable. Within the split: only display:true, which is the board's own decision about what it publishes, and only rows with a finite score.",
   "release": "v2_Semi_Private",
   "sources": [
     "https://arcprize.org/media/data/evaluations.json",

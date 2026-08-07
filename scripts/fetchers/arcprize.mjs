@@ -249,6 +249,8 @@ const arcBoard = ({ id, batch, batchLabel, defaultSplit, benchmark }) => ({
         collectedWith: "scripts/fetchers/arcprize.mjs",
         // Filtered at capture, three ways, all of them reported in the summary above.
         filtered: true,
+        filterRule:
+          `One of the ${datasets.length} splits in evaluations.json: ${wanted}. The same-named public split is never taken -- for v2 it runs ~11 points above the verified board -- nor are the two *_Private_Eval splits, which are 3 rows between them and by construction uncheckable. Within the split: only display:true, which is the board's own decision about what it publishes, and only rows with a finite score.`,
         release: wanted,
         sources: [`${DATA}/evaluations.json`, `${DATA}/models.json`, `${DATA}/datasets.json`, BOARD],
         note:

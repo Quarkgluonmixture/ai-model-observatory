@@ -99,6 +99,8 @@ export const ale = {
         batch: "18 · Agents' Last Exam",
         collectedWith: "scripts/fetchers/ale.mjs",
         filtered: true,
+        filterRule:
+          "The endpoint returns 689 rows across 12 splits. This batch takes the split the catalog's `ale` column means and leaves the other eleven, which answer different questions and would compete in one cell. They are named in the note rather than dropped silently.",
         release: VERSION,
         sources: [ENDPOINT, `${SITE}/leaderboard`],
         note:

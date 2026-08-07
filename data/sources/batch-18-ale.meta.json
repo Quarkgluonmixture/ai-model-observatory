@@ -2,11 +2,12 @@
   "batch": "18 · Agents' Last Exam",
   "collectedWith": "scripts/fetchers/ale.mjs",
   "filtered": true,
+  "filterRule": "The endpoint returns 689 rows across 12 splits. This batch takes the split the catalog's `ale` column means and leaves the other eleven, which answer different questions and would compete in one cell. They are named in the note rather than dropped silently.",
   "release": "ALE-V1",
   "sources": [
     "https://agents-last-exam.org/api/demo/leaderboard",
     "https://agents-last-exam.org/leaderboard"
   ],
   "note": "从 leaderboard 页面自己调用的 https://agents-last-exam.org/api/demo/leaderboard 读取，该路径只出现在客户端 chunk 里，猜不出来（/api/leaderboard 与 /data/leaderboard.json 都是 404）。端点共 689 行、12 个划分：full、full/full-spectrum、full/last-exam、full/near-term、full/overall、licensed、linux_only、unlicensed、unlicensed/full-spectrum、unlicensed/last-exam、unlicensed/near-term、unlicensed/overall；本批只取 full（页面据以排名、也是转录行记录的那个），其余是子集或授权变体，合进同一格会让四个回答不同问题的数字互相竞争。部分分、运行次数与成本留在每行 note 里。端点不给评测日期，因此 evaluation_date 为 null，retrievedDate 是本档唯一敢声称的时间。",
-  "retrievedDate": "2026-08-06"
+  "retrievedDate": "2026-08-07"
 }
