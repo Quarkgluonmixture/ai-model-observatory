@@ -17,7 +17,8 @@ the operating contract and still comes first before any change.
 | 观测 | **1779 rows · 1094 / 2088 cells（52.4% cell coverage）** |
 | 源分类 | benchmark 880 / independent 709 / vendor 190 |
 | 溯源 | 318 / 321 catalog values backed by the archive |
-| 归档 | **26 batches，其中 13 个可脚本重读**（其余 13 个是手抄，永不自更新） |
+| 归档 | **26 batches，其中 13 个可脚本重读**；⚠ 「手抄的 1749 行」是虚高——真正**在站上且无漂移检查的只有 216 行**（其余是已 supersede / 没 alias / 故意不收） |
+| 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
 当天覆盖率走了两步：48.6% → 48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ **52.2%**
