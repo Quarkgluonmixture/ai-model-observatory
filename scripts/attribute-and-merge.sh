@@ -67,25 +67,29 @@ fi
 # three conditions for exactly that reason, and would have had its contents replaced underneath the
 # owner the next morning — the decision moving while the decision is being made.
 #
-# So: a review or a comment from anyone who is not this bot means hands off. Nothing is lost by
-# waiting. The gate is deterministic, so every proposal it makes today it makes again tomorrow, and
-# the run resumes on its own the moment the pull request is merged or closed. A stuck queue is
-# visible; a rewritten judgement call is not.
-open_pr="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)"
+# The signal is `--any-open`, not "somebody commented". This script merges and deletes its own
+# branch whenever the contract is green and no published number moved, so an **open** pull request
+# here is not a change awaiting review — it is this gate having already decided it cannot decide.
+# A person owes a judgement from that moment, not from the moment they start typing, and PR #45 is
+# the proof: nobody had commented on it, because they were still thinking.
+#
+# Nothing is lost by waiting. The gate is deterministic, so every proposal it makes today it makes
+# again tomorrow, and the run resumes on its own the moment that pull request is merged or closed.
+# ⚠ The cost, stated rather than discovered: while it is open, new proposals queue behind it. That
+# is the correct failure mode for a system whose premise is that a wrong attribution costs more
+# than a late one — a stuck queue is visible, a rewritten judgement call is not — but it does mean
+# an unanswered pull request here stops the alias pipeline, not just itself.
+open_pr="$(bash "$(dirname "$0")/pr-hands-off.sh" "$BRANCH" --any-open)"
 if [ -n "$open_pr" ]; then
-  engaged="$(gh pr view "$open_pr" --json reviews,comments \
-    --jq '[ (.reviews[]?, .comments[]?) | select(.author.login != "github-actions[bot]") ] | length' 2>/dev/null || echo 0)"
-  if [ "${engaged:-0}" != "0" ]; then
-    echo "::warning::PR #$open_pr is waiting on a person ($engaged comment(s)/review(s)); not overwriting it. Today's $proposed proposal(s) will be re-made after it is merged or closed."
-    {
-      echo "### Attribution paused"
-      echo
-      echo "[PR #${open_pr}](${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/pull/${open_pr}) has human engagement, so this run left it alone."
-      echo "${proposed} proposal(s) are held until it is merged or closed."
-    } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
-    echo "merged=no" >> "${GITHUB_OUTPUT:-/dev/null}"
-    exit 0
-  fi
+  echo "::warning::PR #$open_pr is waiting on a person; not overwriting it. Today's $proposed proposal(s) will be re-made after it is merged or closed."
+  {
+    echo "### Attribution paused"
+    echo
+    echo "[PR #${open_pr}](${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/pull/${open_pr}) has human engagement, so this run left it alone."
+    echo "${proposed} proposal(s) are held until it is merged or closed."
+  } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+  echo "merged=no" >> "${GITHUB_OUTPUT:-/dev/null}"
+  exit 0
 fi
 
 git config user.name "github-actions[bot]"

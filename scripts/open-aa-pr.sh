@@ -13,6 +13,24 @@ BRANCH="auto/refresh-aa"
 TITLE="Refresh Artificial Analysis parameters"
 DIR="$(dirname "$0")"
 
+# Hands off a pull request somebody is deciding on. This branch is force-pushed, so without this
+# check a refresh would delete work committed onto it by a reviewer — which is not hypothetical:
+# PR #48 carried a hand-written reconciliation of the four catalog values this refresh disagreed
+# with, as a commit on this branch. See scripts/pr-engaged.sh for the full reasoning.
+#
+# Checked before any work, not just before the push: everything below is a snapshot that tomorrow's
+# run reproduces, so there is nothing to save by doing it and then throwing it away.
+engaged_pr="$(bash "$DIR/pr-hands-off.sh" "$BRANCH")"
+if [ -n "$engaged_pr" ]; then
+  echo "::warning::PR #$engaged_pr is waiting on a person; leaving $BRANCH alone. AA re-measures continuously, so tomorrow's run will refresh it once that pull request is merged or closed."
+  {
+    echo "### AA refresh paused"
+    echo
+    echo "[PR #${engaged_pr}](${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/pull/${engaged_pr}) has human engagement, so this run left the branch alone."
+  } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+  exit 0
+fi
+
 # Describe the change before committing it: this compares the working tree against HEAD, so it
 # has to run while the change is still uncommitted. It goes at the top of the pull request body,
 # where a reviewer who cannot check an alias mapping can still check a score.

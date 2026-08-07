@@ -31,14 +31,12 @@
 - [ ] 三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
 
-## 自动化：还没做的那几条
+## 自动化
 
-P0/P1 已在 2026-08-07 做掉（见 `LOG.md` 同日三条）。剩下的按价值排：
+2026-08-07 一天做完两轮，见 `LOG.md` 同日五条。**剩下的只有需要观察的，没有待做的**：
 
-- [ ] **AA refresh 是发射后不管**。`upstream.yml` 用 `gh workflow run aa-refresh.yml` 触发就走了，
-      不看结果。8-07 能有声音纯属侥幸——失败恰好落在 `open-aa-pr.sh` 自己的 fallback 分支里；
-      要是挂在更早的 `npm run ingest`，整个 job 红掉而没有任何人知道。
-- [ ] **main 变红没人知道**，而 `AGENTS.md` 写明 EdgeOne 合并即发布、不看 CI。tier-A 提交推之前
-      跑过契约，所以数据风险不高，但「站已经发出去 + CI 是红的」目前无人通报。
-- [ ] **`auto/refresh-aa` 的「数据是安全的」有保质期**：下次 run 会 force-push 覆盖它，而 AA 连续
-      重测，覆盖后不是同一份。要么当天收，要么让它带日期。
+- [ ] 明早（2026-08-08）验一次：`auto/refresh-aa` 的 PR 应该自己开出来；gaps issue 末尾应该多一节
+      「Is the queue being worked?」；`auto/attribution` 应该**跳过**（PR #45 还开着，`--any-open`
+      会让它按兵不动并写 warning）。
+- [ ] ⚠ **PR #45 一天不处理，alias 管线就一天不流**。这是 `--any-open` 有意的代价（卡住看得见、
+      被改写看不见），但别忘了它卡的不只是自己。

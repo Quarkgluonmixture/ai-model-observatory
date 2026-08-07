@@ -86,3 +86,30 @@ jobs:
             echo
             echo "数字看着不对就说一声,回滚是一个 revert 的事。"
           } | node scripts/notify-pushplus.mjs "观测台 · 新增模型"
+
+      # The other half of the same rule, and the more urgent one. `AGENTS.md` states plainly that
+      # **EdgeOne publishes on merge regardless of what CI said** — so a red check on `main` is not
+      # a build waiting to be fixed, it is a site that is already live with a contract that is
+      # failing. Nothing reported that. A red run sat in the Actions tab and the four notifications
+      # this project sends are all about other events.
+      #
+      # It fires only on `main`, and only on a push. A pull request going red is a pull request
+      # doing its job and belongs to whoever opened it; this is about the published board.
+      #
+      # `if: failure()` runs when an earlier step in this job failed, which is exactly the set of
+      # events worth naming: lint, the archive-drift guard, any of the three data checks, the
+      # attribution backtest, or the build.
+      - name: Tell WeChat when main goes red
+        if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: |
+          {
+            echo "**main 上的检查是红的**,而 EdgeOne 合并即发布、不看 CI——所以站已经是这个状态了。"
+            echo
+            echo "提交:\`${{ github.sha }}\`"
+            echo
+            echo "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo "红的是哪一项去 run 里看。回滚是一个 revert 的事。"
+          } | node scripts/notify-pushplus.mjs "⚠ 观测台 · main 检查变红"
