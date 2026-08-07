@@ -8,13 +8,13 @@ the operating contract and still comes first before any change.
 
 ---
 
-## 现状（2026-08-06）
+## 现状（2026-08-07）
 
 | | |
 |---|---|
 | 目录 | 29 model families · 68 benchmarks |
-| 观测 | 1263 rows · 955 / 1972 cells（48.4% cell coverage） |
-| 源分类 | benchmark 777 / independent 296 / vendor 190 |
+| 观测 | 1286 rows · 955 / 1972 cells（48.4% cell coverage） |
+| 源分类 | benchmark 777 / independent 319 / vendor 190 |
 | 溯源 | 318 / 321 catalog values backed by the archive |
 | 归档 | 22 batches，其中 **9 个可脚本重读**（其余 13 个是手抄，永不自更新） |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
@@ -75,9 +75,10 @@ node scripts/fetch-source.mjs arena    # 单独重抓一个源
 
 ## 现在要盯的三件事
 
-1. **`auto/attribution` PR 明早会出现，它不该自合**——里面 8 条 alias 会让 Opus 4.8 和 GPT-5.5 的
-   `arc-agi-2` 换主行（72.08→62.22、85→83.33），属于"已有数字被改动"。**它如果自合了,是判断逻辑
-   写错了**,要紧。
+1. **`auto/attribution` 闸门已验证生效（2026-08-07）**：PR #45 照常出现并**正确地没有自合**——它要
+   换 Opus 4.8 / GPT-5.6 Sol 的 `arc-agi-2` 主行（已有数字被改动），被三条件闸门拦住，留给人判断。
+   **已并入 main 的那次自合（PR #46）是纯 `PROVIDER_LOOKUPS` 加两行，无数字移动。** 这条不再需要盯，
+   闸门逻辑是对的。
 2. **hermes 的定时任务时间**：GitHub 那个每日巡检实际在 08:10 左右跑（不是写的 06:00），所以 hermes
    必须在那之后，否则它每天读到的是昨天的队列。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
