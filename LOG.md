@@ -13,6 +13,20 @@ grep -n -A4 '#measure' LOG.md      # 所有数字连同出处
 
 ---
 
+## [2026-08-07] qwen3.8-max / qwen3.7-plus 接上 provider 价对照  #ship
+
+`PROVIDER_LOOKUPS` 漏了这两个已上游的目录模型，所以它们的价格卡从不显示
+OpenRouter 实时对照。两个 id 都先对着 `openrouter.ai/api/v1/models` 验过是**精确匹配**
+（不是子串——那条路把 GPT-5.6 Sol 卡渲成 Luna Pro 的 $0.10/$0.60 过）：
+
+- `qwen/qwen3.8-max` → $2/$6，与目录价**一致**
+- `qwen/qwen3.7-plus` → $0.32/$1.28，与目录价 $0.4/$1.6 **不同**——这正是实时卡该露的：
+  归档价旁挂 provider 价，不覆盖。差异是信息，不是错误。
+
+tier B，三条件全满足自合：契约全绿 · `describe-change` 报「不改变任何已发布的数字」· 无任何
+`acknowledgedDisagreements`/`mergedInOneSource` 例外。`report:gaps`（带网络）复核：两个模型不再
+被标「served upstream but no entry」，也没引入 dead lookup。
+
 ## [2026-08-06 16:02] 建立 CHECKPOINT / TODO / LOG 三件套  #decision
 
 仓库原本只有"永久真相"层（`AGENTS.md` 操作合同、`docs/ARCHITECTURE.md` 唯一真相、
