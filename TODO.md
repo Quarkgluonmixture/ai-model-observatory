@@ -7,14 +7,6 @@
 
 ---
 
-## 明早验证（2026-08-07，一次性）
-
-- [ ] `~08:10 UTC` — `auto/attribution` PR 应该出现，并且**不自合**。它自合了就是三条件的判断写错了，
-      优先级最高。
-- [ ] `09:30 UTC` — hermes 应该动一次（先确认它的定时任务已经从 07:00 改到 09:30；GitHub 那个每日
-      巡检实际在 08:10 左右跑，07:00 会让它每天读到昨天的队列）。
-- [ ] 微信应该**一条都没有**，除非真有模型上站。
-
 ## 等人拍板
 
 - [ ] `auto/attribution` 里那 8 条 alias：接上 Claude Opus 4.8 和 GPT-5.5 的效率档行之后，
@@ -39,8 +31,14 @@
 - [ ] 三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
 
-## 需要在章程里定死的分工
+## 自动化：还没做的那几条
 
-- [ ] 归属闸门跑在 GitHub 上、会写 `data/model-aliases.json`，而 `docs/AGENT-OPERATIONS.md`
-      的分工表把 alias 划给 hermes。**两个调度器碰同一个文件**，章程第一句就是不许这样。
-      目前不会炸（各开各的分支），但要写清楚谁拥有什么。
+P0/P1 已在 2026-08-07 做掉（见 `LOG.md` 同日三条）。剩下的按价值排：
+
+- [ ] **AA refresh 是发射后不管**。`upstream.yml` 用 `gh workflow run aa-refresh.yml` 触发就走了，
+      不看结果。8-07 能有声音纯属侥幸——失败恰好落在 `open-aa-pr.sh` 自己的 fallback 分支里；
+      要是挂在更早的 `npm run ingest`，整个 job 红掉而没有任何人知道。
+- [ ] **main 变红没人知道**，而 `AGENTS.md` 写明 EdgeOne 合并即发布、不看 CI。tier-A 提交推之前
+      跑过契约，所以数据风险不高，但「站已经发出去 + CI 是红的」目前无人通报。
+- [ ] **`auto/refresh-aa` 的「数据是安全的」有保质期**：下次 run 会 force-push 覆盖它，而 AA 连续
+      重测，覆盖后不是同一份。要么当天收，要么让它带日期。

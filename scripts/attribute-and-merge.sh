@@ -58,6 +58,36 @@ if git diff --name-only | grep -q 'data/model-aliases.json' &&
   green=no
 fi
 
+# Before touching the remote: is somebody already deciding on the pull request this branch carries?
+#
+# This branch is force-pushed and its body rewritten every morning, which is right while nobody is
+# looking at it — one pull request that always reflects today's proposals beats a queue of stale
+# ones. It stops being right the moment a person starts reading. PR #45 asked whether Claude Opus
+# 4.8's and GPT-5.5's arc-agi-2 cells should change hands, was correctly held back by the
+# three conditions for exactly that reason, and would have had its contents replaced underneath the
+# owner the next morning — the decision moving while the decision is being made.
+#
+# So: a review or a comment from anyone who is not this bot means hands off. Nothing is lost by
+# waiting. The gate is deterministic, so every proposal it makes today it makes again tomorrow, and
+# the run resumes on its own the moment the pull request is merged or closed. A stuck queue is
+# visible; a rewritten judgement call is not.
+open_pr="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty' 2>/dev/null || true)"
+if [ -n "$open_pr" ]; then
+  engaged="$(gh pr view "$open_pr" --json reviews,comments \
+    --jq '[ (.reviews[]?, .comments[]?) | select(.author.login != "github-actions[bot]") ] | length' 2>/dev/null || echo 0)"
+  if [ "${engaged:-0}" != "0" ]; then
+    echo "::warning::PR #$open_pr is waiting on a person ($engaged comment(s)/review(s)); not overwriting it. Today's $proposed proposal(s) will be re-made after it is merged or closed."
+    {
+      echo "### Attribution paused"
+      echo
+      echo "[PR #${open_pr}](${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/pull/${open_pr}) has human engagement, so this run left it alone."
+      echo "${proposed} proposal(s) are held until it is merged or closed."
+    } >> "${GITHUB_STEP_SUMMARY:-/dev/null}"
+    echo "merged=no" >> "${GITHUB_OUTPUT:-/dev/null}"
+    exit 0
+  fi
+fi
+
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 git checkout -B "$BRANCH"
@@ -83,8 +113,12 @@ $(cat checks.txt)
 \`\`\`
 "
 
-gh pr create --base main --head "$BRANCH" --title "Attribute $proposed published string(s)" --body "$body" \
-  || gh pr edit "$BRANCH" --title "Attribute $proposed published string(s)" --body "$body"
+# --body-file, never --body: the escalation list grows with every unattributable string the archive
+# collects, and an argv entry over 128 KiB fails before `gh` starts. See scripts/gh-body.mjs.
+printf '%s' "$body" | node scripts/gh-body.mjs pr-body.md
+
+gh pr create --base main --head "$BRANCH" --title "Attribute $proposed published string(s)" --body-file pr-body.md \
+  || gh pr edit "$BRANCH" --title "Attribute $proposed published string(s)" --body-file pr-body.md
 
 if [ "$green" = "yes" ] && [ "${moved:-1}" = "0" ]; then
   gh pr merge "$BRANCH" --merge --delete-branch

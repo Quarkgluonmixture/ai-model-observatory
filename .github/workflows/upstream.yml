@@ -100,9 +100,21 @@ jobs:
         id: gaps
         env:
           CHROME_PATH: /usr/bin/google-chrome
+          GH_TOKEN: ${{ github.token }}
         run: |
           npm run --silent report:gaps > gaps.md
           node scripts/release-probe.mjs >> gaps.md || echo "_The release probe could not run this time._" >> gaps.md
+          # Half of the mutual watch: this job is the one thing here that runs every day whether or
+          # not anyone is home, so it is the right place to notice that the *other* scheduler has
+          # stopped. It goes into the issue, not into WeChat — a queue nobody is working is worth
+          # writing down and is not worth an interruption. The other half is the agent checking
+          # this job, at the top of docs/AGENT-OPERATIONS.md's recurring task.
+          {
+            echo
+            echo "## Is the queue being worked?"
+            echo
+            node scripts/check-heartbeat.mjs --agent 2>&1 | sed 's/^/- /' || true
+          } >> gaps.md
           sed -n 's/.*<!-- gaps: \([0-9]*\) -->.*/count=\1/p' gaps.md >> "$GITHUB_OUTPUT"
           cat gaps.md >> "$GITHUB_STEP_SUMMARY"
 
