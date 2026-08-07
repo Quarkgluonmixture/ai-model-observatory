@@ -16,7 +16,7 @@ import { execSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { BENCHMARKS, MODELS, byPrimaryPreference } from "../app/model-data.ts";
+import { BENCHMARKS, MODELS, OBSERVATIONS_BY_CELL, byPrimaryPreference } from "../app/model-data.ts";
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const STORE = "app/observations.generated.ts";
@@ -236,9 +236,10 @@ const catalogChanges = [];
 // measuring something — is now picked up by the pipeline without a person, so notifying on it
 // trained the habit of not opening the notification.
 const newModels = [];
+let newModelFloorFailures = 0;
 for (const [id, record] of catalogAfter) {
   const was = catalogBefore.get(id);
-  if (!was) { catalogChanges.push(`新增目录记录 **${record.name}**`); newModels.push(record.name); continue; }
+  if (!was) { catalogChanges.push(`新增目录记录 **${record.name}**`); newModels.push({ id, name: record.name }); continue; }
   // Compare by field NAME, not by index: the two revisions may lay their arguments out differently,
   // and a field that exists on only one side is a signature change rather than a number moving.
   for (const [index, field] of record.fields.entries()) {
@@ -342,9 +343,79 @@ if (eloChanges.length) {
   if (eloChanges.length > 12) out.push(`- …另有 ${eloChanges.length - 12} 处,未列出`);
 }
 
+// --- What a new catalog record actually brings ----------------------------------------------
+//
+// The three conditions an unattended change must clear do not cover this one, and that was
+// measured rather than assumed: a catalog record with NO evidence behind it passes `check:data`,
+// passes `check:models` with exit 0, and passes `check:prices`. All three contracts are green on a
+// model whose row is empty across every column. What refuses such a merge today is that a new
+// record counts toward this report's `moved` tally — a side effect of how the report is written,
+// not a gate anyone designed for the purpose, and one that disappears the moment a merge path
+// stops reading `moved`.
+//
+// So the measurement is printed here, where the merge decision already looks. The floor is
+// arithmetic and not an editorial threshold: adding a model widens the grid by one full
+// column-count, so (filled + k) / ((models + 1) × benchmarks) beats filled / (models × benchmarks)
+// exactly when k > filled / models — the average cells a model already carries. It is recomputed
+// from the base revision every run because it moves as the board fills.
+//
+// An empty row is not merely untidy. Cell coverage is the metric `AGENTS.md` calls the only one
+// that matters, and a record with nothing behind it lowers it while adding no information: the
+// model ranks nowhere, reads `N/A` in every lens, and occupies a row that says only that somebody
+// heard the model exists.
+if (newModels.length) {
+  // Counted from OBSERVATIONS_BY_CELL rather than from this script's own parse of the generated
+  // store, and the difference is not cosmetic: the store holds only the ingested rows, while the
+  // board also carries the seed observations written into `app/model-data.ts`. Measured today,
+  // parsing the store alone put the floor at 36 where the real board says 38 — an understatement,
+  // which for a floor is the permissive direction and therefore the wrong one.
+  //
+  // The new models are excluded from both sides. Including them would let a batch of thin records
+  // lower the average they are then measured against, which is a floor that sinks under load.
+  const newIds = new Set(newModels.map((model) => model.id));
+  const established = MODELS.filter((model) => !newIds.has(model.id));
+  const establishedCells = established.reduce(
+    (total, model) => total + Object.keys(OBSERVATIONS_BY_CELL[model.id] ?? {}).length, 0,
+  );
+  const floor = established.length ? Math.ceil(establishedCells / established.length) : 0;
+  const lines = [];
+  let below = 0;
+  for (const model of newModels) {
+    const brought = Object.keys(OBSERVATIONS_BY_CELL[model.id] ?? {}).length;
+    const verdict = brought === 0
+      ? "**空行** —— 每一列都是 N/A,只会把覆盖率往下拉"
+      : brought > floor
+        ? `高于 ${floor} 格地板,不稀释覆盖率`
+        : `低于 ${floor} 格地板 —— 加了它覆盖率会下降`;
+    if (brought <= floor) below += 1;
+    lines.push(`- **${model.name}** 带来 ${brought} 格:${verdict}`);
+  }
+  out.push("");
+  out.push(
+    `**新增目录记录的证据量**(地板 ${floor} 格 = 现有模型的平均格数,算出来的、不是定出来的):`,
+  );
+  out.push(...lines);
+  if (below) {
+    out.push("");
+    out.push(
+      `⚠ 其中 ${below} 条**没到地板**。三项契约对空行全部亮绿 —— 这一节是唯一会说出来的地方。`,
+    );
+  }
+  // Machine-readable, so a merge path can refuse on it instead of relying on `moved` catching a
+  // new record by accident.
+  newModelFloorFailures = below;
+}
+
 process.stdout.write(out.join("\n") + "\n");
 console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length + reclassified.length} moved -->`);
 console.log(`<!-- elo-changes: ${eloChanges.length} -->`);
-console.log(`<!-- new-models: ${newModels.join(" · ")} -->`);
-// Read by the charter's fourth merge condition: an addition nothing can contradict stops.
+console.log(`<!-- new-models: ${newModels.map((m) => m.name).join(" · ")} -->`);
+// Reported, deliberately NOT a merge condition. A gate on it was measured and rejected: 47 of the
+// 70 columns had a single source, so refusing every addition that lands in one would refuse almost
+// every addition, and a check that is always red is a check nobody reads. (This comment used to
+// claim it was "read by the charter's fourth merge condition". Nothing read it, and no fourth
+// condition existed — the docs were right and the comment was wrong.)
 console.log(`<!-- unverifiable-cells: ${unverifiable.length} -->`);
+// This one IS meant to be read: how many new catalog records arrived below the dilution floor.
+// Zero is the only value an unattended merge may proceed on.
+console.log(`<!-- new-models-below-floor: ${newModelFloorFailures} -->`);
