@@ -118,6 +118,24 @@ const serialise = (row) =>
     .join(", ") +
   " }";
 
+// The observation rows are emitted in chunks rather than as one array literal, and the reason is
+// a hard compiler limit rather than taste. `ObservationRow` has four optional properties, so every
+// row literal has a slightly different shape, and TypeScript checks an array literal against its
+// annotation by building a union across all of them. Past roughly 1,120 rows that union stops
+// being representable and `npm run build` fails with "Expression produces a union type that is too
+// complex to represent" — pointing at line 6 of a generated file, which reads as the file being
+// corrupt rather than as the archive having grown. The archive crossed that line on 2026-08-07,
+// going from 1,116 rows to 1,138 when the ARC Prize batch was attributed; a check at 1,113 rows
+// still passed, so the daily refresh was days away from hitting it on its own.
+//
+// A chunk annotated `ObservationRow[]` contributes `ObservationRow` to the spread, not a literal
+// type, so the union is only ever built over CHUNK rows at a time and the ceiling stops moving
+// with the archive. One row still occupies one line, which `scripts/describe-change.mjs` relies on.
+const CHUNK = 300;
+const chunkName = (index) => `ROWS_${index + 1}`;
+const chunks = [];
+for (let index = 0; index < rows.length; index += CHUNK) chunks.push(rows.slice(index, index + CHUNK));
+
 // Arena Elo is derived here rather than hand-carried on the catalog record, and the reason is the
 // shape of the number rather than tidiness. Elo moves continuously — every vote nudges it — so a
 // value typed into app/model-data.ts is stale the day after it is typed, and a daily refresh of it
@@ -181,9 +199,14 @@ writeFileSync(
     "",
     'import type { ArenaElo, ObservationRow } from "./model-data";',
     "",
-    "export const INGESTED_ROWS: ObservationRow[] = [",
-    ...rows.map((row) => serialise(row) + ","),
-    "];",
+    `// Emitted in ${chunks.length} chunk(s) of up to ${CHUNK}: see scripts/ingest.mjs for why.`,
+    ...chunks.flatMap((chunk, index) => [
+      `const ${chunkName(index)}: ObservationRow[] = [`,
+      ...chunk.map((row) => serialise(row) + ","),
+      "];",
+      "",
+    ]),
+    `export const INGESTED_ROWS: ObservationRow[] = [${chunks.map((_, index) => `...${chunkName(index)}`).join(", ")}];`,
     "",
     "// Human-preference Elo, keyed by catalog model id. Derived, never typed: see scripts/ingest.mjs.",
     "export const ARENA_ELO: ArenaElo[] = [",

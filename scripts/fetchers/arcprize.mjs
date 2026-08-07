@@ -21,13 +21,16 @@
 // it replaces an independent mirror and a hand transcription with the benchmark-native original, at
 // full precision, re-readable.
 //
-// ⚠ Batch 01's ARC rows are therefore a hand-read of this file and are candidates for
-// `supersededRows`, the way batch 02's 18 eye-read DeepSWE rows were superseded by the artifact.
-// That is an editorial call and is deliberately not made here. Until it is, both exist, and batch
-// 01's rows carry an `evaluationDate` while these do not — so the site's primary-row rule keeps
-// preferring the rounded hand-read. Nothing regresses; the precise rows simply wait.
+// Batch 01's ARC rows are therefore a hand-read of this file, and on 2026-08-07 they were
+// superseded by it — the reason is written out in `supersededRows`. The short version, because it
+// changes how you should read this file's `evaluation_date: null`: batch 01's ARC rows carried an
+// `evaluationDate`, and every value of it is `models.json`'s `modelReleaseDate` to the day. That is
+// when the model shipped, not when ARC ran it, and `byPrimaryPreference` sorts on that field — so a
+// release date was choosing which ARC row the dashboard published, and it chose the rounded
+// hand-read every time. Null here is not a gap next to batch 01's richer metadata; it is the
+// absence of a quantity this source genuinely does not publish.
 //
-// ## Three things this fetcher deliberately does not interpret
+// ## What this fetcher interprets, and what it refuses to
 //
 // **1. It filters to `v2_Semi_Private` and nothing else.** The same file carries
 // `v2_Public_Eval` and `v2_Private_Eval`, and the public split is exactly the trap
@@ -36,15 +39,34 @@
 // series, and so does this. `v1_Semi_Private` (ARC-AGI-1) and `v3_Semi_Private` are real and
 // collectable, but each needs its own benchmark id — a taxonomy decision, not a fetch.
 //
-// **2. It does not parse an operating point out of the model id, and `reasoning_effort` stays
-// null.** This file publishes one opaque id per entry and no effort column. Splitting the id looked
-// safe and is not: the trailing token is `high`/`low`/`medium`/`xhigh`/`minimal`/`max` for some
-// entries, but it is a *thinking-token budget* for `-1k`, `-8k`, `-16k`, `-32k`, `-64k`, a *serving
-// route* for `-openrouter`, `-together`, `-bedrock`, and a date or a release tag for others. A
-// budget written into the effort field would corrupt both the drift key and alias resolution, which
-// are the two places effort is load-bearing. LiveBench already establishes the alternative —
-// `AGENTS.md` lists its convention as "effort baked into the string" — so the id is archived
-// verbatim and interpreting it is the alias step's job.
+// **2. It reads the operating point off the end of the model id, from a closed list, and leaves
+// the id itself verbatim.** The first version of this fetcher left `reasoning_effort` null for
+// every row, on the reasoning that the trailing token is an effort for some entries but a
+// thinking-token budget for `-1k`, `-8k`, `-16k`, `-32k`, `-64k`, a serving route for
+// `-openrouter`, `-together`, `-bedrock`, and a date or a release tag for others. That reasoning
+// was right about the tokens and wrong about the conclusion, and the alias step is where it broke:
+//
+//   ARC publishes five entries for GPT-5.6 Sol — 42.5 / 67.08 / 85.42 / 90 / 92.5 — which are one
+//   model at five operating points. With no effort on the row, all five key to the same cell, so
+//   attaching them to the catalog fails the one-source-one-cell gate AND the 20% cross-source
+//   disagreement gate, and the only way through either is an `acknowledgedDisagreements` or
+//   `mergedInOneSource` exemption asserting that a 42.5 and a 92.5 are one measurement. They are
+//   not. `scripts/fetchers/epoch.mjs` records the same failure from the other side: folding a
+//   published operating point into null "makes it collide with rows from sources that simply did
+//   not print an effort".
+//
+// So the token is read against a CLOSED list — the same one Epoch's splitter uses, including its
+// `none` → `non-reasoning` synonym — and anything else leaves the field null. `-1k` and
+// `-bedrock` and `-2026-07-30` are not on the list and never become an effort. What this cannot
+// see is an effort that is not the last token: `openai-gpt-5-6-luna-max-2026-07-30` ends in a
+// date, so it keeps a null effort. That is the conservative direction — a null effort is a row
+// saying nothing, and the gates catch a collision if such a string is ever mapped.
+//
+// The id is still archived **verbatim**, unlike Epoch, which strips the effort off its slug. That
+// is deliberate: a token misread as an effort only mislabels a configuration, while a token
+// stripped out of the id merges two products and the alias table can no longer tell them apart.
+// `max` is an effort for Anthropic and OpenAI and a product tier for Alibaba, and this board is
+// the seventh spelling convention in the archive; identity stays the alias step's decision.
 //
 // **3. It archives entries that are not models.** `2025_human_panel`, `ARChitects`, `Icecuber` and
 // the dated Kaggle solutions are on this board and are not catalog models. They stay in the
@@ -65,6 +87,20 @@ const DATA = `${SITE}/media/data`;
 // The split this catalog's `arc-agi-2` column means. Its siblings in the same file are a different
 // measurement under the same name — see the header.
 const DATASET = "v2_Semi_Private";
+
+// The operating point, when the published id ends in one. Kept identical to the list
+// `scripts/fetchers/epoch.mjs` uses — including `none` → `non-reasoning` — because Epoch reads
+// this same board, so a shared vocabulary is what lets the two readings meet in one cell and be
+// compared by the disagreement gate rather than sit side by side as two configurations.
+const EFFORTS = new Set(["max", "xhigh", "high", "medium", "low", "minimal", "thinking", "non-reasoning"]);
+const EFFORT_SYNONYMS = new Map([["none", "non-reasoning"]]);
+// Both separators, because the board uses both: `openai-gpt-5-6-sol-max` and `claude_sonnet_4_6_max`
+// are the same convention typed two ways, and Epoch reads the second one as max as well (58.33).
+const effortOf = (modelId) => {
+  const tail = String(modelId).split(/[-_]/).pop().toLowerCase();
+  if (EFFORTS.has(tail)) return tail;
+  return EFFORT_SYNONYMS.get(tail) ?? null;
+};
 
 const load = async (name) => {
   const url = `${DATA}/${name}.json`;
@@ -140,6 +176,7 @@ export const arcprize = {
     const rows = [...byId.values()].map((row) => {
       const model = named.get(row.modelId);
       const provider = model?.providerId ?? null;
+      const effort = effortOf(row.modelId);
       return {
         // Verbatim. This is the seventh spelling convention in the archive and the alias step is
         // where it gets reconciled; a fetcher that "tidies" a published id destroys the only thing
@@ -154,8 +191,9 @@ export const arcprize = {
         score: Number((row.score * 100).toFixed(2)),
         unit: "%",
         harness: null,
-        // Null on purpose — this file has no effort column. See the header, point 2.
-        reasoning_effort: null,
+        // Read off the end of the published id against a closed list, never guessed. Null when the
+        // last token is a thinking budget, a serving route or a date. See the header, point 2.
+        reasoning_effort: effort,
         tools_enabled: null,
         context_length: null,
         // Null on purpose. `models.json` carries `modelReleaseDate`, which is when the *model*
@@ -172,7 +210,10 @@ export const arcprize = {
           (provider ? `，provider ${provider}` : "") +
           (Number.isFinite(row.costPerTask) ? `；每题成本 $${row.costPerTask}` : "") +
           (row.resultsUrl ? `；结果页 ${row.resultsUrl}` : "") +
-          `；⚠ 操作档位在 id 里、本文件不单独发布，effort 一律留空`,
+          `；⚠ 本文件没有 effort 列，操作档位只在 id 末尾：` +
+          (effort
+            ? `本行读出 ${effort}（闭合清单内），id 原样保留`
+            : `本行末尾不是档位词（是思考预算 / 服务路由 / 日期一类），effort 留空`),
       };
     });
 
@@ -202,11 +243,15 @@ export const arcprize = {
           "display:true, which is the board's own decision about what it publishes; and rows with a " +
           "finite score. v1_Semi_Private (ARC-AGI-1) and v3_Semi_Private are present and " +
           "collectable but each needs its own benchmark id. " +
-          "reasoning_effort is NULL for every row by design: this file publishes one opaque id per " +
-          "entry and no effort column, and the trailing token of that id is an effort for some " +
-          "entries but a thinking-token budget (-1k, -8k, -16k, -32k, -64k), a serving route " +
-          "(-openrouter, -together, -bedrock), a date or a release tag for others. Parsing it here " +
-          "would corrupt the drift key and alias resolution. Entries that are not models " +
+          "reasoning_effort is read off the END of the published id against a CLOSED list (max, " +
+          "xhigh, high, medium, low, minimal, thinking, non-reasoning, plus none -> non-reasoning) " +
+          "and is null for everything else: this file has no effort column, and the trailing token " +
+          "is a thinking-token budget (-1k, -8k, -16k, -32k, -64k), a serving route (-openrouter, " +
+          "-together, -bedrock), a date or a release tag on many entries. The list is Epoch's, " +
+          "because Epoch reads this same board and the two readings have to meet in one cell to be " +
+          "comparable. An effort that is not the last token (openai-gpt-5-6-luna-max-2026-07-30) " +
+          "stays null. The id itself is archived VERBATIM — unlike Epoch, which strips the effort " +
+          "off its slug — so identity remains the alias step's decision. Entries that are not models " +
           "(2025_human_panel, ARChitects, Icecuber, the dated Kaggle solutions) are archived and " +
           "stay unmapped, per AGENTS.md rule 8. " +
           "append-only: the semi-private question set is frozen, but the board keeps running newly " +

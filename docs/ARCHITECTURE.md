@@ -31,8 +31,8 @@ The application has two data paths:
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
 
-Current scale: **29 model families, 68 benchmarks, 1294 observations across 955 of 1972 cells**,
-sourced benchmark-native 783 / independent 321 / vendor 190. **318 of 321 catalog numbers are
+Current scale: **29 model families, 68 benchmarks, 1316 observations across 958 of 1972 cells**,
+sourced benchmark-native 805 / independent 321 / vendor 190. **318 of 321 catalog numbers are
 backed by an archive row**; the three that are not are listed by `npm run check:models` on every
 run rather than hidden.
 
@@ -449,7 +449,7 @@ pages are known-dead or known-empty and were already worked around.
 
 | Batch | Covers | Outcome |
 | --- | --- | --- |
-| 01 | Reasoning and maths | ARC Prize, Epoch FrontierMath + GPQA. Complete transcript. |
+| 01 | Reasoning and maths | ARC Prize, Epoch FrontierMath + GPQA. Complete transcript. Its GPQA rows are superseded by batch 12 and its 95 ARC rows by batch 23 — both are the same board read by script afterwards. The ARC supersede also retired a wrong field: every `evaluation_date` on those rows is ARC's `modelReleaseDate` to the day, and `byPrimaryPreference` sorts on that field, so a release date was deciding which ARC row the site published. |
 | 02 | Coding and software engineering | Terminal-Bench 2.0/2.1, SWE-bench, SWE-Bench Pro, DeepSWE, SWE-Marathon, FrontierSWE, PostTrainBench, ProgramBench. Complete, 313 rows. |
 | 03 | Agents and tool use | MCP-Atlas, Toolathlon, OSWorld 2.0, Agents' Last Exam. Filtered at capture. |
 | 04 | Multimodal, long context, professional | GDPval-AA, APEX, MMMU. Lowest yield of the set. |
@@ -471,7 +471,7 @@ pages are known-dead or known-empty and were already worked around.
 | 20 | MMMU-Pro leaderboard | 71 models carrying an MMMU-Pro Overall score, rendered from the official board. Supersedes batch 04's two hand-read rows, which filed an author-reported score as benchmark-native. |
 | 22 | LMArena Elo | 493 rows across two boards, read from the pages' own server-rendered payload. Not observations: Arena Elo is human preference, not task accuracy (rule 5), so it stays a model parameter. This is the batch `ARENA_ELO` derives from, which is why the catalog no longer carries an Elo at all. |
 | 21 | QwenCloud operating parameters | Price, cache price and context for Qwen3.8 Max, read from the maker's own marketplace card and release changelog. Collected because the two list-price tables (Alibaba Model Studio, QwenCloud docs) still carried only the 3.7 family three days after release, and Artificial Analysis had not measured the model at all. |
-| 23 | ARC Prize verified leaderboard | 198 entries on the ARC-AGI-2 semi-private split, from the file the board loads. **The first-hand source batch 12 (Epoch's mirror) and batch 01 (hand-read, rounded to one decimal) both descend from** — verified to the decimal against models already in the catalog. Filtered three ways, all reported: `v2_Semi_Private` only, `display:true` only, and one exact duplicate ARC publishes collapsed. `reasoning_effort` is null on every row on purpose: the file publishes one opaque id and no effort column, and that id's trailing token is an effort for some entries but a thinking-token budget (`-1k`…`-64k`) or a serving route (`-openrouter`, `-bedrock`) for others. Interpreting it is the alias step's job; on landing, 2 of 198 rows resolved and **no published number moved**. |
+| 23 | ARC Prize verified leaderboard | 198 entries on the ARC-AGI-2 semi-private split, from the file the board loads. **The first-hand source batch 12 (Epoch's mirror) and batch 01 (hand-read, rounded to one decimal) both descend from** — verified to the decimal against models already in the catalog. Filtered three ways, all reported: `v2_Semi_Private` only, `display:true` only, and one exact duplicate ARC publishes collapsed. `reasoning_effort` is read off the end of the published id against a **closed list** — Epoch's, including its `none` → `non-reasoning` synonym — and is null for the 81 rows whose last token is a thinking-token budget (`-1k`…`-64k`), a serving route (`-openrouter`, `-bedrock`) or a date. It landed with the field null on every row, which turned out not to be a neutral choice: ARC publishes five entries for GPT-5.6 Sol spanning 42.5 to 92.5, and with no effort on the row they all key to one cell, so attaching them failed both the one-source-one-cell gate and the 20% disagreement gate and could only be forced through with an exemption asserting a 42.5 and a 92.5 are one measurement. The id itself is still archived verbatim, unlike Epoch's, so identity stays the alias step's decision. **52 strings were attributed on 2026-08-07** (37 of them confirmed by matching an already-attributed Epoch row to the decimal on the same model-and-effort cell), which added ARC-AGI-2 to Claude Fable 5, Gemini 3.6 Flash and Inkling Small, and replaced seven rounded hand-read numbers with the full-precision originals. |
 
 ### Which sources can be re-read by script
 
@@ -810,6 +810,16 @@ stay. That is judgement, and judgement does not go in a cron job.
   silently — overflow, type floor, tap-target floor — but it needs Chrome and a running server, so
   it is a local gate rather than a CI one.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
+- **The generated observation store has a compiler ceiling, and the archive walked into it on
+  2026-08-07.** `ObservationRow` carries four optional properties, so every emitted row literal has a
+  slightly different shape and TypeScript checks the array by building a union across all of them. Past
+  roughly 1,120 rows that union stops being representable and `npm run build` fails with *Expression
+  produces a union type that is too complex to represent*, pointing at line 6 of a generated file — which
+  reads as corruption rather than as growth. Attributing the ARC batch took the store from 1,116 rows to
+  1,138 and tripped it; 1,113 still passed, so the daily refresh was days from finding it instead.
+  `scripts/ingest.mjs` now emits chunks of 300 typed `ObservationRow[]` and spreads them, which caps the
+  union at chunk size and stops the ceiling moving with the archive. One row is still one line, which
+  `scripts/describe-change.mjs` parses on.
 
 ## 11. Interface
 
