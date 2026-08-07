@@ -114,7 +114,27 @@ control now. Merge only if:
 3. You did **not** need an entry in `acknowledgedDisagreements` or `mergedInOneSource` to make it
    pass. Those exist for real exceptions, and writing one is exactly the judgement a human owes.
 
-Any of the three false: push the branch, open the PR, notify, stop. Do not argue yourself into an
+**A fourth condition, added 2026-08-07, and it applies only to a change that adds a catalog
+record.** `npm run describe-change` must report `new-models-below-floor: 0`. The reason it exists
+is that the other three do not cover the case at all, which was measured rather than assumed: a
+record with NO evidence behind it passes `check:data`, passes `check:models` with exit 0, and
+passes `check:prices`. All three contracts are green on a model whose row is empty across every
+column. What refused such a merge until now was that a new record happens to count toward
+`describe-change`'s `moved` tally — a side effect of how that report is written, not a gate anyone
+designed, and one that vanishes the day a merge path stops reading `moved`.
+
+The floor is arithmetic, not an editorial threshold: adding a model widens the grid by one full
+column-count, so it raises cell coverage only if it brings more filled cells than the models
+already on the board average. That number is recomputed every run — 38 today — and the new models
+are excluded from both sides of it, because a floor that a batch of thin records can lower is a
+floor that sinks under load.
+
+Below the floor is not a refusal to collect the model. It is a refusal to collect it **unattended**:
+an empty row lowers the one metric `AGENTS.md` calls the only one that matters, ranks nowhere, and
+says only that somebody heard the model exists. Report it, leave it in the queue, and let a person
+decide whether the board wants it anyway.
+
+Any of the four false: push the branch, open the PR, notify, stop. Do not argue yourself into an
 exemption — leaving a row unmapped costs nothing and a wrong attribution costs the project its
 credibility (see the attribution rule).
 

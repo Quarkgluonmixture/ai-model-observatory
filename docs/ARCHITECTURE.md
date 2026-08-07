@@ -821,7 +821,13 @@ stay. That is judgement, and judgement does not go in a cron job.
   silently — overflow, type floor, tap-target floor — and **is** in CI since 2026-08-07, on both
   routes, using the Chrome the runner already ships.
 - General capability values are imported composite snapshots, not recomputed from the benchmark portfolio.
-- **The three conditions do not protect against an empty row, and the thing that catches it is
+- ~~The three conditions do not protect against an empty row~~ **Closed 2026-08-07 by a fourth
+  condition**: `describe-change` now counts, for every newly added catalog record, the cells it
+  actually brings and compares them against the board's own average, and emits
+  `new-models-below-floor`. The measurement that made the case is below and still stands —
+  the three contracts really are green on an empty record, so the fourth condition is the only
+  thing that speaks.
+- **The three contracts do not protect against an empty row, and what used to catch it was
   incidental.** Measured 2026-08-07 by putting a zero-evidence catalog record in and running the
   contract: `check:data` passed, `check:models` exited **0**, `check:prices` passed. All three
   contracts are green on a model with no evidence at all, because none of them asks "does this
