@@ -1753,6 +1753,13 @@
       "effort": "*",
       "modelId": "claude-opus-4.8",
       "reason": "ARC Prize verified leaderboard, ARC-AGI-1 only (batch 24) -- ARC never ran Opus 4.8 at max on ARC-AGI-2, so this string is absent from batch 23. Same convention and same model as anthropic-opus-4-8-{low,medium,high}, all three of which are confirmed to the decimal against Epoch (62.22 / 71.67 / 72.08), and the board says so itself: models.json puts all four ids in one modelGroup, anthropic-opus-4-8, and names this one \"Claude Opus 4.8 (Max)\". max is the operating point the catalog record already carries as configurations[0]."
+    },
+    {
+      "modelRaw": "deepseek-v4-flash",
+      "effort": "reasoning max",
+      "file": "batch-26-aa-evaluations",
+      "modelId": "deepseek-v4-flash",
+      "reason": "Same call as the batch-14 entry and for the same reason, scoped again because a file-scoped alias covers one file. AA never renamed its slug: `deepseek-v4-flash` is 'DeepSeek V4 Flash 0731 (Reasoning, Max Effort)', released 2026-07-31, which is this catalog record. Pinned to the effort rather than wildcarded, because the SAME model_raw in this batch also carries the 2026-04-24 preview: AA publishes `deepseek-v4-flash-non-reasoning` ('DeepSeek V4 Flash (Non-reasoning)', 2026-04-24) and the fetcher splits that suffix off, so both meanings land under one string separated only by effort. `reasoning max` takes the release; `non-reasoning` stays unmapped, exactly as the batch-14 note says it must. Found by the evidence counter's self-test, which reported five cells for this model that the catalog does not have -- the rows were sitting in the archive with nothing attaching them."
     }
   ],
   "benchmarkSplits": [

@@ -91,16 +91,33 @@ const splitEffort = (slug) => {
 // `gpt-5-6-sol-high` and never alongside a `-max` sibling, so the two paths do not collide — and
 // if that ever changes, two strings resolving to one cell in one batch is exactly what the
 // one-source-one-cell gate fails on rather than silently merging.
-const NAMED = ["non-reasoning", "reasoning", "minimal", "medium", "xhigh", "high", "low", "max"];
+// Two dimensions, and taking either one alone is a documented way to publish a wrong number.
+// AA writes "(Reasoning, Max Effort)" and "(Non-reasoning, High Effort)" — a MODE and a LEVEL. The
+// first draft of this returned whichever came first in the comma list, which made
+// `deepseek-v4-flash` "reasoning" when it is max, and `claude-sonnet-5-non-reasoning` "non-reasoning"
+// when it is also high. Ten records were affected.
+//
+// Neither token alone is the configuration. `data/model-aliases.json`'s `_doc` records what
+// happens when you pick one: "Claude Sonnet 5 (Non-reasoning, High Effort) — reasoning and
+// non-reasoning are different modes, but both parse to effort 'high', so mapping both put two
+// operating modes in one cell", caught by the one-source-one-cell gate the day it was written.
+//
+// So when both are present both are kept, as `"<mode> <level>"`. It cannot collide with a plain
+// `high` from the reasoning sibling, it loses nothing, and the archive already carries compound
+// efforts of this shape — batch 01 has "thinking 16K" and "thinking none". A parenthetical naming
+// only one of the two yields that one; naming neither yields null rather than a guess.
+const LEVELS = ["minimal", "medium", "xhigh", "high", "low", "max"];
+const MODES = ["non-reasoning", "reasoning"];
 const effortFromName = (name) => {
   const match = /\(([^)]+)\)\s*$/.exec(name ?? "");
   if (!match) return null;
-  // "(Adaptive Reasoning, Max Effort, Opus 4.8 Fallback)" — a comma list, and only the level is
-  // wanted. A parenthetical that names no level at all yields null rather than a guess.
-  for (const part of match[1].split(",").map((p) => p.trim().toLowerCase().replace(/\s*effort\s*$/, ""))) {
-    if (NAMED.includes(part)) return part;
-  }
-  return null;
+  // "Adaptive Reasoning" is neither: it is Anthropic's product name for the mode selector, not an
+  // operating point, so it falls through and the level beside it is what gets recorded.
+  const parts = match[1].split(",").map((part) => part.trim().toLowerCase().replace(/\s*effort\s*$/, ""));
+  const level = parts.find((part) => LEVELS.includes(part)) ?? null;
+  const mode = parts.find((part) => MODES.includes(part)) ?? null;
+  if (level && mode) return `${mode} ${level}`;
+  return level ?? mode;
 };
 
 // AA publishes proportions for the pass@1 evaluations and points for the indices. Every field

@@ -22,6 +22,14 @@
 // never overstates it, which is the safe direction for a number whose job is to stop an empty row:
 // "under the floor" is a claim it can make, "over the floor" is a candidate for a reader.
 //
+// One overstatement is inherent and stays: this matches by published STRING, and a string can mean
+// two models. `deepseek-v4-flash` on Artificial Analysis is the 0731 release at `reasoning max` and
+// the 2026-04-24 preview at `non-reasoning` — one slug, two models, separated only by effort, which
+// is why its alias is pinned to an effort rather than wildcarded. The counter credits the release
+// with the preview's IFBench row because it cannot see that distinction. One cell on one model,
+// and the safe direction to be wrong in is the other one, so it is recorded here rather than
+// papered over: a caller reading a count near the floor should look at the strings behind it.
+//
 // A benchmark NAME is also not a catalog column. The same three lookups `ingest.mjs` applies —
 // dropped benchmarks, an evaluator's own name for a column, a version that gets its own id — are
 // applied here, so a row against a benchmark this catalog does not carry is not counted as a cell
@@ -97,6 +105,23 @@ export const buildEvidenceIndex = (benchmarkIds) => {
    * provider feed does not. Prefix is why a needle shorter than four characters is refused: `gpt`
    * would match every OpenAI model ever published.
    */
+  // A prefix match whose remainder starts with a DIGIT is a different version, not an operating
+  // point, and refusing it is not a nicety — it is the difference between this counter working and
+  // being actively dangerous. Measured before the guard: `GPT-5` normalises to `gpt5`, which
+  // prefix-matches `gpt55`, `gpt56sol`, `gpt562025…` and every other GPT-5.x string in the
+  // archive, and the counter credited it with **55 cells**. `Claude Opus 4` got 51 the same way,
+  // `kimi-k2` got 46. A floor those numbers can clear is a floor that admits a model on another
+  // model's evidence. The self-test missed it because it feeds catalog ids and names, which are
+  // long and specific; the strings a provider feed produces are not always either.
+  //
+  // `gpt56sol` -> `gpt56solmax` leaves "max", which is an operating point and matches.
+  // `gpt5`     -> `gpt55`       leaves "5",   which is a version and does not.
+  const matches = (key, needle) => {
+    if (key === needle) return true;
+    if (!key.startsWith(needle)) return false;
+    return !/^[0-9]/.test(key.slice(needle.length));
+  };
+
   return (needles) => {
     const wanted = [...new Set(needles.map(norm).filter((needle) => needle.length > 3))];
     const cells = [];
@@ -104,9 +129,9 @@ export const buildEvidenceIndex = (benchmarkIds) => {
     let hasParameters = false;
     for (const needle of wanted) {
       for (const [key, hits] of observations) {
-        if (key === needle || key.startsWith(needle)) { rows += hits.length; cells.push(...hits); }
+        if (matches(key, needle)) { rows += hits.length; cells.push(...hits); }
       }
-      for (const key of parameters) if (key === needle || key.startsWith(needle)) hasParameters = true;
+      for (const key of parameters) if (matches(key, needle)) hasParameters = true;
     }
     return { rows, cells: [...new Set(cells)], parameters: hasParameters };
   };
