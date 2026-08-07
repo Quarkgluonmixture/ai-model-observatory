@@ -14,8 +14,8 @@ the operating contract and still comes first before any change.
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks（当日新增 ARC-AGI-1 `legacy` · ARC-AGI-3 `observe` · τ³-Banking `observe` · IFBench `observe`） |
-| 观测 | **1773 rows · 1090 / 2088 cells（52.2% cell coverage）** |
-| 源分类 | benchmark 880 / independent 703 / vendor 190 |
+| 观测 | **1779 rows · 1094 / 2088 cells（52.4% cell coverage）** |
+| 源分类 | benchmark 880 / independent 709 / vendor 190 |
 | 溯源 | 318 / 321 catalog values backed by the archive |
 | 归档 | **26 batches，其中 13 个可脚本重读**（其余 13 个是手抄，永不自更新） |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
@@ -25,7 +25,9 @@ the operating contract and still comes first before any change.
 
 **当天新增的自动化**：`check:mobile` 进了 CI（两条路由，找不到 Chrome 直接失败）；
 `describe-change` 多了第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
-`check:deployment` 建好但**等你填 `data/deployment.json` 的 `productionUrl`**。
+`check:deployment` 建好但**等你填 `data/deployment.json` 的 `productionUrl`**；
+`add-model-and-merge.sh` 会在每日 job 里给「够格的上游新模型」自动建目录记录（**四条**条件，
+第四条是空行保护）——今天没有候选够格，那是稳态。
 
 三个无源值（`check:models` 每次都会报，属于诚实的空缺而非错误）：`qwen3.8-max open`、
 `qwen3.7-plus contextK`、`qwen3.7-plus open`。
