@@ -1,7 +1,7 @@
 # CHECKPOINT
 
-**接手点** — ARC 三个 split 全部脚本化并接上目录，等人合 `feat/arc-attribution`（**不能自合**，
-见下）。之后继续把手抄批次变成脚本源。
+**接手点** — ARC 三个 split 全部脚本化并接上目录，PR #52 已合（2026-08-07，人工合的——它按设计
+不能自合）。下一步是明早验链路，之后继续把手抄批次变成脚本源。
 
 Snapshot for the next session. One page. Durable reasoning lives in the docs below; history lives
 in `LOG.md`; future work lives in `TODO.md`. Nothing here is a substitute for `AGENTS.md`, which is
@@ -97,13 +97,11 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **等你拍板：`feat/arc-attribution`**（两个 commit）。ARC 收尾三个判断题全做完了：52 条 alias
-   （37 条用数字对着 Epoch 逐位确认）、batch 01 的 95 条 ARC 行 supersede、新增 ARC-AGI-1 与
-   ARC-AGI-3 两列。**它不能自合**，因为 `describe-change` 报 7 个已有数字被改动 —— 全是
-   1 位小数手抄值换成全精度原值（72.1→72.08、90.4→90.42，最大 0.04）。三条件第 2 条按设计拦住了它，
-   这正是闸门在工作。判断依据全部写进了 commit message、`data/model-aliases.json` 的 `_doc`
-   和 `LOG.md` 2026-08-07 第四轮。
-   ⚠ 合之前先 rebase：归属闸门每天也写 `data/model-aliases.json`，而它不会为这个分支让路。
+1. **ARC 那一轮已经上线了**（PR #52，人工合于 2026-08-07）。站上多了 ARC-AGI-1 和 ARC-AGI-3 两列，
+   ARC-AGI-2 那列有 7 个数字从 1 位小数换成了全精度（72.1→72.08、90.4→90.42，最大 0.04）。
+   **它当时不能自合**：三条件第 2 条要求「没有已有数字被改动」，而那 7 个确实动了——闸门是对的，
+   只是动的方向是纠正。⚠ 下一轮要是觉得哪一格看着不对，先读这三处再动手：commit message、
+   `data/model-aliases.json` 的 `_doc`、`LOG.md` 2026-08-07 第四轮。
 2. **明早（2026-08-08）验一次改完的链路**：`auto/refresh-aa` 的 PR 应该**自己开出来**；gaps issue
    末尾应该多一节「Is the queue being worked?」；`auto/attribution` 应该**正常跑**（`auto/attribution`
    上没有 open PR）。详见 `TODO.md`。

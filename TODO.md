@@ -37,10 +37,7 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
       `gh: Argument list too long` 开不出来）；② gaps issue 末尾多一节「Is the queue being worked?」；
       ③ `auto/attribution` **正常跑**——#45 已于 8-07 合并，没有 open PR 了，所以 `--any-open` 不该
       触发。要是它反而写了「Attribution paused」的 warning，就是那个判据反了。
-      ⚠ 别把 `feat/arc-attribution` 当成会触发暂停的东西：`pr-hands-off.sh` 查的是
-      `gh pr list --head auto/attribution`，**只看那一个分支**，别的分支上有没有 open PR 它不关心。
-- [ ] ⚠ **`feat/arc-attribution` 开着期间和归属闸门有写冲突风险**：两边都写
-      `data/model-aliases.json`，而闸门三条件满足时会直接合进 main。合我这个 PR 之前先
-      `git fetch && git rebase origin/main`，别指望闸门会让路。
+      ⚠ 判据是 branch-scoped：`pr-hands-off.sh` 查 `gh pr list --head auto/attribution`，
+      **只看那一个分支**，别的分支上有没有 open PR 它一概不管。
 - [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦在 `auto/attribution` 上的 PR）。
       那天起**新 alias 提议会开始积压**，确认 warning 确实写进了 step summary、不是静默的。
