@@ -18,6 +18,7 @@
     "check:mobile": "node scripts/check-mobile.mjs",
     "check:upstream": "node scripts/fetch-source.mjs --check",
     "check:heartbeat": "node scripts/check-heartbeat.mjs",
+    "check:deployment": "node --experimental-strip-types scripts/check-deployment.mjs",
     "ingest": "node scripts/ingest.mjs",
     "start": "WRANGLER_LOG_PATH=.wrangler/wrangler.log vinext start",
     "start:next": "next start",

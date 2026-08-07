@@ -845,10 +845,21 @@ stay. That is judgement, and judgement does not go in a cron job.
   push and pull request, against both routes, and **fails the job rather than skipping itself** if
   the runner has no Chrome: a layout check reporting green for a probe that never ran is worse than
   no layout check. What is still not covered is pixel regression, above.
-- **Nothing verifies the deployed site.** EdgeOne publishes on merge and does not read CI, and the
-  WeChat push added for this measures `main` going red — which is the repository's state, not the
-  deployment's. A failed or unfired EdgeOne build is silent. The coupling also runs the other way:
-  a type error in the personal site at `/` fails the build step that gates the daily data refresh.
+- ~~Nothing verifies the deployed site~~ **Mechanism built 2026-08-07, waiting on one fact.**
+  `npm run check:deployment` fetches `/models` from production, follows every `<script src>` it
+  names, and looks for every catalog benchmark and model name in the concatenated bundle. The
+  obvious check — "does the page show the new benchmark" — does not survive contact with the page:
+  it is a client component whose catalog is collapsed, so the prerendered HTML carries 22 of 72
+  names and headless rendering gives 6,345 characters of body text, still 49 short. The data does
+  not depend on any of that; it is compiled into the chunks. Verified both ways against a local
+  production build: 9 chunks, 1.5MB, every name present, and a name added without rebuilding is
+  correctly reported missing. It runs in the daily job and reports into the gaps issue rather than
+  failing, because a stale deployment is a fact somebody needs and not a reason to abandon the
+  archive refresh. **What it still needs is the production URL**, which is recorded nowhere in this
+  repository — that absence is itself part of why nothing verified the deployment. Until
+  `data/deployment.json` names it, the check reports itself as unrun, every day, in the issue.
+  The coupling still runs the other way too: a type error in the personal site at `/` fails the
+  build step that gates the daily data refresh.
 - **The two schedulers watch each other asymmetrically.** GitHub dying is pushed to WeChat by
   hermes. hermes dying is written into the gaps issue and the step summary only — and that issue is
   mostly read by hermes. On top of that `check-heartbeat --agent` deliberately cannot tell the agent
