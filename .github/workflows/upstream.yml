@@ -332,3 +332,18 @@ jobs:
           git checkout -- . || true
           git checkout main && git pull --ff-only
           bash scripts/attribute-and-merge.sh
+
+      # The last step that used to be "somebody writes a ModelRecord by hand". It runs AFTER the
+      # attribution gate and on a clean tree, so it sees today's aliases and its own diff is only
+      # the record it wrote. Four conditions decide, not three: the fourth exists because the other
+      # three are all green on a catalog record with no evidence behind it — measured, not assumed.
+      # See the script header, and `docs/AGENT-OPERATIONS.md` for the charter side.
+      - name: Add a catalog record for an upstream model that earned one
+        if: always()
+        id: newmodel
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git checkout -- . || true
+          git checkout main && git pull --ff-only
+          bash scripts/add-model-and-merge.sh
