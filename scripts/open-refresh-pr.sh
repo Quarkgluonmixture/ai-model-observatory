@@ -50,14 +50,18 @@ $(cat "$CHECKS")
 Checks ran inside the workflow because a pull request opened with \`GITHUB_TOKEN\` does not
 trigger CI. Push any commit to this branch to get a real CI run."
 
+# --body-file, never --body. This body is small today, but it grows with the number of cells a
+# refresh moves, and the failure mode is silent until the day it is not: see scripts/gh-body.mjs.
+printf '%s' "$body" | node "$(dirname "$0")/gh-body.mjs" pr-body.md
+
 existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
 if [ -n "$existing" ]; then
-  gh pr edit "$existing" --title "$TITLE" --body "$body" >/dev/null
+  gh pr edit "$existing" --title "$TITLE" --body-file pr-body.md >/dev/null
   echo "Updated PR #$existing"
 # See scripts/open-aa-pr.sh: a repository can forbid Actions from opening pull requests, and this
 # path had never run — every refresh so far was tier A and went straight to main — so the one
 # branch that exists specifically to be reviewed by a human was the one that would have failed.
-elif gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>pr-error.txt; then
+elif gh pr create --head "$BRANCH" --title "$TITLE" --body-file pr-body.md 2>pr-error.txt; then
   :
 else
   echo "::warning::Could not open the pull request ($(tr '\n' ' ' < pr-error.txt)); the branch is pushed. Open it at ${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}/compare/$BRANCH?expand=1"

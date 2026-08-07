@@ -18,11 +18,17 @@ DIR="$(dirname "$0")"
 # where a reviewer who cannot check an alias mapping can still check a score.
 node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
 
-# Every AA model the catalog does not carry, drafted from the archive that just landed. The
-# numbers in a model record all have a source; only the display name, colour and tags do not, and
-# those are what the draft leaves blank. Without this the pull request says "AA has new
-# parameters" and the reader still has to write the record from scratch.
-node scripts/draft-model-record.mjs --all-new > drafts.md 2>/dev/null || echo "(could not draft records)" > drafts.md
+# Every AA model the catalog does not carry *and the archive can already fill*, drafted from the
+# batch that just landed. The numbers in a model record all have a source; only the display name,
+# colour and tags do not, and those are what the draft leaves blank. Without this the pull request
+# says "AA has new parameters" and the reader still has to write the record from scratch.
+#
+# --with-evidence, since 2026-08-07. Unfiltered this was 213 records and 200,061 bytes, of which
+# 118 were for models with no observation row — each one carrying the drafter's own warning not to
+# add it yet. That body could not be passed to `gh` at all (see scripts/gh-body.mjs), and even at a
+# size that could, a reviewer scrolling 200KB to find the nine records worth writing is a reviewer
+# who stops reading. The held-back count is printed in the draft itself.
+node scripts/draft-model-record.mjs --all-new --with-evidence > drafts.md 2>/dev/null || echo "(could not draft records)" > drafts.md
 
 git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -61,17 +67,21 @@ CI. Push any commit to this branch to get a real CI run.
 
 $(cat drafts.md)"
 
+# Never `--body "$body"`. The body carries a drafted record per uncollected model and outgrew the
+# 128 KiB Linux caps on a single argv entry on 2026-08-07, so `gh` could not be started at all.
+printf '%s' "$body" | node "$DIR/gh-body.mjs" pr-body.md
+
 repo_url="${GITHUB_SERVER_URL:-https://github.com}/${GITHUB_REPOSITORY:-}"
 existing="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
 if [ -n "$existing" ]; then
-  gh pr edit "$existing" --title "$TITLE" --body "$body" >/dev/null
+  gh pr edit "$existing" --title "$TITLE" --body-file pr-body.md >/dev/null
   url="$(gh pr view "$existing" --json url --jq .url)"
   echo "Updated PR #$existing"
 # A repository can forbid Actions from opening pull requests — Settings → Actions → General →
 # "Allow GitHub Actions to create and approve pull requests". That setting is off by default, and
 # the work is already safe on a branch by this point, so losing the whole job over the last step
 # would throw away a good fetch. Report the branch and let a human open it.
-elif url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body "$body" 2>pr-error.txt)"; then
+elif url="$(gh pr create --head "$BRANCH" --title "$TITLE" --body-file pr-body.md 2>pr-error.txt)"; then
   echo "$url"
 else
   opened="no"

@@ -7,5 +7,5 @@
     "https://artificialanalysis.ai/evaluations/gdpval-aa"
   ],
   "note": "AA 的 REST API 把 GDPval-AA 放在 Pro 档后面（/api/v2 返回 403），所以 batch 14 拿不到它，§9 一度记为「无脚本路径」。但公开页面不需要 key，只是客户端渲染，因此这是第一个用浏览器而不是取文件的 fetcher —— 也因此是这批源里最脆的一个：改版会让它坏，而 JSON 端点不会。harness 与工具设置每次都从页面正文重新读取（\"in an agentic loop via Stirrup\"、\"shell access and web browsing\"），页面不再这么写时 fetcher 会拒绝写入而不是沿用旧假设。板子只给「发布月份」不给评测日期，所以 evaluation_date 为 null，月份留在 note 里。取代 batch 04 眼抄的 14 行 —— 见 model-aliases.json 的 supersededRows。",
-  "retrievedDate": "2026-08-06"
+  "retrievedDate": "2026-08-07"
 }

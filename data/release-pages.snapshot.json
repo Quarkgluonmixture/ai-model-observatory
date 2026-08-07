@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-06",
+  "checkedAt": "2026-08-07",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -437,6 +437,7 @@
       "https://openai.com/index/how-people-are-using-chatgpt",
       "https://openai.com/index/how-should-ai-systems-behave",
       "https://openai.com/index/how-the-voices-for-chatgpt-were-chosen",
+      "https://openai.com/index/how-the-world-is-putting-chatgpt-to-work",
       "https://openai.com/index/how-two-settings-tripled-our-arc-agi-3-scores",
       "https://openai.com/index/how-we-monitor-internal-coding-agents-misalignment",
       "https://openai.com/index/hp-frontier-partnership",
@@ -448,6 +449,7 @@
       "https://openai.com/index/improved-techniques-for-training-consistency-models",
       "https://openai.com/index/improvements-to-data-analysis-in-chatgpt",
       "https://openai.com/index/improving-gans-using-optimal-transport",
+      "https://openai.com/index/improving-gpt-5-6-sol-in-chatgpt",
       "https://openai.com/index/improving-health-intelligence-in-chatgpt",
       "https://openai.com/index/improving-language-model-behavior",
       "https://openai.com/index/improving-mathematical-reasoning-with-process-supervision",
@@ -691,6 +693,7 @@
       "https://openai.com/index/openai-acquires-software-applications-incorporated",
       "https://openai.com/index/openai-acquires-tbpn",
       "https://openai.com/index/openai-amd-strategic-partnership",
+      "https://openai.com/index/openai-and-apa-partner-to-advance-responsible-ai",
       "https://openai.com/index/openai-and-apple-announce-partnership",
       "https://openai.com/index/openai-and-broadcom-announce-strategic-collaboration",
       "https://openai.com/index/openai-and-foxconn-collaborate",
@@ -1102,7 +1105,6 @@
       "https://deepmind.google/blog/how-weathernext-helped-the-national-hurricane-center-better-predict-hurricane-melissas-historic-landfall-in-jamaica/",
       "https://deepmind.google/blog/how-were-bringing-ai-image-verification-to-the-gemini-app/",
       "https://deepmind.google/blog/improved-gemini-audio-models-for-powerful-voice-experiences/",
-      "https://deepmind.google/blog/introducing-codemender-an-ai-agent-for-code-security/",
       "https://deepmind.google/blog/introducing-computer-use-in-gemini-3-5-flash/",
       "https://deepmind.google/blog/introducing-gemini-3-5-flash-cyber/",
       "https://deepmind.google/blog/introducing-gemini-3-6-flash-3-5-flash-lite-and-3-5-flash-cyber/",
@@ -1143,6 +1145,7 @@
       "https://deepmind.google/blog/using-ai-to-perceive-the-universe-in-greater-depth/",
       "https://deepmind.google/blog/veo-3-1-ingredients-to-video-more-consistency-creativity-and-control/",
       "https://deepmind.google/blog/weathernext-2-our-most-advanced-weather-forecasting-model/",
+      "https://deepmind.google/blog/weathernext-ai-model-achieves-breakthrough-in-forecasting-cyclones/",
       "https://deepmind.google/blog/were-expanding-our-presence-in-singapore-to-advance-ai-in-the-asia-pacific-region/",
       "https://deepmind.google/blog/were-launching-lyria-35-in-google-flow-music-with-advances-across-musicality-lyrics-vocals-and-creative-control/",
       "https://deepmind.google/blog/were-launching-the-google-deepmind-accelerator-program-in-asia-pacific-to-tackle-environmental-risks/"
@@ -1202,13 +1205,13 @@
     "anthropic": [
       "/news/announcing-our-updated-responsible-scaling-policy",
       "/news/anthropic-economic-index-connector",
-      "/news/claude-for-teachers",
       "/news/claude-opus-5",
       "/news/claude-sonnet-5",
       "/news/cognizant-anthropic",
       "/news/donation-public-first-action",
       "/news/economic-futures-research-fund-agenda",
       "/news/hard-questions",
+      "/news/improving-fable-5-s-biology-safeguards",
       "/news/investigating-incidents-cybersecurity-evals",
       "/news/position-open-weights-models",
       "/news/rare-disease-research-grants",

@@ -8,13 +8,13 @@ the operating contract and still comes first before any change.
 
 ---
 
-## 现状（2026-08-06）
+## 现状（2026-08-07）
 
 | | |
 |---|---|
 | 目录 | 29 model families · 68 benchmarks |
-| 观测 | 1263 rows · 955 / 1972 cells（48.4% cell coverage） |
-| 源分类 | benchmark 777 / independent 296 / vendor 190 |
+| 观测 | 1286 rows · 955 / 1972 cells（48.4% cell coverage） |
+| 源分类 | benchmark 777 / independent 319 / vendor 190 |
 | 溯源 | 318 / 321 catalog values backed by the archive |
 | 归档 | 22 batches，其中 **9 个可脚本重读**（其余 13 个是手抄，永不自更新） |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
@@ -68,18 +68,26 @@ node scripts/fetch-source.mjs arena    # 单独重抓一个源
 **推送前**：`gh auth switch -u Quarkgluonmixture`（个人账号）。仓库密钥：`AA_API_KEY`、
 `PUSHPLUS_TOKEN`，两个都是可选的——缺了对应步骤跳过自己，不会让任何检查变红。
 
-**微信只剩 4 条推送**：站上新增模型 / 归档完整性失败 / 完整性恢复 / AA 刷新但 PR 没开成。
+**微信推送**：GitHub 侧 4 条——站上新增模型 / 归档完整性失败 / 完整性恢复 / AA 刷新但 PR 没开成；
+hermes 侧 1 条——**GitHub 每日 job 超过 36h 没跑完**（`npm run check:heartbeat -- --github`）。
+第 5 条 2026-08-07 加的，因为那个 job 死的时候是攥着通知通道一起死的：前 4 条全由它或 CI 触发。
 其余全部砍掉，理由在 `docs/ARCHITECTURE.md` §10。
+
+**沉默现在可诊断**：两个调度器互相看守，只用已有产物。hermes 每轮开头查 GitHub（36h 阈值，
+推微信）；每日 job 查 main 上最近的非 bot 提交（3 天阈值，只写进 gaps issue、不推微信）。
+阈值为什么是 36h / 3 天，写在 `scripts/check-heartbeat.mjs` 头部。
 
 ---
 
 ## 现在要盯的三件事
 
-1. **`auto/attribution` PR 明早会出现，它不该自合**——里面 8 条 alias 会让 Opus 4.8 和 GPT-5.5 的
-   `arc-agi-2` 换主行（72.08→62.22、85→83.33），属于"已有数字被改动"。**它如果自合了,是判断逻辑
-   写错了**,要紧。
-2. **hermes 的定时任务时间**：GitHub 那个每日巡检实际在 08:10 左右跑（不是写的 06:00），所以 hermes
-   必须在那之后，否则它每天读到的是昨天的队列。
+1. **等你拍板：PR #45**（`auto/attribution`）。闸门本身已验证是对的——它照常出现并**正确地没有自合**，
+   因为要换 Opus 4.8 / **GPT-5.5** 的 `arc-agi-2` 主行（72.08→62.22、85→83.33，属于已有数字被改动）。
+   同日自合的 PR #46 是纯 `PROVIDER_LOOKUPS` 加两行、无数字移动，两边判断都对。
+   **2026-08-07 起这个 PR 不会再被每天覆盖**：只要它带着人的 comment/review，闸门当天就不碰远端。
+   所以它会一直等你，但也意味着**在你处理它之前，新的 alias 提议全部积压**——别放太久。
+2. **明早（2026-08-08）验一次改完的链路**：`auto/refresh-aa` 的 PR 应该**自己开出来**（今早是
+   `gh: Argument list too long` 开不出来）；gaps issue 末尾应该多一节「Is the queue being worked?」。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
