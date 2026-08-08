@@ -1760,6 +1760,24 @@
       "file": "batch-26-aa-evaluations",
       "modelId": "deepseek-v4-flash",
       "reason": "Same call as the batch-14 entry and for the same reason, scoped again because a file-scoped alias covers one file. AA never renamed its slug: `deepseek-v4-flash` is 'DeepSeek V4 Flash 0731 (Reasoning, Max Effort)', released 2026-07-31, which is this catalog record. Pinned to the effort rather than wildcarded, because the SAME model_raw in this batch also carries the 2026-04-24 preview: AA publishes `deepseek-v4-flash-non-reasoning` ('DeepSeek V4 Flash (Non-reasoning)', 2026-04-24) and the fetcher splits that suffix off, so both meanings land under one string separated only by effort. `reasoning max` takes the release; `non-reasoning` stays unmapped, exactly as the batch-14 note says it must. Found by the evidence counter's self-test, which reported five cells for this model that the catalog does not have -- the rows were sitting in the archive with nothing attaching them."
+    },
+    {
+      "modelRaw": "deepseek-v4-flash-0731-high",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"deepseek-v4-flash-0731\" is exactly deepseek-v4-flash after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "deepseek-v4-flash-0731-low",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"deepseek-v4-flash-0731\" is exactly deepseek-v4-flash after stripping the effort. No human read this string; the contract is what accepted it."
+    },
+    {
+      "modelRaw": "deepseek-v4-flash-0731-max",
+      "effort": "*",
+      "modelId": "deepseek-v4-flash",
+      "reason": "Proposed by scripts/propose-attribution.mjs, tier 1: \"deepseek-v4-flash-0731\" is exactly deepseek-v4-flash after stripping the effort. No human read this string; the contract is what accepted it."
     }
   ],
   "benchmarkSplits": [
