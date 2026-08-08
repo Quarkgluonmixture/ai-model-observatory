@@ -1,0 +1,13 @@
+{
+  "batch": "27 · AA model-page parameters supplement",
+  "retrievedDate": "2026-08-08",
+  "collectedWith": "Direct read of the Artificial Analysis model pages (https://artificialanalysis.ai/models/qwen3-7-plus and /qwen3-8-max). Both pages publish context window and open-weights status in their HTML overview; the AA parameter API that batch-14 reads publishes neither field, which is why these catalog values stayed unsourced.",
+  "filtered": true,
+  "filterRule": "Only the two catalog models whose open_weights had no archive row (qwen3.7-plus, qwen3.8-max); qwen3.7-plus context_k was also unsourced. Every other field those pages publish is already backed: qwen3.7-plus metrics from batch-14, qwen3.8-max price/context from batch-21. Those are left null here so this batch adds provenance and nothing else.",
+  "schema": "Model operating parameters, NOT benchmark scores. A supplement to batches 08/14/21 that backs the three catalog fields check:models reported unsourced: qwen3.7-plus contextK, qwen3.7-plus open, qwen3.8-max open. Adds provenance only — no catalog value changes, no observation rows, no cell-coverage effect.",
+  "sources": [
+    "https://artificialanalysis.ai/models/qwen3-7-plus",
+    "https://artificialanalysis.ai/models/qwen3-8-max"
+  ],
+  "note": "Why a supplement and not an edit to batch-08/14/21: hard rule #2 — the archive is evidence, and existing batches correctly record what their source said at capture. batch-14's qwen3.7-plus row carries open_weights/context_k as null because the AA API publishes neither; this batch reads the AA page (a different surface) that does. The values are uncontroversial and match the catalog: the Qwen Max and Plus lines are proprietary and serve a 1M context, corroborated by AA's own comparison page and independent reporting. The qwen3.8-max intelligence index (now 58 on AA) is deliberately NOT captured here — updating a catalog value is the AA-refresh workflow's job, not a provenance fix."
+}
