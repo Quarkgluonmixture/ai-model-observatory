@@ -614,3 +614,43 @@ AA 17 个字段取 14 个 —— 都有成文规则。
 
 ARC 当天验证了 DeepSeek V4 Flash 0731（AGI-1/-2 各 3 档）。**故意不写 alias** —— 归属闸门 tier 1
 就认（靠目录显示名精确匹配），章程说不要替它做它那一半。明早那一跑就是端到端演示。
+
+## 2026-08-08 — 溯源率 318/321 → 321/321（PR #59，自合）
+
+### 背景
+
+`check:models` 每次都报三个无源值：`qwen3.8-max open`、`qwen3.7-plus contextK`、
+`qwen3.7-plus open`。值本身正确（与 AA 对比页一致），只是没有 archive 行支撑。
+
+### 为什么之前补不上
+
+AA 的**参数 API**（batch-14 读的）对这两个模型不发布 `open_weights` / `context_k`——
+两字段在 API 里是 null。batch-21 从 QwenCloud 卡读 qwen3.8-max 时，那张卡对开源
+状态不置可否，也留了 null。但 AA **渲染后的模型页**明确写着
+"Context Window: 1M tokens" 和 "Proprietary — weights not publicly available"。
+这跟 batch-08 当初给 qwen3.7-max 补 `context_k` 走的是同一个界面，只是当时没顺手
+覆盖 Plus 和 Max。
+
+### 做了什么
+
+新建 `batch-27-aa-params-supplement.jsonl`（2 行，schema 标 "Model operating
+parameters" → 进 operating-parameters 批次、被观测循环排除）：
+- Qwen3.7 Plus：`open_weights:false, context_k:1000`
+- Qwen3.8 Max：`open_weights:false`（context_k batch-21 已有）
+
+只写了这两个字段，其余全 null——确保只补溯源、不动任何单元格或观测行。
+
+### 自合判定（tier B 三条件）
+
+1. 契约全绿（ingest 干净 → 0 观测行变化；lint / check:data / check:prices / build）。
+2. `describe-change`：0 models, 0 moved，0 new models below floor。
+3. 无 `acknowledgedDisagreements` / `mergedInOneSource` 豁免。
+
+三条件满足，自合（177a5ea）。
+
+### 顺手记下、没动
+
+- qwen3.8-max `intelligence` 目录仍为 null，但 AA 现已发布 58。**故意没收**——更新已发布
+  值是 AA-refresh 工作流的事，不是溯源修复。记进 TODO.md，下次 AA 刷新一并处理。
+- qwen3.7-max 带着个误导性的 `"open weights"` 标签（tags 是 editorial、不被审计、
+  `open:false` 本身正确），没动——留给 owner 定。
