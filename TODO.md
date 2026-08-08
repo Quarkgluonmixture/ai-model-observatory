@@ -46,7 +46,10 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 ## 小口子
 
-- [ ] 三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。
+- [x] ~~三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。~~
+      ✅ batch-27 补齐（PR #59, 2026-08-08），溯源率 318/321 → 321/321。
+- [ ] qwen3.8-max `intelligence` 仍为 null，但 AA 现已发布 58 —— 属于 AA-refresh 工作流，
+      非溯源修复。下次 AA 刷新时一并更新。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
 - [ ] ARC 的两条「显示名说该映射、`modelGroup` 说不是」的字符串
       （`openai-gpt-5-5-2026-04-23-high`、`google-gemini-3-1-pro-preview`）现在按两个带日期的快照

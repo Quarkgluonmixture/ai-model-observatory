@@ -30,8 +30,8 @@ the operating contract and still comes first before any change.
 `add-model-and-merge.sh` 会在每日 job 里给「够格的上游新模型」自动建目录记录（**四条**条件，
 第四条是空行保护）——今天没有候选够格，那是稳态。
 
-三个无源值（`check:models` 每次都会报，属于诚实的空缺而非错误）：`qwen3.8-max open`、
-`qwen3.7-plus contextK`、`qwen3.7-plus open`。
+溯源率 **321/321（100%）** —— 最后三个无源值（`qwen3.8-max open`、`qwen3.7-plus contextK`、
+`qwen3.7-plus open`）已由 batch-27 从 AA 模型页补齐（PR #59，2026-08-08）。
 
 ---
 
