@@ -19,7 +19,8 @@ import { gdpval } from "./gdpval.mjs";
 import { livebench } from "./livebench.mjs";
 import { mmmu } from "./mmmu.mjs";
 import { terminalBench } from "./terminal-bench.mjs";
+import { vals } from "./vals.mjs";
 
-export const FETCHERS = [livebench, deepswe, epoch, epochFrontierMath, terminalBench, ale, gdpval, mmmu, arena, arcprize, arcprizeV1, arcprizeV3, artificialAnalysis, aaEvaluations];
+export const FETCHERS = [livebench, deepswe, epoch, epochFrontierMath, terminalBench, ale, gdpval, mmmu, arena, arcprize, arcprizeV1, arcprizeV3, artificialAnalysis, aaEvaluations, vals];
 
 export const fetcherById = (id) => FETCHERS.find((fetcher) => fetcher.id === id);

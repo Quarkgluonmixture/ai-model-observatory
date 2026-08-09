@@ -770,3 +770,76 @@ benchmark 版本**的批次（Tiers 1-3 和 Tier 4 共用 `benchmark: "frontierm
 - **「新记录必须先有归档行」这条闸门**：§10 说「如果将来建了新模型自动化，缺的条件是…」——
   其实已经建了，`propose-model.mjs` 的准入比那句还严（要求高于看板平均格数），
   加上第四条 `new-models-below-floor`。那句话是旧的。
+
+## 2026-08-09（第三轮）— Vals AI 变成脚本源（batch 29）：第八次推翻「没有路」
+
+### 为什么两遍都没找到
+
+§9 记的是「两遍都没找到机器可读路径」。两个原因叠在一起：
+
+1. **`/benchmarks` 是索引页，不是榜单**——上面一个分数都没有，而两遍探的都是它。
+   真正的板在 `/benchmarks/<slug>`，37 个。
+2. **板本身没有「数据文件」**：Vals 用 Astro，Astro 把组件的 props 直接**服务端渲染进
+   `props="…"` 属性**。整块榜单就在 HTML 里，以 HTML 转义的 JSON 形式存在。所以
+   查 `<table>` / `<tr>` / `fetch(` / `/api/` 全部答「没有」——在一个装着整块板的页面上。
+   JS chunk 里也找不到，因为数据从不单独传输。
+
+CorpFin v2 那一页 1.16 MB，解出来是 131 模型 × 4 个 task 视图，每格带 accuracy / latency /
+stderr / cost_per_test / harness / reasoning_effort / provider。手抄版本是 **6 行**，只有 accuracy。
+
+⚠ 我自己第一次爬也失败了，两个 bug：Astro 的 import 是相对路径 `./`（我的正则只认 `/_astro/`），
+以及 Vals 挡 `python-urllib`（curl 通）。**「爬不到」先怀疑自己的爬法。**
+
+### 允许 supersede 的证据
+
+`overall` 是榜单默认展示的那一栏：batch-05 手抄的 6 行 CorpFin
+（73.19 / 71.83 / 71.56 / 71.29 / 68.57 / 68.53）与本文件的
+73.194 / 71.834 / 71.562 / 71.29 / 68.57 / 68.532 **6/6 对上**。
+
+另外三个视图（`exact_pages` / `max_fitting_context` / `shared_max_context`）**不是**同一个数的
+另一种读法，是**三种不同的上下文条件**；LegalBench 的 `issue_tasks` 之类是子集。与 `overall`
+并列会把一个模型的条件对上另一个模型的条件（第 4 条）。所以只读 `overall`，
+外加 batch-05 当初刻意单列的两个子项（CyberBench poc/patch、Web Search finance/legal）。
+
+alias 27 条，分两级、都写了理由：
+- **23 条机械**：Vals 发的是 `provider/model`，去掉 provider 前缀后与目录 id **逐字相同**——
+  就是归属闸门 tier 1 的规则，手工套用（因为没有重叠格可供 tier 2 印证）。
+- **4 条靠数字印证**：`anthropic/claude-opus-4-8`（点写成杠）、`meta/muse_spark_1_1`（下划线）、
+  `google/gemini-3.1-pro-preview`（带 provider 前缀）、`minimax/MiniMax-M3`（厂商自己的大小写）。
+  每条都在共享的板上给出**同一个分数**才收。⚠ 我第一版把印证数字**编错了**（写了 91.0 / 69.12 /
+  87.24），实测是 88.6 / 69.912 / 82.725 —— 理由里的数字必须实测后再写。
+
+### 两个版本陷阱，都是 `check:data` 抓的、不是想出来的
+
+1. **Vals 的 `version` 是「Vals 这块板的版次」，不是基准的版本**。它把自己的 GPQA Diamond 板叫
+   `1`——那句话对 GPQA 是哪个 split 一无所知。写进共享列就成了 `v2.1` 和已有的 `2.1` 同格，
+   check:data 直接报「一个格里混了两个版本」。
+2. **但「一律填 null」也不免费**：`ingest` 会丢掉「既没有发布版本、又没有 `versionFallbacks`」
+   的行。`terminal` 没有 fallback，于是一律 null **悄悄删掉了全部 50 行 Terminal-Bench**，
+   而七项契约全绿——归档里有，看板上没有。现在共享列是一张**显式表**。
+   ⭐ 教训：**null 不是中立值**；在有 fallback 的列上它是「继承」，在没有的列上它是「丢弃」。
+
+### 一条 acknowledgedDisagreements
+
+Qwen3.8 Max 在 Terminal-Bench 2.1 上有三个读数：Vals 67.416、AA 81.27（batch 26）、
+Qwen 自家发布表 86.6（batch 17）。第 6 条：系统基准量的是 模型+脚手架+工具+预算，三家跑的不是
+同一套。Vals 这块板逐行写 harness（别的模型上是 Claude Code / Codex / Cursor CLI），**这一行没写**；
+Qwen 的表一个都没写，而且它最高——正是 §9 早就记下的「厂商在系统基准上偏高」的方向（那里记的是
++8 分，这里是比 Vals 高 19 分）。
+
+### 结果
+
+- 观测 1635 → 2086 行；cell 1121 → 1349（53.7% → **64.6%**）。
+- **新增 227 格**，**51 个已有数字变化**。多数是精度（68.1 → 68.133），但有两个是**证据等级**变了：
+  Qwen3.8 Max · Terminal-Bench 86.6（厂商）→ 67.416（独立），
+  Gemini 3.1 Pro Preview · MMMU-Pro 80.5 → 88.208。**第 3 条在起作用**：独立读数压过厂商读数。
+- 2,421 行里 953 行进目录，其余是目录不收的上一代（180 个未映射字符串）与 16 块没有列的板
+  （全部归档 + 写明拒绝理由，将来开列不用重采）。
+- ⚠ **189 格落在单源列上**——Vals 自己那 12 列按定义只有它一家。
+
+### 自维护比例
+
+15 / 29 批次可脚本重读；11,137 / 1,751 行 = 86.4%。但**别读这个比例**：1,751 行里有 464 行已被
+supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。而且排序变了——按「还在裸奔的行数」
+排，第一名是 `batch-17-qwen3.8-release`（465，可发布帖是冻结的，没有漂移可查，所以它最大但最不值得做），
+然后才是 batch-05 剩下的 LMArena 439 行。按文件大小排会指向 batch-05，而 batch-05 正是今天修掉的那个。

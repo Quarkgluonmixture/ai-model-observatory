@@ -9,7 +9,8 @@
 
 ## 继续把手抄批次变成脚本源
 
-28 个批次里 14 个可脚本重读，其余是手抄的、只有"上次有人读它是什么时候"这一个新鲜度信号。
+29 个批次里 15 个可脚本重读。**真正还在裸奔的是 1,287 行**（1,751 行手抄里有 464 行已被
+supersede、不再供给任何东西）——别拿 86.4% 这个比例当进度。
 按 §10 的规矩：**动手前先重新探一遍**，那份"没有路"的名单已经被推翻七次了。
 
 ⚠ batch 28 之后多一条判据：**探到数据文件不算完，还得确认它就是页面渲染的那一份**。
@@ -17,7 +18,6 @@ Epoch 的 zip 确实发布 FrontierMath，读进来的却是退役题集（见 `
 
 候选（按对覆盖率的价值排）：
 
-- [ ] Vals AI 子基准
 - [ ] OSWorld 2.0 / Toolathlon / MCP-Atlas（agent 轴，目前全靠手抄）
 - [ ] FrontierSWE / ProgramBench（后者官方分与厂商表差 70 分，注意别混指标）
 - [ ] APEX-Agents
@@ -92,12 +92,24 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] ⭐ `data/deployment.json` 的 `productionUrl`（同上，机制早就建好了）。
 
 **堆 2 · 能自动，但是下一个 chunk（要写新 fetcher，不是补机制）**
-- [ ] **1,751 行手抄档案没有任何漂移检查**。83.3% 那个比例是被脚本批做大的，
-      手抄行本身几乎没动过。按行数排：`batch-05-independent`（538，Vals AI）·
-      `batch-17-qwen3.8-release`（465）· `batch-02-coding`（313）。
-      Vals 是最大的一块，§9 记的是「两遍都没找到机器可读路径」——**那份名单已经被推翻七次**，
-      按规矩动手前重新探一遍。
+- [x] ~~Vals AI（538 行，最大一块）~~ ✅ batch-29，2026-08-09。第八次推翻「没有路」。
+- [ ] **还剩 1,287 行裸奔**。按「还在裸奔的行数」重排（不是按文件大小）：
+      `batch-17-qwen3.8-release`（465）· `batch-05-independent`（439，只剩 LMArena 与合成指数）·
+      `batch-02-coding`（136）。⚠ 第一名**不值得先做**：发布帖是冻结的，没有漂移可查。
+      真正值得的是 `batch-02-coding` 里那 136 行（SWE-Marathon / PostTrainBench / FrontierSWE），
+      以及 batch-05 的 LMArena（已有 batch-22 脚本源，需确认剩下 439 行里哪些是它没覆盖的）。
 
 **堆 3 · 判断题，cron 不该做（记在这里防止有人当成待办来"修"）**
 - 单源列（batch 28 又加了 25 格）· LiveBench 新 release 的收集 · 目录记录落位 ·
   `ArenaElo` 没有 harness 维度 · 活价与目录价的 10 处分歧。
+
+## batch 29 之后留下的（2026-08-09）
+
+- [ ] ⭐ **16 块 Vals 板没有目录列**，行已全部归档（开列不用重采）。开哪一列是分类学判断：
+      `vals-tax_eval_v2`(136 行) · `vals-legal_bench`(133) · `vals-medcode`(80) · `vals-sage`(73) ·
+      `vals-programbench`(36) · `vals-hlab`(31) 等。判据是「这一列进哪根轴、地板变成多少、
+      是不是和别的源已经填的列重复」。
+- [ ] **180 个 Vals 字符串没有 alias**（多数是上一代）。归属闸门对它们会说
+      「no like-for-like cell shared with any family」——因为 Vals 是这些模型唯一的源。
+      要收就得人工判断，不急。
+- [ ] ⚠ **单源格又多了 189 个**（Vals 自己那 12 列按定义只有它一家）。
