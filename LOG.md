@@ -843,3 +843,50 @@ Qwen 的表一个都没写，而且它最高——正是 §9 早就记下的「�
 supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。而且排序变了——按「还在裸奔的行数」
 排，第一名是 `batch-17-qwen3.8-release`（465，可发布帖是冻结的，没有漂移可查，所以它最大但最不值得做），
 然后才是 batch-05 剩下的 LMArena 439 行。按文件大小排会指向 batch-05，而 batch-05 正是今天修掉的那个。
+
+## 2026-08-09（第四轮）— 那「16 块没有列的板」其实不是一类东西
+
+### 量完之后是三堆
+
+用「这块板上有多少个**目录里的**模型」当尺子，而不是「有多少行」：
+
+| 堆 | 板 | 结论 |
+|---|---|---|
+| **列已经存在，缺的只是接线** | `programbench`→`program`(22 模型)、`terminal-bench-2`→`terminal-20`(10) | 不是分类学判断，直接接 |
+| **拒绝理由已过期** | `cyberbench` poc/patch | 原文「每个只有 2-3 行，不足以成列」——那是手抄时代的行数，实际各 18 个目录模型 |
+| **明确不该开** | math500 0 · mgsm 0 · poker_agent 0 · medqa 1 · aime 2 | 开一列分母 +29 格、最多填 2 格 |
+| **真判断（留给 owner）** | legal_bench 23 · tax_eval_v2 23 · emb 23 · hlab 22 · medcode 21 · sage 21 · time_horizon 7 · case_law 6 | 定轴 + core/observe |
+
+### ProgramBench：差点顺手改错，被文档里一句话拦住
+
+先做的是「同名不同物」检查 —— 这个项目栽过（ALE-Bench vs Agents' Last Exam 只共享三个字母）。
+证据够硬：Vals 板的描述与 `facebookresearch/programbench` 的 GitHub 描述是**同一句话**
+（"Can Language Models Rebuild Programs From Scratch?"）。
+
+然后我给 `program` 加了 `versionFallbacks`，理由写的是「实测该列 0 行归档、没什么可混淆的」。
+**这句话是错的**，而且错得很典型：我查的是**生成的 store**（0 行），不是**归档**。
+归档里躺着 batch-02 的 **15 行**，来自 ProgramBench **自己的榜单**（`source_kind: benchmark`，
+不是 §9 说的「厂商数字」），**全部因为没有版本而被 ingest 丢掉**。
+⇒ 那条拒绝不是在保护这一列，是在**清空**它。加上 fallback 之后，这 15 行里有 7 行也一并回来了。
+
+⚠ 但 §9 那句话里还有一半是对的，而且是**我差点踩的那一半**：
+「ProgramBench 官方 Resolved score 给 GPT-5.5 是 0.5%，而某厂商表给同一格 70.8」。
+真正防住它的**不是拒绝版本，是选对 task 视图**：Vals 发四个视图，
+`partial`（Raw Pass Rate）给 GPT-5.5 正是 **70.775**，而 `overall` 与 `strict`（Fully Resolved）
+**逐位相同**、是 **0.5** —— 与官方榜单的 0.5 一致。我读的是 `overall`，所以两个源同尺度。
+归档里今天没有任何 raw pass rate 行；真来了，跨源分歧闸门会在那一格失败。
+
+⭐ **两条教训，都是「查错了对象」**：
+1. 「这一列是空的」要查**归档**，不是查生成产物 —— 生成产物是空的，可能正因为有东西被丢掉了。
+2. **null 不是中立值**（第二次撞上，今天第一次是 terminal 50 行）：有 fallback 的列上它是「继承」，
+   没有的列上它是「丢弃」。
+
+### 结果
+
+- cell 1349 → **1374（64.6% → 65.8%）**，`program` 从空列变成 29 行 / 23 模型
+  （7 benchmark-native + 22 independent），`terminal-20` 从 11 行变 21 行。
+- **没有任何已有数字被改动**；`unverifiable-cells: 0` —— 这两列现在各有两个来源，
+  是这轮里唯一**降低**单源暴露的改动。
+- cyberbench 的拒绝理由重写成实测状态：「行太少」那半条已死，「Vals 这块板逐行 harness 全是 null、
+  而它的 SWE-bench / Terminal-Bench 板会写 Claude Code / Codex / Cursor CLI」那半条还站得住，
+  所以它从「归档待议」升级成 TODO 里的**活决定**。

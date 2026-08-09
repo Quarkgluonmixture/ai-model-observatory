@@ -2050,6 +2050,16 @@
       "benchmark": "vals-terminal-bench-2-1",
       "benchmarkId": "terminal",
       "reason": "Vals' Terminal-Bench 2.1 run is the same benchmark version under an independent evaluator with the Terminus 2 harness."
+    },
+    {
+      "benchmark": "vals-programbench",
+      "benchmarkId": "program",
+      "reason": "Vals runs Meta's ProgramBench, and this is checked rather than inferred from the name: Vals' board description and facebookresearch/programbench's own GitHub description are the same sentence, 'Can Language Models Rebuild Programs From Scratch?'. Reading the name alone is how ALE-Bench nearly landed in Agents' Last Exam's column. Independent evaluator running someone else's benchmark, so the rows are `independent` and a benchmark-native row would outrank them."
+    },
+    {
+      "benchmark": "vals-terminal-bench-2",
+      "benchmarkId": "terminal",
+      "reason": "Terminal-Bench 2.0, which the catalog keeps in its own `terminal-20` column — this entry routes to `terminal` and `benchmarkSplits` does the rest off the version string `2.0`. 2.0 and 2.1 are different task sets and must never share a cell."
     }
   ],
   "droppedBenchmarks": [
@@ -2067,7 +2077,7 @@
     },
     {
       "benchmark": "vals-cyberbench-poc / vals-cyberbench-patch / vals-web-search-index*",
-      "reason": "Two to three rows each and tool-dependent definitions; not enough to form a comparable column yet. Archived for later."
+      "reason": "Measured 2026-08-09 and rewritten, because half of the original reason had expired. It read 'two to three rows each and tool-dependent definitions; not enough to form a comparable column yet' — the row count came from batch 05's hand-read, and batch 29 reads the board itself: 22 rows each, 18 of them catalog models, on both PoC and Patch. So the 'not enough' half is dead. What still stands is the other half and it is worth stating precisely: CyberBench is an agentic benchmark ('can autonomous agents craft PoC inputs that trigger OSS-Fuzz vulnerabilities, and produce source patches that fix them') and Vals publishes NO harness on this board — the field is null on every row, where its SWE-bench and Terminal-Bench boards name Claude Code, Codex and Cursor CLI per row. Rule 6 says a system result is model + scaffold, so two columns whose scaffold is unstated is a real cost, not a formality. Opening them is now a live decision — which axis, and core or observe — and it is in TODO.md rather than here."
     },
     {
       "benchmarks": [
@@ -2185,8 +2195,16 @@
       "reason": "Vals' multimodal composite, the same call as `vals-index`: it averages CorpFin v2, Finance Agent, SWE-bench, SAGE, MortgageTax, Vibe Code and Terminal-Bench 2.1, every one of which batch 29 ingests individually. Carrying it would double-count them."
     },
     {
-      "benchmark": "vals-aime / vals-math500 / vals-mgsm / vals-medqa / vals-case_law_v2 / vals-emb / vals-hlab / vals-legal_bench / vals-medcode / vals-programbench / vals-sage / vals-tax_eval_v2 / vals-poker_agent / vals-time_horizon_index / vals-public-benefits-bench-v1 / vals-terminal-bench-2",
-      "reason": "Boards batch 29 collects in full but the catalog has no column for. Refused rather than filed somewhere approximate: giving each one a column is a taxonomy decision (which axis, what the coverage floor becomes, whether it duplicates a column another source already fills — `vals-aime`, `vals-math500` and `vals-mgsm` overlap benchmarks already refused as AA fields, and `vals-terminal-bench-2` is the 2.0 question set the catalog keeps in its own `terminal-20` column). The rows are archived so adding a column later costs no re-collection, which is the whole reason they are captured at all."
+      "benchmark": "vals-math500 / vals-mgsm / vals-poker_agent / vals-medqa / vals-aime",
+      "reason": "Boards batch 29 collects in full where the catalog has too few models on them for a column to mean anything. Measured 2026-08-09, catalog models per board: vals-math500 0, vals-mgsm 0, vals-poker_agent 0, vals-medqa 1, vals-aime 2. Opening any of them adds 29 cells to the coverage denominator and fills at most 2, which is the column-scale version of the empty catalog row the new-model floor exists to prevent. This is a measurement, not a permanent verdict: the rows are archived, so if Vals runs the current generation against these boards the count changes and so does the answer."
+    },
+    {
+      "benchmark": "vals-legal_bench / vals-tax_eval_v2 / vals-emb / vals-hlab / vals-medcode / vals-sage / vals-time_horizon_index / vals-case_law_v2",
+      "reason": "Boards batch 29 collects in full but the catalog has no column for, and where the count IS there: vals-legal_bench 23 catalog models, vals-tax_eval_v2 23, vals-emb 23, vals-hlab 22, vals-medcode 21, vals-sage 21, vals-time_horizon_index 7, vals-case_law_v2 6. Refused rather than filed somewhere approximate, because opening a column is a taxonomy decision — which axis it joins, whether it is core or observe (core moves the portfolio floor), and whether it duplicates a column another source already fills. Each also needs a `versionFallbacks` entry: Vals labels these boards `1`, which this project does not record, and a row with no version and no fallback is DROPPED at ingest rather than defaulted. The rows are archived so the decision costs no re-collection."
+    },
+    {
+      "benchmark": "vals-public-benefits-bench-v1",
+      "reason": "The retired v1 board of a column the catalog already has at v1.1 (`vals-public-benefits`). Not a missing column and not a second reading: v1 and v1.1 are different question sets and rule 4 forbids merging them, and batch 05's own v1.1 rows are already superseded by batch 29. Archived as the record of what the v1 board published; nothing wants it in a cell."
     }
   ],
   "versionFallbacks": [
@@ -2225,6 +2243,13 @@
       ],
       "version": "Pro",
       "reason": "Vals publishes no version for its mmmu run. 'Pro' is the name of the evaluation split, not a release number, so recording it asserts nothing beyond what the source states."
+    },
+    {
+      "benchmarks": [
+        "program"
+      ],
+      "version": "2026",
+      "reason": "Vals publishes no version for its ProgramBench run and ProgramBench has published no numbered release; the column declares 2026 and each row's retrievedDate pins the snapshot. Same call as the nine vals-* columns. It was previously refused, and docs/ARCHITECTURE.md §9 gave the reason as 'an unlabelled row would land in a column that already holds vendor numbers of unknown provenance'. Measured 2026-08-09, that was wrong in both halves: batch 02 archived 15 ProgramBench rows from the benchmark's OWN leaderboard — source_kind `benchmark`, not vendor — and not one of them was reaching the board, because a row with no version and no fallback is DROPPED at ingest rather than defaulted. The refusal was not protecting the column, it was emptying it. This entry recovers those rows as well as admitting Vals'. The two scales were checked before being allowed to share a cell rather than assumed: the official board's metric is a Resolved score out of 200 tasks, Vals' `overall` is byte-identical to its `strict` / 'Fully Resolved' column, and GPT-5.5 reads 0.5 on both. The numbers are near zero because ProgramBench is hard, not because one of them is a fraction of the other's unit."
     }
   ],
   "supersededRows": [

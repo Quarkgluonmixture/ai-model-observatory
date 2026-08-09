@@ -55,6 +55,12 @@ const KNOWN_ENTRIES = [
   ["mmlu_pro", "vals-mmlu-pro", "shared"],
   ["swebench", "vals-swe-bench-verified", "shared"],
   ["terminal-bench-2-1", "vals-terminal-bench-2-1", "shared"],
+  ["terminal-bench-2", "vals-terminal-bench-2", "shared"],
+  // Meta's ProgramBench, not a namesake. The check: Vals' board description and the repository's
+  // own GitHub description are the same sentence — "Can Language Models Rebuild Programs From
+  // Scratch?" — which is exactly the check that was missing when a namesake last got through here
+  // (ALE-Bench and Agents' Last Exam share three letters and nothing else).
+  ["programbench", "vals-programbench", "shared"],
   // Vals' own composites. Mapped to the string the archive already refuses rather than left to
   // arrive under a new one, because the reason has not changed: they average the sub-benchmarks
   // this batch ingests individually, so carrying them would double-count.
@@ -88,6 +94,12 @@ const KNOWN = new Map(KNOWN_ENTRIES.map(([slug, benchmark]) => [slug, benchmark]
 // unprefixed, which is how the column already spells it.
 const SHARED_VERSION = new Map([
   ["terminal-bench-2-1", "2.1"],
+  // Terminal-Bench 2.0 is a different question set from 2.1 and the catalog keeps it in its own
+  // `terminal-20` column; `benchmarkSplits` does that routing off this exact version string.
+  ["terminal-bench-2", "2.0"],
+  // ProgramBench publishes no version. The `program` column declares 2026 and a `versionFallbacks`
+  // entry supplies it — see data/model-aliases.json for why that is safe here and was not before.
+  ["programbench", null],
   // The other four publish no version of the underlying benchmark, and each has a
   // `versionFallbacks` entry naming its split — Diamond, Pro, Verified — which is the label a
   // reader can check. `mmlu_pro` has neither, which is why the catalog's `mmlu-pro` column is

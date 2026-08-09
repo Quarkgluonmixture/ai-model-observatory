@@ -563,10 +563,24 @@ Deliberately not carried, with reasons in `droppedBenchmarks`: LMArena text Elo 
 Analysis and Vals composite indices (they double-count their own components), and a few
 Vals benchmarks with one to three rows.
 
-Rows whose source publishes **no benchmark version** are archived but not ingested. This
-currently costs SWE-Marathon, PostTrainBench and ProgramBench. It is deliberate: ProgramBench's
-official Resolved score for GPT-5.5 is 0.5% while the Kimi vendor table reports 70.8 for the
-same cell, so those columns would silently mix two different metrics.
+Rows whose source publishes **no benchmark version** are archived but not ingested. This still
+costs SWE-Marathon and PostTrainBench. **ProgramBench came off that list on 2026-08-09**, and the
+correction is worth reading because the original reasoning was half right in a way that matters.
+
+The hazard it named is real: ProgramBench's official Resolved score for GPT-5.5 is 0.5% while a
+raw pass rate for the same model is 70.8, so a column that mixed the two would be nonsense. What
+was wrong is that refusing a *version* is not what prevents that — reading the wrong *metric* is,
+and the refusal was instead deleting evidence. Measured: 15 ProgramBench rows sat in batch 02 from
+the benchmark's own leaderboard, `source_kind: benchmark` rather than the vendor numbers the note
+assumed, and not one reached the board, because a row with no version and no fallback is dropped
+rather than defaulted. The column read empty while the archive held it.
+
+What actually keeps the metrics apart is the task view. Vals publishes four — `overall`, `strict`
+("Fully Resolved"), `almost`, `partial` ("Raw Pass Rate") — and batch 29 reads `overall`, which is
+byte-identical to `strict` on every model checked, against `partial`'s 70.775 for that same
+GPT-5.5. So both sources in this column are Resolved scores, and GPT-5.5 reads 0.5 on each. No row
+publishing a raw pass rate is in the archive under this benchmark; if one arrives, the cross-source
+disagreement gate fails on the mixed cell, which is the check that was doing this job all along.
 
 ## 10. Known limitations and next work
 
