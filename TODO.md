@@ -53,8 +53,6 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 ## 小口子
 
-- [x] ~~三个无源值找出处：`qwen3.8-max open`、`qwen3.7-plus contextK`、`qwen3.7-plus open`。~~
-      ✅ batch-27 补齐（PR #59, 2026-08-08），溯源率 318/321 → 321/321。
 - [ ] qwen3.8-max `intelligence` 仍为 null，但 AA 现已发布 58 —— 属于 AA-refresh 工作流，
       非溯源修复。下次 AA 刷新时一并更新。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
@@ -92,7 +90,6 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] ⭐ `data/deployment.json` 的 `productionUrl`（同上，机制早就建好了）。
 
 **堆 2 · 能自动，但是下一个 chunk（要写新 fetcher，不是补机制）**
-- [x] ~~Vals AI（538 行，最大一块）~~ ✅ batch-29，2026-08-09。第八次推翻「没有路」。
 - [ ] **还剩 1,287 行裸奔**。按「还在裸奔的行数」重排（不是按文件大小）：
       `batch-17-qwen3.8-release`（465）· `batch-05-independent`（439，只剩 LMArena 与合成指数）·
       `batch-02-coding`（136）。⚠ 第一名**不值得先做**：发布帖是冻结的，没有漂移可查。
@@ -105,8 +102,6 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 ## batch 29 之后留下的（2026-08-09）
 
-- [x] ~~`vals-programbench` → 目录已有的 `program` 列~~ · ~~`vals-terminal-bench-2` → `terminal-20`~~
-      ✅ 2026-08-09。两块根本不是「开新列」，列早就声明好了。
 - [ ] ⭐ **要你定：CyberBench 的 poc / patch 两列开不开**。原拒绝理由「每个只有 2-3 行」是手抄时代
       的行数，实测各 **18 个目录模型**，那半条已经死了。还站得住的是另一半：CyberBench 是 agentic
       板（「自主 agent 能不能造出触发 OSS-Fuzz 漏洞的 PoC、并写出修复补丁」），而 **Vals 在这块板上
