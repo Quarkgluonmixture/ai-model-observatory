@@ -654,3 +654,119 @@ parameters" → 进 operating-parameters 批次、被观测循环排除）：
   值是 AA-refresh 工作流的事，不是溯源修复。记进 TODO.md，下次 AA 刷新一并处理。
 - qwen3.7-max 带着个误导性的 `"open weights"` 标签（tags 是 editorial、不被审计、
   `open:false` 本身正确），没动——留给 owner 定。
+
+## 2026-08-09 — FrontierMath 变成脚本源（batch 28），顺带结掉「1.7x」那桩悬案
+
+### 起因
+
+排程 agent 的「AI 观测台日常班」当轮耗尽轮次而失败，报告里带着一条线索：Epoch 的排行榜
+可能有机器可读的数据源，而且和文档里被排除的那个 zip 不是同一份。
+
+### 查到的（都实测过，不是推断）
+
+1. `epoch.ai/data/benchmarks.csv` 有 1311 条 run，按 `task` 列分组。FrontierMath 有**六个**
+   task 家族，其中两个是站上现在渲染的：`FrontierMath-Tiers-1-3-v2-Private`（42 行）和
+   `FrontierMath-Tier-4-v2-Private`（44 行）。
+2. **「1.7x 分歧」的真正原因**：zip 里的 `frontiermath.csv` 正是
+   `FrontierMath-2025-02-28-Private`——101 行、最高 52.40，和当初 epoch.mjs 头注释记的数字
+   逐一对上；tier 4 那个是 `2025-07-01`（72 行）。**是两个题集，不是两次测量。**
+   老注释说「分歧发生在 Epoch 的导出内部，原因不明」——数字全对，归因错了。
+3. 页面确实读这个 CSV：`BenchmarkBody.*.js` → `benchmarks.*.js` → `fetch('/data/benchmarks.csv')`。
+   而且榜单页自己的 astro island props 就把这块板叫 `FrontierMath-Tiers-1-3-v2-Private`，
+   与 CSV 的 `task` 是同一个字符串。
+4. **替换前先对账**：batch-01 手抄的 39 行里有 15 行的模型也在这份 CSV 里，15/15 在它当初四舍五入
+   到的那一位上完全一致（87.7=87.72、85.3=85.26、80.0=80.00、62.8=62.81、14.6=14.63）。
+   这才是允许 supersede 的依据。
+
+⚠ 中途自己踩了一次：`grep -c "89.1" fm.html` 返回 5，据此以为分数是服务端渲染进 HTML 的。
+`grep` 把 `.` 当通配符了，全是假阳性。用 Python 精确匹配复查后为 0。**数值 claim 要用精确匹配复核。**
+
+### 做了什么
+
+- 新 fetcher `scripts/fetchers/epoch-frontiermath.mjs` → `batch-28-frontiermath`，86 行。
+  按 **task 名**而不是文件名选行——v3 来的时候会是新 task，不会是这两行被改写。
+- `versioning: "append-only"`：v2 题集冻结（`task version` 全是 2.0.0、私有题集），但客人名单不冻结
+  （Qwen3.8 Max 是 8-04 才被跑上去的）。跟 LiveBench 同一个理由。
+- `tools_enabled` / `context_length` 这两个 CSV 不带的字段，从榜单页明写的 affordances 读
+  （python + submit_answer 工具、1,000,000 token 硬上限）——和 livebench.mjs 取 scaffold 是同一种取法。
+- 三道 fetch 期守卫，都会直接抛：task 名一行都匹配不上（改名了，写空批次等于删档案）、
+  一个 configuration 出现两次（重跑了，哪条是发布值得人来定）、`mean_score ≠ best_score`
+  （出了第二个 scorer）。
+- supersede batch-01 的 `frontiermath`（39 行）；改掉 epoch.mjs 里那段归因错误的注释。
+
+### 顺手修了一个静默失效的检查
+
+`fetch-source.mjs` 的 `cellKey` 不含 `benchmark_version`。batch 28 是**第一个在一个批次里装两个
+benchmark 版本**的批次（Tiers 1-3 和 Tier 4 共用 `benchmark: "frontiermath"`，靠 `benchmarkSplits`
+在下游分开），于是两个 tier 撞进同一个 key——86 行只被核了 44 格，每个模型的 Tier 4 分数
+**悄悄退出了自己的漂移检查**。加上版本字段后 86/86。其他源每批只有一个版本，key 只是变长。
+
+### 结果
+
+- 观测 1610 → 1635 行；cell 1094 → 1121（52.4% → 53.7%）。
+- **新增 25 格**：GPT-5.6 Sol / Terra / Luna、Claude Opus 5、Claude Sonnet 5、Kimi K3、
+  Qwen3.8 Max、Grok 4.5、Gemini 3.6 Flash、DeepSeek V4 Flash 0731 / V4 Pro 等两个 tier 各一格。
+- **15 个已有数字变化**，全部是一位小数 → 全精度（最大 0.05）。所以 tier-B 三条件第 2 条不满足，
+  **不能自合**——和 ARC 那轮同一个机制，闸门是对的，动的方向是纠正。
+- 86 行里只有 44 行进目录。另外 42 行是目录不收的上一代（`gpt-5.4-pro-2026-03-05`、
+  `claude-opus-4-7`、`o3-mini-2025-01-31` 等），外加 `gpt-5.6-sol_promax` —— 那是同一模型的
+  operating point 变体，按「一个家族一条记录」不入目录，也不猜 alias。
+
+### 留下的话
+
+- 这 25 格**全部落在单源列上**。`frontiermath` / `frontiermath-t4` 本来就是四个核心单源列里的两个，
+  batch 28 把它们填满了但没有把它们移出那份名单——同一个发布方读同一块板，仍然没有第二个声音。
+- ARCHITECTURE §9 里「脚本源不等于正确源」那段没有退休，反而更锋利了：退休题集是**内部自洽、
+  版本标注也正确**的，结构检查一条都不会响。
+
+## 2026-08-09（第二轮）— 全自动化还差什么：补掉一个会吃掉一整天的洞
+
+### 先把「差什么」量出来，别照抄文档
+
+`docs/ARCHITECTURE.md` §10 自己记的三个数全部过期了，先实测重写：
+
+| §10 原文 | 实测 2026-08-09 |
+|---|---|
+| 13 / 26 批次能自维护 | **14 / 28** |
+| 12 个脚本批 3,381 行 · 13 个手抄批 1,749 行 = 65.9% | **8,716 / 1,751 = 83.3%** |
+| 4 个目录值无源 | **0**（batch-27 于 8-08 补齐，321/321） |
+
+⚠ 83.3% 这个数**不能当进步读**：手抄行从 1,749 只动到 1,751，比例上升全靠脚本批变大。
+看绝对值，不看比例——所以那段话里加了一句 "Read the row count, not the ratio"。
+
+### 补掉的洞：单源卡死会吃掉整天的漂移检查
+
+**证据（同一台机器、同一条命令、同一份档案，一小时内）**：
+- 一次跑**超过 80 分钟**没走到 MMMU，只能 kill；第二次约 9 分钟；第三次带时间戳跑，
+  **全程 36 秒**（GDPval 14s、MMMU 15s，CI runner 上是 19s / 13s）。
+- 三次之间归档没变、上游板没变。所以：浏览器 fetcher 卡住是**偶发、不可预测、无上界**的。
+
+代价不是丢一个源，是丢**一整天**：drift job 有 `timeout-minutes: 10`，卡住时进程被杀在
+打印任何东西之前——那天没有任何源被核对，而且那一步自己的 `could not be read` 报告也没跑成。
+`fetch-source.mjs` 头注释写着「一个源失败不能拖垮其他源」，但这条保证**没覆盖「永不返回」**。
+
+改法：
+- `fetch-source.mjs` 加 per-source `FETCH_TIMEOUT_MS`（默认 300s = 实测健康值的 20 倍）。
+  卡住 = 和抛错同一类事件：报出来、置 exit code、继续下一个源。
+- 默认值故意宽松：笔记本上误报 `could not be read` 比慢一点更糟。**CI 自己设预算**
+  （`upstream.yml` 两个跑 fetcher 的步骤都设 `FETCH_TIMEOUT_MS: 120000`），因为那边的
+  job cap 才是让卡死变贵的东西。refresh job 那步尤其重要——它**会写**，被杀在中途会留下
+  一半重写、一半没提交的批次。
+- race 掉超时并不会真的停下卡住的工作（进了浏览器调用就没法停），所以这个文件末尾那句
+  显式 `process.exit` 是承重的，不是习惯。
+
+验证：`FETCH_TIMEOUT_MS=1` 走超时分支、node 退出码 1；正常路径 86 格照常核对；
+全量 12 个源在新 key + 新超时下**全绿**，且逐源格数与当天 CI 的日志逐一对上
+（897 / 53 / 619 / 17 / 57 / 179 / 71 / 496 / 201 / 200 / 26）——这就是「cellKey 那改动
+没动到别的源」的实证。
+
+### 查了但**没有**动的（都是有意的设计，不是漏掉的）
+
+- **agent 死了没人推微信**。`upstream.yml` 里写明了理由：「没人在做的队列值得记下来，
+  不值得打扰」。§10 也承认这是唯一没有推送兜底的失败。改它是在推翻 owner 8-06 那次
+  10→4 的裁剪，属于判断不属于补洞——列进「要你定」。
+- **单源列**（这次又多 25 格）、**LiveBench 新 release 的收集**、**目录记录落位**、
+  **`ArenaElo` 没有 harness 维度**：文档里都写明是判断题，cron 不该做。
+- **「新记录必须先有归档行」这条闸门**：§10 说「如果将来建了新模型自动化，缺的条件是…」——
+  其实已经建了，`propose-model.mjs` 的准入比那句还严（要求高于看板平均格数），
+  加上第四条 `new-models-below-floor`。那句话是旧的。

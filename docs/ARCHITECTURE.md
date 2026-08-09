@@ -444,12 +444,12 @@ The data check currently enforces:
 
 ## 9. Collection state
 
-Twenty-two archive batches, all under `data/sources/`. Read this before re-running a source: several
+Twenty-eight archive batches, all under `data/sources/`. Read this before re-running a source: several
 pages are known-dead or known-empty and were already worked around.
 
 | Batch | Covers | Outcome |
 | --- | --- | --- |
-| 01 | Reasoning and maths | ARC Prize, Epoch FrontierMath + GPQA. Complete transcript. Its GPQA rows are superseded by batch 12 and its 95 ARC rows by batch 23 — both are the same board read by script afterwards. The ARC supersede also retired a wrong field: every `evaluation_date` on those rows is ARC's `modelReleaseDate` to the day, and `byPrimaryPreference` sorts on that field, so a release date was deciding which ARC row the site published. |
+| 01 | Reasoning and maths | ARC Prize, Epoch FrontierMath + GPQA. Complete transcript. Its GPQA rows are superseded by batch 12, its 95 ARC rows by batch 23 and its 39 FrontierMath rows by batch 28 — each is the same board read by script afterwards. Nothing of its own is left in the observation store from these three boards, which is the shape a transcription is supposed to end in. The ARC supersede also retired a wrong field: every `evaluation_date` on those rows is ARC's `modelReleaseDate` to the day, and `byPrimaryPreference` sorts on that field, so a release date was deciding which ARC row the site published. |
 | 02 | Coding and software engineering | Terminal-Bench 2.0/2.1, SWE-bench, SWE-Bench Pro, DeepSWE, SWE-Marathon, FrontierSWE, PostTrainBench, ProgramBench. Complete, 313 rows. |
 | 03 | Agents and tool use | MCP-Atlas, Toolathlon, OSWorld 2.0, Agents' Last Exam. Filtered at capture. |
 | 04 | Multimodal, long context, professional | GDPval-AA, APEX, MMMU. Lowest yield of the set. |
@@ -460,7 +460,7 @@ pages are known-dead or known-empty and were already worked around.
 | 09 | LiveBench | 23 task columns × 36 models = 828 rows, fetched by script, not transcribed. Took cell coverage from 25.7% to 47.2%. |
 | 10 | Standard vendor pricing | Claude Sonnet 5's list $3/$15. No new retrieval — promoted from batch 08's capture, where it sat in a row's note. |
 | 11 | DeepSWE | 50 configurations fetched from the artifact the board loads. Supersedes batch 02's 18 transcribed rows of the same page. |
-| 12 | Epoch AI export | 538 rows from the CC BY ZIP: Epoch's own GPQA runs plus four second-hand boards with no first-hand path. **FrontierMath and Tier 4 are deliberately not read** — the export disagrees with Epoch's own page by about 1.7x; see the fetcher header. |
+| 12 | Epoch AI export | 538 rows from the CC BY ZIP: Epoch's own GPQA runs plus four second-hand boards with no first-hand path. **FrontierMath and Tier 4 are deliberately not read** — resolved 2026-08-09: those two CSVs are the retired `2025-02-28` and `2025-07-01` question sets, which is why they run about 1.7x below the page. Not a broken export, a different benchmark version. The current boards are batch 28. |
 | 13 | Terminal-Bench 2.1 | 17 submissions from the Supabase function the page calls, each with its agent, effort and run date. Supersedes batch 02's 2.1 rows. |
 | 14 | Artificial Analysis | 590 configurations of operating parameters from the REST API. Not observations — this batch feeds `check:models`. On demand, needs `AA_API_KEY`. |
 | 15 | Model config.json | Context windows read from each model's own Hugging Face `config.json`. Two rows, added to settle whether Inkling's window is a serving limit or an architectural maximum. |
@@ -475,6 +475,7 @@ pages are known-dead or known-empty and were already worked around.
 | 24 | ARC Prize · ARC-AGI-1 | 197 entries on the `v1_Semi_Private` split, same file and same fetcher body as batch 23 — `evaluations.json` carries all eight splits, so a second board costs an argument rather than a second scraper. Carried as a **legacy** benchmark: 16 catalog families land on it and the top is saturated (98.5 / 98 / 97.5 across three makers), so it separates the middle of the field and not the frontier, and `legacy` keeps it out of the portfolio floor. One string exists only here — `anthropic-opus-4-8-max`, which ARC never ran on ARC-AGI-2. |
 | 25 | ARC Prize · ARC-AGI-3 | 26 entries on `v3_Semi_Private`, six catalog families, every one under 8% except Claude Opus 5's 30.16. Carried as **observe** for exactly that reason — a column at the floor is not a ranking — but it is the only unsaturated ARC split, so it is where movement will show first. Two entries here are deliberately unmapped and both look mappable: `openai-gpt-5-5-2026-04-23-high` displays as plain "GPT-5.5 (High)" and `google-gemini-3-1-pro-preview` as "Gemini 3.1 Pro (Preview)", but each sits in a different `modelGroup` from the string this catalog already carries, which is the board saying they are separate dated snapshots. Cost: two cells at 0.43 and 0.42. |
 | 26 | Artificial Analysis evaluations | AA's own runs of seven benchmarks, from `/api/v2/data/llms/models` — a **different path** from batch 14's `/api/v2/language/models/free`, on the same key. Measured 2026-08-07: the free path publishes 3 `evaluations` keys and this one publishes 17. Kept a separate batch because batch 14 declares model operating parameters, which is what keeps its rows out of the observation store. Adds 110 cells, and gives `hle-no-tools` and `scicode` — until now held up entirely by one vendor release table — an independent reading. Every mapping was checked against AA's published methodology table, which is also what decides `hle` is the no-tools column (its Tool Usage entry is ✗) rather than a guess. Ten of the seventeen keys are deliberately not collected, each with a reason in the fetcher header — `terminalbench_hard` because AA itself calls it superseded and out of active reporting, `tau2` because it appears in neither the methodology nor the leaderboard. `manual`: AA re-measures continuously, so this never enters the daily refresh. |
+| 28 | Epoch AI FrontierMath | 86 rows across both v2 boards, from `/data/benchmarks.csv` — the file the board page's own client chunk fetches, which is where the current question set lives. Supersedes batch 01's 39 hand-read rows; 15 of them name a model this file also carries and all 15 agree to the decimal they were rounded to, which is what licensed the replacement. **It closes the 1.7x question batch 12 left open**: the ZIP's `frontiermath.csv` is the retired 2025-02-28 set, and `benchmarks.csv` says so per row in a `task` column the ZIP does not have. Read by task name rather than filename for that reason — a v3 would arrive as a new task, not as a rewrite of these. `append-only`: the v2 problems are frozen (`task version` 2.0.0) but Epoch keeps running newly released models against them. 44 of the 86 rows land in the catalog; the other 42 are pre-catalog generations (`gpt-5.4-pro-2026-03-05`, `claude-opus-4-7`, `o3-mini-2025-01-31`) and one operating point with no record of its own, `gpt-5.6-sol_promax`. **25 new cells, and every one of them lands in a single-source column** — `frontiermath` and `frontiermath-t4` are two of the four core columns nothing can contradict. |
 
 ### Which sources can be re-read by script
 
@@ -491,7 +492,8 @@ endpoints a client builds at runtime, and found the two largest additions to thi
 | --- | --- |
 | LiveBench | `table_<release>.csv` + `categories_*.json` + `cost_*.csv`. **Scripted, batch 09.** |
 | DeepSWE | `/artifacts/v1.1/leaderboard-live.json` — every configuration with harness, effort, pass@1, CI, cost. **Scripted, batch 11.** |
-| Epoch AI | `epoch.ai/data/benchmark_data.zip` — 76 CSVs, CC BY. Invisible from the page. **Scripted, batch 12** — but not every CSV is usable: the FrontierMath files disagree with Epoch's own leaderboard by about 1.7x and are excluded. An export being official does not make it the same measurement as the page. |
+| Epoch AI | `epoch.ai/data/benchmark_data.zip` — 76 CSVs, CC BY. Invisible from the page. **Scripted, batch 12** — but not every CSV is usable: its two FrontierMath files are the retired 2025-02-28 question set and are excluded, which is why they run about 1.7x below the board. An export being official does not make it the same measurement as the page. |
+| Epoch AI · FrontierMath | `epoch.ai/data/benchmarks.csv` — every run Epoch has published, keyed by `task`. **Scripted, batch 28.** Reached from `BenchmarkBody.*.js` → `benchmarks.*.js` → `fetch('/data/benchmarks.csv')`; the board page names its own board `FrontierMath-Tiers-1-3-v2-Private` in an island prop, which is the same string the CSV keys on. The ZIP was found first and looked like the answer, so the lesson is narrower than "look for a data file": **one publisher can ship two files for one benchmark, and the filename does not say which version is in it.** |
 | Terminal-Bench | An unauthenticated Supabase Edge Function the page calls, found in Harbor's client source. **Scripted, batch 13.** |
 | Artificial Analysis | A documented REST API at `/api/v2`. **Scripted, batch 14**, on demand with `AA_API_KEY`. The free tier carries intelligence index, cost per task, speed, latency and pricing; GDPval-AA and AA-LCR return 403 behind the Pro tier, so those two core benchmarks still have no scripted path. |
 | MMMU | The board renders client-side and is read that way — **scripted, batch 20**. Its legend is load-bearing: `*: results provided by the authors`, so the asterisk decides `source_kind`, and the fetcher refuses to write if the page stops saying it. |
@@ -566,8 +568,8 @@ same cell, so those columns would silently mix two different metrics.
 
 ## 10. Known limitations and next work
 
-**Thirteen of twenty-six batches now maintain themselves; the other thirteen cannot.** This paragraph used
-to say four of fifteen, then nine of twenty-two, then ten of twenty-three, and — more usefully — it used to say that closing the gap was not a code
+**Fourteen of twenty-eight batches now maintain themselves; the other fourteen cannot.** This paragraph used
+to say four of fifteen, then nine of twenty-two, then ten of twenty-three, then thirteen of twenty-six, and — more usefully — it used to say that closing the gap was not a code
 problem, because "§9 records that no other source publishes a data file to read". That was wrong,
 and it was wrong in the most expensive way a written-down answer can be: it told the next person
 not to look.
@@ -590,9 +592,13 @@ path" is a claim about the search, not about the source.
 a scripted source is not automatically a correct one.** Epoch's FrontierMath export disagreed with
 Epoch's own leaderboard by about 1.7x, and every structural check passed — the rows were
 well-formed, versioned, dated and attributed. What caught it was a second source disagreeing, and
-that only exists where a benchmark has been read twice. **Measured 2026-08-07: 47 of the 70 columns
+that only exists where a benchmark has been read twice. The cause was finally named on 2026-08-09
+and it sharpens the point rather than retiring it: the export is a **retired question set**, so it
+was internally consistent, correctly versioned by its own lights, and still wrong for the column —
+the exact failure no structural check can see. **Measured 2026-08-07: 47 of the 70 columns
 had exactly one source**, and four of those were core (`frontiermath`, `frontiermath-t4`,
-`imo-answer`, `aa-lcr`). On any of them, nothing would contradict a wrong reading. Batch 26 moved
+`imo-answer`, `aa-lcr`). Batch 28 fills those first two properly but does not take them off that
+list: it is the same publisher reading the same board, so there is still nothing to contradict it. On any of them, nothing would contradict a wrong reading. Batch 26 moved
 `aa-lcr`, `hle-no-tools` and `scicode` off that list by giving them a second reading, and added
 two columns (`tau3-banking`, `ifbench`) that join it — the trade is deliberate and `describe-change`
 prints the count on every run. `ARC-AGI-1` and
@@ -609,8 +615,8 @@ What "maintains itself" means concretely, every day, in `.github/workflows/upstr
 
 | Finding | Source kind | Verdict |
 | --- | --- | --- |
-| A published cell changed or vanished under a frozen version | pinned, append-only (LiveBench) | Integrity failure, job red, a human decides |
-| A cell *appeared* under a frozen version | append-only (LiveBench) | New data → the batch is rewritten. A release freezes the question set, not the list of models run against it |
+| A published cell changed or vanished under a frozen version | pinned, append-only (LiveBench, Epoch FrontierMath) | Integrity failure, job red, a human decides |
+| A cell *appeared* under a frozen version | append-only (LiveBench, Epoch FrontierMath) | New data → the batch is rewritten. A release freezes the question set, not the list of models run against it |
 | A cell moved on a live board | live (DeepSWE, Epoch, Terminal-Bench) | New data → the batch is rewritten and a pull request opens |
 | A newer release exists | pinned, append-only | Reported only. Collecting it changes 23 benchmark version fields and is a catalog decision |
 | Anything never collected at all | any | The collection-gaps issue |
@@ -771,18 +777,26 @@ stay. That is judgement, and judgement does not go in a cron job.
   list with no second list to maintain.
 - Upstream diffing still exists only for sources with a machine-readable feed. LiveBench is
   re-fetched and compared cell by cell (`npm run check:upstream`, daily in CI). **Measured
-  2026-08-07: 12 scripted batches carry 3,381 archived rows and 13 transcribed ones carry 1,749,
-  so 65.9% of the archive re-reads itself and the other third is undiffable** — nothing tells you
+  2026-08-09: 14 scripted batches carry 8,716 archived rows and 14 transcribed ones carry 1,751,
+  so 83.3% of the archive re-reads itself and the rest is undiffable** — nothing tells you
   that Vals or the Qwen release table edited a number after it was archived. Ranked by rows at
-  risk the undiffable ones are `batch-05-independent` (538), `batch-17-qwen3.8-release` (465) and
-  `batch-02-coding` (313), which is the order worth attacking them in. Each source that gains a fetcher gains a drift check.
+  risk the undiffable ones are `batch-05-independent` (538), `batch-17-qwen3.8-release` (465),
+  `batch-02-coding` (313) and `batch-01-reasoning-math` (190, of which 154 are already superseded
+  by batches 12, 23 and 28 — what is left is 10 HLE, 13 CritPt and 13 IMO rows), which is the
+  order worth attacking them in. The percentage rose without any
+  transcription being retired: scripted batches grew faster. **Read the row count, not the ratio**
+  — 1,751 rows are still undiffable and that number has barely moved. Each source that gains a fetcher gains a drift check.
   Until then, how long ago a source was last read is the only honest freshness signal there is,
   which is why every source card now prints it and marks itself aging after
   `SOURCE_STALE_DAYS` (30). The card prints *read* or *evaluated* and never blurs the two: a
   recently-read source with an old evaluation date is not stale, its leaderboard is quiet.
-- Four catalog values still have no archive row: Claude Opus 4.8's code Elo, Qwen3.7 Plus's context
-  window, and the open-weights flag on Qwen3.7 Plus and Qwen3.8 Max. `npm run check:models` lists
-  them. The two flags are the same gap: no source consulted states the weights status either way,
+- ~~Four catalog values still have no archive row~~ **Closed 2026-08-08 (batch 27): provenance is
+  321/321.** The last three — Qwen3.7 Plus's context window and the open-weights flag on Qwen3.7
+  Plus and Qwen3.8 Max — came off Artificial Analysis' *rendered model pages*, which state
+  "Context Window: 1M tokens" and "Proprietary — weights not publicly available" where its
+  parameter API returns null for both. Worth keeping as a pattern rather than as a fixed entry:
+  when the API says null, the same vendor's page often does not. `npm run check:models` is the
+  instrument, and it names anything that regresses. The two flags are the same gap: no source consulted states the weights status either way,
   and absence of a weights repository is not a published fact, so the catalog carries the
   conservative `false` and the audit keeps saying it is unsourced. Grok 4.3's two Elo figures left this list without
   new collection: batch 09 added a lowercase `grok-4.3` alias, which attached LMArena rows that

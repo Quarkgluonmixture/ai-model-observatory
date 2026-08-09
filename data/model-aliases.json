@@ -2059,6 +2059,13 @@
   ],
   "supersededRows": [
     {
+      "file": "batch-01-reasoning-math",
+      "benchmark": "frontiermath",
+      "supersededBy": "batch-28-frontiermath",
+      "reason": "Batch 01 transcribed both FrontierMath v2 boards by eye: 39 rows, effort folded into the model string, scores rounded to one decimal. Batch 28 reads /data/benchmarks.csv -- the file the board page's own client chunk fetches -- and gets 86 rows at full precision with effort, run date and standard error in their own fields. One measurement read twice, so only the scripted reading is ingested: 87.7 is 87.72, 85.3 is 85.26, 80.0 is 80.00, 62.8 is 62.81, 14.6 is 14.63. Fifteen of batch 01's rows name a model this file also carries and all fifteen agree to the decimal place they were rounded to, both tiers, which is what licensed the replacement. No entry is scoped by benchmarkVersion because batch 01 carries no FrontierMath version other than the two v2 boards. The rows stay in the archive as evidence of what the page showed on 2026-07-31.",
+      "note": "This is NOT the same file as the ZIP's frontiermath.csv, which epoch.mjs still refuses to read: that one is the retired 2025-02-28 question set and scores about 1.7x lower. See the header of scripts/fetchers/epoch-frontiermath.mjs."
+    },
+    {
       "file": "batch-02-coding",
       "benchmark": "deepswe",
       "supersededBy": "batch-11-deepswe",

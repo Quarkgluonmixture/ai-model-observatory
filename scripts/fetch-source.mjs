@@ -72,6 +72,42 @@ const serialise = (rows) => rows.map((row) => JSON.stringify(row)).join("\n") + 
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+// Per-source wall clock, because a source that never answers was the one failure this file did not
+// survive.
+//
+// Measured 2026-08-09, and the spread is the whole point. A healthy full sweep of all 12 sources
+// takes **36 seconds** end to end on a laptop — GDPval 14s and MMMU 15s, the two that drive a
+// browser, against 19s and 13s on the CI runner. The same command on the same machine an hour
+// earlier ran **past 80 minutes** without reaching MMMU and had to be killed, and a second attempt
+// took nine. Nothing about the archive or the boards had changed. So a browser fetcher stalling is
+// rare, unpredictable and unbounded, and the cost of it is not one source: the workflow caps the
+// drift job at ten minutes, so the process is killed before it prints anything and the day loses
+// every other source's check *and* the step's own "could not be read" report.
+//
+// The default is 20x the observed healthy time rather than tight, because a false "could not be
+// read" on a laptop is worse than a slow one — the runner sets its own budget in
+// .github/workflows/upstream.yml, where the job cap is what makes a stall expensive.
+//
+// Racing the timeout does not stop the stalled work — nothing can, once a fetcher is inside a
+// browser call — which is why this file ends in an explicit process.exit rather than letting the
+// event loop drain.
+const TIMEOUT_MS = Number(process.env.FETCH_TIMEOUT_MS ?? 300_000);
+const withTimeout = (promise) => {
+  if (!Number.isFinite(TIMEOUT_MS) || TIMEOUT_MS <= 0) return promise;
+  let timer;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(
+        () => reject(new Error(`no answer in ${Math.round(TIMEOUT_MS / 1000)}s (FETCH_TIMEOUT_MS)`)),
+        TIMEOUT_MS,
+      );
+      // The timer must not be the reason the process stays alive after every source is done.
+      timer.unref?.();
+    }),
+  ]);
+};
+
 let failed = false;
 let changedAny = false;
 
@@ -97,9 +133,16 @@ for (const fetcher of selected) {
   // file, so a throw meant the network was down and losing the run cost nothing; a fetcher that
   // drives a browser can fail because a page was restyled, and that must not stop DeepSWE's new
   // rows from being written. The failure is still reported and still sets the exit code.
+  //
+  // A source that never returns had been left out of that guarantee, and it is the one failure
+  // mode that costs the whole run rather than one source: the workflow caps the job at ten
+  // minutes, so a fetcher that hangs takes down the drift check for every other source *and* the
+  // step's own "could not be read" report, because the process is killed before it prints
+  // anything. A stall is now the same class of event as a throw — one source lost, named, and the
+  // exit code set. See `TIMEOUT_MS` above for why the default is generous.
   let fetched;
   try {
-    fetched = await fetcher.fetch(target);
+    fetched = await withTimeout(fetcher.fetch(target));
   } catch (error) {
     console.error(`\n${fetcher.label}: could not be read — ${error.message}`);
     failed = true;
@@ -136,7 +179,13 @@ for (const fetcher of selected) {
   // alone silently compared one board's row against the other's.
   const cellKey = isParameters
     ? (row) => `${row.model_raw}/${row.effort ?? "-"}/${row.source_url ?? "-"}`
-    : (row) => `${row.model_raw}/${row.benchmark}/${row.harness ?? "-"}/${row.reasoning_effort ?? "-"}`;
+    // benchmark_version is in the key because one batch can hold two versions of one benchmark
+    // id: batch 28 carries FrontierMath Tiers 1-3 and Tier 4, which the catalog splits apart
+    // downstream but which share `benchmark: "frontiermath"` here. Without it the two tiers
+    // collided on one key and 86 rows were verified as 44 — every model's Tier 4 score silently
+    // dropped out of its own drift check. Nothing else changes: every other source publishes one
+    // version per batch, so the extra field only makes an already-unique key longer.
+    : (row) => `${row.model_raw}/${row.benchmark}/${row.benchmark_version ?? "-"}/${row.harness ?? "-"}/${row.reasoning_effort ?? "-"}`;
   // Every measured field, including the two Elos. They were missing here while the only Elo rows in
   // the archive were hand-read, and a scripted Arena board would have been compared on seven nulls:
   // the batch would have looked unchanged forever and never been refreshed.

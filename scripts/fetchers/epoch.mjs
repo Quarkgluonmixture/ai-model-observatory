@@ -37,7 +37,9 @@ const HUB = "https://epoch.ai/benchmarks";
 // result (27.1) as though the two sources disagreed about the same thing.
 const EFFORT_SYNONYMS = new Map([["none", "non-reasoning"]]);
 const UNKNOWN_EFFORTS = new Set(["unknown", "default", ""]);
-const splitEffort = (modelVersion) => {
+// Exported because epoch-frontiermath.mjs reads a different Epoch file with the same model-string
+// convention. One copy, so a new operating point is named in one place.
+export const splitEffort = (modelVersion) => {
   const cut = modelVersion.lastIndexOf("_");
   if (cut === -1) return { modelRaw: modelVersion, effort: null };
   const tail = modelVersion.slice(cut + 1).toLowerCase();
@@ -64,7 +66,7 @@ const effortFromName = (name) => {
   return NAMED_EFFORTS.includes(inside) ? inside : null;
 };
 
-const pct = (value) => {
+export const pct = (value) => {
   const n = Number(value);
   if (!Number.isFinite(n)) return null;
   // Epoch stores proportions; the catalog stores percentages.
@@ -84,20 +86,24 @@ const OWN = [
 // frontiermath.csv and frontiermath_tier_4.csv are DELIBERATELY NOT READ, and this is the reason,
 // so nobody adds them back on the reasonable-looking grounds that Epoch publishes them.
 //
-// Their contents do not match Epoch's own leaderboard page. The export tops out at 52.40 across
-// all 101 Tiers 1-3 rows; the page's leader is 89. Model by model the page runs about 1.7x the
-// export — GPT-5.5 xhigh 85.3 on the page against 51.70 in the CSV, Claude Opus 4.8 max 80
-// against 47.24 — consistently enough to be two different measurements, not a stale file.
+// They are a **retired question set**, not a second reading of the current one. This file used to
+// say the divergence was unexplained — the export tops out at 52.40 across all 101 Tiers 1-3 rows
+// while the page's leader is 89, about 1.7x, GPT-5.5 xhigh 85.3 on the page against 51.70 in the
+// CSV — and that note was correct about the numbers and wrong about the cause. Epoch's
+// benchmarks.csv settles it by naming what each run was against: the ZIP's 101 rows are
+// `FrontierMath-2025-02-28-Private` and its 72 tier-4 rows are
+// `FrontierMath-Tier-4-2025-07-01-Private`, whereas the boards the site renders are
+// `FrontierMath-Tiers-1-3-v2-Private` (42 rows) and `FrontierMath-Tier-4-v2-Private` (44). Two
+// versions of a benchmark, which this project may never merge into one cell.
 //
-// What settles which to trust is that the page is what a reader can open and check, and the
-// transcription in batch 01 agrees with it. What rules out a parsing bug on this side is GPQA:
-// same fetcher, same CSV shape, same code path, and its values agree with the transcription
-// exactly. So the divergence lives inside Epoch's FrontierMath export, not here.
+// So the divergence was never inside the export. Reading these files anyway would put a retired
+// version's score in a column of current ones, which is the same failure as reading a public split
+// into a verified board's column.
 //
-// Reading them anyway put a wrong number on the dashboard rather than a missing one, because a
-// model with no transcribed row showed the export's figure while its neighbour showed the page's:
-// GPT-5.5 at 85.3 beside Claude Opus 4.8 at 47.24, in one column, as though the gap were real.
-// Until someone establishes what the export measures, the page is the source for this benchmark.
+// The current boards are collected by scripts/fetchers/epoch-frontiermath.mjs, from
+// /data/benchmarks.csv — the file the board page itself fetches. Should a v3 ship, the ZIP will
+// most likely keep publishing v2 under these two filenames, and that is exactly why they are read
+// by task name over there rather than by filename here.
 
 const EXTERNAL = [
   {

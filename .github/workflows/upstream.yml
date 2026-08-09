@@ -68,6 +68,12 @@ jobs:
           # Chrome exactly as much as the refresh job does — an omission that made GDPval and MMMU
           # unreadable here while they worked there.
           CHROME_PATH: /usr/bin/google-chrome
+          # A stalled browser fetcher used to cost the whole day: the job cap kills the process
+          # before it prints anything, so no source got checked and the "could not be read"
+          # report below never ran. A healthy sweep of all 12 sources takes ~40s here, so two
+          # minutes for any single one is four times the slowest ever measured, and a stall now
+          # costs that source and nothing else. See scripts/fetch-source.mjs.
+          FETCH_TIMEOUT_MS: 120000
         # pipefail so the step's verdict stays check:upstream's and not tee's. The log is kept
         # because the steps below have to report *which* cells moved, and a failure that says
         # only "exit code 1" is the kind nobody acts on.
@@ -235,6 +241,10 @@ jobs:
       - name: Re-read the live boards
         env:
           CHROME_PATH: /usr/bin/google-chrome
+          # Same budget and the same reason as the drift job. Here a stall is worse than losing a
+          # check: this job WRITES, so being killed mid-sweep leaves the batches it had already
+          # rewritten uncommitted and silently unrefreshed.
+          FETCH_TIMEOUT_MS: 120000
         run: node scripts/fetch-source.mjs --live | tee fetch.log
 
       # Detection only. The probe reports that a maker published a post; it never reads a score,
