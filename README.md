@@ -63,8 +63,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-1773 observations across 1090/2088 cells (52.2% cell coverage;
-benchmark 880 / independent 703 / vendor 190)
+1813 observations across 1121/2088 cells (53.7% cell coverage;
+benchmark 911 / independent 712 / vendor 190)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -83,17 +83,23 @@ answers an unauthenticated function call found in its client's source. Agents' L
 recorded as publishing nothing machine-readable through two hand-reads; its leaderboard calls
 `/api/demo/leaderboard`, a path that appears only inside the page's own JavaScript bundle. And
 GDPval-AA sits behind Artificial Analysis' Pro tier in the API while the leaderboard page is
-public — so that one is read by rendering the page, and MMMU the same way. All eight are scripted
-(`npm run fetch:sources`), which is what gives them an automatic drift check and an automatic
-daily refresh. The remaining batches have neither.
+public — so that one is read by rendering the page, and MMMU the same way. Every one of them is
+scripted (`npm run fetch:sources`), which is what gives them an automatic drift check and an
+automatic daily refresh. The remaining batches have neither.
+
+Finding a data file is not the end of it: **the file has to be the one the page renders.** Epoch's
+ZIP does publish FrontierMath, and reading it would have put a retired question set — the
+2025-02-28 problems, about 1.7x lower for the same model — into a column of current scores. The
+board the site actually draws comes from `/data/benchmarks.csv`, which only its client chunk names.
+Same publisher, same benchmark, two versions, and nothing about the filename says which is which.
 
 Model records are hand-authored, but their numbers are audited the same way. `npm run check:models`
 fails when a catalog value contradicts the archive and reports how much of the catalog nothing
 on file supports:
 
 ```text
-Model provenance passed: 310/313 catalog values backed by data/sources (99%),
-3 with no archive row.
+Model provenance passed: 321/321 catalog values backed by data/sources (100%),
+0 with no archive row.
 ```
 
 Three checks fail on things that used to be printed and ignored: a cross-source disagreement

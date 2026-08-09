@@ -1,7 +1,8 @@
 # CHECKPOINT
 
-**接手点** — ARC 三个 split 全部脚本化并接上目录，PR #52 已合（2026-08-07，人工合的——它按设计
-不能自合）。下一步是明早验链路，之后继续把手抄批次变成脚本源。
+**接手点** — FrontierMath 两块板变成脚本源（batch 28，2026-08-09），batch-01 的手抄行退役。
+**这一轮按设计不能自合**（15 个已发布数字从一位小数换成全精度），等人工合。下一步继续把手抄批次
+变成脚本源，名单在 `TODO.md`。
 
 Snapshot for the next session. One page. Durable reasoning lives in the docs below; history lives
 in `LOG.md`; future work lives in `TODO.md`. Nothing here is a substitute for `AGENTS.md`, which is
@@ -9,29 +10,36 @@ the operating contract and still comes first before any change.
 
 ---
 
-## 现状（2026-08-07）
+## 现状（2026-08-09）
 
 | | |
 |---|---|
-| 目录 | 29 model families · **72** benchmarks（当日新增 ARC-AGI-1 `legacy` · ARC-AGI-3 `observe` · τ³-Banking `observe` · IFBench `observe`） |
-| 观测 | **1779 rows · 1094 / 2088 cells（52.4% cell coverage）** |
-| 源分类 | benchmark 880 / independent 709 / vendor 190 |
-| 溯源 | 318 / 321 catalog values backed by the archive |
-| 归档 | **26 batches，其中 13 个可脚本重读**；⚠ 「手抄的 1749 行」是虚高——真正**在站上且无漂移检查的只有 216 行**（其余是已 supersede / 没 alias / 故意不收） |
+| 目录 | 29 model families · **72** benchmarks |
+| 观测 | **1813 rows · 1121 / 2088 cells（53.7% cell coverage）** |
+| 源分类 | benchmark 911 / independent 712 / vendor 190 |
+| 溯源 | **321 / 321**（100%，batch-27 于 2026-08-08 补齐最后三个） |
+| 归档 | **28 batches，其中 14 个可脚本重读**；⚠ 「手抄了多少行」是虚高——真正**在站上且无漂移检查**的那一小部分才算 |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
-当天覆盖率走了两步：48.6% → 48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ **52.2%**
-（AA 的第二条 API 路径，+110 格）。三个数字一起读，别只读百分比。
+覆盖率这几天走的三步：48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ 52.4%（AA 第二条 API
+路径，+110 格）→ **53.7%**（FrontierMath 脚本化，+25 格）。三个数字一起读，别只读百分比。
 
-**当天新增的自动化**：`check:mobile` 进了 CI（两条路由，找不到 Chrome 直接失败）；
-`describe-change` 多了第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
+**已在跑的自动化**（8-07 那批）：`check:mobile` 进 CI（两条路由，找不到 Chrome 直接失败）；
+`describe-change` 的第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
 `check:deployment` 建好但**等你填 `data/deployment.json` 的 `productionUrl`**；
-`add-model-and-merge.sh` 会在每日 job 里给「够格的上游新模型」自动建目录记录（**四条**条件，
-第四条是空行保护）——今天没有候选够格，那是稳态。
+`add-model-and-merge.sh` 在每日 job 里给「够格的上游新模型」自动建目录记录（四条条件）。
 
-溯源率 **321/321（100%）** —— 最后三个无源值（`qwen3.8-max open`、`qwen3.7-plus contextK`、
-`qwen3.7-plus open`）已由 batch-27 从 AA 模型页补齐（PR #59，2026-08-08）。
+**8-09 修的两个静默失效**：
+1. `fetch-source.mjs` 的 `cellKey` 不含 `benchmark_version`，于是 batch 28 的两个 tier 撞进
+   同一个 key——86 行只核了 44 格。加上版本字段后 86/86，其余 11 个源逐源格数不变（对过当天 CI 日志）。
+2. **单源卡死会吃掉一整天**：drift job 有 `timeout-minutes: 10`，浏览器 fetcher 偶发卡住时
+   进程被杀在打印之前，那天一个源都没核。现在 `FETCH_TIMEOUT_MS` 逐源兜底（默认 300s，
+   CI 两步设 120s）——卡住 = 报出来、置退出码、继续下一个。实测健康值：全量 12 源 36 秒。
+
+**自动化真正剩下的**看 `TODO.md` 那一节（分三堆：只差你一个事实 / 下一个 chunk / 判断题）。
+⚠ §10 里三个自报的数当天全部过期并已重测；「83.3% 自维护」**不能当进步读**，手抄行只从
+1,749 动到 1,751，比例上升全靠脚本批变大。
 
 ---
 
@@ -106,14 +114,14 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **ARC 那一轮已经上线了**（PR #52，人工合于 2026-08-07）。站上多了 ARC-AGI-1 和 ARC-AGI-3 两列，
-   ARC-AGI-2 那列有 7 个数字从 1 位小数换成了全精度（72.1→72.08、90.4→90.42，最大 0.04）。
-   **它当时不能自合**：三条件第 2 条要求「没有已有数字被改动」，而那 7 个确实动了——闸门是对的，
-   只是动的方向是纠正。⚠ 下一轮要是觉得哪一格看着不对，先读这三处再动手：commit message、
-   `data/model-aliases.json` 的 `_doc`、`LOG.md` 2026-08-07 第四轮。
-2. **明早（2026-08-08）验一次改完的链路**：`auto/refresh-aa` 的 PR 应该**自己开出来**；gaps issue
-   末尾应该多一节「Is the queue being worked?」；`auto/attribution` 应该**正常跑**（`auto/attribution`
-   上没有 open PR）。详见 `TODO.md`。
+1. **batch 28 这轮等人工合**。15 个已发布数字动了（87.7→87.72、85.3→85.26…，最大 0.05），
+   全是一位小数换全精度；三条件第 2 条要求「没有已有数字被改动」，所以闸门拦住是对的，
+   跟 ARC 那轮（PR #52）同一个机制。⚠ 觉得哪一格看着不对，先读这三处再动手：
+   `scripts/fetchers/epoch-frontiermath.mjs` 的头注释、`supersededRows` 里 batch-01 那条、
+   `LOG.md` 2026-08-09。
+2. **「1.7x 悬案」已结**：Epoch 的 zip 里那两个 FrontierMath CSV 是**退役题集**
+   （2025-02-28 / 2025-07-01），不是坏掉的导出。epoch.mjs 里那段归因错误的注释已改。
+   别再拿 zip 去补 FrontierMath——它按设计仍然不读那两个文件。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
