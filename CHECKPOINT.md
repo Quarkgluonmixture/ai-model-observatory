@@ -1,12 +1,12 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-09 两轮脚本化都已合进 main：FrontierMath（batch 28，PR #61）与
-Vals AI 全部 37 块板（batch 29）。覆盖率 52.4% → **64.6%**。下一步在 `TODO.md`：
-还剩 1,287 行手抄裸奔，以及 16 块 Vals 板要不要开目录列（分类学判断，交给你）。
+**接手点** — 2026-08-09 三轮脚本化全部合进 main（batch 28 FrontierMath · batch 29 Vals 全部
+37 块板 · ProgramBench 与 Terminal-Bench 2.0 接上已有的列）。覆盖率 52.4% → **65.8%**。
+下一步在 `TODO.md`，全是**要你定**的：CyberBench 两列开不开 · 8 块板的轴与 core/observe ·
+`vals-mmlu-pro` 那一个断言 · `productionUrl`。
 
-Snapshot for the next session. One page. Durable reasoning lives in the docs below; history lives
-in `LOG.md`; future work lives in `TODO.md`. Nothing here is a substitute for `AGENTS.md`, which is
-the operating contract and still comes first before any change.
+Snapshot for the next session. One page. 现场状态在这里；**动手前的自查在 `GOTCHAS.md`**；
+历史在 `LOG.md`；未来在 `TODO.md`。都不能替代 `AGENTS.md`——它是操作合同，改任何东西之前先读它。
 
 ---
 
@@ -22,24 +22,15 @@ the operating contract and still comes first before any change.
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
-覆盖率这几天走的四步：48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ 52.4%（AA 第二条 API
-路径，+110 格）→ 53.7%（FrontierMath 脚本化，+25 格）→ 64.6%（Vals 全部 37 块板，+227 格）
-→ **65.8%**（ProgramBench 与 Terminal-Bench 2.0 接上已有的列，+25 格）。三个数字一起读，别只读百分比。
+⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。覆盖率这几天怎么走的，
+见 `LOG.md` 2026-08-06 起各条。
 
-**已在跑的自动化**（8-07 那批）：`check:mobile` 进 CI（两条路由，找不到 Chrome 直接失败）；
-`describe-change` 的第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
-`check:deployment` 建好但**等你填 `data/deployment.json` 的 `productionUrl`**；
-`add-model-and-merge.sh` 在每日 job 里给「够格的上游新模型」自动建目录记录（四条条件）。
+**已建好但等你填的**：`check:deployment` 等 `data/deployment.json` 的 `productionUrl`
+（在那之前它每天在 gaps issue 里把自己报成「没跑」）。
+8-09 修掉两个静默失效的检查，见 `GOTCHAS.md` 坑 3 / 坑 4。
 
-**8-09 修的两个静默失效**：
-1. `fetch-source.mjs` 的 `cellKey` 不含 `benchmark_version`，于是 batch 28 的两个 tier 撞进
-   同一个 key——86 行只核了 44 格。加上版本字段后 86/86，其余 11 个源逐源格数不变（对过当天 CI 日志）。
-2. **单源卡死会吃掉一整天**：drift job 有 `timeout-minutes: 10`，浏览器 fetcher 偶发卡住时
-   进程被杀在打印之前，那天一个源都没核。现在 `FETCH_TIMEOUT_MS` 逐源兜底（默认 300s，
-   CI 两步设 120s）——卡住 = 报出来、置退出码、继续下一个。实测健康值：全量 12 源 36 秒。
-
-**自动化真正剩下的**看 `TODO.md` 那一节（分三堆：只差你一个事实 / 下一个 chunk / 判断题）。
-⚠ §10 里三个自报的数当天全部过期并已重测；「83.3% 自维护」**不能当进步读**，手抄行只从
+**自动化真正剩下的**看 `TODO.md`（分三堆：只差你一个事实 / 下一个 chunk / 判断题）。
+⚠ §10 里三个自报的数 8-09 全部过期并已重测；**「86.4% 自维护」不能当进步读**——手抄行只从
 1,749 动到 1,751，比例上升全靠脚本批变大。
 
 ---
@@ -57,8 +48,7 @@ the operating contract and still comes first before any change.
 一源两串闸门）· `describe-change` 报告**没有已有数字被改动** · 没有写 `acknowledgedDisagreements`
 或 `mergedInOneSource` 例外。
 
-⚠ 闸门的「有人在看就别动」判据是 **branch-scoped**：`pr-hands-off.sh` 查
-`gh pr list --head auto/attribution`，别的分支上有 open PR 它不管。
+闸门的 hands-off 判据是 branch-scoped —— 见 `GOTCHAS.md` 坑 13。
 
 ---
 
@@ -74,10 +64,8 @@ npm run check:prices    # 促销价是否混进目录
 npm run build
 ```
 
-`npm run check:mobile` **2026-08-07 起进了 CI**（两条路由都探，用 runner 自带的 Chrome，
-找不到 Chrome 直接失败而不是跳过）。本地改布局时照样跑，要 Chrome + `PORT=3111 npm run start:next`，
-**跑完必须停掉那个 server**——用 `lsof -nP -iTCP:3111 -sTCP:LISTEN` 确认，
-别用 `pgrep -f "next start"`，它会匹配到自己那条命令。
+`npm run check:mobile` **2026-08-07 起进了 CI**（两条路由都探）。本地跑要 Chrome +
+`PORT=3111 npm run start:next`，**跑完必须停掉那个 server**——见 `GOTCHAS.md` 坑 11。
 
 其他常用：
 
@@ -120,14 +108,8 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
    Gemini 3.1 Pro Preview · MMMU-Pro 80.5 → 88.208。第 3 条在起作用（独立压厂商），
    但这是站上肉眼可见的移动，值得你亲自看一眼。理由写在 `acknowledgedDisagreements`
    与 `LOG.md` 2026-08-09 第三轮。
-2. **两个「悬案/没有路」都结了**：Epoch zip 里的 FrontierMath 是**退役题集**（2025-02-28 /
-   2025-07-01），不是坏掉的导出；Vals **不是没有机器可读路径**——它的板是 Astro，整块榜单就在
-   HTML 的 `props="…"` 属性里（读法在 `scripts/lib/astro-props.mjs`）。
-   ⭐ **null 不是中立值**（今天撞了两次）：在有 `versionFallbacks` 的列上它是「继承」，在没有的列上
-   它是「丢弃」—— 一律填 null 曾悄悄删掉 50 行 Terminal-Bench；而 `program` 列看着是空的，其实是
-   归档里 15 行 benchmark-native 全被丢掉了。
-   ⭐ **「这一列是空的」要查归档，不要查 `observations.generated.ts`** —— 生成产物是空的，
-   可能正因为有东西在 ingest 被丢掉。
+2. **明早那一跑是三个第一次**：两个新源（`epoch-frontiermath` append-only、`vals` live）
+   第一次进每日刷新，`FETCH_TIMEOUT_MS` 第一次在 CI 生效。看一眼有没有意外开 PR。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
@@ -142,10 +124,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
+| `GOTCHAS.md` | **动手之前扫一遍**：14 条仍会咬人的坑，编号稳定可引用 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做 |
-
-⚠ 生成文件 `app/observations.generated.ts` 现在按 300 行分块发出，不是一个大数组 —— 那是
-TypeScript 的并集上限（约 1,120 行就炸 `npm run build`），原委在 `scripts/ingest.mjs` 头注释
-和 `docs/ARCHITECTURE.md` §10。别把它合回一个数组。
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
