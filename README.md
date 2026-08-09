@@ -39,7 +39,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 ### Connected
 
 - [Artificial Analysis](https://artificialanalysis.ai/leaderboards/models) — independent capability, speed, price, long-context and GDPval references
-- [Vals AI](https://www.vals.ai/benchmarks) — independent finance, legal, medical and coding evaluations
+- [Vals AI](https://www.vals.ai/benchmarks) — independent finance, legal, medical and coding evaluations, all 37 boards, scripted
 - [Epoch AI](https://epoch.ai/frontiermath) — FrontierMath Tiers 1-3 and Tier 4, plus an independent GPQA Diamond run
 - [ARC Prize](https://arcprize.org/leaderboard) — verified ARC-AGI-1, 2 and 3 results across reasoning efforts
 - [Artificial Analysis](https://artificialanalysis.ai/methodology/intelligence-benchmarking) — its own runs of GPQA Diamond, HLE, SciCode, AA-LCR, Terminal-Bench 2.1, τ³-Banking and IFBench
@@ -63,8 +63,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-1813 observations across 1121/2088 cells (53.7% cell coverage;
-benchmark 911 / independent 712 / vendor 190)
+2086 observations across 1349/2088 cells (64.6% cell coverage;
+benchmark 911 / independent 985 / vendor 190)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -87,7 +87,14 @@ public — so that one is read by rendering the page, and MMMU the same way. Eve
 scripted (`npm run fetch:sources`), which is what gives them an automatic drift check and an
 automatic daily refresh. The remaining batches have neither.
 
-Finding a data file is not the end of it: **the file has to be the one the page renders.** Epoch's
+Sometimes there is no data file at all and the page *is* one. Vals AI was recorded as publishing
+nothing machine-readable through two passes; its boards are Astro, which server-renders each
+component's props into a `props="…"` attribute, so the whole leaderboard sits in the HTML as
+escaped JSON. A search for `<table>`, `fetch(` or an `/api/` path answers no on a page that
+contains every row. The other half of that miss: `/benchmarks` is an index with no scores on it,
+and that is the page both passes measured.
+
+Finding a data file is not the end of it either: **the file has to be the one the page renders.** Epoch's
 ZIP does publish FrontierMath, and reading it would have put a retired question set — the
 2025-02-28 problems, about 1.7x lower for the same model — into a column of current scores. The
 board the site actually draws comes from `/data/benchmarks.csv`, which only its client chunk names.

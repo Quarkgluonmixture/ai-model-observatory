@@ -1,8 +1,8 @@
 # CHECKPOINT
 
-**接手点** — FrontierMath 两块板变成脚本源（batch 28，2026-08-09），batch-01 的手抄行退役。
-**这一轮按设计不能自合**（15 个已发布数字从一位小数换成全精度），等人工合。下一步继续把手抄批次
-变成脚本源，名单在 `TODO.md`。
+**接手点** — 2026-08-09 两轮脚本化都已合进 main：FrontierMath（batch 28，PR #61）与
+Vals AI 全部 37 块板（batch 29）。覆盖率 52.4% → **64.6%**。下一步在 `TODO.md`：
+还剩 1,287 行手抄裸奔，以及 16 块 Vals 板要不要开目录列（分类学判断，交给你）。
 
 Snapshot for the next session. One page. Durable reasoning lives in the docs below; history lives
 in `LOG.md`; future work lives in `TODO.md`. Nothing here is a substitute for `AGENTS.md`, which is
@@ -15,15 +15,16 @@ the operating contract and still comes first before any change.
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **1813 rows · 1121 / 2088 cells（53.7% cell coverage）** |
-| 源分类 | benchmark 911 / independent 712 / vendor 190 |
+| 观测 | **2086 rows · 1349 / 2088 cells（64.6% cell coverage）** |
+| 源分类 | benchmark 911 / independent 985 / vendor 190 |
 | 溯源 | **321 / 321**（100%，batch-27 于 2026-08-08 补齐最后三个） |
-| 归档 | **28 batches，其中 14 个可脚本重读**；⚠ 「手抄了多少行」是虚高——真正**在站上且无漂移检查**的那一小部分才算 |
+| 归档 | **29 batches，其中 15 个可脚本重读**（11,137 / 1,751 行 = 86.4%）；⚠ 别读这个比例——1,751 行里 464 行已 supersede，**真正裸奔的是 1,287 行** |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
-覆盖率这几天走的三步：48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ 52.4%（AA 第二条 API
-路径，+110 格）→ **53.7%**（FrontierMath 脚本化，+25 格）。三个数字一起读，别只读百分比。
+覆盖率这几天走的四步：48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ 52.4%（AA 第二条 API
+路径，+110 格）→ 53.7%（FrontierMath 脚本化，+25 格）→ **64.6%**（Vals 全部 37 块板，+227 格）。
+三个数字一起读，别只读百分比。
 
 **已在跑的自动化**（8-07 那批）：`check:mobile` 进 CI（两条路由，找不到 Chrome 直接失败）；
 `describe-change` 的第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
@@ -114,14 +115,16 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **batch 28 这轮等人工合**。15 个已发布数字动了（87.7→87.72、85.3→85.26…，最大 0.05），
-   全是一位小数换全精度；三条件第 2 条要求「没有已有数字被改动」，所以闸门拦住是对的，
-   跟 ARC 那轮（PR #52）同一个机制。⚠ 觉得哪一格看着不对，先读这三处再动手：
-   `scripts/fetchers/epoch-frontiermath.mjs` 的头注释、`supersededRows` 里 batch-01 那条、
-   `LOG.md` 2026-08-09。
-2. **「1.7x 悬案」已结**：Epoch 的 zip 里那两个 FrontierMath CSV 是**退役题集**
-   （2025-02-28 / 2025-07-01），不是坏掉的导出。epoch.mjs 里那段归因错误的注释已改。
-   别再拿 zip 去补 FrontierMath——它按设计仍然不读那两个文件。
+1. **batch 29 改动了 51 个已发布数字**，其中两个不是精度、是**证据等级**变了：
+   Qwen3.8 Max · Terminal-Bench 86.6（厂商）→ 67.416（Vals，独立），
+   Gemini 3.1 Pro Preview · MMMU-Pro 80.5 → 88.208。第 3 条在起作用（独立压厂商），
+   但这是站上肉眼可见的移动，值得你亲自看一眼。理由写在 `acknowledgedDisagreements`
+   与 `LOG.md` 2026-08-09 第三轮。
+2. **两个「悬案/没有路」都结了**：Epoch zip 里的 FrontierMath 是**退役题集**（2025-02-28 /
+   2025-07-01），不是坏掉的导出；Vals **不是没有机器可读路径**——它的板是 Astro，整块榜单就在
+   HTML 的 `props="…"` 属性里（读法在 `scripts/lib/astro-props.mjs`）。
+   ⭐ **null 不是中立值**：在有 `versionFallbacks` 的列上它是「继承」，在没有的列上它是「丢弃」——
+   一律填 null 曾悄悄删掉 50 行 Terminal-Bench 而七项契约全绿。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
