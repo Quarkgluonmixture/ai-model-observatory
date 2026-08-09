@@ -105,10 +105,24 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 ## batch 29 之后留下的（2026-08-09）
 
-- [ ] ⭐ **16 块 Vals 板没有目录列**，行已全部归档（开列不用重采）。开哪一列是分类学判断：
-      `vals-tax_eval_v2`(136 行) · `vals-legal_bench`(133) · `vals-medcode`(80) · `vals-sage`(73) ·
-      `vals-programbench`(36) · `vals-hlab`(31) 等。判据是「这一列进哪根轴、地板变成多少、
-      是不是和别的源已经填的列重复」。
+- [x] ~~`vals-programbench` → 目录已有的 `program` 列~~ · ~~`vals-terminal-bench-2` → `terminal-20`~~
+      ✅ 2026-08-09。两块根本不是「开新列」，列早就声明好了。
+- [ ] ⭐ **要你定：CyberBench 的 poc / patch 两列开不开**。原拒绝理由「每个只有 2-3 行」是手抄时代
+      的行数，实测各 **18 个目录模型**，那半条已经死了。还站得住的是另一半：CyberBench 是 agentic
+      板（「自主 agent 能不能造出触发 OSS-Fuzz 漏洞的 PoC、并写出修复补丁」），而 **Vals 在这块板上
+      逐行 harness 全是 null** —— 它的 SWE-bench / Terminal-Bench 板会写 Claude Code / Codex /
+      Cursor CLI。第 6 条：系统结果 = 模型 + 脚手架，脚手架不明是真代价。
+      要定的是：**进哪根轴（agent 还是 coding），以及 core 还是 observe**。
+- [ ] ⭐ **要你定：8 块真正需要新列的板**（行已全部归档，开列不用重采）。按目录模型数排：
+      `vals-legal_bench` 23 · `vals-tax_eval_v2` 23 · `vals-emb` 23 · `vals-hlab` 22 ·
+      `vals-medcode` 21 · `vals-sage` 21 · `vals-time_horizon_index` 7 · `vals-case_law_v2` 6。
+      每列要定**轴 + core/observe**（core 会动 portfolio 地板，分母也确定要涨 —— 全开的话覆盖率
+      会从 65.8% 往下走，即使绝对格数 +155）。机械件（`versionFallbacks`、中英名、url）我来。
+      ⚠ 这些板 Vals 只标 `1`，本项目不记这种版次 ⇒ **没有 fallback 的列上 null = 丢行**，不是默认值。
+- [ ] **`vals-mmlu-pro` 23 个目录模型卡在一个断言上**：`mmlu-pro` 列声明 version 2025，Vals 不发版本。
+      加 fallback 等于**替 Vals 断言它跑的是 2025 release，而没有人这么说过**。这一格判断交给你。
+- [ ] 明确**不开**（已写进 `droppedBenchmarks` 并附实测数）：math500 0 · mgsm 0 · poker_agent 0 ·
+      medqa 1 · aime 2 个目录模型 —— 开一列分母 +29 格、最多填 2 格。
 - [ ] **180 个 Vals 字符串没有 alias**（多数是上一代）。归属闸门对它们会说
       「no like-for-like cell shared with any family」——因为 Vals 是这些模型唯一的源。
       要收就得人工判断，不急。

@@ -15,16 +15,16 @@ the operating contract and still comes first before any change.
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2086 rows · 1349 / 2088 cells（64.6% cell coverage）** |
-| 源分类 | benchmark 911 / independent 985 / vendor 190 |
+| 观测 | **2125 rows · 1374 / 2088 cells（65.8% cell coverage）** |
+| 源分类 | benchmark 918 / independent 1017 / vendor 190 |
 | 溯源 | **321 / 321**（100%，batch-27 于 2026-08-08 补齐最后三个） |
 | 归档 | **29 batches，其中 15 个可脚本重读**（11,137 / 1,751 行 = 86.4%）；⚠ 别读这个比例——1,751 行里 464 行已 supersede，**真正裸奔的是 1,287 行** |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
 覆盖率这几天走的四步：48.3%（ARC 两个新列，分母进 58 格证据进 22 格）→ 52.4%（AA 第二条 API
-路径，+110 格）→ 53.7%（FrontierMath 脚本化，+25 格）→ **64.6%**（Vals 全部 37 块板，+227 格）。
-三个数字一起读，别只读百分比。
+路径，+110 格）→ 53.7%（FrontierMath 脚本化，+25 格）→ 64.6%（Vals 全部 37 块板，+227 格）
+→ **65.8%**（ProgramBench 与 Terminal-Bench 2.0 接上已有的列，+25 格）。三个数字一起读，别只读百分比。
 
 **已在跑的自动化**（8-07 那批）：`check:mobile` 进 CI（两条路由，找不到 Chrome 直接失败）；
 `describe-change` 的第四条合并条件 `new-models-below-floor`（空行三项契约全绿，只有它会说）；
@@ -123,8 +123,11 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 2. **两个「悬案/没有路」都结了**：Epoch zip 里的 FrontierMath 是**退役题集**（2025-02-28 /
    2025-07-01），不是坏掉的导出；Vals **不是没有机器可读路径**——它的板是 Astro，整块榜单就在
    HTML 的 `props="…"` 属性里（读法在 `scripts/lib/astro-props.mjs`）。
-   ⭐ **null 不是中立值**：在有 `versionFallbacks` 的列上它是「继承」，在没有的列上它是「丢弃」——
-   一律填 null 曾悄悄删掉 50 行 Terminal-Bench 而七项契约全绿。
+   ⭐ **null 不是中立值**（今天撞了两次）：在有 `versionFallbacks` 的列上它是「继承」，在没有的列上
+   它是「丢弃」—— 一律填 null 曾悄悄删掉 50 行 Terminal-Bench；而 `program` 列看着是空的，其实是
+   归档里 15 行 benchmark-native 全被丢掉了。
+   ⭐ **「这一列是空的」要查归档，不要查 `observations.generated.ts`** —— 生成产物是空的，
+   可能正因为有东西在 ingest 被丢掉。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
