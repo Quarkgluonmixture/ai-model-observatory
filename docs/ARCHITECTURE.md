@@ -392,12 +392,28 @@ is deliberately not recorded in this repository). When it is approved the footer
 number linked to `https://www.beian.gov.cn/`, alongside the ICP one. `app/site-beian.tsx` is
 already the single place that renders it, so that is a one-file change — do not add it to a page.
 
-**Status as of 2026-08-10: neither `quarkspace.top` nor `www.quarkspace.top` resolves.** The
-domain is active and its nameservers point at DNSPod, but no A or CNAME record answers from
-`8.8.8.8`, `1.1.1.1` or `223.5.5.5` — the custom domain has not been bound in EdgeOne Pages yet.
-Until it resolves, `productionUrl` in `data/deployment.json` stays `null`: pointing
-`check:deployment` at a host that does not resolve turns the daily job red for a reason that has
-nothing to do with the data.
+**Live since 2026-08-10.** Binding the domain took three steps in this order, and the order is the
+part worth remembering: EdgeOne first proves ownership through a `TXT` record at
+`edgeonereclaim.<domain>`, and only then issues the per-host CNAME targets that actually route
+traffic. Ownership verification does not serve a single byte — a domain can pass it and still not
+resolve, which is exactly the state this section described for most of that day.
+
+```text
+quarkspace.top      CNAME  quarkspace.top.pages.dnsoe6.com
+www.quarkspace.top  CNAME  www.quarkspace.top.pages.dnsoe4.com
+ai-model-observatory-lhi0hg2y.edgeone.cool   EdgeOne's own default domain, same build
+```
+
+Measured once both were bound: all three hosts answer `200` with a clean TLS verify, and the ICP
+number renders in the **server-side** HTML of both `/` and `/models` on both custom hosts — a 2×2
+matrix, not one spot check. Server-side matters: whoever checks the filing may not run JavaScript.
+The apex and `www` each serve independently; neither redirects to the other.
+
+`productionUrl` in `data/deployment.json` is therefore set to the apex, which activates
+`check:deployment` — the check that had never once run. It passes: every catalog name is present in
+what the live site serves. Note what that check does and does not prove. It compares `main` against
+production, so it catches a stalled or partial deploy; it says nothing about whether the filing is
+displayed, which is why the 2×2 matrix above was measured by hand rather than added to it.
 
 ## 7. Change playbooks
 

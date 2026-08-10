@@ -14,7 +14,14 @@
     "indistinguishable from a deployment that is fine.",
     "",
     "Read by scripts/check-deployment.mjs, which can also be pointed somewhere with --url, and",
-    "which reads SITE_URL from the environment first if that is set."
+    "which reads SITE_URL from the environment first if that is set.",
+    "",
+    "The apex is the origin, not `www`. Both are bound in EdgeOne and both serve 200 -- neither",
+    "redirects to the other -- so this is a choice, not a discovery; picking one keeps the daily",
+    "check from passing on a host nobody quotes. EdgeOne's own default domain",
+    "(ai-model-observatory-lhi0hg2y.edgeone.cool) also serves the same build and is the fallback",
+    "to test against if the custom domain's DNS is ever the thing that broke.",
+    "See docs/ARCHITECTURE.md section 6 for the domain and ICP filing."
   ],
-  "productionUrl": null
+  "productionUrl": "https://quarkspace.top"
 }
