@@ -384,6 +384,14 @@ the observatory's fixed bottom rail through `:global(.shell) ~ .strip` — `.she
 class, whereas `.home` is a CSS-module class whose emitted name is hashed and cannot be matched
 that way (it does not need to be; the personal site has nothing fixed).
 
+There is a **second filing**, and it is a different authority. The ICP filing above is MIIT; the
+公安联网备案 is the Ministry of Public Security, filed through `beian.gov.cn` and reviewed by the
+district police unit — here 西城驻区大队, submitted 2026-08-10 with a 30-day review window
+(so a decision by roughly 2026-09-09; the result arrives by SMS to the number on the filing, which
+is deliberately not recorded in this repository). When it is approved the footer takes a **second**
+number linked to `https://www.beian.gov.cn/`, alongside the ICP one. `app/site-beian.tsx` is
+already the single place that renders it, so that is a one-file change — do not add it to a page.
+
 **Status as of 2026-08-10: neither `quarkspace.top` nor `www.quarkspace.top` resolves.** The
 domain is active and its nameservers point at DNSPod, but no A or CNAME record answers from
 `8.8.8.8`, `1.1.1.1` or `223.5.5.5` — the custom domain has not been bound in EdgeOne Pages yet.
