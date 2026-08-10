@@ -53,6 +53,48 @@ import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./archive.mjs
 
 export const norm = (value) => String(value).toLowerCase().replace(/[\s._\-()]/g, "");
 
+// What may follow a family name is an OPERATING POINT and nothing else. See the long note further
+// down for the two wrong versions this replaced; the short form is that a size, tier or variant word
+// is not an effort — Pro is a different model, Codex is a different model, **Flash-Lite is not
+// Flash**.
+//
+// `fast` and `batch` are deliberately absent: they are serving tiers, not operating points, and the
+// two callers want opposite things from them. The evidence counter must not credit a tier's rows to
+// the model, and the gap report must not hide a tier behind "the catalog already has this" — it has
+// its own group for them, with a reason. See `scripts/report-gaps.mjs`.
+const EFFORT_TOKENS = [
+  "maxeffort", "xhigheffort", "higheffort", "mediumeffort", "loweffort", "minimaleffort",
+  "nonreasoning", "adaptivereasoning", "reasoning", "nonthinking", "thinking",
+  "max", "xhigh", "high", "medium", "low", "minimal", "none", "effort", "auto",
+];
+
+/**
+ * True when `published` is the family `family` itself, or that family at a published operating
+ * point. Both arguments are normalised here, so a caller cannot forget to.
+ *
+ * Exported because two callers need exactly this question and a second copy would drift into
+ * disagreeing with this one about which upstream names are new models — which is the whole reason
+ * this module exists. `scripts/report-gaps.mjs` used `id.includes(catalogId)` instead and went blind
+ * to `google/gemini-3.5-flash-lite` for as long as the catalog carried `gemini-3.5-flash`: 33 cells
+ * of archived evidence, reported as "already carried". That is the same substring failure the price
+ * lookups were made exact for (see AGENTS.md), found on 2026-08-10 in a second file.
+ */
+export const sameFamily = (published, family) => {
+  const key = norm(published);
+  const needle = norm(family);
+  if (!needle || key === needle) return key === needle;
+  if (!key.startsWith(needle)) return false;
+  let rest = key.slice(needle.length);
+  // A remainder may be several stacked tokens: "reasoningmaxeffort", "nonreasoninghigh".
+  for (let changed = true; rest.length && changed;) {
+    changed = false;
+    for (const token of EFFORT_TOKENS) {
+      if (rest.startsWith(token)) { rest = rest.slice(token.length); changed = true; break; }
+    }
+  }
+  return rest.length === 0;
+};
+
 /**
  * Builds the index once. `benchmarks` is the catalog's own list of column ids, passed in rather
  * than imported so this module stays free of the TypeScript catalog and can be run by plain node.
@@ -139,24 +181,7 @@ export const buildEvidenceIndex = (benchmarkIds) => {
   // or a serving route (`-bedrock`) no longer counts, so the number is a lower bound by more than
   // it was. A floor that undercounts leaves a model in the queue for a person. A floor that
   // overcounts admits a model on another model's evidence.
-  const EFFORT_TOKENS = [
-    "maxeffort", "xhigheffort", "higheffort", "mediumeffort", "loweffort", "minimaleffort",
-    "nonreasoning", "adaptivereasoning", "reasoning", "nonthinking", "thinking",
-    "max", "xhigh", "high", "medium", "low", "minimal", "none", "effort", "auto",
-  ];
-  const matches = (key, needle) => {
-    if (key === needle) return true;
-    if (!key.startsWith(needle)) return false;
-    let rest = key.slice(needle.length);
-    // A remainder may be several stacked tokens: "reasoningmaxeffort", "nonreasoninghigh".
-    for (let changed = true; rest.length && changed;) {
-      changed = false;
-      for (const token of EFFORT_TOKENS) {
-        if (rest.startsWith(token)) { rest = rest.slice(token.length); changed = true; break; }
-      }
-    }
-    return rest.length === 0;
-  };
+  const matches = (key, needle) => sameFamily(key, needle);
 
   return (needles) => {
     const wanted = [...new Set(needles.map(norm).filter((needle) => needle.length > 3))];
@@ -233,6 +258,48 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\
     const filled = MODELS.reduce((total, m) => total + Object.keys(OBSERVATIONS_BY_CELL[m.id] ?? {}).length, 0);
     const floor = dilutionFloor(filled, MODELS.length);
     console.log(`Dilution floor right now: ${floor} cells (${filled} filled / ${MODELS.length} models).\n`);
+
+    // `sameFamily` decides two different things for two callers — which archived rows count as a
+    // model's evidence, and which upstream names are new models — so both directions are asserted,
+    // and the FALSE ones are the dangerous half: a rule that says "same" too readily credits a model
+    // with another model's rows and hides a real model from the gap report. Every string here is
+    // real. `gemini-3.5-flash-lite` is the case that was actually broken, in the other caller, for as
+    // long as the catalog carried Flash.
+    const FAMILY_CASES = [
+      // the family itself, and the family at an operating point → same
+      ["claude-opus-5", "claude-opus-5", true],
+      ["gpt-5.6-sol (max)", "gpt-5.6-sol", true],
+      // ⚠ false, and worth knowing why: `norm` strips ` . _ - ( )` but NOT the comma, so the
+      // remainder here is `reasoning,maxeffort` and the comma blocks the effort strip. This is a
+      // real limitation and it stays — `norm` has to keep matching the attribution gate's
+      // normalisation exactly, and widening it here would silently change which rows that gate and
+      // this counter agree on. It is one of the reasons mean recovery is a lower bound: AA writes
+      // its operating points with commas. Asserted so nobody "fixes" it by accident.
+      ["DeepSeek V4 Flash 0731 (Reasoning, Max Effort)", "deepseek-v4-flash-0731", false],
+      ["DeepSeek V4 Flash 0731 (Reasoning Max Effort)", "deepseek-v4-flash-0731", true],
+      ["qwen3.8-max-thinking", "qwen3.8-max", true],
+      ["gemini-3.5-flash-xhigh", "gemini-3.5-flash", true],
+      // a longer NAME that merely contains the family → different model
+      ["gemini-3.5-flash-lite", "gemini-3.5-flash", false],
+      ["gpt-5.6-luna-pro", "gpt-5.6-luna", false],
+      ["gpt-5.2-codex", "gpt-5.2", false],
+      ["gpt-5.5", "gpt-5", false],
+      ["kimi-k2.6", "kimi-k2", false],
+      // a serving tier is not an operating point: the gap report needs to SEE it so it can name it
+      ["claude-opus-5-fast", "claude-opus-5", false],
+      ["claude-opus-5-batch", "claude-opus-5", false],
+      // and a family is never the same as something it is not a prefix of
+      ["inkling-small", "inkling", false],
+      ["", "claude-opus-5", false],
+    ];
+    let familyFailed = 0;
+    for (const [published, family, expected] of FAMILY_CASES) {
+      if (sameFamily(published, family) !== expected) {
+        console.log(`FAIL  sameFamily(${JSON.stringify(published)}, ${JSON.stringify(family)}) should be ${expected}`);
+        familyFailed += 1;
+      }
+    }
+    console.log(`sameFamily: ${FAMILY_CASES.length - familyFailed}/${FAMILY_CASES.length} cases pass\n`);
     console.log("model                 true  found  recovered   over-count?");
     const pinnedFor = (modelId) => KNOWN_OVERCOUNTS.find((entry) => entry.model === modelId);
     const unexpected = [];
@@ -266,7 +333,7 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\
     console.log(`${KNOWN_OVERCOUNTS.length} pinned exemption(s): ` +
       KNOWN_OVERCOUNTS.map((entry) => `${entry.model}/${entry.cells.join("+")} — ${entry.reason}`).join("; "));
 
-    let failed = false;
+    let failed = familyFailed > 0;
     for (const { model, cells } of unexpected) {
       console.log(`FAIL  ${model} is credited with ${cells.join(", ")}, which it does not have and which is not pinned.`);
       failed = true;

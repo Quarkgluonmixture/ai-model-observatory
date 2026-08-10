@@ -581,3 +581,29 @@ supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。
   (1,404 vs 1,226;手抄总行 1,573)。**我没有用第三个数去覆盖它**,而是在 TODO 里标注「先钉定义
   再引用」。教训与今天早些时候那次同形:**别重写项目自己的判定逻辑**,要么用它的 resolver,
   要么把定义找出来 —— 我第一版又手搓了一遍 supersede 匹配,和 resolver 差了 178 行。
+
+## [2026-08-10] 假阴性:一条子串过滤让 gaps 报告对 Flash Lite 全盲  #incident #ship #measure
+
+- **起因**:owner 追问那份上游清单。八行里七行如预期,**第八行 `Gemini 3.5 Flash Lite` 一个字都没出现**。
+- **根因**:`report-gaps.mjs` 用 `item.id.includes(catalogId)` 判断「目录已有」。
+  `google/gemini-3.5-flash-lite` **包含** `gemini-3.5-flash`(目录 id)⇒ 被判成已收录。
+  ⚠ **这是假阴性,比噪音危险**:噪音你看得见,漏报你看不见。
+- **⭐⭐ 同一个坑这个仓库已经付过一次代价**:`AGENTS.md` 里记着 `list.find(id => id.includes("gpt-5.6"))`
+  返回 `openai/gpt-5.6-luna-pro`、Sol 价格卡渲染成 $0.10/$0.60,所以 `PROVIDER_LOOKUPS` 改成了精确
+  匹配 —— **另一个文件里没改**。而且刺眼的是:这次冒出来的正是 `gpt-5.6-luna-pro` 那三个 `-pro`。
+  ⇒ 教训:**修一个类型的 bug 时,把同一类型的所有调用点一起找出来**,别只修报出来的那一处。
+- **#ship 修法是共用规则而不是再写一份**:把 `matches` 从 `buildEvidenceIndex` 的闭包里提出来,
+  导出成 `sameFamily(published, family)`(内部自己 norm,调用方无法忘记),`report-gaps` 直接用。
+  这个模块存在的理由本来就是「两个调用方要同一个数字,第二份副本会漂移」—— 过滤器是第三个调用方,
+  之前它自己发明了一个更差的规则。
+- **#measure 效果**:60 天窗口内上游可见条目 **2 → 7**(4 有证据 / 2 无证据 / 1 定价档)。
+  `gemini-3.5-flash-lite` **42 行证据、33 格**,是全场证据最好的候选(比 Muse Spark 1.2 的 31 格还多),
+  差 16 格到地板 —— 排序改成「按接近地板」之后它直接排第一。
+  副作用是好的:`claude-opus-5-fast` 现在落进「定价档」组 ⇒ 我昨天说「档位分类器在 report-gaps
+  里几乎是死代码」**不再成立** —— 它之前是被子串过滤**因为错误的理由**藏起来的。
+- **⭐ 自测当场教了我一件事**:给 `sameFamily` 钉 15 条用例时,
+  `"DeepSeek V4 Flash 0731 (Reasoning, Max Effort)"` 断言失败 —— 因为 `norm` 剥
+  `[\s._\-()]` **但不剥逗号**,`reasoning,maxeffort` 里那个逗号挡住了 effort 剥离。
+  **是我的期望写错了,不是代码错**;而 `norm` 不能改(文件写明必须与归属闸门的归一化一致)。
+  已把该用例期望改成 `false` 并写下原因 —— 这也是 recovery 只有 70% 的一个来源:**AA 的操作点带逗号**。
+  失败路径验过(把 Flash Lite 那条期望翻成 true → exit 1)。

@@ -37,7 +37,7 @@ import {
 import { FETCHERS } from "./fetchers/index.mjs";
 import { PROVIDER_LOOKUPS } from "../app/api/live-models/route.ts";
 import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
-import { buildEvidenceIndex, dilutionFloor } from "./lib/upstream-evidence.mjs";
+import { buildEvidenceIndex, dilutionFloor, sameFamily } from "./lib/upstream-evidence.mjs";
 
 const args = process.argv.slice(2);
 const argOf = (name, fallback) => {
@@ -360,14 +360,30 @@ if (!useNetwork) {
     // Names the catalog already understands. Catalog ids count too, not just the lookup table:
     // a model the catalog carries but has no price lookup for is a missing lookup, not a
     // missing model, and must not be reported as new.
-    const catalogNeedles = [...Object.values(PROVIDER_LOOKUPS), ...MODELS.map((model) => model.id)];
+    //
+    // ⚠ This used to ask `item.id.includes(needle)`, and a substring test cannot tell a family from
+    // a longer name that contains it. `google/gemini-3.5-flash-lite` contains `gemini-3.5-flash`, so
+    // for as long as the catalog carried Flash, this report was **blind to Flash Lite** — 33 cells of
+    // archived evidence, silently filed as "already carried". Measured 2026-08-10. It is the same
+    // failure the price lookups were made exact for (AGENTS.md: `includes("gpt-5.6")` returned
+    // `gpt-5.6-luna-pro` and rendered the wrong price), in a second file, and worse here because a
+    // false negative is invisible — a noisy line gets read, a missing line does not.
+    //
+    // `sameFamily` is the module's own rule, imported rather than re-implemented: the family itself,
+    // or the family at a published operating point, and nothing else. A tier (`-fast`) is not an
+    // operating point, so a tier now reaches the tier group below and is named there with a reason,
+    // instead of vanishing behind this filter for the wrong reason.
+    const catalogNeedles = [...Object.values(PROVIDER_LOOKUPS), ...MODELS.map((model) => model.id)]
+      // The lookup table is namespaced (`anthropic/claude-opus-5`) and catalog ids are not, and the
+      // comparison below is against the id's tail, so both are reduced to that shape once here.
+      .map((needle) => needle.split("/").slice(-1)[0]);
 
     const cutoff = Date.now() / 1000 - sinceDays * 86400;
     const candidates = list
       .filter((item) => namespaces.has(item.id.split("/")[0]))
       .filter((item) => !variantOf(item.id))
       .filter((item) => !knownIds.has(item.id))
-      .filter((item) => !catalogNeedles.some((needle) => item.id.toLowerCase().includes(needle)))
+      .filter((item) => !catalogNeedles.some((needle) => sameFamily(item.id.split("/").slice(1).join("/"), needle)))
       .filter((item) => Number(item.created) > cutoff)
       .sort((a, b) => Number(b.created) - Number(a.created));
 
