@@ -25,9 +25,12 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 ⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。覆盖率这几天怎么走的，
 见 `LOG.md` 2026-08-06 起各条。
 
-**已建好但等你填的**：`check:deployment` 等 `data/deployment.json` 的 `productionUrl`
-（在那之前它每天在 gaps issue 里把自己报成「没跑」）。
-8-09 修掉两个静默失效的检查，见 `GOTCHAS.md` 坑 3 / 坑 4。
+**备案（2026-08-10）**：ICP `京ICP备2026050077号-1` 页脚已全局挂上（`app/site-beian.tsx`，根 layout）。
+⚠ **但 `quarkspace.top` 与 `www` 都还不解析**，腾讯要两个都能访问才算合格 ⇒ 差**绑域名**（只有你能做）。
+公安备案同日交西城驻区大队，约 2026-09-09 出结果，批了在同一文件补第二个号。细节 `docs/ARCHITECTURE.md` §6。
+
+**已建好但等你填的**：`check:deployment` 等 `productionUrl`（**等解析通了再填**，否则每日 job 会因为
+与数据无关的理由变红；在那之前它每天在 gaps issue 里把自己报成「没跑」）。
 
 **自动化真正剩下的**看 `TODO.md`（分三堆：只差你一个事实 / 下一个 chunk / 判断题）。
 ⚠ §10 里三个自报的数 8-09 全部过期并已重测；**「86.4% 自维护」不能当进步读**——手抄行只从

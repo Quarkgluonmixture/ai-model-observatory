@@ -447,3 +447,32 @@ supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。
 - **#decision** 新建 `GOTCHAS.md`（四件套的第五件）。触发条件两条都满足：快照被坑类条目顶过硬上限（151 行 vs ~120），且坑 1「null 不是中立值」**当天踩了两次**。快照里那些条目是**搬走**不是复制，快照只留按号指针。
 - **#decision** 明确**不做**的两件，理由都写进了文件而不是只留在对话里：hermes 死了不补微信推送（维持 owner 8-06 那次 10→4 的裁剪，判据写进 TODO）；5 块目录模型 ≤2 个的 Vals 板不开列（理由写进 `droppedBenchmarks`，附实测数）。
 - **下一步全是要 owner 定的**：CyberBench 两列开不开 · 8 块板的轴与 core/observe · `vals-mmlu-pro` 那一个断言 · `productionUrl`。见 `TODO.md`。
+
+## [2026-08-10] ICP 备案页脚：挂在根 layout,不挂在页面  #ship #decision #measure
+
+- **#ship** 备案下来了(`quarkspace.top`,京ICP备2026050077号-1),新增 `app/site-beian.tsx`
+  + `app/site-beian.module.css`,由 `app/layout.tsx` 在 `{children}` **之后**渲染一次。
+  两条路由实测各渲染一次(`grep -F` 精确匹配,不是 `grep` —— 见 `GOTCHAS.md` 坑 8):
+  `/` 与 `/models` 的 **服务端 HTML** 里都有备案号 + `beian.miit.gov.cn` 链接 + `rel=noopener`。
+  服务端渲染这点是要紧的:核验方不一定跑 JS。
+- **#decision** 挂根 layout 而不是两个页面各写一份。理由不是省事,是**以后加的第三条路由**
+  会漏——per-page 页脚的失败模式是静默的,而备案漏挂是监管问题不是显示问题。
+- **#decision** 两个号不能混用:`京ICP备2026050077号` 是主体号,页脚要挂的是**服务号**
+  (带 `-1`)。「挂主体号」那个说法是广东备案的情形,北京照抄会不合规。理由进 `docs/ARCHITECTURE.md` §6。
+- **#decision** 页脚颜色**写死**,不引用任何一边的变量。因为它渲染在两套调色板之上,而 `.home`
+  作用域里 globals.css 的 `--muted`/`--line` **仍然在 scope 内** —— 引用哪一套都会在另一个站上画错。
+- **#measure** 手机契约两条路由都实测过(生产构建 + 真设备模拟,320/390/430):
+  **无横向溢出**,无新增 <9px 文本(残留那条 `span > small @7.2px` 是评分表溯源标签,
+  `docs/UI.md` §2 写明的例外,与本次无关),无触摸目标告警(链接手机上 `min-height:40px`)。
+  ≤800px 的底栏避让走 `:global(.shell) ~ .strip`,产物里实测编译成
+  `.shell~.site-beian-module__…__strip` —— `.shell` 是全局类所以选得中;`.home` 是 CSS module
+  类名会被哈希,选不中(也不需要,个人站没有 fixed 元素)。
+- **⚠ 只有 owner 能解的阻塞**:`quarkspace.top` 与 `www.quarkspace.top` **两个都不解析**
+  (8.8.8.8 / 1.1.1.1 / 223.5.5.5 查 A 记录全空;域名 ACTIVE、NS 已指 DNSPod,缺的是记录本身)。
+  腾讯要求主域名与 www **都能正常访问**才算合格,所以页脚做完了备案这件事**还没完**。
+  `data/deployment.json` 的 `productionUrl` 因此继续留 `null` —— 指向一个不解析的域名
+  只会让每日 job 因为与数据无关的理由变红。
+- **补记(同日)**:公安联网备案已提交至**西城驻区大队**,30 个自然日审核(约 2026-09-09 前出结果,
+  短信通知)。这与上面的 ICP 是**两个不同的主管部门**(MIIT vs 公安),批下来之后页脚要挂**第二个**
+  号、链到 `www.beian.gov.cn`。因为页脚是根 layout 的单一组件,那会是**一个文件的改动** ——
+  这正是当初不做 per-page 页脚换来的东西。备案预留手机号**不入库**(公开仓库不放个人号码)。

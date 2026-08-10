@@ -356,6 +356,49 @@ deploy — only a failing `npm run build` does. `check:prices` and `check:upstre
 notifications rather than gates: they turn CI red while the site keeps serving whatever was last
 merged. Read the CI result before merging, not after.
 
+### Domain and ICP filing
+
+The production domain is **`quarkspace.top`**, registered 2026-07-31 through DNSPod, and it is
+filed with the MIIT. Two numbers come out of a filing and they are not interchangeable:
+
+| Number | What it is | Where it goes |
+| --- | --- | --- |
+| `京ICP备2026050077号` | 主体备案号 — the entity | Nowhere on the site |
+| `京ICP备2026050077号-1` | 服务备案号 — this one website | **The footer, linked to the registry** |
+
+The site is filed in Beijing, and Tencent Cloud's current rule for a Beijing filing is that the
+footer carries the **service** number — the one with the `-1` suffix — as a link to
+`https://beian.miit.gov.cn/`. Guangdong filings are the case people quote for hanging the bare
+entity number; copying that here fails the check.
+
+Tencent also verifies that **both the filed apex and its `www` host serve the site**, so a
+deployment that answers on only one of them is a filing problem even though the pages are fine.
+
+It is implemented as `app/site-beian.tsx` + `app/site-beian.module.css`, rendered once from
+`app/layout.tsx` **after `{children}`**, so every route carries it — including a route added later
+by someone who never reads this section. That is the whole reason it is not a per-page footer.
+The strip hardcodes its colours: it renders above both palettes (`--muted`/`--line` from
+globals.css, `--h-*` from `home.module.css`), and under `.home` the globals variables are still in
+scope, so reading either set would paint it wrong on one of the two sites. Below 800px it clears
+the observatory's fixed bottom rail through `:global(.shell) ~ .strip` — `.shell` is a plain global
+class, whereas `.home` is a CSS-module class whose emitted name is hashed and cannot be matched
+that way (it does not need to be; the personal site has nothing fixed).
+
+There is a **second filing**, and it is a different authority. The ICP filing above is MIIT; the
+公安联网备案 is the Ministry of Public Security, filed through `beian.gov.cn` and reviewed by the
+district police unit — here 西城驻区大队, submitted 2026-08-10 with a 30-day review window
+(so a decision by roughly 2026-09-09; the result arrives by SMS to the number on the filing, which
+is deliberately not recorded in this repository). When it is approved the footer takes a **second**
+number linked to `https://www.beian.gov.cn/`, alongside the ICP one. `app/site-beian.tsx` is
+already the single place that renders it, so that is a one-file change — do not add it to a page.
+
+**Status as of 2026-08-10: neither `quarkspace.top` nor `www.quarkspace.top` resolves.** The
+domain is active and its nameservers point at DNSPod, but no A or CNAME record answers from
+`8.8.8.8`, `1.1.1.1` or `223.5.5.5` — the custom domain has not been bound in EdgeOne Pages yet.
+Until it resolves, `productionUrl` in `data/deployment.json` stays `null`: pointing
+`check:deployment` at a host that does not resolve turns the daily job red for a reason that has
+nothing to do with the data.
+
 ## 7. Change playbooks
 
 ### Add a model

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist_Mono } from "next/font/google";
 import "./globals.css";
+import SiteBeian from "./site-beian";
 
 // Only the mono face is loaded. Prose uses the platform UI font so Latin and Chinese pair —
 // see the type note in globals.css — and a webfont nobody references is a download for nothing.
@@ -45,6 +46,8 @@ export default function RootLayout({
         className={`${geistMono.variable} antialiased`}
       >
         {children}
+        {/* Every route gets the ICP filing, including any added after this line was written. */}
+        <SiteBeian />
       </body>
     </html>
   );
