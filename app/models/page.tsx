@@ -33,7 +33,9 @@ const UI = {
     snapshot: "价格未对照",
     live: "已对照实时价",
     liveFresh: (n: number) => `实时:${n} 个新模型 · 价格已对照`,
-    freshNote: "上游已在提供、目录还没有的模型:",
+    freshSummary: (n: number) => `上游新出 ${n} 个模型,本目录尚未收录`,
+    freshNote: "这不是缺陷清单,也不是待办:模型只有在存档里有观测行之后才进目录,所以这里是下一批采集的线索。服务档位(batch / Fast 之类)不算模型,已排除。",
+    freshCapped: (n: number) => `下面只列出最近 ${n} 个。`,
     tracked: "收录模型",
     portfolio: "Benchmark 目录",
     ranking: "前沿模型排行",
@@ -97,7 +99,9 @@ const UI = {
     snapshot: "Prices not compared",
     live: "Prices compared",
     liveFresh: (n: number) => `Live · ${n} new upstream · prices compared`,
-    freshNote: "Served upstream, not yet in this catalog: ",
+    freshSummary: (n: number) => `${n} model${n === 1 ? "" : "s"} served upstream, not yet in this catalog`,
+    freshNote: "Not a defect list and not a queue: a model enters the catalog once there are archived observations behind it, so these are leads for the next collection pass. Service tiers (batch, Fast and the like) are not models and are excluded.",
+    freshCapped: (n: number) => ` Only the ${n} most recent are listed below.`,
     tracked: "Tracked models",
     portfolio: "Benchmarks catalogued",
     ranking: "Frontier model ranking",
@@ -442,6 +446,8 @@ export default function Home() {
   // them tomorrow morning; this finds them now, and says so rather than pretending the board is
   // complete. It is a pointer, not data: nothing here reaches a cell.
   const [fresh,setFresh] = useState<FreshModel[]>([]);
+  // What the 8-name cap in the route left out, so the fold can say so instead of implying "that is all".
+  const [freshTotal,setFreshTotal] = useState(0);
   const [live,setLive] = useState(false);
   const [updated,setUpdated] = useState("snapshot");
   const ui = UI[lang];
@@ -473,9 +479,10 @@ export default function Home() {
     try {
       const res = await fetch("/api/live-models",{cache:"no-store"});
       if (!res.ok) throw new Error();
-      const data = await res.json() as { prices: LivePrices; fresh?: FreshModel[] };
+      const data = await res.json() as { prices: LivePrices; fresh?: FreshModel[]; freshTotal?: number };
       setLivePrices(data.prices);
       setFresh(data.fresh ?? []);
+      setFreshTotal(data.freshTotal ?? data.fresh?.length ?? 0);
       setLive(true); setUpdated("just now");
     } catch { setLive(false); setUpdated("snapshot"); }
   }
@@ -550,7 +557,16 @@ export default function Home() {
 
       <section className="panel ranking-panel" id="ranking">
         <div className="section-head"><div className="section-title"><span>01</span><div><h2>{ui.ranking}</h2><p>{ui.rankingDesc}</p></div></div><div className="source-stamp"><i/>{ui.updated(LAST_RETRIEVED)}</div></div>
-          {fresh.length > 0 && <p className="fresh-note">{ui.freshNote}{fresh.map(model => <span key={model.id}>{model.name}<small>{model.published}</small></span>)}</p>}
+          {/* Folded shut. Open, this is a row of amber pills directly under the ranking heading, and
+              a reader takes eight names in that position for eight things wrong with the board — the
+              opposite of what it says. Collapsed it reads as what it is: a count, on request. */}
+          {fresh.length > 0 && (
+            <details className="fresh-note">
+              <summary>{ui.freshSummary(Math.max(freshTotal, fresh.length))}</summary>
+              <p>{ui.freshNote}{freshTotal > fresh.length && ui.freshCapped(fresh.length)}</p>
+              <div>{fresh.map(model => <span key={model.id}>{model.name}<small>{model.published}</small></span>)}</div>
+            </details>
+          )}
         <div className="rank-toolbar"><div className="metric-tabs">{LENSES.map(item => <button key={item.id} className={lens===item.id?"active":""} onClick={()=>setLens(item.id)}><span>{item[lang]}</span><b>{lang === "zh" ? item.shortZh : item.shortEn}</b></button>)}</div><div className="filters"><select value={maker} onChange={e=>setMaker(e.target.value)} aria-label="Lab filter">{makers.map(x => <option key={x} value={x}>{x === "All labs" ? ui.allLabs : x}</option>)}</select><label><input type="checkbox" checked={openOnly} onChange={e=>setOpenOnly(e.target.checked)}/>{ui.open}</label></div></div>
         <div className="rank-head"><span>#</span><span>{lang === "zh" ? "模型" : "Model"}</span><span>{lensName}</span><span>AA</span><span>Arena</span><span>{lang === "zh" ? "编程组合" : "Coding"}</span><span>Agent</span><span>{lang === "zh" ? "速度" : "Speed"}</span><span>{ui.compare}</span></div>
         <div className="rank-list">{visible.map((model,index) => {

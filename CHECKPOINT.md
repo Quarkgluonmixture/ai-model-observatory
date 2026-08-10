@@ -1,8 +1,10 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-10 六个 PR 合进 main：**站上线在 `https://quarkspace.top`**(ICP 页脚 +
+**接手点** — 2026-08-10 八个 PR 合进 main：**站上线在 `https://quarkspace.top`**(ICP 页脚 +
 `check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
-**batch 30 SWE-Bench Pro 脚本化** · 修掉一条让报告对 Gemini 3.5 Flash Lite 全盲的子串过滤。
+**batch 30 SWE-Bench Pro 脚本化** · 修掉一条让报告对 Gemini 3.5 Flash Lite 全盲的子串过滤 ·
+**最后一个 PR:网站上那份「上游模型」从没拿到过滤器**,而那 5 条档位噪音正占着 8 个名额里的 5 个、
+挤掉 3 个真模型 ⇒ 判定逻辑收进 `app/upstream-variants.ts`(唯一的家,三个调用方 import)。
 下一步在 `TODO.md`，**全是要你定的**：CyberBench 两列 · 8 块板的轴与 core/observe ·
 `vals-mmlu-pro` 那一个断言 · hermes 死了要不要推微信。等批复的只有公安备案(约 2026-09-09)。
 
@@ -33,9 +35,13 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 号链 `www.beian.gov.cn`。细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。
 
 **自动化真正剩下的**看 `TODO.md`（堆 1「只差你一个事实」8-10 已清空；剩下是下一个 chunk 与判断题）。
-⭐ **gaps 报告里那一节不是缺陷清单**：上游有、目录没有的模型只有**过了地板**才计入 issue 的计数，
-其余(在地板下 / 无证据 / 定价档 / 图像模型)折叠在 `<details>` 里，摘要写明「none of it is a defect」。
-判据与理由 → `docs/ARCHITECTURE.md` §8。
+⭐ **「上游有、目录没有」那一节不是缺陷清单**,而它**由两处独立算出**:`report:gaps`(存档证据链,
+只有**过了地板**才计入 issue 计数,其余折叠在 `<details>` 里)和 **`app/api/live-models/route.ts`
+(网站上那一份,OpenRouter 运行时)**。⚠⚠ 后者一整天没有前者的档位/变体过滤器 ——
+**报告干净不等于网站干净**;而且噪音不只是难看,它占着 `.slice(0, 8)` 的名额**遮掉了三个真模型**。
+现在判定逻辑只有一个家 `app/upstream-variants.ts`(route 里 import 必须带 `.ts` 扩展名),
+网站那份也折叠了、并明说不是缺陷、被截时会报出截掉多少。判据与理由 →
+`docs/ARCHITECTURE.md` §6「Two code paths…」+ §8,机制 → `GOTCHAS.md` 19。
 
 ---
 
@@ -108,7 +114,10 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 ## 现在要盯的三件事
 
 1. **明早第一次看到分层后的 gaps issue**：上游那一节应当是**折叠的一行**,且 issue 的计数**不含**
-   地板下的候选。若它还把 7 个上游名字都算成 gap,就是 `clears` 那条没生效。
+   地板下的候选(8-10 本地实测 58,折叠内 4 个候选一个都没计)。若它还把 7 个上游名字都算成 gap,
+   就是 `clears` 那条没生效。**并且顺手在 quarkspace.top 上点开那个折叠**:应当是 6 个名字、
+   没有任何 `(batch)` / `(Fast)`,里面**要有** Luna Pro / Terra Pro / Sol Pro
+   —— 它们是被噪音挤掉过的那三个。
 2. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。Scale 加一个模型就该开 PR;
    ⚠ 它读的是 RSC flight，**不是稳定 API** —— 挂了应当是**大声 throw**(六条断言),
    不该是"看板变小了"。真挂了先看 `docs/ARCHITECTURE.md` §9 里 SWE-Bench Pro 那行。
@@ -126,7 +135,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：18 条仍会咬人的坑，编号稳定可引用。⭐ 8-10 新增第五族「我以为我知道数据长什么样」(15–18)——一天踩三次同形错 |
+| `GOTCHAS.md` | **动手之前扫一遍**：20 条仍会咬人的坑，编号稳定可引用。⭐ 8-10 新增第五族「我以为我知道数据长什么样」(15–18)——一天踩三次同形错；19 = 规则写在报告里≠网站在生效(同一句话两条代码路径)，20 = `<small>` 自己掉到 9px 底下 + 检查器不选中的元素永远通过 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
