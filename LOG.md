@@ -532,3 +532,52 @@ supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。
 - **#measure 失败路径实证过**(照这个仓库给 `add-model-and-merge.sh` 做过的那样):探针把豁免清空 +
   下限抬到 99 → **exit 1** 且两条 FAIL 都打印;正常路径 exit 0,那格标 `ifbench (pinned)`。
   没验过失败路径的闸门不算闸门。
+
+## [2026-08-10] 纠正:batch-26 没有问题,是我读错了字段名  #incident #decision
+
+- **撤回上一条的结论。** 我说 `batch-26-aa-evaluations` 里那两套分数「没有任何字段能分开、必须重抓」
+  —— **错的**。字段叫 **`reasoning_effort`**,我用 `r.get('effort')` 取值(那个键不存在),
+  于是每行都返回 None,据此下了结论,还照这个结论改写了 `upstream-evidence.mjs` 顶部**原本正确**
+  的注释,并开了一条「要你定:怎么重抓」的 TODO。注释已恢复成准确版本(并留了一句
+  「不要再推导出那个结论」),TODO 已删。
+- **实测的真实情况**(四个 AA 条目,每个都有自己的 `reasoning_effort`、AA 显示名、独立 source_url):
+  `reasoning max` = `DeepSeek V4 Flash 0731 (Reasoning, Max Effort)`,发布 2026-07-31 = 目录记录;
+  另外三个(`non-reasoning` 与两个 `-0420`)全是发布 **2026-04-24** 的四月版。
+- **⭐ 而且 alias 早就写好了**:`{modelRaw: deepseek-v4-flash, effort: "reasoning max",
+  file: batch-26-aa-evaluations, modelId: deepseek-v4-flash}`,那 6 格(gpqa 90.8 · hle 38.6 ·
+  scicode 49.9 · aa-lcr 74.33 · tau3-banking 39.38 · terminal 78.65)**都已在库中**(逐格实测)。
+  它的 reason 里甚至写着「Found by the evidence counter's self-test」—— 正是这次争论的那个机制。
+  ⇒ **这件事早就被正确处理过了**,我等于把一个已解决的问题重新发明成了一个未解决的问题。
+- **⭐⭐ 教训(比这次改动重要)**:**JSON 字段名要对着一行真实数据核,不要凭语义猜**。
+  `.get('effort')` vs `reasoning_effort` —— Python 的 `.get` 对不存在的键**静默返回 None**,
+  于是「字段缺失」和「值为空」长得一模一样,而我把前者读成了后者。这跟坑 1「null 不是中立值」
+  是同一族:**缺席被当成了一个值**。下次:下「某字段全为空」的结论前,先 `print` 一整行原始 JSON。
+- **保留的部分仍然有效**:#68 的钉住豁免 + CI 闸门与这个理由无关,照样成立(它挡的是**新**的
+  over-count)。只有解释文字是错的,已改。
+
+## [2026-08-10] batch 30:SWE-Bench Pro 从手抄变成脚本源(第九次推翻「没有路」) #ship #measure #decision
+
+- **#ship 机制**:`labs.scale.com` 是 Next.js App Router,所以对榜单 URL 发一个带 `RSC: 1` 头的
+  普通 GET,返回的 flight 流里**整块看板是内联未转义 JSON**(`"entries":[{model,rank,score,
+  confidenceInterval_upper,company,createdAt,maxScore,deprecated}]`),不需要浏览器。
+  没有 JSON 端点 —— 旧结论说的是这件事,它没错;错的是**只探了端点就收工**。
+- **⭐⭐ 那个星号是 harness,不是装饰**。页面自己两句话都在载荷里:
+  「We ran frontier models on Pro using the **SWE-Agent** scaffold」(默认)+
+  「\*Run with **mini-swe-agent** harness」(带星的行)。实测 5 星 / 20 无星,**与 batch-02 手抄的
+  5/20 逐行一致** —— 当年那位转录者读对了。⇒ fetcher 每次抓取都**断言这两句在**,不在就 throw;
+  读错星号 = 把两个脚手架并进一个格子,违反第 4 条,而且看起来跟真结果一模一样。
+- **#decision 不硬编码任何板级常量**。harness 两句 + `731 instances` 全部是断言而非假设;
+  `deprecated: true` 的行跳过(Scale 另有一个 deprecated 板);`tools_enabled` 留 null
+  (板子是 agentic 的,但它**没有**发布工具清单,写 true 就是替它断言)。
+- **#measure 失败路径逐条验过**(六条):缺默认 harness 句 / 缺星号脚注 / 缺 731 / 没有 entries /
+  entries 空数组 / HTTP 403 —— **全部 throw**,没有一条会静默返回小一号的看板。这很要紧:
+  静默空读会长得像「Scale 删掉了所有模型」,然后漂移检查会把它报成归档完整性失败。
+  括号配平也用「名字里带 `] [`」的行走真实解析路径验过(正则 `[^\]]*` 会在那里断掉)。
+- **#measure supersede 安全**:脚本串与手抄串**逐字相同**(`Muse Spark 1.1*`、`gpt-5.4 (xHigh)*`),
+  所以同一批 alias 继续命中。`describe-change` 实测:**「这次改动不改变任何已发布的数字」**
+  (0 moved / 0 unverifiable),3 行 swe-pro 观测原地换出处;重读自检报
+  「archive matches upstream, **25 cells verified**」—— 写 25 行核 25 格,对得上(GOTCHAS 坑 3)。
+- **⚠ 顺带发现一个复现不出来的数**:文档里的「还在裸奔 1,287 行 / 手抄 1,751 行」两种测法都对不上
+  (1,404 vs 1,226;手抄总行 1,573)。**我没有用第三个数去覆盖它**,而是在 TODO 里标注「先钉定义
+  再引用」。教训与今天早些时候那次同形:**别重写项目自己的判定逻辑**,要么用它的 resolver,
+  要么把定义找出来 —— 我第一版又手搓了一遍 supersede 匹配,和 resolver 差了 178 行。

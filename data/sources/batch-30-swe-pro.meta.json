@@ -1,0 +1,11 @@
+{
+  "batch": "30 · SWE-Bench Pro Public, scripted",
+  "collectedWith": "scripts/fetchers/swe-pro.mjs",
+  "filtered": false,
+  "release": "Public Dataset",
+  "sources": [
+    "https://labs.scale.com/leaderboard/swe_bench_pro_public"
+  ],
+  "note": "Read from the page's own React Server Component payload (a GET with `RSC: 1`), which carries the board inline as JSON under `entries`. There is no JSON API; batch 02 transcribed the same board by hand and its swe-pro rows are superseded by this batch, recorded in data/model-aliases.json. harness is derived per row from the asterisk on the model name, which the page's own footnote defines as mini-swe-agent against a SWE-Agent default; both sentences are asserted on every fetch, so a wording change throws rather than mislabelling a scaffold. `deprecated: true` entries are skipped — Scale keeps a separate deprecated board for them. tools_enabled stays null because the board publishes no tool list. The RSC flight format is React-internal and not a stable API: that is the known risk of this source, mitigated by failing loudly rather than returning a smaller board.",
+  "retrievedDate": "2026-08-10"
+}

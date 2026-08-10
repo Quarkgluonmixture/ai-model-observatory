@@ -2455,6 +2455,12 @@
       "benchmark": "vals-index",
       "supersededBy": "batch-29-vals",
       "reason": "Batch 05's Vals Index rows are superseded by batch 29's reading of the same composite. Both are refused at ingest by `droppedBenchmarks` — it averages sub-benchmarks this batch already carries individually — so this entry changes nothing today. It is here so that if the column is ever opened, the eye-read version does not come back with it."
+    },
+    {
+      "file": "batch-02-coding",
+      "benchmark": "swe-pro",
+      "supersededBy": "batch-30-swe-pro",
+      "reason": "Batch 02 transcribed the SWE-Bench Pro public board by hand. Batch 30 reads the same board out of the page's own React Server Component payload (`RSC: 1`), and the readings agree row for row: 25 rows, the same 5 asterisked models on mini-swe-agent and 20 on SWE-Agent, the same scores. One measurement read twice, so only the scripted reading is ingested -- and the scripted one is what gives this board a drift check and an automatic refresh, which a frozen hand transcription can never have. The transcription was accurate; that is not why it is superseded."
     }
   ],
   "acknowledgedDisagreements": [
