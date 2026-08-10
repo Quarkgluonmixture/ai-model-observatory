@@ -4,6 +4,10 @@ A bilingual, mobile-ready dashboard for comparing frontier AI models across vers
 
 一个支持中英文切换与手机端使用的前沿 AI 模型看板，可查看排行榜、能力雷达图、多模型 Benchmark 折线对比、上下文窗口及实时 Token 价格。
 
+**Live: [quarkspace.top/models](https://quarkspace.top/models)** — the root route of the same
+deployment is the owner's personal site. Hosted on Tencent EdgeOne Pages, ICP-filed; see
+[Deploy](#deploy-to-tencent-edgeone-pages).
+
 For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The repository is maintained partly by a scheduled agent; its standing instructions are [`docs/AGENT-OPERATIONS.md`](docs/AGENT-OPERATIONS.md).
 
 ## Features
@@ -13,7 +17,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - separate rankings for general capability, agent systems, coding systems, human preference, speed, and value
 - selectable model dossier and three-model comparison
 - evidence-backed seven-axis capability radar with explicit `Not ingested` / partial / broad coverage states
-- 68-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
+- 72-benchmark catalog spanning reasoning, science, coding, agents, professional work, multimodality, and long context
 - multi-model benchmark line charts and raw-score tables by capability family
 - model-capability / best-system toggle to prevent harness results being presented as pure model ability
 - OpenRouter price comparison rather than a live overwrite: the card shows the archived list
@@ -24,12 +28,12 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - mobile layout with a labelled bottom bar, card-form ranking rows, safe-area insets, and a
   layout probe (`npm run check:mobile`) that fails on horizontal overflow
 - per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
-- eight boards re-read by script, which is what gives them a daily drift check and an automatic
-  refresh; the rest are hand-transcribed, and every source card prints how long ago it was
-  last read
+- fifteen sources re-read by script (`FETCHERS` in `scripts/fetchers/index.mjs`), which is what
+  gives them a daily drift check and an automatic refresh; the rest are hand-transcribed, and
+  every source card prints how long ago it was last read
 - a release probe that watches all eleven makers the catalog carries, and a WeChat notification
   that fires on what is new rather than on what is merely still open
-- 314 catalog values audited against the archive on every run, including the context window and
+- 321 catalog values audited against the archive on every run, including the context window and
   open-weights flag; whatever is unsourced is listed rather than hidden
 
 ## Data sources
@@ -63,8 +67,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-2086 observations across 1349/2088 cells (64.6% cell coverage;
-benchmark 911 / independent 985 / vendor 190)
+2133 observations across 1382/2088 cells (66.2% cell coverage;
+benchmark 918 / independent 1025 / vendor 190)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -185,20 +189,44 @@ whether or not the checks passed — read the CI result before merging, not afte
 6. Keep the framework preset as Next.js / automatic detection.
 7. Deploy, then optionally bind a custom domain.
 
-For a custom domain served from mainland-China acceleration nodes, follow Tencent Cloud's current domain and ICP filing requirements. If you do not yet have an ICP-filed domain, start with the platform preview domain or an overseas/global acceleration region.
+### The custom domain and the ICP filing
+
+This deployment serves `quarkspace.top` and `www.quarkspace.top`; EdgeOne's own
+`ai-model-observatory-lhi0hg2y.edgeone.cool` serves the same build and is the fallback to test
+against when the custom domain's DNS is the thing that broke. `data/deployment.json` names the
+apex, which is what activates `npm run check:deployment`.
+
+Binding is three steps and the order matters: EdgeOne first proves ownership through a `TXT`
+record at `edgeonereclaim.<domain>`, and only then issues the per-host CNAME targets that route
+traffic. **Ownership verification serves no traffic** — a domain can pass it and still not resolve
+at all, which is a confusing hour if you expect otherwise.
+
+For a mainland-China acceleration region the domain must be ICP-filed, and the filing has to be
+displayed: `app/site-beian.tsx` renders the **service** filing number (the `…号-1` suffix, not the
+bare entity number) from the root layout, so it appears on every route. Tencent also requires the
+filed apex **and** its `www` host to both serve. Full detail, including the two filing authorities,
+is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) §6 — read it before changing that component.
+Without an ICP-filed domain, start with the platform preview domain or an overseas/global region.
 
 ## Project structure
 
 ```text
 app/
   api/live-models/route.ts     # OpenRouter lookup, by exact provider id
-  globals.css                  # responsive light interface
+  layout.tsx                   # root layout: fonts, viewport, and the ICP strip on every route
+  site-beian.tsx               # ICP filing footer — one place, all routes (+ .module.css)
+  globals.css                  # the observatory's visual system and phone contract
   model-data.ts                # catalog, benchmark taxonomy, derived views, coverage floor
   observations.generated.ts    # generated by npm run ingest — never hand-edited
-  page.tsx                     # ranking, radar, comparison, pricing UI
+  models/page.tsx              # THE OBSERVATORY: ranking, radar, comparison, pricing UI
+  models/layout.tsx            # its title (the page is a client component)
+  page.tsx                     # the owner's personal site at / — no data files
+  home-content.ts              # that site's copy (source of truth: ../quark-space)
+  home.module.css              # that site's styles, scoped under .home, --h-* properties
 data/
   sources/*.jsonl              # append-only archive: one row per published result
   model-aliases.json           # every editorial decision, each with a written reason
+  deployment.json              # where production is, so something can verify it
 scripts/
   fetchers/*.mjs               # one module per source that can be re-read by script
   fetch-source.mjs             # runs them; --check diffs, --live refreshes the moving boards
@@ -207,13 +235,18 @@ scripts/
   check-model-provenance.mjs   # every catalog number against the archive
   report-gaps.mjs              # what has NOT been collected
   check-mobile.mjs             # layout probe under device emulation
+  check-deployment.mjs         # does production serve what main says
 .github/workflows/
   ci.yml                       # the contract, on every push and pull request
   upstream.yml                 # daily: drift, refresh, collection gaps
-docs/ARCHITECTURE.md           # diagrams, data contract, collection state, next work
+docs/ARCHITECTURE.md           # diagrams, data contract, domain/filing, collection state
 docs/UI.md                     # type scale, breakpoints, phone contract, verification
 docs/AGENT-OPERATIONS.md       # standing instructions for the scheduled agent
 AGENTS.md                      # concise coding-agent handoff rules
+CHECKPOINT.md                  # where things stand — read this first
+TODO.md                        # what is next (finished items are deleted, not ticked)
+LOG.md                         # append-only history: what happened and why
+GOTCHAS.md                     # the durable traps, stably numbered — scan before starting
 ```
 
 ## What maintains itself
