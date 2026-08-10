@@ -68,10 +68,12 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 ## 自动化
 
-- [ ] 明早（2026-08-08）验三件事：① `auto/refresh-aa` 的 PR **自己开出来**（8-07 是
-      `gh: Argument list too long` 开不出来）；② gaps issue 末尾多一节「Is the queue being worked?」；
-      ③ `auto/attribution` **正常跑**——#45 已于 8-07 合并，没有 open PR 了，所以 `--any-open` 不该
-      触发。要是它反而写了「Attribution paused」的 warning，就是那个判据反了。
+- [ ] （原 8-08 的三件,2026-08-10 实测后只剩两件；③ 已确认:`auto/attribution` 8-08 开了 #58,
+      判据没反）① `auto/refresh-aa` 到底有没有**自己**开出过 PR —— 该分支只有 8-07 的 #48,
+      8-08 之后没有新的,所以「`gh: Argument list too long` 已修好」这件事**从未被观测证实过**,
+      只是没再报错。下次 AA 有参数变动时盯一次。
+      ② 「Is the queue being worked?」那一节 **`report-gaps.mjs` 里 grep = 0**,即根本没建
+      (或建了又删了)。要么建，要么把这条删掉——现在是个悬空的期待。
       ⚠ 判据是 branch-scoped：`pr-hands-off.sh` 查 `gh pr list --head auto/attribution`，
       **只看那一个分支**，别的分支上有没有 open PR 它一概不管。
 - [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦在 `auto/attribution` 上的 PR）。
