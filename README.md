@@ -258,7 +258,13 @@ how a red check becomes background noise.
 | --- | --- |
 | A number moved under a version that is supposed to be frozen | Integrity failure. The job goes red and a human decides. |
 | A live board published new results | New data. The batch is rewritten, the contract runs, and it merges itself. |
-| Something exists that was never collected | A collection target. It becomes one self-updating issue. |
+| Something exists that was never collected | A collection target. It becomes one self-updating issue — and only the part somebody can act on today is counted. |
+
+An upstream model the catalog does not carry is the clearest case of that third answer being a
+*target* rather than a defect: it is counted only when it clears the coverage floor, because under
+the floor nobody can add it until a source evaluates it further. The rest — models under the floor,
+models with no evidence yet, and pricing tiers that must never get a record at all — are printed
+inside a collapsed section that says so.
 
 The refresh is idempotent, so a week in which nothing moved writes nothing and merges nothing.
 What may merge unattended is bounded by the file set rather than by who pushed it: a change
