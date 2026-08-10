@@ -11,6 +11,10 @@
 // the card keeps its archived price, which is the safe direction to fail in. `npm run
 // report:gaps` reports both a dead lookup and a catalog model that has no lookup at all —
 // this table cannot silently stop covering a model.
+// The extension is required, not stylistic: `scripts/report-gaps.mjs` imports this file, and Node
+// resolving app→app has no bundler to guess it. tsconfig has `allowImportingTsExtensions`.
+import { tierWordOf, variantOf } from "../../upstream-variants.ts";
+
 export const PROVIDER_LOOKUPS: Record<string, string> = {
   "claude-opus-5": "anthropic/claude-opus-5",
   "claude-opus-4.8": "anthropic/claude-opus-4.8",
@@ -75,13 +79,23 @@ export async function GET() {
     // Reported, never ingested. A runtime number has no archive row behind it and can never
     // become a catalog number; this is the same rule the price card follows when it shows a
     // provider figure beside the archived one instead of overwriting it. What the reader gets is
-    // "something is missing here", which is true, and a date they can check.
+    // "something is new upstream", which is true, and a date they can check.
+    //
+    // It is not a defect list, and it is not a queue. A model enters the catalog only with archived
+    // rows behind it, so a name here is a lead for the next collection pass, not work overdue. The
+    // reader is told that in `freshNote` and the whole block is folded shut, because eight names
+    // under an unfolded heading read as eight things wrong.
     const tracked = new Set(Object.values(PROVIDER_LOOKUPS));
     const namespaces = new Set(Object.values(PROVIDER_LOOKUPS).map(id => id.split("/")[0]));
     const cutoff = Date.now() / 1000 - 60 * 24 * 60 * 60;
-    const fresh = list
+    const candidates = list
       .filter(item => namespaces.has(item.id.split("/")[0]))
       .filter(item => !tracked.has(item.id.toLowerCase()))
+      // An operating point or a price tier of a model is not a model. Both filters are the shared
+      // ones in `app/upstream-variants.ts`, so this list and `npm run report:gaps` cannot disagree
+      // about what counts again.
+      .filter(item => !variantOf(item.id))
+      .filter(item => !tierWordOf(item.name))
       // This catalog measures models that answer in text. An image generator served by a maker we
       // track is not a gap in it — Nano Banana 2 Lite sitting in a list headed "not yet in this
       // catalog" reads as work outstanding, and it is not. The provider states the modality, so
@@ -91,11 +105,18 @@ export async function GET() {
         return !out || (out.includes("text") && !out.includes("image"));
       })
       .filter(item => typeof item.created === "number" && item.created >= cutoff)
-      .sort((a, b) => (b.created ?? 0) - (a.created ?? 0))
+      .sort((a, b) => (b.created ?? 0) - (a.created ?? 0));
+
+    // The cap is a layout limit, so the number it cut is reported beside it. Measured 2026-08-10:
+    // this cap used to be the last filter, and the five tier rows above were spending five of its
+    // eight slots — `GPT-5.6 Luna Pro`, `Terra Pro` and `Sol Pro` were all real models, all absent
+    // from the catalog, and all pushed off the end of the list by noise. A silent truncation reads
+    // as "that is all of them".
+    const fresh = candidates
       .slice(0, 8)
       .map(item => ({ id: item.id, name: item.name ?? item.id, published: new Date((item.created ?? 0) * 1000).toISOString().slice(0, 10) }));
 
-    return Response.json({ prices, fresh, updatedAt: new Date().toISOString(), provider: "OpenRouter" }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=240" } });
+    return Response.json({ prices, fresh, freshTotal: candidates.length, updatedAt: new Date().toISOString(), provider: "OpenRouter" }, { headers: { "Cache-Control": "public, max-age=60, s-maxage=240" } });
   } catch {
     return Response.json({ error: "Live price feed unavailable" }, { status: 503, headers: { "Cache-Control": "no-store" } });
   }

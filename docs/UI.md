@@ -57,7 +57,9 @@ Every size in the stylesheet comes from one of two scales. Do not introduce a th
 Two rules hold the scale together:
 
 1. **Nothing on a phone renders below 9px** except the provenance tag inside the score table,
-   which is a secondary annotation on a cell whose number is already legible.
+   which is a secondary annotation on a cell whose number is already legible. `<small>` inside a
+   9px block is **7.2px**, not 9px — it inherits the browser's 80%, so state the size. Content
+   behind a fold counts: a reader can open it, so it obeys the floor like anything else.
 2. **Form controls on a phone are 16px.** iOS Safari zooms the whole page when a control smaller
    than that takes focus, and the page never zooms back. This is why `.search input` and
    `.filters select` look larger than their neighbours; it is deliberate.
@@ -96,7 +98,8 @@ Six guarantees. A change that breaks one of them is a regression even if it look
    and 430px. Wide content lives inside a named scroller, never in the page.
 2. **Every control is at least 44px tall.** Rail items are 56px; buttons, selects and the search
    are 44px. A segmented sub-button inside a 44px group (`中` / `EN`, `模型` / `系统`) may be
-   shorter than its group but never below 36px.
+   shorter than its group but never below 36px. A `<summary>` is a control: the fold over the
+   upstream-models note is 36px on desktop and 44px on a phone.
 3. **One horizontal scroller per row**, each with `overscroll-behavior-x: contain` so a swipe
    cannot chain into the browser's back gesture. The scrollers are: `.brief`, `.metric-tabs`,
    `.axis-tabs`, `.legend`, `.compare-pills`, `.price-strip`, `.chart-scroll`, `.score-table-wrap`.
@@ -169,6 +172,12 @@ reports `scrollWidth` vs `clientWidth`, every element crossing the viewport edge
 inside a scroller, every rendered text node under 9px, and every control under 36px. Overflow
 exits non-zero; the other two print as warnings. It is not in CI — it needs Chrome and a running
 server — so run it when you touch the layout.
+
+Its control selector is `a,button,input,select,label,summary`. `summary` was added on 2026-08-10,
+with the first fold in the app — until then the checker could not have measured one, and something a
+checker does not select always passes. **When you introduce an element type, check that the probe
+knows about it**, and prove the probe fires by breaking it once: shrinking the fold to 10px produced
+`details.fresh-note > summary h=13`, which is how the addition was verified rather than assumed.
 
 Then look at it on a real phone. Emulation gets layout right and gets touch, momentum scrolling,
 dynamic toolbars and font rendering wrong.

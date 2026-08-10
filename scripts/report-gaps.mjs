@@ -36,6 +36,7 @@ import {
 } from "../app/model-data.ts";
 import { FETCHERS } from "./fetchers/index.mjs";
 import { PROVIDER_LOOKUPS } from "../app/api/live-models/route.ts";
+import { tierWordOf, variantOf } from "../app/upstream-variants.ts";
 import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
 import { buildEvidenceIndex, dilutionFloor, sameFamily } from "./lib/upstream-evidence.mjs";
 
@@ -271,27 +272,11 @@ if (aging.length === 0) {
 say("## Published upstream, absent from the catalog");
 say();
 
-const variantOf = (id) => id.includes(":"); // ":free", ":thinking" — an operating point, not a model
-
-// A pricing or service tier is not a model either, and it arrives in a shape `variantOf` cannot
-// see: OpenRouter publishes `Claude Opus 5 (batch)` and `Claude Opus 5 (Fast)` as separate entries
-// whose tier lives in `name`, not after a colon in `id`. AGENTS.md rule 7 puts an operating point
-// in `configurations`; a record of its own would enter every ranking as a second copy of a model
-// the catalog already carries.
-//
-// The keyword list is closed and deliberately short, because the cost of a wrong entry here is a
-// real model going unreported. `preview` is NOT on it — the catalog carries `Gemini 3.1 Pro
-// Preview` and `Qwen3.6 Max Preview` as records of their own, since a preview is different weights
-// while a batch tier is the same weights at a different price. Nor are `lite`, `mini` or `flash`:
-// those are models. Measured on 2026-08-10, when five of the eight names in this section were
-// `(batch)` or `(Fast)` and carried zero archived rows between them.
-const TIER_WORDS = new Set(["batch", "fast", "flex", "priority", "standard", "scale"]);
-const tierOf = (item) => {
-  const match = /\(([^()]+)\)\s*$/.exec(item.name ?? "");
-  if (!match) return null;
-  const word = match[1].trim().toLowerCase();
-  return TIER_WORDS.has(word) ? word : null;
-};
+// `variantOf` and `tierWordOf` used to be declared here and separately in `aa-new-models.mjs`, and
+// the site's own copy of this list had neither — see `app/upstream-variants.ts`, which is now the
+// single home for "what upstream serves that is not a model". The reasoning for the closed keyword
+// list lives there too.
+const tierOf = (item) => tierWordOf(item.name);
 
 // An image generator is not a candidate for this catalog, and the feed says so outright:
 // `architecture.output_modalities`. Measured 2026-08-07 — Nano Banana 2, Nano Banana 2 Lite and

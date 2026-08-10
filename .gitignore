@@ -43,3 +43,6 @@ next-env.d.ts
 
 # Local cross-AI working notes. The conclusions that mattered are in docs/ARCHITECTURE.md §9.
 docs/cross-ai-audits/
+
+# `tsc --noEmit` with incremental:true leaves this behind. Build cache, not source.
+tsconfig.tsbuildinfo

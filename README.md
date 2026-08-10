@@ -213,6 +213,7 @@ Without an ICP-filed domain, start with the platform preview domain or an overse
 ```text
 app/
   api/live-models/route.ts     # OpenRouter lookup, by exact provider id
+  upstream-variants.ts         # what upstream serves that is not a model — one home, three callers
   layout.tsx                   # root layout: fonts, viewport, and the ICP strip on every route
   site-beian.tsx               # ICP filing footer — one place, all routes (+ .module.css)
   globals.css                  # the observatory's visual system and phone contract

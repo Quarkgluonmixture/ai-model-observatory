@@ -22,6 +22,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODELS } from "../app/model-data.ts";
+import { tierWordOf } from "../app/upstream-variants.ts";
 import { artificialAnalysis } from "./fetchers/artificial-analysis.mjs";
 import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
 
@@ -36,23 +37,16 @@ const say = (line = "") => { if (!quiet) console.log(line); };
 // on a page: a tier counted in the marker at the end dispatches an AA refresh that re-reads 591
 // configurations to learn nothing.
 //
-// The keyword list is closed and short, because the cost of a wrong entry is a real model going
-// unreported. `preview` is deliberately absent — the catalog carries `Gemini 3.1 Pro Preview` and
-// `Qwen3.6 Max Preview` as records of their own, since a preview is different weights while a batch
-// tier is the same weights at a different price. `lite`, `mini` and `flash` are models too.
-//
-// Declared up here, above the API-key check, so `--self-test` can exercise it without a key.
-const TIER_WORDS = new Set(["batch", "fast", "flex", "priority", "standard", "scale"]);
-const tierOf = (modelRaw) => {
-  const match = /\(([^()]+)\)\s*$/.exec(String(modelRaw ?? ""));
-  if (!match) return null;
-  const word = match[1].trim().toLowerCase();
-  return TIER_WORDS.has(word) ? word : null;
-};
+// The closed keyword list and the reasoning for every word on it live in
+// `app/upstream-variants.ts`, which is the one home for this rule: it was written here and in
+// `report-gaps.mjs` and applied in neither the site's own copy of the list, which is how the daily
+// issue came out clean while quarkspace.top showed the five tiers to every reader.
+const tierOf = (modelRaw) => tierWordOf(modelRaw);
 
 // The classifier is the whole risk in this file — too greedy and a real model stops being reported —
-// so it is asserted rather than described. Both directions matter, and the negative cases are the
-// ones that would hurt: every string below is real, taken from AA's own index on 2026-08-10.
+// so it is asserted rather than described. It runs above the API-key check so `--self-test` needs no
+// key. Both directions matter, and the negative cases are the ones that would hurt: every string
+// below is real, taken from AA's own index on 2026-08-10.
 if (process.argv.includes("--self-test")) {
   const cases = [
     ["Claude Opus 5 (batch)", "batch"],

@@ -66,7 +66,9 @@ const PROBE = `(() => {
     }
   }
   const tiny = new Map();
-  for (const el of document.querySelectorAll("a,button,input,select,label")) {
+  // \`summary\` is on this list because the app grew one before the list did: the fold over the
+  // upstream-models note is a control the thumb has to hit, and nothing here would have measured it.
+  for (const el of document.querySelectorAll("a,button,input,select,label,summary")) {
     const box = el.getBoundingClientRect();
     if (box.width === 0 || box.height === 0) continue;
     // An input inside a label is not its own target — the label is what the thumb hits.

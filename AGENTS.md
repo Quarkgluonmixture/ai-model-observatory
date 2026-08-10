@@ -298,6 +298,15 @@ official pages for precision, not because LMArena is wrong.
   that had been used as evidence *against* a source.
 - Vendors price in tiers and regions. Archive the tier the catalog quotes and record the
   others in the batch meta, so a later reader does not "correct" Standard to Batch.
+- A rule enforced in a *report* is not enforced on the *site*. "Served upstream, not in this
+  catalog" is computed twice — `scripts/report-gaps.mjs` from the archive, `app/api/live-models`
+  from the provider at runtime — and the tier/variant filter had been written twice and applied in
+  neither of the reader's copies. The daily issue read clean while quarkspace.top listed five
+  `(batch)` / `(Fast)` tiers, which were also spending five of the list's eight slots and hiding
+  three real models. Both now import `app/upstream-variants.ts`. Ask *who prints this sentence*, and
+  how many of them there are.
+- Any `slice(0, N)` that a reader sees must report what it cut. A silent truncation reads as
+  "that is all of them".
 - **One published model string can mean two different models, and which one depends on the
   source.** DeepSeek shipped V4 Flash as a preview and then as the post-trained 0731 release,
   whose scores are far higher. LiveBench, Epoch and LMArena publish both and print `-0731` for the
@@ -340,6 +349,7 @@ official pages for precision, not because LMArena is wrong.
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |
 | `app/models/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
+| `app/upstream-variants.ts` | What upstream serves that is not a model (`:variant`, `(batch)`, `(Fast)`) — one home, imported by the live route and by two scripts. Import it with the `.ts` extension from `route.ts` |
 | `app/page.tsx`, `app/home-content.ts`, `app/home.module.css` | The personal site at `/` — no data files, see above |
 | `app/site-beian.tsx`, `app/site-beian.module.css` | The ICP filing footer, rendered from the root layout onto every route — see above and `docs/ARCHITECTURE.md` §6 |
 | `data/deployment.json` | Where production is, so `check:deployment` can verify it serves what `main` says |

@@ -46,7 +46,8 @@ run rather than hidden.
 | `app/page.tsx` + `app/home-content.ts` + `app/home.module.css` | The owner's personal site at `/`. Reads no data file; see AGENTS.md "Two sites share this repo" |
 | `app/layout.tsx` | Root layout: the one mono webfont, the viewport contract, and the ICP strip on every route |
 | `app/site-beian.tsx` + `app/site-beian.module.css` | The ICP filing footer. Belongs to neither site — see §6, and do not move it into a page |
-| `app/api/live-models/route.ts` | OpenRouter price/context lookup and short-lived cache |
+| `app/api/live-models/route.ts` | OpenRouter price/context lookup, short-lived cache, and the folded "new upstream" note |
+| `app/upstream-variants.ts` | The one home for "what upstream serves that is not a model" — imported by that route and by two scripts |
 | `app/globals.css` | Light visual system and responsive layout |
 | `data/deployment.json` | Where production is, so `check:deployment` can ask whether it serves what `main` says |
 | `scripts/check-deployment.mjs` | Compares the live bundle against the catalog — catches a stalled or partial deploy |
@@ -341,6 +342,28 @@ other lookups landed on a `-fast`, `-pro` or `-lite` variant the same way, and n
 visible, because a wrong price looks exactly like a right one. A retired id now resolves to
 nothing and the card keeps its archived figure, which is the safe direction to fail in;
 `npm run report:gaps` reports the dead lookup.
+
+### Two code paths print "served upstream, not in this catalog"
+
+The same sentence is computed twice, from different evidence, and that is deliberate: the route
+sees what a provider is serving **right now** (earlier than any scheduled job), while
+`npm run report:gaps` sees what the **archive** already holds for each of those names and can
+therefore say whether a record today would lower cell coverage. Neither can do the other's job — the
+route runs at the edge with no archive.
+
+What they must not do is disagree about *what counts as a model*. They did: the tier and variant
+filters were written in `report-gaps.mjs` and again in `aa-new-models.mjs`, and the route — the only
+one a reader ever sees — had neither. On 2026-08-10 the daily issue read clean while the site showed
+eight names of which five were `(batch)` or `(Fast)` tiers of models already on the board. Worse, the
+route's `.slice(0, 8)` came last, so those five tiers were spending five of the eight slots and
+`GPT-5.6 Luna Pro`, `Terra Pro` and `Sol Pro` — three real, uncatalogued models — never appeared at
+all.
+
+The rule now has one home, `app/upstream-variants.ts`, imported by the route and both scripts. The
+route must import it **with the `.ts` extension**: `scripts/report-gaps.mjs` runs `route.ts` through
+Node's type stripping, and Node resolving app→app has no bundler to guess the extension.
+`tsconfig.json` already sets `allowImportingTsExtensions`. The site's list is folded shut and its
+note says outright that it is not a defect list; the cap now reports how many names it cut.
 
 Canonical production settings:
 
