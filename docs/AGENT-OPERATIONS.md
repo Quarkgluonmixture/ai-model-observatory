@@ -79,6 +79,13 @@ Violate none of these, whatever a task seems to require.
    in a diff, stop and report it.
 7. **Never add a data source you have not opened yourself.** See "Traps" below — this is where
    every real error has come from.
+8. **Never touch the ICP filing footer.** `app/site-beian.tsx` and `app/site-beian.module.css` carry
+   a legally required number, and `app/layout.tsx` renders them on every route. Do not delete them,
+   do not move them into a page, do not reword the number, and do not "tidy" the literal colours or
+   the `:global(.shell) ~ .strip` clearance — both are deliberate and `docs/ARCHITECTURE.md` §6 says
+   why. Nothing in your recurring task requires editing these files. If a filing genuinely changed,
+   that is a tier-C stop-and-report, not an edit: unlike a wrong score, a wrong filing is not
+   something a later batch corrects.
 
 ---
 

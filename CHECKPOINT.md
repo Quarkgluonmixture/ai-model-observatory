@@ -10,27 +10,26 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 
 ---
 
-## 现状（2026-08-09）
+## 现状（2026-08-10）
 
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2125 rows · 1374 / 2088 cells（65.8% cell coverage）** |
-| 源分类 | benchmark 918 / independent 1017 / vendor 190 |
+| 观测 | **2133 rows · 1382 / 2088 cells（66.2% cell coverage）** —— 8-10 实测；8-09 是 2125 / 1374 / 65.8%，差值来自当日 `Refresh live boards` |
+| 源分类 | benchmark 918 / independent 1025 / vendor 190 |
 | 溯源 | **321 / 321**（100%，batch-27 于 2026-08-08 补齐最后三个） |
 | 归档 | **29 batches，其中 15 个可脚本重读**（11,137 / 1,751 行 = 86.4%）；⚠ 别读这个比例——1,751 行里 464 行已 supersede，**真正裸奔的是 1,287 行** |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
-| 站点 | `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
+| 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
 ⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。覆盖率这几天怎么走的，
 见 `LOG.md` 2026-08-06 起各条。
 
-**备案（2026-08-10）**：ICP `京ICP备2026050077号-1` 页脚已全局挂上（`app/site-beian.tsx`，根 layout）。
-⚠ **但 `quarkspace.top` 与 `www` 都还不解析**，腾讯要两个都能访问才算合格 ⇒ 差**绑域名**（只有你能做）。
-公安备案同日交西城驻区大队，约 2026-09-09 出结果，批了在同一文件补第二个号。细节 `docs/ARCHITECTURE.md` §6。
-
-**已建好但等你填的**：`check:deployment` 等 `productionUrl`（**等解析通了再填**，否则每日 job 会因为
-与数据无关的理由变红；在那之前它每天在 gaps issue 里把自己报成「没跑」）。
+**站已上线在自己的域名上（2026-08-10）**：`https://quarkspace.top` 与 `www` 均 200，ICP
+`京ICP备2026050077号-1` 在两个域名 × 两条路由的**服务端 HTML** 里都渲染（`app/site-beian.tsx`，
+根 layout 一处）。`productionUrl` 已填 ⇒ **`check:deployment` 从此真的在跑**（此前从未跑过），
+现在绿。⏳ 仍未完：公安联网备案 8-10 交西城驻区大队，约 2026-09-09 出结果，批了在同一文件补第二个
+号链 `www.beian.gov.cn`。细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。
 
 **自动化真正剩下的**看 `TODO.md`（分三堆：只差你一个事实 / 下一个 chunk / 判断题）。
 ⚠ §10 里三个自报的数 8-09 全部过期并已重测；**「86.4% 自维护」不能当进步读**——手抄行只从

@@ -26,6 +26,11 @@ rail (nav)   workspace
 `NAV` in `page.tsx` is the single source for both the rail and the scroll-spy: adding a section
 means adding one entry there and one `id` on the section, nothing else.
 
+One element lives **outside** that component and outside the personal site: the ICP filing strip
+(`app/site-beian.tsx`), rendered by the root layout after `{children}`, so on `/models` it is a
+sibling of `.shell` rather than a child. That placement is what makes it appear on every route, and
+it is also the reason it needs its own phone clearance — see §4.
+
 State lives in `Home`. Nothing is persisted except the language choice (`localStorage`,
 `observatory-language`), applied after mount so the prerendered HTML stays static.
 
@@ -98,6 +103,12 @@ Six guarantees. A change that breaks one of them is a regression even if it look
 4. **Nothing fixed without a safe-area pad.** The bottom rail pads with
    `env(safe-area-inset-bottom)` and `.shell` reserves `64px + inset`. The workspace pads its
    sides with `max(10px, env(safe-area-inset-*))` for landscape notches.
+   That reservation covers `.shell`'s own children and nothing else, so the ICP strip — its
+   *sibling* — repeats it through `:global(.shell) ~ .strip`, or the fixed rail would sit on top of
+   the filing number at full scroll. The selector is scoped that way because `.shell` is a plain
+   global class while `.home` is a CSS-module class whose emitted name is hashed; the personal site
+   has nothing fixed and needs no clearance. Anything else added after `{children}` in the root
+   layout inherits this problem and does not inherit the fix.
 5. **Nothing absolutely positioned inside the header.** The header is static on a phone; the
    search sits in its own flow row. It used to be `position:absolute; top:72px` inside a sticky
    header, which meant it floated over the page permanently while scrolling.

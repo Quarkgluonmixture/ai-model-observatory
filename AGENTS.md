@@ -42,6 +42,18 @@ have already been made here — all of which passed every automated check.
 - `scripts/check-mobile.mjs` defaults to `/models` for this reason — pointed at `/` it would pass
   on the personal site while a phone regression sat one route over. Pass a URL to probe `/`.
 
+**And one thing belongs to neither site.** `app/site-beian.tsx` (+ its CSS module) renders the ICP
+filing number, and `app/layout.tsx` renders it after `{children}` so it lands on **every** route.
+Three rules on it, all of them the kind that fail silently:
+
+- **Do not move it into a page.** A per-page footer misses the next route somebody adds, and a
+  missing filing is a regulatory problem, not a display problem.
+- **Do not delete or reword the number**, and do not swap the service number (`…号-1`) for the bare
+  entity number. If a filing changes, `docs/ARCHITECTURE.md` §6 says which is which.
+- **Its colours are literal, deliberately.** It renders above both palettes, and inside `.home` the
+  globals.css variables are still in scope, so reading either set paints it wrong on one of the two
+  sites. Its bottom clearance for the phone rail rides on `:global(.shell) ~ .strip`.
+
 ## Mission
 
 Maintain a bilingual, mobile-first AI model observatory with honest evidence semantics. The
@@ -314,6 +326,8 @@ official pages for precision, not because LMArena is wrong.
 | `app/observations.generated.ts` | Generated — never hand-edit |
 | `app/models/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
 | `app/page.tsx`, `app/home-content.ts`, `app/home.module.css` | The personal site at `/` — no data files, see above |
+| `app/site-beian.tsx`, `app/site-beian.module.css` | The ICP filing footer, rendered from the root layout onto every route — see above and `docs/ARCHITECTURE.md` §6 |
+| `data/deployment.json` | Where production is, so `check:deployment` can verify it serves what `main` says |
 | `app/globals.css` | Visual system, type scale, breakpoints, phone layout |
 | `scripts/check-mobile.mjs` | Layout probe: overflow, type floor, tap-target floor |
 | `docs/ARCHITECTURE.md` | Architecture, data policy, collection state, next work |

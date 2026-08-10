@@ -44,8 +44,12 @@ run rather than hidden.
 | `app/models/page.tsx` | The observatory itself: client state, rankings, coverage, radar, line charts, tables, language switching |
 | `app/models/layout.tsx` | Its title — the page is a client component and cannot export metadata |
 | `app/page.tsx` + `app/home-content.ts` + `app/home.module.css` | The owner's personal site at `/`. Reads no data file; see AGENTS.md "Two sites share this repo" |
+| `app/layout.tsx` | Root layout: the one mono webfont, the viewport contract, and the ICP strip on every route |
+| `app/site-beian.tsx` + `app/site-beian.module.css` | The ICP filing footer. Belongs to neither site — see §6, and do not move it into a page |
 | `app/api/live-models/route.ts` | OpenRouter price/context lookup and short-lived cache |
 | `app/globals.css` | Light visual system and responsive layout |
+| `data/deployment.json` | Where production is, so `check:deployment` can ask whether it serves what `main` says |
+| `scripts/check-deployment.mjs` | Compares the live bundle against the catalog — catches a stalled or partial deploy |
 | `data/sources/*.jsonl` | Append-only raw transcription archive, one row per published result |
 | `data/model-aliases.json` | Every editorial decision: model mapping, benchmark splits, version and source-class overrides |
 | `scripts/ingest.mjs` | Archive + aliases → `app/observations.generated.ts` |
@@ -392,12 +396,28 @@ is deliberately not recorded in this repository). When it is approved the footer
 number linked to `https://www.beian.gov.cn/`, alongside the ICP one. `app/site-beian.tsx` is
 already the single place that renders it, so that is a one-file change — do not add it to a page.
 
-**Status as of 2026-08-10: neither `quarkspace.top` nor `www.quarkspace.top` resolves.** The
-domain is active and its nameservers point at DNSPod, but no A or CNAME record answers from
-`8.8.8.8`, `1.1.1.1` or `223.5.5.5` — the custom domain has not been bound in EdgeOne Pages yet.
-Until it resolves, `productionUrl` in `data/deployment.json` stays `null`: pointing
-`check:deployment` at a host that does not resolve turns the daily job red for a reason that has
-nothing to do with the data.
+**Live since 2026-08-10.** Binding the domain took three steps in this order, and the order is the
+part worth remembering: EdgeOne first proves ownership through a `TXT` record at
+`edgeonereclaim.<domain>`, and only then issues the per-host CNAME targets that actually route
+traffic. Ownership verification does not serve a single byte — a domain can pass it and still not
+resolve, which is exactly the state this section described for most of that day.
+
+```text
+quarkspace.top      CNAME  quarkspace.top.pages.dnsoe6.com
+www.quarkspace.top  CNAME  www.quarkspace.top.pages.dnsoe4.com
+ai-model-observatory-lhi0hg2y.edgeone.cool   EdgeOne's own default domain, same build
+```
+
+Measured once both were bound: all three hosts answer `200` with a clean TLS verify, and the ICP
+number renders in the **server-side** HTML of both `/` and `/models` on both custom hosts — a 2×2
+matrix, not one spot check. Server-side matters: whoever checks the filing may not run JavaScript.
+The apex and `www` each serve independently; neither redirects to the other.
+
+`productionUrl` in `data/deployment.json` is therefore set to the apex, which activates
+`check:deployment` — the check that had never once run. It passes: every catalog name is present in
+what the live site serves. Note what that check does and does not prove. It compares `main` against
+production, so it catches a stalled or partial deploy; it says nothing about whether the filing is
+displayed, which is why the 2×2 matrix above was measured by hand rather than added to it.
 
 ## 7. Change playbooks
 
@@ -950,7 +970,12 @@ stay. That is judgement, and judgement does not go in a cron job.
   push and pull request, against both routes, and **fails the job rather than skipping itself** if
   the runner has no Chrome: a layout check reporting green for a probe that never ran is worse than
   no layout check. What is still not covered is pixel regression, above.
-- ~~Nothing verifies the deployed site~~ **Mechanism built 2026-08-07, waiting on one fact.**
+- ~~Nothing verifies the deployed site~~ **Closed 2026-08-10.** The mechanism was built 2026-08-07
+  and then sat unrun for three days for one reason: nobody had written down the address. The domain
+  went live on 2026-08-10, `data/deployment.json` now names the apex, and the check passes on its
+  first real run. Keep the shape of that gap in mind — the missing thing was not code.
+  What it still does **not** cover is whether the ICP filing is displayed; that was measured by hand
+  across both hosts × both routes (§6) and is not in any check.
   `npm run check:deployment` fetches `/models` from production, follows every `<script src>` it
   names, and looks for every catalog benchmark and model name in the concatenated bundle. The
   obvious check — "does the page show the new benchmark" — does not survive contact with the page:
@@ -960,9 +985,9 @@ stay. That is judgement, and judgement does not go in a cron job.
   production build: 9 chunks, 1.5MB, every name present, and a name added without rebuilding is
   correctly reported missing. It runs in the daily job and reports into the gaps issue rather than
   failing, because a stale deployment is a fact somebody needs and not a reason to abandon the
-  archive refresh. **What it still needs is the production URL**, which is recorded nowhere in this
-  repository — that absence is itself part of why nothing verified the deployment. Until
-  `data/deployment.json` names it, the check reports itself as unrun, every day, in the issue.
+  archive refresh. It reported itself as unrun, every day, until `data/deployment.json` named the
+  origin on 2026-08-10; the first real run confirmed every catalog name in what the live site serves
+  (29 × 72, 9 chunks). Point it elsewhere with `--url` or `SITE_URL`.
   The coupling still runs the other way too: a type error in the personal site at `/` fails the
   build step that gates the daily data refresh.
 - **The two schedulers watch each other asymmetrically.** GitHub dying is pushed to WeChat by
