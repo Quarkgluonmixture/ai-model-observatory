@@ -312,14 +312,16 @@ const textOnly = (item) => {
 // written at all, and a second copy would drift into disagreeing with this one about which models
 // are worth collecting. Run it with `--self-test`.
 //
-// ⚠ That self-test has drifted and is not in CI, which is why the drift went unnoticed. Measured
-// 2026-08-10: **70% mean recovery** (was 89% when written) and **1 model credited with a cell it
-// does not have** (was 0) — `deepseek-v4-flash` / `ifbench`. That model is the repository's known
-// two-models-one-string case (the preview versus the 0731 release, see AGENTS.md), so the
-// over-count is most likely `norm` conflating the two spellings rather than a new bug. It matters
-// beyond this report: this counter is what decides whether a model clears the dilution floor, and
-// `scripts/add-model-and-merge.sh` merges on that. Tracked in TODO.md; do not "fix" the numbers in
-// this comment to match, fix the counter.
+// That self-test is a gate as of 2026-08-10 and runs in CI. Before that it always exited 0, and the
+// numbers quoted here — "89% mean recovery, 0 over-counts" — had silently become 70% and 1 without
+// anybody noticing, which is the whole argument for wiring it up. No percentage is repeated here on
+// purpose: run the self-test, do not trust a number copied into a comment.
+//
+// The one over-count is pinned there with its reason: `deepseek-v4-flash` / `ifbench`, because
+// `batch-26-aa-evaluations` carries that bare slug with two complete score sets and no field
+// separating them, so `ingest` refuses the rows and this counter matches the string anyway. A NEW
+// over-count fails CI, which matters because this counter decides whether a model clears the
+// dilution floor and `scripts/add-model-and-merge.sh` merges on that number.
 const lookupEvidence = buildEvidenceIndex(BENCHMARKS.map((benchmark) => benchmark.id));
 const evidenceFor = (item) => lookupEvidence([item.id.split("/").slice(1).join("/"), item.name ?? ""]);
 
