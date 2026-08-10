@@ -317,11 +317,12 @@ const textOnly = (item) => {
 // anybody noticing, which is the whole argument for wiring it up. No percentage is repeated here on
 // purpose: run the self-test, do not trust a number copied into a comment.
 //
-// The one over-count is pinned there with its reason: `deepseek-v4-flash` / `ifbench`, because
-// `batch-26-aa-evaluations` carries that bare slug with two complete score sets and no field
-// separating them, so `ingest` refuses the rows and this counter matches the string anyway. A NEW
-// over-count fails CI, which matters because this counter decides whether a model clears the
-// dilution floor and `scripts/add-model-and-merge.sh` merges on that number.
+// The one over-count is pinned there with its reason: `deepseek-v4-flash` / `ifbench`. One AA slug
+// carries the 0731 release and the April preview, separated by `reasoning_effort`; `ingest` uses that
+// field and attributes both correctly, while this counter strips effort by design — which is what
+// lets it work for a model that has no alias yet. A NEW over-count fails CI, and that matters
+// because this counter decides whether a model clears the dilution floor and
+// `scripts/add-model-and-merge.sh` merges on that number.
 const lookupEvidence = buildEvidenceIndex(BENCHMARKS.map((benchmark) => benchmark.id));
 const evidenceFor = (item) => lookupEvidence([item.id.split("/").slice(1).join("/"), item.name ?? ""]);
 

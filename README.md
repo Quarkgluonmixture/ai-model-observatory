@@ -28,7 +28,7 @@ For implementation details and AI-agent handoff, read [`AGENTS.md`](AGENTS.md) a
 - mobile layout with a labelled bottom bar, card-form ranking rows, safe-area insets, and a
   layout probe (`npm run check:mobile`) that fails on horizontal overflow
 - per-observation provenance: benchmark version, source type, harness, reasoning effort, tool setting, date, and context length
-- fifteen sources re-read by script (`FETCHERS` in `scripts/fetchers/index.mjs`), which is what
+- sixteen sources re-read by script (`FETCHERS` in `scripts/fetchers/index.mjs`), which is what
   gives them a daily drift check and an automatic refresh; the rest are hand-transcribed, and
   every source card prints how long ago it was last read
 - a release probe that watches all eleven makers the catalog carries, and a WeChat notification

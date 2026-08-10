@@ -23,21 +23,24 @@
 // "under the floor" is a claim it can make, "over the floor" is a candidate for a reader.
 //
 // One overstatement is inherent and stays: this matches by published STRING, and a string can mean
-// two models. `deepseek-v4-flash` is the one case, and the mechanism was described imprecisely here
-// until it was measured on 2026-08-10 — the correction matters because it changes who can fix it.
+// two models. `deepseek-v4-flash` is the one case. In `batch-26-aa-evaluations` that bare slug
+// carries two complete score sets, and they are told apart by `reasoning_effort` and nothing else:
 //
-// It is NOT two efforts the counter cannot see. In `batch-26-aa-evaluations` the bare slug carries
-// **two complete score sets** — gpqa 71.6 and 90.8, hle-no-tools 7.8 and 38.6, aa-lcr 37.33 and
-// 74.33 — and `effort` is `null` on every one of those rows. Nothing in the batch as recorded
-// separates them, which is why the bare string is aliased only inside `batch-14-aa-parameters` and
-// left deliberately unmapped everywhere else: attributing it would be a guess, and AGENTS.md rule 8
-// says a string that cannot be attributed stays unmapped and reported.
+//   reasoning max    AA "DeepSeek V4 Flash 0731 (Reasoning, Max Effort)", released 2026-07-31
+//                    → this catalog record. Aliased, effort-pinned, and its six cells are ingested.
+//   non-reasoning    AA "DeepSeek V4 Flash (Non-reasoning)", released 2026-04-24 → the preview.
+//                    Deliberately unmapped, IFBench 47.21 among its seven rows.
 //
-// So the counter credits the catalog's record with an IFBench row that `ingest` correctly refuses.
-// One cell on one model, in the safe direction (the other one admits a model on another model's
-// evidence), and it is pinned in the self-test below as a named exemption rather than smoothed away.
-// The repair is not in this file: it is re-capturing that batch with whatever field AA uses to tell
-// its two entries apart. Tracked in TODO.md.
+// `ingest` gets this right because `resolveModelId` is given the effort. This counter cannot: it
+// matches on the string with effort tokens stripped, which is the whole reason it works for a model
+// that has no alias yet. So it credits the release with the preview's IFBench row — one cell, on one
+// model, in the safe direction (the other one admits a model on another model's evidence).
+//
+// It is pinned in the self-test below as a named exemption rather than smoothed away, and there is
+// nothing here to repair: the archive records the distinction and the alias file already uses it.
+// ⚠ A previous pass through this comment (2026-08-10) claimed the batch recorded no field separating
+// the two and that it needed re-capturing. That was a measurement error — the field is
+// `reasoning_effort`, and it was read under the wrong name. Do not re-derive that conclusion.
 //
 // A benchmark NAME is also not a catalog column. The same three lookups `ingest.mjs` applies —
 // dropped benchmarks, an evaluator's own name for a column, a version that gets its own id — are
@@ -208,11 +211,12 @@ const KNOWN_OVERCOUNTS = [
   {
     model: "deepseek-v4-flash",
     cells: ["ifbench"],
-    // The long version is at the top of this file. Short: `batch-26-aa-evaluations` carries the bare
-    // slug with two complete score sets and `effort: null` on all of them, so the rows cannot be
-    // attributed and stay unmapped; the counter matches the string anyway. Fixing it means
-    // re-capturing that batch, not changing the matcher.
-    reason: "one AA slug, two score sets, nothing recorded to tell them apart — see TODO.md",
+    // The long version is at the top of this file. Short: one AA slug carries the 0731 release and
+    // the April preview, separated by `reasoning_effort`. `ingest` uses that field and attributes
+    // both correctly; this counter strips effort by design, so it picks up the preview's IFBench row.
+    // Nothing to repair — do not "fix" it by teaching the matcher about effort, which is what makes
+    // it work for models that have no alias yet.
+    reason: "one AA slug = 0731 release + April preview, separated only by effort, which this counter strips by design",
   },
 ];
 
