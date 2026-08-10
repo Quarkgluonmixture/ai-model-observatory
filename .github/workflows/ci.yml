@@ -60,6 +60,22 @@ jobs:
       - name: Replay the attribution gate against every human decision
         run: npm run propose:attribution -- --backtest
 
+      # Two classifiers decide, unattended, which upstream rows count as evidence and which upstream
+      # names are models at all — and both used to be self-tests somebody had to remember to run.
+      # That is the shape `check:mobile` had until 2026-08-07, and it rotted the same way: a comment
+      # quoted "89% recovery, 0 over-counts" for weeks while the real numbers were 70% and 1.
+      #
+      # What each one fails on is narrow on purpose. The evidence counter fails on an over-count that
+      # is not pinned with a reason (that is how a model gets over the dilution floor on another
+      # model's rows, and `add-model-and-merge.sh` merges on that number) and on mean recovery
+      # collapsing below its floor. The tier classifier fails when it stops telling a pricing tier
+      # from a model in either direction — too greedy and a real model silently stops being reported.
+      # Neither needs a network or a key.
+      - name: Replay the evidence counter and the tier classifier against known cases
+        run: |
+          node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test
+          node scripts/aa-new-models.mjs --self-test
+
       - name: Build production application
         run: npm run build
 

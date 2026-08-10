@@ -23,12 +23,21 @@
 // "under the floor" is a claim it can make, "over the floor" is a candidate for a reader.
 //
 // One overstatement is inherent and stays: this matches by published STRING, and a string can mean
-// two models. `deepseek-v4-flash` on Artificial Analysis is the 0731 release at `reasoning max` and
-// the 2026-04-24 preview at `non-reasoning` — one slug, two models, separated only by effort, which
-// is why its alias is pinned to an effort rather than wildcarded. The counter credits the release
-// with the preview's IFBench row because it cannot see that distinction. One cell on one model,
-// and the safe direction to be wrong in is the other one, so it is recorded here rather than
-// papered over: a caller reading a count near the floor should look at the strings behind it.
+// two models. `deepseek-v4-flash` is the one case, and the mechanism was described imprecisely here
+// until it was measured on 2026-08-10 — the correction matters because it changes who can fix it.
+//
+// It is NOT two efforts the counter cannot see. In `batch-26-aa-evaluations` the bare slug carries
+// **two complete score sets** — gpqa 71.6 and 90.8, hle-no-tools 7.8 and 38.6, aa-lcr 37.33 and
+// 74.33 — and `effort` is `null` on every one of those rows. Nothing in the batch as recorded
+// separates them, which is why the bare string is aliased only inside `batch-14-aa-parameters` and
+// left deliberately unmapped everywhere else: attributing it would be a guess, and AGENTS.md rule 8
+// says a string that cannot be attributed stays unmapped and reported.
+//
+// So the counter credits the catalog's record with an IFBench row that `ingest` correctly refuses.
+// One cell on one model, in the safe direction (the other one admits a model on another model's
+// evidence), and it is pinned in the self-test below as a named exemption rather than smoothed away.
+// The repair is not in this file: it is re-capturing that batch with whatever field AA uses to tell
+// its two entries apart. Tracked in TODO.md.
 //
 // A benchmark NAME is also not a catalog column. The same three lookups `ingest.mjs` applies —
 // dropped benchmarks, an evaluator's own name for a column, a version that gets its own id — are
@@ -177,6 +186,42 @@ export const dilutionFloor = (filledCells, modelCount) => Math.ceil(filledCells 
 // counter against its published spellings says how much of it a name-only match recovers. This is
 // the number that decides whether the floor is reachable at all — a counter that recovers a tenth
 // of the truth would refuse every model forever and look like a policy rather than a bug.
+//
+// It used to print and always exit 0, which made it a command somebody had to remember to run —
+// the same shape as `check:mobile` before 2026-08-07, and it rotted the same way: a comment in
+// `report-gaps.mjs` quoted "89% recovery, 0 over-counts" while the real numbers had moved to 70%
+// and 1. So it is now a gate, and it runs in CI. Two assertions, and neither is a target to
+// optimise:
+//
+//   an over-count that is not pinned below   FAILS — the counter started crediting a model with
+//                                            evidence that belongs to something else, which is how
+//                                            a model gets admitted over the dilution floor on
+//                                            another model's rows.
+//   mean recovery under RECOVERY_FLOOR       FAILS — the matching rules broke badly enough that
+//                                            the floor stops being reachable, which looks like a
+//                                            policy ("nothing ever qualifies") rather than a bug.
+//
+// A pinned exemption that stops occurring is reported, not failed: the archive moves daily and a
+// green run turning red because a known problem went away is the wrong incentive. Delete the pin
+// when its report says nobody needs it.
+const KNOWN_OVERCOUNTS = [
+  {
+    model: "deepseek-v4-flash",
+    cells: ["ifbench"],
+    // The long version is at the top of this file. Short: `batch-26-aa-evaluations` carries the bare
+    // slug with two complete score sets and `effort: null` on all of them, so the rows cannot be
+    // attributed and stay unmapped; the counter matches the string anyway. Fixing it means
+    // re-capturing that batch, not changing the matcher.
+    reason: "one AA slug, two score sets, nothing recorded to tell them apart — see TODO.md",
+  },
+];
+
+// Not a target, a regression guard. Measured 2026-08-10: 70%. It was 89% when this was written and
+// fell as the archive grew and the effort-token guard tightened, both expected — a lower bound is
+// allowed to loosen. 60 is below today's value by enough that ordinary archive growth will not trip
+// it, and far enough above zero that a broken matcher will.
+const RECOVERY_FLOOR = 60;
+
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\]/, ""))) {
   if (process.argv.includes("--self-test")) {
     const { MODELS, BENCHMARKS, OBSERVATIONS_BY_CELL } = await import("../../app/model-data.ts");
@@ -185,6 +230,9 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\
     const floor = dilutionFloor(filled, MODELS.length);
     console.log(`Dilution floor right now: ${floor} cells (${filled} filled / ${MODELS.length} models).\n`);
     console.log("model                 true  found  recovered   over-count?");
+    const pinnedFor = (modelId) => KNOWN_OVERCOUNTS.find((entry) => entry.model === modelId);
+    const unexpected = [];
+    const unusedPins = new Set(KNOWN_OVERCOUNTS.map((entry) => entry.model));
     let over = 0;
     const ratios = [];
     for (const model of MODELS) {
@@ -193,15 +241,40 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\
       const hit = found.cells.filter((cell) => truth.has(cell)).length;
       const spurious = found.cells.filter((cell) => !truth.has(cell));
       if (spurious.length) over++;
+      const pin = pinnedFor(model.id);
+      // Pinned per CELL, not per model: a pinned model growing a second spurious cell is a new
+      // finding and must not ride in on the old exemption.
+      const newCells = spurious.filter((cell) => !(pin?.cells ?? []).includes(cell));
+      if (spurious.length && pin) unusedPins.delete(model.id);
+      if (newCells.length) unexpected.push({ model: model.id, cells: newCells });
       const pct = truth.size ? (100 * hit) / truth.size : 0;
       ratios.push(pct);
+      const mark = spurious.length
+        ? spurious.map((cell) => ((pin?.cells ?? []).includes(cell) ? `${cell} (pinned)` : `${cell} ⚠ NEW`)).join(",")
+        : "-";
       console.log(
         `${model.id.padEnd(20)} ${String(truth.size).padStart(4)}  ${String(found.cells.length).padStart(5)}  ` +
-        `${pct.toFixed(0).padStart(8)}%   ${spurious.length ? spurious.join(",") : "-"}`,
+        `${pct.toFixed(0).padStart(8)}%   ${mark}`,
       );
     }
     const mean = ratios.reduce((a, b) => a + b, 0) / ratios.length;
     console.log(`\nmean recovery ${mean.toFixed(0)}% | models where the counter found a cell they do not have: ${over}`);
-    process.exit(0);
+    console.log(`${KNOWN_OVERCOUNTS.length} pinned exemption(s): ` +
+      KNOWN_OVERCOUNTS.map((entry) => `${entry.model}/${entry.cells.join("+")} — ${entry.reason}`).join("; "));
+
+    let failed = false;
+    for (const { model, cells } of unexpected) {
+      console.log(`FAIL  ${model} is credited with ${cells.join(", ")}, which it does not have and which is not pinned.`);
+      failed = true;
+    }
+    if (mean < RECOVERY_FLOOR) {
+      console.log(`FAIL  mean recovery ${mean.toFixed(0)}% is under the ${RECOVERY_FLOOR}% floor.`);
+      failed = true;
+    }
+    for (const model of unusedPins) {
+      console.log(`note  the pinned exemption for ${model} no longer occurs — delete it (this is not a failure).`);
+    }
+    console.log(failed ? "self-test FAILED" : "self-test passed");
+    process.exit(failed ? 1 : 0);
   }
 }

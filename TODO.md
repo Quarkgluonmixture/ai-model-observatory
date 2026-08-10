@@ -30,14 +30,17 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 三个做掉了（手机探针进 CI · 空行第四条 · 线上站验证机制——**2026-08-10 起真的在跑了**，
 `productionUrl` 已填 `https://quarkspace.top`），缺口 2 按你的决定跳过。剩下：
 
-- [ ] ⭐⭐ **证据计数器漂了，而且它是自动上板的判据**。2026-08-10 实测 `upstream-evidence.mjs
-      --self-test`：**70% mean recovery**（注释里写的是 89%）、**1 个模型被算了它没有的格**
-      （注释写 0）—— `deepseek-v4-flash` / `ifbench`。那个模型正是仓库记载的「一个字符串两个
-      模型」（preview vs 0731，见 `AGENTS.md`），所以最可能是 `norm` 把两种拼法混了，不是新 bug。
-      **为什么要紧**：这个计数器决定谁过 48 格地板，而 `add-model-and-merge.sh` 按它自动合并 ——
-      算多了就可能拿不存在的证据把一个模型推过地板。⚠ 两个 `--self-test`（这个和
-      `aa-new-models.mjs --self-test`）**都不在 CI 里**，所以这次漂移没人发现；要不要挂进 CI 是
-      一个决定（挂了就多一个失败面）。
+- [ ] ⭐⭐ **要你定：`batch-26-aa-evaluations` 里的裸 `deepseek-v4-flash` 怎么办**（2026-08-10 查实）。
+      那个批次里**同一个裸 slug 带着两套完整分数**——gpqa 71.6 与 90.8、hle-no-tools 7.8 与 38.6、
+      aa-lcr 37.33 与 74.33——而**所有行的 `effort` 都是 `null`**，批次里没有任何字段能把两者分开。
+      所以它在这个批次故意不映射（第 8 条：绝不猜归属），13 行就这么躺着。
+      **不是计数器的 bug**：`upstream-evidence.mjs` 顶部本来就写着这个 over-count 存在且是刻意的；
+      我上一轮把它写成「`norm` 混了拼法、需要修计数器」是错的，已改正。现在它在自测里是一条
+      **带理由的钉住豁免**，新出现的 over-count 会让 CI 红。
+      **真修只有一条路**：拿 AA 用来区分它那两个条目的字段重抓一次这个批次（AA 侧大概是
+      reasoning / non-reasoning，但**这要看到实际字段再说，不能推**）。抓到之后这 13 行才能归属。
+      ⚠ 别用「猜一个 alias」了事——AGENTS 里 DeepSeek V4 Flash 那段教训就是这个形状（49.25 挂在
+      100 分的模型名下，而且什么都没失败）。
 - [ ] ⭐ **要你定：`swe-pro` 的 Scale 活板要不要写成 fetcher**（2026-08-10 排程 agent 查出来的）。
       它走 Next.js RSC flight —— 带 `RSC: 1` 头 GET 就能拿到 `"entries":[{model,rank,score,…}]`，
       不需要浏览器。现在 `batch-02` 是手抄且冻结，**Scale 哪天评测了新模型没人会发现**。
