@@ -29,6 +29,60 @@ const ROOT = fileURLToPath(new URL("../", import.meta.url));
 const quiet = process.argv.includes("--quiet");
 const say = (line = "") => { if (!quiet) console.log(line); };
 
+// A pricing or service tier is not a new model, and AA indexes it as its own row: `Claude Opus 5
+// (batch)`, `Claude Opus 5 (Fast)`, `Inkling (batch)`. The alias check further down cannot catch
+// them — nothing resolves a string the catalog has never been told about — so on 2026-08-10 five of
+// the eight names in this report were tiers of models already on the board. That is not only noise
+// on a page: a tier counted in the marker at the end dispatches an AA refresh that re-reads 591
+// configurations to learn nothing.
+//
+// The keyword list is closed and short, because the cost of a wrong entry is a real model going
+// unreported. `preview` is deliberately absent — the catalog carries `Gemini 3.1 Pro Preview` and
+// `Qwen3.6 Max Preview` as records of their own, since a preview is different weights while a batch
+// tier is the same weights at a different price. `lite`, `mini` and `flash` are models too.
+//
+// Declared up here, above the API-key check, so `--self-test` can exercise it without a key.
+const TIER_WORDS = new Set(["batch", "fast", "flex", "priority", "standard", "scale"]);
+const tierOf = (modelRaw) => {
+  const match = /\(([^()]+)\)\s*$/.exec(String(modelRaw ?? ""));
+  if (!match) return null;
+  const word = match[1].trim().toLowerCase();
+  return TIER_WORDS.has(word) ? word : null;
+};
+
+// The classifier is the whole risk in this file — too greedy and a real model stops being reported —
+// so it is asserted rather than described. Both directions matter, and the negative cases are the
+// ones that would hurt: every string below is real, taken from AA's own index on 2026-08-10.
+if (process.argv.includes("--self-test")) {
+  const cases = [
+    ["Claude Opus 5 (batch)", "batch"],
+    ["Claude Opus 5 (Fast)", "fast"],
+    ["Gemini 3.6 Flash (batch)", "batch"],
+    ["Gemini 3.5 Flash Lite (batch)", "batch"],
+    ["Inkling (batch)", "batch"],
+    // Models, every one of them. A preview and a "Lite" are different weights, not a price tier.
+    ["Muse Spark 1.2", null],
+    ["Qwen3.7 Flash", null],
+    ["Gemini 3.5 Flash Lite", null],
+    ["Gemini 3.1 Pro Preview", null],
+    ["Qwen3.6 Max Preview", null],
+    ["Inkling Small", null],
+    ["GPT-5.6 Sol (high)", null],        // an effort, which `resolveModelId` already handles
+    ["Claude Opus 5", null],
+    [undefined, null],
+  ];
+  let failed = 0;
+  for (const [input, expected] of cases) {
+    const actual = tierOf(input);
+    if (actual !== expected) {
+      console.log(`FAIL  ${JSON.stringify(input)} → ${JSON.stringify(actual)}, expected ${JSON.stringify(expected)}`);
+      failed += 1;
+    }
+  }
+  console.log(failed === 0 ? `tierOf: ${cases.length}/${cases.length} cases pass` : `tierOf: ${failed} case(s) failed`);
+  process.exit(failed === 0 ? 0 : 1);
+}
+
 if (!process.env.AA_API_KEY) {
   say("AA_API_KEY is not set; cannot ask Artificial Analysis what it has added.");
   console.log("<!-- aa-new-models: 0 -->");
@@ -100,11 +154,19 @@ const evidenceCount = (() => {
   return (modelRaw) => byModel.get(norm(modelRaw))?.size ?? 0;
 })();
 
+// `tierOf` is declared at the top of this file, above the key check, with the reasoning and a
+// `--self-test`. The test here is a CONJUNCTION: a tier keyword *and* an empty archive. A `(batch)`
+// row that somehow carries benchmark evidence stays in the report for a person to look at, because
+// the expensive mistake is silently dropping a model, not printing one extra line.
+const isTier = (row) => tierOf(row.model_raw) && evidenceCount(row.model_raw) === 0;
+const tiers = [...fresh.values()].filter(isTier);
+const models = [...fresh.values()].filter((row) => !isTier(row));
+
 // A model with no intelligence index cannot become a catalog record — `cfg()` requires one and
 // its field source is fixed to AA. Reporting it as collectable would send somebody after a record
 // they cannot write, so it is counted separately and named.
-const ready = [...fresh.values()].filter((row) => Number.isFinite(row.intelligence_index));
-const waiting = [...fresh.values()].filter((row) => !Number.isFinite(row.intelligence_index));
+const ready = models.filter((row) => Number.isFinite(row.intelligence_index));
+const waiting = models.filter((row) => !Number.isFinite(row.intelligence_index));
 
 // Only a model AA has measured *since the archive was written* needs a fetch. The rest are ready
 // to record right now, which is a different sentence and a different action.
@@ -136,6 +198,18 @@ if (ready.length) {
 if (waiting.length) {
   say(`_${waiting.length} further model(s) are listed by AA but carry no intelligence index yet, ` +
     `so no catalog record can be written for them: ${waiting.map((row) => row.model_raw).join(", ")}._`);
+  say();
+}
+
+// Named but not listed as work, and never as a `- **name**` bullet: this group is settled, and
+// re-deciding a settled question every morning is how a reader learns to skim the whole report.
+// The count stays visible because a silent filter is how a real model would disappear.
+if (tiers.length) {
+  say(`_${tiers.length} row(s) are a **pricing or service tier** of a model, not a model: ` +
+    `${tiers.map((row) => `${row.model_raw} (${tierOf(row.model_raw)})`).join(", ")}. ` +
+    "Same weights at a different price — they belong in `configurations` or a batch meta, never in " +
+    "a catalog record of their own (AGENTS.md rule 7), so they are excluded from the count below " +
+    "and from the refresh it triggers. Matched on a closed keyword list **and** an empty archive._");
   say();
 }
 
