@@ -1,9 +1,10 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-09 三轮脚本化全部合进 main（batch 28 FrontierMath · batch 29 Vals 全部
-37 块板 · ProgramBench 与 Terminal-Bench 2.0 接上已有的列）。覆盖率 52.4% → **65.8%**。
-下一步在 `TODO.md`，全是**要你定**的：CyberBench 两列开不开 · 8 块板的轴与 core/observe ·
-`vals-mmlu-pro` 那一个断言 · `productionUrl`。
+**接手点** — 2026-08-10 六个 PR 合进 main：**站上线在 `https://quarkspace.top`**(ICP 页脚 +
+`check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
+**batch 30 SWE-Bench Pro 脚本化** · 修掉一条让报告对 Gemini 3.5 Flash Lite 全盲的子串过滤。
+下一步在 `TODO.md`，**全是要你定的**：CyberBench 两列 · 8 块板的轴与 core/observe ·
+`vals-mmlu-pro` 那一个断言 · hermes 死了要不要推微信。等批复的只有公安备案(约 2026-09-09)。
 
 Snapshot for the next session. One page. 现场状态在这里；**动手前的自查在 `GOTCHAS.md`**；
 历史在 `LOG.md`；未来在 `TODO.md`。都不能替代 `AGENTS.md`——它是操作合同，改任何东西之前先读它。
@@ -18,7 +19,7 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 | 观测 | **2133 rows · 1382 / 2088 cells（66.2% cell coverage）** —— 8-10 实测；8-09 是 2125 / 1374 / 65.8%，差值来自当日 `Refresh live boards` |
 | 源分类 | benchmark 918 / independent 1025 / vendor 190 |
 | 溯源 | **321 / 321**（100%，batch-27 于 2026-08-08 补齐最后三个） |
-| 归档 | **29 batches，其中 15 个可脚本重读**（11,137 / 1,751 行 = 86.4%）；⚠ 别读这个比例——1,751 行里 464 行已 supersede，**真正裸奔的是 1,287 行** |
+| 归档 | **30 batches，其中 16 个可脚本重读**（8-10 实测 `meta.collectedWith`；batch 30 = SWE-Bench Pro）；⚠ **「裸奔 1,287 行」这个数复现不出来**（两种测法得 1,404 / 1,226），引用前先钉定义 |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
@@ -31,9 +32,10 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 现在绿。⏳ 仍未完：公安联网备案 8-10 交西城驻区大队，约 2026-09-09 出结果，批了在同一文件补第二个
 号链 `www.beian.gov.cn`。细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。
 
-**自动化真正剩下的**看 `TODO.md`（分三堆：只差你一个事实 / 下一个 chunk / 判断题）。
-⚠ §10 里三个自报的数 8-09 全部过期并已重测；**「86.4% 自维护」不能当进步读**——手抄行只从
-1,749 动到 1,751，比例上升全靠脚本批变大。
+**自动化真正剩下的**看 `TODO.md`（堆 1「只差你一个事实」8-10 已清空；剩下是下一个 chunk 与判断题）。
+⭐ **gaps 报告里那一节不是缺陷清单**：上游有、目录没有的模型只有**过了地板**才计入 issue 的计数，
+其余(在地板下 / 无证据 / 定价档 / 图像模型)折叠在 `<details>` 里，摘要写明「none of it is a defect」。
+判据与理由 → `docs/ARCHITECTURE.md` §8。
 
 ---
 
@@ -44,7 +46,7 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 | ~08:10（cron 写 06:00，GitHub 实际延迟约两小时） | GitHub Actions `upstream.yml` | **12** 个脚本源漂移检查 → 重抓 live 板 → 发布页探针 → 写 gaps issue → AA 新模型侦测 | 只碰 `data/sources/` + 生成文件 → **直推 main** |
 | 同上，末步 | GitHub Actions | 归属闸门 `attribute-and-merge.sh`：提议 alias → 跑契约 → 三条件满足才自合 | 有条件自合，否则留 PR |
 | 09:30 | hermes（Windows 定时任务） | 读 gaps issue → 挑一件完整做完 → 开 PR / tier-B 三条件自合 | 有条件自合 |
-| 任意 push 到 main | GitHub Actions `ci.yml` | 七项契约 + 归属闸门回测 + **站上新增模型才推微信** | — |
+| 任意 push 到 main | GitHub Actions `ci.yml` | 契约全套 + 归属闸门回测 + **两个分类器自测(8-10 起)** + 手机探针(两条路由) + 站上新增模型才推微信 | — |
 
 **三条件**（tier B 自合的唯一门槛，写在 `docs/AGENT-OPERATIONS.md`）：契约全绿（含跨源分歧闸门与
 一源两串闸门）· `describe-change` 报告**没有已有数字被改动** · 没有写 `acknowledgedDisagreements`
@@ -76,7 +78,7 @@ npm run propose:attribution            # 归属闸门今天能定多少
 npm run propose:attribution -- --backtest   # 回测 300 条人工判断（CI 里也跑）
 npm run describe-change origin/main    # 这次改动对已发布看板做了什么
 npm run report:gaps                    # 什么从来没被采集过
-npm run check:upstream                 # 12 个脚本源逐格对照
+npm run check:upstream                 # 16 个脚本源逐格对照
 node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcprize-v1 / arcprize-v3）
 ```
 
@@ -105,13 +107,11 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **batch 29 改动了 51 个已发布数字**，其中两个不是精度、是**证据等级**变了：
-   Qwen3.8 Max · Terminal-Bench 86.6（厂商）→ 67.416（Vals，独立），
-   Gemini 3.1 Pro Preview · MMMU-Pro 80.5 → 88.208。第 3 条在起作用（独立压厂商），
-   但这是站上肉眼可见的移动，值得你亲自看一眼。理由写在 `acknowledgedDisagreements`
-   与 `LOG.md` 2026-08-09 第三轮。
-2. **明早那一跑是三个第一次**：两个新源（`epoch-frontiermath` append-only、`vals` live）
-   第一次进每日刷新，`FETCH_TIMEOUT_MS` 第一次在 CI 生效。看一眼有没有意外开 PR。
+1. **明早第一次看到分层后的 gaps issue**：上游那一节应当是**折叠的一行**,且 issue 的计数**不含**
+   地板下的候选。若它还把 7 个上游名字都算成 gap,就是 `clears` 那条没生效。
+2. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。Scale 加一个模型就该开 PR;
+   ⚠ 它读的是 RSC flight，**不是稳定 API** —— 挂了应当是**大声 throw**(六条断言),
+   不该是"看板变小了"。真挂了先看 `docs/ARCHITECTURE.md` §9 里 SWE-Bench Pro 那行。
 3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
    太吵就把取整阈值放宽。
 
@@ -126,7 +126,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：14 条仍会咬人的坑，编号稳定可引用 |
+| `GOTCHAS.md` | **动手之前扫一遍**：18 条仍会咬人的坑，编号稳定可引用。⭐ 8-10 新增第五族「我以为我知道数据长什么样」(15–18)——一天踩三次同形错 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。

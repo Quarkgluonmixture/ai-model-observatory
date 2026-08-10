@@ -409,19 +409,40 @@ if (!useNetwork) {
       .sort((a, b) => b.evidence.cells.length - a.evidence.cells.length);
     const unbacked = rest.filter((entry) => entry.evidence.rows === 0);
 
+    // Only a candidate that CLEARS the floor is an actionable gap, and only actionable gaps may
+    // hold the collection issue open — `publish-gaps-issue.sh` closes it when the count reaches
+    // zero, and the issue's contract is "open means there is something to collect". A model under
+    // the floor is not something to collect: nobody can add it until a source evaluates it further,
+    // so counting it would pin the issue open on work that does not exist and teach its reader to
+    // skim. This whole section used to add every upstream name to the count, which is what made an
+    // informational list read like a defect list.
+    const clears = queue.filter((entry) => entry.evidence.cells.length > floor);
+
+    // Collapsed, because on any ordinary day the honest summary of this section is one line and the
+    // detail is 30 benchmark ids per model. `<details>` renders in a GitHub issue body, which is
+    // where this report is read. The bullet shape inside is unchanged: `publish-gaps-issue.sh`
+    // reads `- \`id\`` lines out of this section to tell a model that appeared today from one that
+    // has been sitting here a week, and it does not care that they are nested.
+    const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+    say("<details>");
+    say(
+      `<summary><b>${plural(textish.length, "upstream text model", "upstream text models")} the ` +
+        "catalog does not carry</b> — " +
+        (clears.length
+          ? `**${plural(clears.length, "clears", "clear")}** the ${floor}-cell floor and needs a record; `
+          : `none clear the ${floor}-cell floor, so <b>nothing here needs a record today</b>; `) +
+        `${queue.length - clears.length} have evidence but sit under it; ` +
+        `${unbacked.length} have none; ` +
+        `${tiers.length === 1 ? "1 is a pricing tier, not a model" : `${tiers.length} are pricing tiers, not models`}. ` +
+        "<b>Nothing in this section is a defect</b> — a model nobody has evaluated enough of yet is a " +
+        "collection target, and only a floor-clearing candidate is counted as work.</summary>",
+    );
+    say();
     say(
       `Watching ${namespaces.size} provider namespaces the catalog already resolves to ` +
         `(${[...namespaces].sort().join(", ")}), published in the last ${sinceDays} days. ` +
         `A model needs **more than ${floor} filled cells** to not lower cell coverage — ` +
         `that is the current average, recomputed each run, not a policy.`,
-    );
-    say();
-    say(
-      `Of ${textish.length} text model(s) upstream that the catalog does not carry: ` +
-        `**${queue.length} have archived evidence** and are the queue below; ` +
-        `${unbacked.length} have nothing waiting for them; ` +
-        `${tiers.length} are pricing or service tiers of a model, not models. ` +
-        "Only the first group is counted as a gap.",
     );
     say();
 
@@ -450,7 +471,7 @@ if (!useNetwork) {
           (evidence.cells.length ? `\n  cells it would fill: ${evidence.cells.sort().join(", ")}` : "");
       });
       say();
-      gapCount += queue.length;
+      gapCount += clears.length;
     }
 
     // The two non-queue groups are counts with their names inline, never `- \`id\`` bullets:
@@ -471,7 +492,7 @@ if (!useNetwork) {
 
     if (tiers.length) {
       say(
-        `${tiers.length} are a **pricing or service tier**, not a model ` +
+        `${tiers.length} ${tiers.length === 1 ? "is" : "are"} a **pricing or service tier**, not a model ` +
           `(${tiers.map(({ item }) => "`" + item.id + "` (" + tierOf(item) + ")").join(", ")}). ` +
           "Same weights at a different price: they belong in `configurations` or a batch meta, never " +
           "in a catalog record of their own (AGENTS.md rule 7). Matched on a closed keyword list " +
@@ -492,6 +513,12 @@ if (!useNetwork) {
       );
       say();
     }
+
+    // Closed here on purpose: everything above is upstream information, and everything below is a
+    // defect on THIS side of the line — a price lookup naming a dead id, or a catalog model with no
+    // lookup at all. Those two stay visible and keep counting, because somebody can fix them today.
+    say("</details>");
+    say();
 
     // A lookup naming an id the provider no longer serves resolves to nothing, and nothing is
     // silent: the price card simply keeps its archived figure with no comparison beside it.

@@ -464,8 +464,20 @@ npm run ingest && git diff --exit-code app/observations.generated.ts
 npm run check:data
 npm run check:models
 npm run check:prices
+npm run propose:attribution -- --backtest                          # the attribution gate vs 300 human decisions
+node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test
+node scripts/aa-new-models.mjs --self-test
 npm run build
+npm run check:mobile                                               # both routes, real device emulation
 ```
+
+The last four were added after the first six, each because something that decides unattended was
+being trusted rather than tested. `check:mobile` went in on 2026-08-07; the two `--self-test`s on
+2026-08-10, and the argument for them is written in their own files: both classifiers decide which
+upstream rows count as evidence and which upstream names are models at all, `add-model-and-merge.sh`
+merges on the first of those numbers, and a comment in `report-gaps.mjs` had been quoting
+"89% recovery, 0 over-counts" for weeks while the real figures were 70% and 1. Neither needs a
+network or an API key, which is why they can sit in the per-commit contract at all.
 
 `npm run check:upstream` is deliberately **not** in that list. It re-fetches an archived source
 over the network and fails for reasons unrelated to the commit under review, which is how a red
@@ -477,6 +489,15 @@ matter what it finds and the finding becomes an issue instead. The daily job pub
 long-lived issue titled *Collection gaps*, edited in place and closed when the report comes back
 empty — so an open issue always means there is something to collect, and there is never a backlog
 of stale issues to ignore. Add `--no-network` to run the two local sections offline.
+
+**What counts toward that count is narrower than what the report prints**, and the difference is the
+whole reason the issue stays readable. An upstream model the catalog does not carry is only counted
+when it **clears the dilution floor** — under the floor, nobody can add it until a source evaluates
+it further, so counting it would pin the issue open on work that does not exist. Everything else in
+that section (models under the floor, models with no archived evidence, pricing tiers, image models)
+is printed inside a collapsed `<details>` whose summary says outright that none of it is a defect.
+Changed 2026-08-10, after the section read as eight outstanding tasks when it was two queue items
+and six things that must never be collected.
 
 The data check currently enforces:
 

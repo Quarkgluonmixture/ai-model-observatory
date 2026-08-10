@@ -126,6 +126,21 @@ linked, so every `node` script passed and `lint` and `build` reported `not found
 CI runs all of these, and additionally fails if `app/observations.generated.ts` differs from
 a fresh `npm run ingest` — the generated file must never be hand-edited.
 
+**Two classifiers are also replayed on every commit** (added 2026-08-10, neither needs a network or
+a key):
+
+```bash
+node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test   # sameFamily + evidence counter
+node scripts/aa-new-models.mjs --self-test                                      # pricing tier vs model
+```
+
+They decide, unattended, which archived rows count as a model's evidence and which upstream names are
+models at all — and `scripts/add-model-and-merge.sh` merges a new catalog record on the first of
+those numbers. Both were print-only commands until a comment quoting "89% recovery, 0 over-counts"
+was found still saying that weeks after the real figures had moved to 70% and 1. If you change a
+matching rule, expect these to fail first; that is what they are for. The evidence counter carries
+one **pinned** over-count with a written reason — a new one fails, that one does not.
+
 Three of the contract's failures exist because a *report* was not enough. `check:data` printed
 `deepseek-v4-flash/critpt: 7.14 vs 16.57` every day for a week while the live site showed a
 preview release's Arena score under the name of the model that replaced it. A line that never
