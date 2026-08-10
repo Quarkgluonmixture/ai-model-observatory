@@ -273,6 +273,26 @@ say();
 
 const variantOf = (id) => id.includes(":"); // ":free", ":thinking" — an operating point, not a model
 
+// A pricing or service tier is not a model either, and it arrives in a shape `variantOf` cannot
+// see: OpenRouter publishes `Claude Opus 5 (batch)` and `Claude Opus 5 (Fast)` as separate entries
+// whose tier lives in `name`, not after a colon in `id`. AGENTS.md rule 7 puts an operating point
+// in `configurations`; a record of its own would enter every ranking as a second copy of a model
+// the catalog already carries.
+//
+// The keyword list is closed and deliberately short, because the cost of a wrong entry here is a
+// real model going unreported. `preview` is NOT on it — the catalog carries `Gemini 3.1 Pro
+// Preview` and `Qwen3.6 Max Preview` as records of their own, since a preview is different weights
+// while a batch tier is the same weights at a different price. Nor are `lite`, `mini` or `flash`:
+// those are models. Measured on 2026-08-10, when five of the eight names in this section were
+// `(batch)` or `(Fast)` and carried zero archived rows between them.
+const TIER_WORDS = new Set(["batch", "fast", "flex", "priority", "standard", "scale"]);
+const tierOf = (item) => {
+  const match = /\(([^()]+)\)\s*$/.exec(item.name ?? "");
+  if (!match) return null;
+  const word = match[1].trim().toLowerCase();
+  return TIER_WORDS.has(word) ? word : null;
+};
+
 // An image generator is not a candidate for this catalog, and the feed says so outright:
 // `architecture.output_modalities`. Measured 2026-08-07 — Nano Banana 2, Nano Banana 2 Lite and
 // Nano Banana Pro all publish ["image","text"], while Muse Spark 1.2 and Qwen3.7 Flash publish
@@ -290,8 +310,16 @@ const textOnly = (item) => {
 // `scripts/lib/upstream-evidence.mjs`, which is also where the four reasons a row is not a cell
 // live. Kept there rather than here because that number is what decides whether a record should be
 // written at all, and a second copy would drift into disagreeing with this one about which models
-// are worth collecting. Self-tested against the catalog's own models: 89% mean recovery and 0
-// models credited with a cell they do not have — run it with `--self-test`.
+// are worth collecting. Run it with `--self-test`.
+//
+// ⚠ That self-test has drifted and is not in CI, which is why the drift went unnoticed. Measured
+// 2026-08-10: **70% mean recovery** (was 89% when written) and **1 model credited with a cell it
+// does not have** (was 0) — `deepseek-v4-flash` / `ifbench`. That model is the repository's known
+// two-models-one-string case (the preview versus the 0731 release, see AGENTS.md), so the
+// over-count is most likely `norm` conflating the two spellings rather than a new bug. It matters
+// beyond this report: this counter is what decides whether a model clears the dilution floor, and
+// `scripts/add-model-and-merge.sh` merges on that. Tracked in TODO.md; do not "fix" the numbers in
+// this comment to match, fix the counter.
 const lookupEvidence = buildEvidenceIndex(BENCHMARKS.map((benchmark) => benchmark.id));
 const evidenceFor = (item) => lookupEvidence([item.id.split("/").slice(1).join("/"), item.name ?? ""]);
 
@@ -341,7 +369,26 @@ if (!useNetwork) {
       .sort((a, b) => Number(b.created) - Number(a.created));
 
     const images = candidates.filter((item) => textOnly(item) === false);
-    const fresh = candidates.filter((item) => textOnly(item) !== false);
+    const textish = candidates.filter((item) => textOnly(item) !== false);
+
+    // Three different things used to share one list, and a reader had to re-sort them by hand every
+    // morning: a model worth collecting, a model with nothing behind it yet, and a pricing tier that
+    // must never get a record at all. Eight names on 2026-08-10 were two of the first and six of the
+    // other two, which is how a report that never fails trains its reader to skim it.
+    //
+    // The tier test is deliberately a CONJUNCTION — a tier keyword *and* an empty archive. A
+    // `(batch)` entry that somehow has archived cells stays in the queue for a person to look at,
+    // because the expensive mistake here is silently dropping a real model, not carrying one extra
+    // line. Same reason the image count below is printed rather than filtered away.
+    const withEvidence = textish.map((item) => ({ item, evidence: evidenceFor(item) }));
+    const tiers = withEvidence.filter((entry) => tierOf(entry.item) && entry.evidence.rows === 0);
+    const rest = withEvidence.filter((entry) => !tiers.includes(entry));
+    // Closest to clearing the floor first. Date order put the newest name on top, which is not the
+    // same as the one worth collecting.
+    const queue = rest
+      .filter((entry) => entry.evidence.rows > 0)
+      .sort((a, b) => b.evidence.cells.length - a.evidence.cells.length);
+    const unbacked = rest.filter((entry) => entry.evidence.rows === 0);
 
     say(
       `Watching ${namespaces.size} provider namespaces the catalog already resolves to ` +
@@ -350,29 +397,69 @@ if (!useNetwork) {
         `that is the current average, recomputed each run, not a policy.`,
     );
     say();
+    say(
+      `Of ${textish.length} text model(s) upstream that the catalog does not carry: ` +
+        `**${queue.length} have archived evidence** and are the queue below; ` +
+        `${unbacked.length} have nothing waiting for them; ` +
+        `${tiers.length} are pricing or service tiers of a model, not models. ` +
+        "Only the first group is counted as a gap.",
+    );
+    say();
 
-    if (fresh.length === 0) {
-      say("Nothing new.");
+    if (queue.length === 0) {
+      say("Nothing upstream has archived evidence waiting for it.");
+      say();
     } else {
-      clipped(fresh, (item) => {
-        const evidence = evidenceFor(item);
+      clipped(queue, ({ item, evidence }) => {
         const date = new Date(Number(item.created) * 1000).toISOString().slice(0, 10);
         const modality = textOnly(item) === null ? " · ⚠ feed states no output modality" : "";
         // Both numbers are lower bounds, and saying so is the point: a source spelling the model
         // differently enough to survive `norm` is not counted, so "below the floor" is a claim
         // this can make and "above the floor" is a candidate rather than a verdict.
-        const verdict = evidence.rows === 0
-          ? "**nothing in the archive waits for it** — a record today draws an empty row, so leave it uncollected"
+        //
+        // The shortfall is `floor + 1 - cells`, not `floor - cells`, because clearing the floor
+        // means *more than* the average — an off-by-one worth spelling out, since this number is
+        // the one a reader uses to decide what to collect next.
+        const verdict = evidence.cells.length > floor
+          ? `at least ${evidence.rows} archived row(s) filling at least ${evidence.cells.length} catalog cell(s)` +
+            ` — clears the ${floor}-cell floor, worth drafting with \`npm run draft:model\``
           : `at least ${evidence.rows} archived row(s) filling at least ${evidence.cells.length} catalog cell(s)` +
-            (evidence.cells.length > floor
-              ? ` — clears the ${floor}-cell floor, worth drafting with \`npm run draft:model\``
-              : ` — under the ${floor}-cell floor, so a record would still lower coverage`);
+            ` — **needs ${floor + 1 - evidence.cells.length} more cell(s)** to clear the ${floor}-cell floor;` +
+            " a record today would still lower coverage";
         return `- \`${item.id}\` — ${item.name ?? "unnamed"}, published ${date}${modality}\n` +
           `  ${verdict}${evidence.parameters ? " (operating parameters are archived)" : ""}` +
           (evidence.cells.length ? `\n  cells it would fill: ${evidence.cells.sort().join(", ")}` : "");
       });
       say();
-      gapCount += fresh.length;
+      gapCount += queue.length;
+    }
+
+    // The two non-queue groups are counts with their names inline, never `- \`id\`` bullets:
+    // `scripts/publish-gaps-issue.sh` reads that bullet shape out of this section to tell a model
+    // that appeared today from one that has been sitting here a week, and neither of these is a
+    // model queued for collection. The `images` paragraph below has always worked this way.
+    if (unbacked.length) {
+      const named = unbacked
+        .map(({ item, evidence }) => "`" + item.id + "`" + (evidence.parameters ? " (parameters archived)" : ""))
+        .join(", ");
+      say(
+        `${unbacked.length} published upstream with **nothing in the archive waiting** ` +
+          `(${named}). A record today draws an empty row across every column, so these wait for a ` +
+          "source to evaluate them rather than for somebody to type them in.",
+      );
+      say();
+    }
+
+    if (tiers.length) {
+      say(
+        `${tiers.length} are a **pricing or service tier**, not a model ` +
+          `(${tiers.map(({ item }) => "`" + item.id + "` (" + tierOf(item) + ")").join(", ")}). ` +
+          "Same weights at a different price: they belong in `configurations` or a batch meta, never " +
+          "in a catalog record of their own (AGENTS.md rule 7). Matched on a closed keyword list " +
+          "**and** an empty archive, so a tier that turns out to carry evidence stays in the queue " +
+          "above instead of disappearing here.",
+      );
+      say();
     }
 
     // Reported as a count and not as a list. They are not work, and naming them every day is how

@@ -30,6 +30,14 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 三个做掉了（手机探针进 CI · 空行第四条 · 线上站验证机制——**2026-08-10 起真的在跑了**，
 `productionUrl` 已填 `https://quarkspace.top`），缺口 2 按你的决定跳过。剩下：
 
+- [ ] ⭐⭐ **证据计数器漂了，而且它是自动上板的判据**。2026-08-10 实测 `upstream-evidence.mjs
+      --self-test`：**70% mean recovery**（注释里写的是 89%）、**1 个模型被算了它没有的格**
+      （注释写 0）—— `deepseek-v4-flash` / `ifbench`。那个模型正是仓库记载的「一个字符串两个
+      模型」（preview vs 0731，见 `AGENTS.md`），所以最可能是 `norm` 把两种拼法混了，不是新 bug。
+      **为什么要紧**：这个计数器决定谁过 48 格地板，而 `add-model-and-merge.sh` 按它自动合并 ——
+      算多了就可能拿不存在的证据把一个模型推过地板。⚠ 两个 `--self-test`（这个和
+      `aa-new-models.mjs --self-test`）**都不在 CI 里**，所以这次漂移没人发现；要不要挂进 CI 是
+      一个决定（挂了就多一个失败面）。
 - [ ] ⭐ **要你定：`swe-pro` 的 Scale 活板要不要写成 fetcher**（2026-08-10 排程 agent 查出来的）。
       它走 Next.js RSC flight —— 带 `RSC: 1` 头 GET 就能拿到 `"entries":[{model,rank,score,…}]`，
       不需要浏览器。现在 `batch-02` 是手抄且冻结，**Scale 哪天评测了新模型没人会发现**。
