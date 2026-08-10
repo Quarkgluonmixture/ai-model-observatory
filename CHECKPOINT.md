@@ -1,6 +1,7 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-10 八个 PR 合进 main：**站上线在 `https://quarkspace.top`**(ICP 页脚 +
+**接手点** — 2026-08-10 八个 PR **全部合并并已发布**(#65–#72)：**站上线在
+`https://quarkspace.top`**(ICP 页脚 +
 `check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
 **batch 30 SWE-Bench Pro 脚本化** · 修掉一条让报告对 Gemini 3.5 Flash Lite 全盲的子串过滤 ·
 **最后一个 PR:网站上那份「上游模型」从没拿到过滤器**,而那 5 条档位噪音正占着 8 个名额里的 5 个、
@@ -18,7 +19,7 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2133 rows · 1382 / 2088 cells（66.2% cell coverage）** —— 8-10 实测；8-09 是 2125 / 1374 / 65.8%，差值来自当日 `Refresh live boards` |
+| 观测 | **2133 rows · 1382 / 2088 cells（66.2% cell coverage）** —— 8-10 实测 |
 | 源分类 | benchmark 918 / independent 1025 / vendor 190 |
 | 溯源 | **321 / 321**（100%，batch-27 于 2026-08-08 补齐最后三个） |
 | 归档 | **30 batches，其中 16 个可脚本重读**（8-10 实测 `meta.collectedWith`；batch 30 = SWE-Bench Pro）；⚠ **「裸奔 1,287 行」这个数复现不出来**（两种测法得 1,404 / 1,226），引用前先钉定义 |
@@ -28,20 +29,15 @@ Snapshot for the next session. One page. 现场状态在这里；**动手前的�
 ⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。覆盖率这几天怎么走的，
 见 `LOG.md` 2026-08-06 起各条。
 
-**站已上线在自己的域名上（2026-08-10）**：`https://quarkspace.top` 与 `www` 均 200，ICP
-`京ICP备2026050077号-1` 在两个域名 × 两条路由的**服务端 HTML** 里都渲染（`app/site-beian.tsx`，
-根 layout 一处）。`productionUrl` 已填 ⇒ **`check:deployment` 从此真的在跑**（此前从未跑过），
-现在绿。⏳ 仍未完：公安联网备案 8-10 交西城驻区大队，约 2026-09-09 出结果，批了在同一文件补第二个
-号链 `www.beian.gov.cn`。细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。
+**域名 / 备案已定案**（两个域名 × 两条路由的服务端 HTML 都渲染 ICP，`check:deployment` 绿）——
+细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。⏳ 只剩：公安联网备案约 2026-09-09 出结果，
+批了在 `app/site-beian.tsx` 补第二个号链 `www.beian.gov.cn`（一个文件的事）。
 
 **自动化真正剩下的**看 `TODO.md`（堆 1「只差你一个事实」8-10 已清空；剩下是下一个 chunk 与判断题）。
-⭐ **「上游有、目录没有」那一节不是缺陷清单**,而它**由两处独立算出**:`report:gaps`(存档证据链,
-只有**过了地板**才计入 issue 计数,其余折叠在 `<details>` 里)和 **`app/api/live-models/route.ts`
-(网站上那一份,OpenRouter 运行时)**。⚠⚠ 后者一整天没有前者的档位/变体过滤器 ——
-**报告干净不等于网站干净**;而且噪音不只是难看,它占着 `.slice(0, 8)` 的名额**遮掉了三个真模型**。
-现在判定逻辑只有一个家 `app/upstream-variants.ts`(route 里 import 必须带 `.ts` 扩展名),
-网站那份也折叠了、并明说不是缺陷、被截时会报出截掉多少。判据与理由 →
-`docs/ARCHITECTURE.md` §6「Two code paths…」+ §8,机制 → `GOTCHAS.md` 19。
+⭐ **「上游有、目录没有」不是缺陷清单**,而它**由两处独立算出** —— `report:gaps`(存档证据链,
+只有过地板的才计入 issue 计数)和 `app/api/live-models/route.ts`(网站那份,运行时)。判定逻辑
+现在只有一个家 `app/upstream-variants.ts`(route 里 import 必须带 `.ts`)。⚠⚠ **报告干净不等于
+网站干净** → `GOTCHAS.md` 19 + `docs/ARCHITECTURE.md` §6「Two code paths…」。
 
 ---
 
@@ -113,11 +109,9 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **明早第一次看到分层后的 gaps issue**：上游那一节应当是**折叠的一行**,且 issue 的计数**不含**
-   地板下的候选(8-10 本地实测 58,折叠内 4 个候选一个都没计)。若它还把 7 个上游名字都算成 gap,
-   就是 `clears` 那条没生效。**并且顺手在 quarkspace.top 上点开那个折叠**:应当是 6 个名字、
-   没有任何 `(batch)` / `(Fast)`,里面**要有** Luna Pro / Terra Pro / Sol Pro
-   —— 它们是被噪音挤掉过的那三个。
+1. **明早第一次看到分层后的 gaps issue**：上游那一节应当是**折叠的一行**,计数**不含**地板下的候选
+   (8-10 本地实测 58)。若 7 个上游名字都算成 gap,就是 `clears` 没生效。**顺手在站上点开那个折叠**:
+   应当 6 个名字、零 `(batch)`/`(Fast)`,且**要有** Luna Pro / Terra Pro / Sol Pro(被噪音挤掉过的三个)。
 2. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。Scale 加一个模型就该开 PR;
    ⚠ 它读的是 RSC flight，**不是稳定 API** —— 挂了应当是**大声 throw**(六条断言),
    不该是"看板变小了"。真挂了先看 `docs/ARCHITECTURE.md` §9 里 SWE-Bench Pro 那行。
@@ -136,6 +130,6 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
 | `GOTCHAS.md` | **动手之前扫一遍**：20 条仍会咬人的坑，编号稳定可引用。⭐ 8-10 新增第五族「我以为我知道数据长什么样」(15–18)——一天踩三次同形错；19 = 规则写在报告里≠网站在生效(同一句话两条代码路径)，20 = `<small>` 自己掉到 9px 底下 + 检查器不选中的元素永远通过 |
-| `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做 |
+| `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 已第六轮轮转（8-10）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
