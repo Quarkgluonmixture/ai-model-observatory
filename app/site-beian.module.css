@@ -1,0 +1,53 @@
+/* The ICP filing strip, rendered by the root layout on every route.
+
+   Its colours are literal on purpose. The observatory owns one palette (--muted / --line in
+   globals.css) and the personal site owns another (--h-dim / --h-hair, scoped under .home), and
+   a strip that sits above both must not resolve a variable from either — under .home the
+   globals ones are still in scope and would silently paint it the observatory's grey.
+   Nothing in this file may move into globals.css: that file owns the observatory's phone
+   contract (type floor, tap targets, safe areas) — see docs/UI.md. */
+
+.strip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  padding: 15px max(12px, env(safe-area-inset-right)) 15px max(12px, env(safe-area-inset-left));
+  border-top: 1px solid #e0ddd2;
+  color: #6d7982;
+  /* 11px is the body step of the scale in docs/UI.md §2. The phone floor is 9px, but this is
+     the one line on the page a regulator reads, so it takes body size rather than footnote. */
+  font: 11px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "HarmonyOS Sans SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
+  text-align: center;
+}
+
+.strip a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid #c6c2b5;
+}
+
+.strip a:hover {
+  color: #14212b;
+  border-bottom-color: #14212b;
+}
+
+@media (max-width: 800px) {
+  /* The link is the only control in the strip, so it gets a real tap target. */
+  .strip a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+
+  /* Clear the observatory's bottom rail, which is position:fixed below 800px. `.shell` reserves
+     64px + inset for its own content, but this strip is its *sibling* — outside that reservation
+     — so at full scroll the rail would sit on top of the filing number. Matched through the
+     sibling combinator because `.shell` is a plain global class; `.home` is a CSS-module class
+     whose emitted name is hashed, so the personal site cannot (and need not) be matched here. */
+  :global(.shell) ~ .strip {
+    padding-bottom: calc(15px + 64px + env(safe-area-inset-bottom));
+  }
+}

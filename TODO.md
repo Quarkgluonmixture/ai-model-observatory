@@ -29,9 +29,15 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 三个做掉了（手机探针进 CI · 空行第四条 · 线上站验证机制），缺口 2 按你的决定跳过。剩下：
 
-- [ ] ⭐ **填 `data/deployment.json` 的 `productionUrl`** —— 只有你有这个事实。填之前
-      `check:deployment` 每天在 gaps issue 里把自己报成「没跑」。填一行就激活：
-      `"productionUrl": "https://<域名>"`。机制已经验过（读 JS chunk，不依赖 DOM 显不显示）。
+- [ ] ⭐⭐ **只有你能做：把 `quarkspace.top` 绑到 EdgeOne Pages，主域名和 `www` 都要**。
+      2026-08-10 实测两个都**不解析**（三个公共解析器查 A 记录全空；域名 ACTIVE、NS 已指 DNSPod，
+      缺的是记录本身）。腾讯的备案合格线是**主域名与 www 都能正常访问** + 页脚挂服务备案号，
+      页脚已经做完（`app/site-beian.tsx`，见 `docs/ARCHITECTURE.md` §6），所以现在只差这一步。
+      在 EdgeOne Pages 加自定义域名拿到 CNAME 目标，再去 DNSPod 加 `@` 与 `www` 两条记录。
+- [ ] ⭐ **填 `data/deployment.json` 的 `productionUrl`** —— **等上面那条解析通了再填**，
+      域名已经知道了（`https://quarkspace.top`），但指向一个不解析的域名只会让每日 job
+      因为与数据无关的理由变红。填之前 `check:deployment` 每天在 gaps issue 里把自己
+      报成「没跑」。填一行就激活。机制已经验过（读 JS chunk，不依赖 DOM 显不显示）。
 - [ ] ⭐ **要你定：hermes 死了要不要推微信**。GitHub 挂 → hermes 推微信；hermes 挂 →
       只写进它自己读的那个 issue。**这是唯一没有推送兜底的失败**（§10 自己也这么说）。
       没动是因为 `upstream.yml` 里写明了相反的理由——「没人在做的队列值得记下来，不值得打扰」——
