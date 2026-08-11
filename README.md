@@ -140,6 +140,7 @@ npm run check:data      # observation contract + coverage report
 npm run check:models    # every catalog number vs the source archive
 npm run check:prices    # a promotional price that reached the catalog
 npm run build
+npm run check:beian     # the ICP filing reached every prerendered route (needs the build above)
 ```
 
 `npm run check:upstream` is separate: it re-reads every scripted source over the network and

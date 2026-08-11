@@ -37,6 +37,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { BENCHMARKS, MODELS } from "../app/model-data.ts";
+import { FILING } from "../app/beian-filing.ts";
 
 // fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
 // leading slash that fs cannot resolve. The agent maintaining this runs there.
@@ -78,6 +79,73 @@ const fetchText = async (url) => {
   if (!response.ok) throw new Error(`${response.status} ${response.statusText} — ${url}`);
   return response.text();
 };
+
+// The filing, on the live host. `npm run check:beian` already asserts it reached every route of
+// the production *build* and fails CI if it did not; this asks the other half of the question,
+// which no build check can: is the host actually serving that build. They are different failures —
+// a correct build that never deployed still leaves the domain non-compliant.
+//
+// §6 requires the filed apex *and* its www host to both serve, so the sibling host is probed too.
+// It reports rather than fails, like everything else here: a filing problem is urgent for a person
+// and is still not a reason to abandon the archive refresh.
+//
+// It runs BEFORE the staleness check below, and that ordering is load-bearing rather than
+// cosmetic. The staleness check exits early when `/models` does not answer — which is exactly the
+// state in which somebody most needs to know whether the domain is still displaying its filing.
+// Written the other way round once, a 404 on one route silently took the filing verdict with it,
+// and a check that does not run prints nothing, which reads like a check that passed.
+{
+  const siblingOf = (url) => {
+    try {
+      const parsed = new URL(url);
+      parsed.hostname = parsed.hostname.startsWith("www.")
+        ? parsed.hostname.slice(4)
+        : `www.${parsed.hostname}`;
+      return parsed.origin;
+    } catch {
+      return null;
+    }
+  };
+
+  const probes = [
+    [`${base}/`, "apex /"],
+    [`${base}/models`, "apex /models"],
+  ];
+  const sibling = siblingOf(base);
+  if (sibling) probes.push([`${sibling}/`, `${new URL(sibling).hostname} /`]);
+
+  const missingFiling = [];
+  const unreachable = [];
+  for (const [url, label] of probes) {
+    // `/models` was already fetched above; refetching it is one request and keeps this block
+    // readable as one loop rather than a special case that stops matching the list beside it.
+    try {
+      if (!(await fetchText(url)).includes(FILING)) missingFiling.push(label);
+    } catch (error) {
+      unreachable.push(`${label} (${error.message})`);
+    }
+  }
+
+  if (missingFiling.length === 0 && unreachable.length === 0) {
+    console.log(`ICP filing served on all ${probes.length} probed host/route pair(s): ${FILING}.`);
+  } else {
+    if (missingFiling.length) {
+      console.log(
+        `⚠ **The ICP filing is missing from what production serves** — ${missingFiling.join(", ")}. ` +
+        "A Beijing-filed site must display it on every route of every filed host (§6); the consequence " +
+        "of not doing so is the domain, not a wrong number. `npm run check:beian` says whether the " +
+        "build carries it, which tells you whether this is a build problem or a deployment problem.",
+      );
+    }
+    if (unreachable.length) {
+      console.log(
+        `⚠ **A filed host did not answer**: ${unreachable.join("; ")}. ` +
+        "Tencent Cloud requires the apex and its www host to both serve, so an unreachable sibling " +
+        "is itself a filing problem and not only a monitoring gap.",
+      );
+    }
+  }
+}
 
 let html;
 try {
