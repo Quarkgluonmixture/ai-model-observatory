@@ -240,7 +240,7 @@ export const others = [
   {
     name: "Autonomous Agent Prediction",
     year: "2026",
-    text: "Kaggle 给 60 分钟、2 美元、纯 CPU,agent 自己分析没见过的表格数据、训练、挑最终提交。public 约 0.817,130 队里前三分之一。",
+    text: "Kaggle 给 60 分钟、2 美元、纯 CPU,agent 自己分析没见过的表格数据、训练、挑最终提交。最终 private 0.780,571 队里第 131。赛后我把两份榜单按队伍连起来算过:竞争带里 public 与 private 的 Spearman 只有 0.142,所以整场比赛我追的那个分数几乎不预测最终成绩。",
     href: "https://github.com/Quarkgluonmixture/autonomous-agent-prediction-beta",
   },
   {

@@ -58,8 +58,40 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 
 ## 小口子
 
-- [ ] qwen3.8-max `intelligence` 仍为 null，但 AA 现已发布 58 —— 属于 AA-refresh 工作流，
-      非溯源修复。下次 AA 刷新时一并更新。
+- [ ] ⭐ **要你定:AA 把 Qwen 的 Max 档放在 `effort` 里,目录把它当族名 —— 这一格自动修不了。**
+      原条目写的是「下次 AA 刷新时一并更新」,**2026-08-11 证伪**:那次刷新(PR #74)如期发生,
+      没更新,而且机制上永远不会。逐条实测:
+      - AA 参数 API 把旗舰拼成**裸词干 + effort 单列**:`qwen3-8`/`max`、`qwen3-7`/`max`、
+        `qwen3-6`/`max`、`qwen3`/`max`。四条 `resolveModelId(...)` **全部 undefined**
+        (Plus 档不受影响:`qwen3-7-plus` 有自己的 slug,解析正常)。
+      - `check-model-provenance.mjs:71` 对解析不到的行**直接跳过** ⇒ 这四行连被检查的资格都没有,
+        所以「321/321 backed · 0 contradictions」为真,但它的**范围是解析得到的行**。
+      - ⚠ **光加别名不管用**:同文件 `:219` 按 `模型id|effort` 分桶,`qwen3.8-max` 的
+        configuration effort 是 `null`,只会去 `|null` 桶取值;effort 为 `max` 的行落进 `|max` 桶,
+        对那一格依然不可见。而 `max` 在 `claude-opus-5_max` / `gpt-5.6-sol_max` 上是**真 effort**,
+        「统一把 max 并进族名」会错到别家头上。
+      - 代价(2026-08-11 实测,归档值取 PR #74 刷新后):
+
+        | 目录 | 现在写着 | AA 参数 API 这一行 |
+        |---|---|---|
+        | `qwen3.8-max` | intel/cost/speed/latency **全 null**(全目录唯一一个) | 58.1 / 1.132 / 81.57 / 2.81 |
+        | `qwen3.7-max` | 46 · **1.28** · 199.6 · 2.45 | 46.7 · **0.5413** · 201.87 · 2.31 |
+        | `qwen3.6-max` | 40 · null · 45.9 · 3.29 | 41.1 · null · 50.21 · 3.5 |
+
+        `qwen3.7-max` 那行**有据**——来自 `batch-07-aa-leaderboard` 与 `batch-08-operating`,
+        都是 AA 的**旧读数**,所以契约全绿。但 AA 现在这一行的 cost **差 2.4 倍**,
+        而漂移闸门看不见它 ⇒ 站上挂着过期的旗舰成本,不会有任何检查报出来。
+        这是「报告干净 ≠ 网站干净」发生在**参数**上,不是观测格上。
+      - **两个都站得住的选项**(要你选一个,机械件我来):
+        (a) **fetcher 层归一**:对着一份闭合的「厂商产品档」清单(Alibaba 的 max/plus,不是 effort)
+            把档位并回 `model_raw`、effort 置空。好处是目录语义不动;代价是要维护第二份闭合清单。
+        (b) **目录层认账**:把这三条记录的 configuration effort 从 `null` 改成 `max`。
+            好处是不写新规则;代价是给一个没有 effort 维度的族**造出**一个维度。
+      - ⚠ 无论选哪个,合并那一刻 `qwen3.7-max` 的 cost 会从 1.28 动到 0.5413 ——
+        **这是已发布数字的移动**,正好撞三条件第二条,按章程就不该无人值守地做。
+      - 顺带:`data/model-aliases.json` 里 `Qwen3.8 Max` 那条的 reason 写着「AA 的评测板比参数 API
+        先收录这个模型,所以目录有 GDPval 分而没有 intelligence」——**那句话现在过期了**,
+        参数 API 已经有它,只是拼法解析不到。定案时一并改掉,别让下一个人再查一遍。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
 - [ ] ARC 的两条「显示名说该映射、`modelGroup` 说不是」的字符串
       （`openai-gpt-5-5-2026-04-23-high`、`google-gemini-3-1-pro-preview`）现在按两个带日期的快照
@@ -69,11 +101,14 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 ## 自动化
 
 - [ ] （原 8-08 的三件,2026-08-10 实测后只剩两件；③ 已确认:`auto/attribution` 8-08 开了 #58,
-      判据没反）① `auto/refresh-aa` 到底有没有**自己**开出过 PR —— 该分支只有 8-07 的 #48,
-      8-08 之后没有新的,所以「`gh: Argument list too long` 已修好」这件事**从未被观测证实过**,
-      只是没再报错。下次 AA 有参数变动时盯一次。
-      ② 「Is the queue being worked?」那一节 **`report-gaps.mjs` 里 grep = 0**,即根本没建
-      (或建了又删了)。要么建，要么把这条删掉——现在是个悬空的期待。
+      判据没反）~~① `auto/refresh-aa` 到底有没有**自己**开出过 PR~~ —— **2026-08-11 观测证实**:
+      `auto/refresh-aa` 自己开出了 **#74**,`gh: Argument list too long` 确实修好了。这条可删。
+      ~~② 「Is the queue being worked?」那一节根本没建~~ —— **2026-08-11 证伪:建了,只是不在
+      `report-gaps.mjs` 里**,而是 `upstream.yml:118-123` 直接 `node scripts/check-heartbeat.mjs
+      --agent` 拼进 `gaps.md`(所以按 npm script 名 `check:heartbeat` 去 grep 会漏掉它)。这条可删。
+      ⚠ 真正留下的那半个问题不在这:`--agent` **分不清 agent 和 owner**(两者都以人的身份提交),
+      所以它答的是「队列有没有人在做」,不是「hermes 活着吗」——你自己开一次 session 就把三天时钟
+      清零。见 `docs/ARCHITECTURE.md` §10 末尾「两个调度器互相看守是不对称的」那条。
       ⚠ 判据是 branch-scoped：`pr-hands-off.sh` 查 `gh pr list --head auto/attribution`，
       **只看那一个分支**，别的分支上有没有 open PR 它一概不管。
 - [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦在 `auto/attribution` 上的 PR）。

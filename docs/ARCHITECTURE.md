@@ -768,7 +768,23 @@ table was outside the catalog because one third party had not published a compos
 every other lens ranks the model normally, and the value lens — a ratio of intelligence to cost —
 drops it the same way it already drops a model with no published cost per task. This is rule 1
 applied to the catalog's own schema, which was the one place the codebase still required a number
-it might not have. AA's index fills itself in later, on a normal refresh, with no code change.
+it might not have.
+
+~~AA's index fills itself in later, on a normal refresh, with no code change.~~ **Disproved
+2026-08-11, and the way it failed is the point.** The refresh arrived on schedule (PR #74) and
+Qwen3.8 Max is still null, because the parameter API spells the flagship as a bare stem with the
+tier in its own field — `qwen3-8` / effort `max` — and that string resolves to nothing. Three more
+do the same (`qwen3-7`, `qwen3-6`, `qwen3`). `check-model-provenance.mjs:71` skips a row it cannot
+resolve, so those rows were never eligible to be checked: the audit's own "321/321 backed, 0
+contradictions" is true, and its scope is *the rows the resolver can see*. Adding an alias does not
+fix it either — `:219` buckets rows by `id|effort` and this record's configuration effort is `null`,
+so a row carrying `max` lands in a bucket the null configuration never reads. The real question is
+whether Alibaba's Max/Plus **product tier** is an effort at all, and `max` genuinely is an effort
+elsewhere (`claude-opus-5_max`), so no blanket rule is available. It is a catalog decision, it is
+open in `TODO.md`, and the cost of leaving it is not only the empty record: Qwen3.7 Max's published
+cost per task is backed by an older AA reading at 1.28 while this row says 0.5413, and the drift
+gate cannot see the disagreement. **A number that no check can reach is not a checked number** —
+the same shape as "report clean ≠ site clean", one layer lower.
 
 What is left of the manual path is the part that should be manual — and it is now smaller than
 that sentence used to imply, because the *easy half* of the alias step was measured and handed to a
@@ -904,7 +920,13 @@ stay. That is judgement, and judgement does not go in a cron job.
   2026-08-09, after batch 29: 15 scripted batches carry 11,137 archived rows and 14 transcribed ones
   carry 1,751, so 86.4% of the archive re-reads itself. The honest figure for what is undiffable is
   smaller than that leftover: 464 of those transcribed rows are superseded by a scripted batch and
-  no longer feed anything, so **1,287 rows are actually at risk** — nothing tells you
+  no longer feed anything, so **1,287 rows are actually at risk** — ⚠ **that number is contested and
+  should not be quoted until it is pinned.** Re-measured 2026-08-10 two ways, it came out 1,404
+  (own predicate) and 1,226 (`archive.mjs`'s `supersededBy`), and the transcribed total came out
+  1,573 rather than 1,751. Nobody has since chosen the definition, and this file and `TODO.md` have
+  been carrying different answers to one question ever since — the failure the single-source rule
+  exists to prevent. Pin the predicate first, then edit this sentence; do not subtract from it.
+  Nothing tells you
   that Vals or the Qwen release table edited a number after it was archived. Ranked by rows at
   risk they are `batch-17-qwen3.8-release` (465, and a release post is frozen — there is nothing for a
   drift check to watch, which makes it the least valuable of the three despite being the largest),

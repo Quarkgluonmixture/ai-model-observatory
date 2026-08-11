@@ -1,12 +1,17 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-10 八个 PR **全部合并并已发布**(#65–#72)：**站上线在
-`https://quarkspace.top`**(ICP 页脚 +
-`check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
-**batch 30 SWE-Bench Pro 脚本化** · 修掉一条让报告对 Gemini 3.5 Flash Lite 全盲的子串过滤 ·
-**最后一个 PR:网站上那份「上游模型」从没拿到过滤器**,而那 5 条档位噪音正占着 8 个名额里的 5 个、
-挤掉 3 个真模型 ⇒ 判定逻辑收进 `app/upstream-variants.ts`(唯一的家,三个调用方 import)。
-下一步在 `TODO.md`，**全是要你定的**：CyberBench 两列 · 8 块板的轴与 core/observe ·
+**接手点** — 2026-08-11:**两件等你动手**。① **PR #74 已 merge-ready**(`auto/refresh-aa` 自己
+开的,CI 绿且 `headSha` 与 PR head 逐字对上;目录侧只动 `qwen3.7-plus` 的 speed/latency,
+observe 格零变动)——按 `aa-refresh.yml` 的设计,reconciliation 后的合并是 reviewer 的活。
+② **`TODO.md` 顶上多了一条要你定的**:AA 参数 API 把 Qwen 旗舰拼成裸词干 + 档位单列
+(`qwen3-8`/`max`),四条全部解析不到 ⇒ `qwen3.8-max` 是全目录唯一空记录,且 `qwen3.7-max`
+的 cost 停在旧读数 1.28(AA 现为 0.5413,**差 2.4 倍**,漂移闸门看不见)。
+⚠ **光加别名不管用**,这是「厂商产品档 vs 目录 effort 维度」的语义冲突,细节与两个选项在 TODO。
+
+在此之前 2026-08-10 八个 PR **全部合并并已发布**(#65–#72)：站上线在 `https://quarkspace.top`
+(ICP 页脚 + `check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
+**batch 30 SWE-Bench Pro 脚本化** · 判定逻辑收进 `app/upstream-variants.ts`(唯一的家)。
+`TODO.md` 里其余**全是要你定的**：CyberBench 两列 · 8 块板的轴与 core/observe ·
 `vals-mmlu-pro` 那一个断言 · hermes 死了要不要推微信。等批复的只有公安备案(约 2026-09-09)。
 
 Snapshot for the next session. One page. 现场状态在这里；**动手前的自查在 `GOTCHAS.md`**；
@@ -115,8 +120,12 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 2. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。Scale 加一个模型就该开 PR;
    ⚠ 它读的是 RSC flight，**不是稳定 API** —— 挂了应当是**大声 throw**(六条断言),
    不该是"看板变小了"。真挂了先看 `docs/ARCHITECTURE.md` §9 里 SWE-Bench Pro 那行。
-3. **LMArena 每天都会动**，所以大概率每天产生一次 tier-A 自动提交（静默，不推微信）。观察一周，
-   太吵就把取整阈值放宽。
+3. ~~LMArena 每天都会动 → 每天一次 tier-A 自动提交~~ **2026-08-11 证实**:`d795df0`「Refresh
+   live boards」里 `batch-22-arena` 改了 708 行,静默直推 main,没推微信。按设计工作。
+   仍然值得看的只剩「太吵就放宽取整阈值」这个编辑判断。
+4. ⚠ **别再用「契约全绿」当「数字被检查过了」**。8-11 实测:`check-model-provenance.mjs:71`
+   对解析不到的行**直接跳过**,所以 321/321 的**范围是解析得到的行**。判一个数有没有被守住,
+   要问「有哪条检查真的够得到它」,不是「检查过了没有」。
 
 ---
 
