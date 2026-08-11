@@ -1,12 +1,14 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-11:**两件等你动手**。① **PR #74 已 merge-ready**(`auto/refresh-aa` 自己
-开的,CI 绿且 `headSha` 与 PR head 逐字对上;目录侧只动 `qwen3.7-plus` 的 speed/latency,
-observe 格零变动)——按 `aa-refresh.yml` 的设计,reconciliation 后的合并是 reviewer 的活。
-② **`TODO.md` 顶上多了一条要你定的**:AA 参数 API 把 Qwen 旗舰拼成裸词干 + 档位单列
-(`qwen3-8`/`max`),四条全部解析不到 ⇒ `qwen3.8-max` 是全目录唯一空记录,且 `qwen3.7-max`
-的 cost 停在旧读数 1.28(AA 现为 0.5413,**差 2.4 倍**,漂移闸门看不见)。
-⚠ **光加别名不管用**,这是「厂商产品档 vs 目录 effort 维度」的语义冲突,细节与两个选项在 TODO。
+**接手点** — 2026-08-11:#74 / #75 已合并并发布,CI 契约从七项变成**九项**(新增
+`check:beian` 与 `test:sites`,都在 CI 里硬失败)。**一件要你定**:`TODO.md` 顶上那条 ——
+AA 参数 API 把 Qwen 旗舰拼成**裸词干 + 档位单列**(`qwen3-8`/`max`),四条全部解析不到 ⇒
+`qwen3.8-max` 是全目录唯一空记录(4 个参数 + **6 个观测格**滞留),且 `qwen3.7-max` 的 cost
+停在旧读数 1.28(AA 现为 0.5413,**差 2.4 倍**,漂移闸门看不见这一行)。
+⚠ **光加别名不管用**,这是「厂商产品档 vs 目录 effort 维度」的语义冲突,两个选项在 TODO。
+⚠⚠ 由此得到的通用判据:**「契约全绿」只覆盖检查够得到的东西** —— 解析不到的行被
+`check-model-provenance.mjs:71` 直接跳过,`test:sites` 在 `package.json` 里躺了很久却没有任何
+调用方。判一个东西有没有被守住,**grep 它的调用方并数一数**,别问「有没有这个检查」。
 
 在此之前 2026-08-10 八个 PR **全部合并并已发布**(#65–#72)：站上线在 `https://quarkspace.top`
 (ICP 页脚 + `check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
@@ -73,6 +75,7 @@ npm run check:data      # 观测契约 + 覆盖率
 npm run check:models    # 目录每个数字 vs 归档
 npm run check:prices    # 促销价是否混进目录
 npm run build
+npm run check:beian     # 备案号是否进了每一条预渲染路由(读上面 build 的产物)
 ```
 
 `npm run check:mobile` **2026-08-07 起进了 CI**（两条路由都探）。本地跑要 Chrome +

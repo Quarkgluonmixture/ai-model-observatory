@@ -491,8 +491,18 @@ npm run propose:attribution -- --backtest                          # the attribu
 node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test
 node scripts/aa-new-models.mjs --self-test
 npm run build
+npm run check:beian                                                # the ICP filing, on every prerendered route
+npm run test:sites                                                 # the root layout, through the site's own server bundle
 npm run check:mobile                                               # both routes, real device emulation
 ```
+
+`check:beian` and `test:sites` went in on 2026-08-11 and neither was new code that needed writing —
+one asserts a requirement that had been verified by hand exactly once, the other is a test that
+already existed and ran nowhere. `test:sites` was referenced exactly once in the whole repository,
+by its own definition; it needs GNU `timeout`, so it could not run on the maintainer's macOS at
+all, which is how a test can be present, correct, and dead. **Being in `package.json` is not being
+in the contract** — the same lesson `check:mobile` taught on 2026-08-07, and the cheapest audit for
+it is to grep each script name and count the callers.
 
 The last four were added after the first six, each because something that decides unattended was
 being trusted rather than tested. `check:mobile` went in on 2026-08-07; the two `--self-test`s on
@@ -1041,8 +1051,17 @@ stay. That is judgement, and judgement does not go in a cron job.
   and then sat unrun for three days for one reason: nobody had written down the address. The domain
   went live on 2026-08-10, `data/deployment.json` now names the apex, and the check passes on its
   first real run. Keep the shape of that gap in mind — the missing thing was not code.
-  What it still does **not** cover is whether the ICP filing is displayed; that was measured by hand
-  across both hosts × both routes (§6) and is not in any check.
+  ~~What it still does not cover is whether the ICP filing is displayed~~ **Closed 2026-08-11**, and
+  in two places because they answer different questions. `npm run check:beian` reads the prerendered
+  HTML `next build` writes and **fails CI** if the filing is missing from any route — the build
+  question. This check gained the other half: it probes the apex `/`, the apex `/models` and the www
+  host, and reports when the live site is not serving it, because a correct build that never deployed
+  still leaves the domain non-compliant. Two details are deliberate. The filing probe runs *before*
+  the staleness check's early exit — written the other way round, a 404 on `/models` silently took
+  the filing verdict with it, and a check that does not run prints nothing, which reads like a check
+  that passed. And the number itself moved into `app/beian-filing.ts` so the footer, the build check
+  and this one assert the same string rather than three copies; 公安联网备案 gets a null constant in
+  that same file, so granting it around 2026-09-09 is one edit that both checks pick up unchanged.
   `npm run check:deployment` fetches `/models` from production, follows every `<script src>` it
   names, and looks for every catalog benchmark and model name in the concatenated bundle. The
   obvious check — "does the page show the new benchmark" — does not survive contact with the page:

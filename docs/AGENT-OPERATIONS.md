@@ -25,7 +25,7 @@ node --version                                                          # must b
 git check-attr text -- app/observations.generated.ts                    # must not be "unspecified"
 npm ci
 npm run ingest && git diff --exit-code app/observations.generated.ts    # must be clean
-npm run lint && npm run check:data && npm run check:models && npm run check:prices && npm run build
+npm run lint && npm run check:data && npm run check:models && npm run check:prices && npm run build && npm run check:beian
 ```
 
 - **Any failure: report exactly what failed and stop.** Do not attempt a fix as your first act.
@@ -461,6 +461,7 @@ npm run check:data
 npm run check:models
 npm run check:prices
 npm run build
+npm run check:beian   # the ICP filing, on every prerendered route — reads the build above
 ```
 
 `npm run check:mobile` additionally if you touched `app/globals.css` or `app/models/page.tsx`. Its
