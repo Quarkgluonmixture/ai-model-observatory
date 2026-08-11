@@ -82,6 +82,17 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
         都是 AA 的**旧读数**,所以契约全绿。但 AA 现在这一行的 cost **差 2.4 倍**,
         而漂移闸门看不见它 ⇒ 站上挂着过期的旗舰成本,不会有任何检查报出来。
         这是「报告干净 ≠ 网站干净」发生在**参数**上,不是观测格上。
+      - ⚠⚠ **代价不止参数,还有观测格。** `batch-26-aa-evaluations` 把这个模型也只拼成
+        `qwen3-8`(档位在 `reasoning_effort` 里),**6 条观测行同样解析不到、从没进过板**:
+        `gpqa` 92.7 · `hle-no-tools` 43 · `scicode` 52.9 · `aa-lcr` 74.33 · `terminal` 81.27 ·
+        `tau3-banking` 51.34。所以这一条拼法的总账是 **4 个参数 + 6 个观测格**。
+        `npm run ingest` 其实**天天在报**它(`6 x qwen3-8 (max)`),只是混在 700 多条
+        「上一代、故意不映射」里,和噪音长得一模一样 —— 报了等于没报。
+      - ⚠⚠ **它还让一句写下来的话变成假的。** `data/model-aliases.json` 里 terminal 那条
+        `acknowledgedDisagreements` 写着「三个读数……The catalog keeps all three rows」,
+        而 `check:data` 实际只打印 **67.416 vs 86.6 两个**——AA 的 81.27 正是那 6 条里的一条,
+        从没附上过。**而 81.27 恰恰是那段论证的中间点**(它用来说明差距是 scaffold 不是错误)。
+        已在该条 reason 后就地加 `CORRECTION 2026-08-11`,没有删原文。
       - **两个都站得住的选项**(要你选一个,机械件我来):
         (a) **fetcher 层归一**:对着一份闭合的「厂商产品档」清单(Alibaba 的 max/plus,不是 effort)
             把档位并回 `model_raw`、effort 置空。好处是目录语义不动;代价是要维护第二份闭合清单。
