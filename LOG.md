@@ -377,3 +377,60 @@ supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。
   ② 「Is the queue being worked?」那一节在 `report-gaps.mjs` 里 **grep = 0**,根本不存在。
   ⇒ 教训与今天的主线同形:**「没再报错」不等于「被证实跑通了」;「期待写在 TODO 里」不等于
   「代码里有」**。已把这条重写成实测后仍未决的两件,而不是整条删掉充当做完。
+
+## [2026-08-11] 三条「文档说的」被实测推翻,其中一条是 §10 自己  #measure #incident #decision
+
+今天的 cron 报告说 PR #74 已 merge-ready、采集队列无活可干。核 PR 时顺手把 CHECKPOINT 与 TODO 里
+「等观测证实」的条目逐个对今天的产物量了一遍,三条翻了。
+
+- **#measure ① `auto/refresh-aa` 自己开 PR —— 证实了。** #74 就是它开的,`gh: Argument list too
+  long` 确实修好了。TODO 里那条「从未被观测证实」可删。CI run `31479167215` 的 `headSha` 与
+  `gh pr view` 的 `headRefOid` 逐字一致(3adb53b),测的是当前 head 不是旧提交。
+- **#incident ② 「Is the queue being worked?」不是没建,是我上一轮 grep 错了地方。** 它在
+  `upstream.yml:118-123`,直接 `node scripts/check-heartbeat.mjs --agent` 拼进 `gaps.md`——
+  按 npm script 名 `check:heartbeat` 去 grep 永远找不到它。**教训:负面结论换一种拼法再问一遍**,
+  尤其是「grep = 0 所以没建」这种用输出证明输入不存在的推断。真正留下的半个问题是 `--agent`
+  分不清 agent 与 owner,答的是「队列有没有人做」而不是「hermes 活着吗」。
+- **#incident ③ §10 那句「AA's index fills itself in later, on a normal refresh, with no code
+  change」——证伪。** 刷新如期到了(#74),`qwen3.8-max` 仍是全目录唯一一个 intelligence 为 null
+  的记录。根因不在刷新脚本:AA 参数 API 把旗舰拼成**裸词干 + 档位单列**(`qwen3-8`/`max`),
+  四条(`qwen3-8`/`qwen3-7`/`qwen3-6`/`qwen3`)`resolveModelId` 全 undefined;
+  `check-model-provenance.mjs:71` 对解析不到的行直接跳过 ⇒ **它们连被检查的资格都没有**。
+  所以「321/321 backed · 0 contradictions」为真,而它的**范围是解析得到的行**。
+  ⚠ 光加别名也不行:`:219` 按 `id|effort` 分桶,这条记录的 configuration effort 是 `null`,
+  带 `max` 的行落进 `|max` 桶,对那一格依然不可见。而 `max` 在 `claude-opus-5_max` 上是真 effort
+  ⇒ 没有一刀切的规则。**这是「厂商拿 Max/Plus 当产品档、目录拿 effort 当维度」的语义冲突**,
+  是判断题,写进 TODO 待裁,没有替你定。
+  代价不只是那条空记录:`qwen3.7-max` 的 cost 目录写 1.28(有据,来自 batch-07/08 的**旧** AA
+  读数),AA 现在这一行是 0.5413,**差 2.4 倍**,而漂移闸门看不见 ⇒ 站上挂着过期的旗舰成本。
+  **一个任何检查都够不到的数字,不是被检查过的数字** —— 和「报告干净≠网站干净」同形,低一层。
+- **#decision 没有替你合 #74,也没有替你补别名。** 前者被本地权限分类器拦下(`gh pr merge`),
+  后者按章程本就不该无人值守做:合并那一刻 `qwen3.7-max` 的 cost 会移动,正撞三条件第二条。
+- **#measure 一个数字的两份副本对不上,已在 §10 就地标注**:§10 写「1,287 rows at risk」,
+  TODO 写「这个数复现不出来(1,404 / 1,226)」。同一个问题两个文档两个答案,正是单一真源要防的。
+  没有写第三个数,只在 §10 标了「争议中、钉死判定式之前不要引用」。
+- **#ship 个人站那条 Kaggle 文案换成最终结果**:private 0.780 · 571 队第 131(真相源
+  `autonomous-agent-prediction-beta/docs/final-results.md`,含复算命令)。原文「public 约 0.817,
+  130 队里前三分之一」是赛中快照,名次也不对(public 实为 286/571)。新文案带上竞争带
+  Spearman 0.142 这个赛后结论——追了一整场的那个分数几乎不预测最终成绩。
+
+## [2026-08-11b] 补测:同一条拼法还卡着 6 个观测格,并让一句写下来的话变成假的  #measure #incident
+
+上一条只算了参数。做自动化盘点时想验「有没有哪一步在报未解析的行」,顺手把账算全了。
+
+- **`npm run ingest` 天天在报它** —— 输出里就有 `6 x qwen3-8 (max)`。所以「没有报告」这个
+  说法是错的,**真正的问题是它和噪音长得一样**:那份未匹配清单有 700 多条,绝大多数是
+  「上一代、故意不映射」(§10 自己说这是**故意留着**的)。一条能对上目录已有族的字符串,
+  混在故意不映射的堆里,**报了等于没报**。⇒ 缺的不是报告,是**分级**。
+- **那 6 条不是参数,是观测行。** `batch-26-aa-evaluations` 把这个模型也只拼成 `qwen3-8`
+  (档位在 `reasoning_effort` 里):`gpqa` 92.7 · `hle-no-tools` 43 · `scicode` 52.9 ·
+  `aa-lcr` 74.33 · `terminal` 81.27 · `tau3-banking` 51.34。**一条拼法的总账 = 4 个参数 + 6 个格。**
+  而 §10 记着 batch 26 加进来正是为了给 `aa-lcr`/`hle-no-tools`/`scicode` **第二个读数**、
+  把它们移出单源列 —— 对这个模型,那第二个读数从没落地。
+- **#incident 它让一句写下来的话变成假的。** terminal 那条 `acknowledgedDisagreements` 写着
+  「三个读数……The catalog keeps all three rows」,而 `check:data` 实际打印的是
+  **67.416 vs 86.6**——只有两个。缺的 81.27 正是那 6 条之一,**而它恰恰是那段论证的中间点**
+  (用来论证差距是 scaffold 不是错误)。论证本身没塌,塌的是「目录能把它展示出来」这半句。
+  已在 reason 后加 `CORRECTION 2026-08-11`,原文一字未删。
+  ⇒ 教训:**写在 reason 里的证据也要有人核它到底在不在板上**。这类字段没有任何检查读它,
+  它是纯散文,而散文会漂。
