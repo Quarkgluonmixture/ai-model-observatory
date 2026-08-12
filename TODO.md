@@ -60,6 +60,27 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
 
+## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建、数据还没来）
+
+背景与判据全在 `GOTCHAS.md` 24，**别在这里复述**。这里只放要动手的：
+
+- [ ] **等 GA 分第一次落进归档**。今天归档里 `0813` 零行（`grep -r 0813 data/sources/` 唯一命中是
+      一个小数），`report:gaps` 已把 `deepseek/deepseek-v4-pro-0813` 列进「上游已发布、归档里什么都没有」
+      那 5 个 —— 系统自己看见了，判定正确，**今天建记录等于画一整行空格**。
+      第一批分到的那天照坑 24 的「动手顺序」走：先 alias 再目录，别先改显示名。
+- [ ] ⭐ **要你定：厂商 GA 表要不要按转录入档，用什么当 `source_url`。**
+      owner 2026-08-12 提供了 DeepSeek 官方发布图（四列：Pro-0813 / Flash-0731 / Pro-Preview /
+      Flash-Preview，十行 agent 基准）。**图的真实性已交叉验证**：其中 Flash-0731 那一列的九项
+      （Terminal 82.7 · NL2Repo 54.2 · Cybergym 76.7 · DeepSWE 54.4 · Toolathlon 70.3 ·
+      ALE 25.2 · AutomationBench 25.1 · DSBench-FullStack 68.7 · DSBench-Hard 59.6）与官方
+      changelog 2026-07-31 条目**逐位相同**，Pro-Preview 那一列的 HLE 37.7 与目录现有值也逐位相同。
+      卡住的**只有 URL**：截至 2026-08-12 官方 changelog（中英两版）都还没有 0813 条目，
+      HF 也还没有 `DeepSeek-V4-Pro-0813` 仓库 —— 也就是说这张表**先于官方文档渠道发布**。
+      三个选项：(a) 等 changelog 上线，用 `capture-release-tables.mjs` 正规抓（可复跑，最干净）；
+      (b) 现在按转录入档，`source_url` 指向 changelog 页并在 note 里写明「表来自官方发布图，
+      条目当时未上线」；(c) 不入厂商表，只等第三方板。
+      ⚠ 选 (b) 要想清楚：这个项目从来没有过 `source_url` 指不到那张表的行。
+
 ## 小口子
 
 - [ ] 结构性、记着别当新发现：**`check:models` 尾部那节永远不会归零**。2026-08-12 把

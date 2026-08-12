@@ -72,6 +72,33 @@
 - 机制：ARC 的 public eval 比 verified 板高约 11 分，基准名一模一样。
 - ⇒ 每个 fetcher 钉死一个 `*_Semi_Private` split；换 split 前先对已知模型逐位核。
 
+### 24. DeepSeek 的 preview→GA 是**同一个字符串换了模型**，Pro 正在重演 Flash 那一次
+2026-08-12 建立，**这次是事前**（Flash 那次是事后才发现的，见 `AGENTS.md`「One published model
+string can mean two different models」）。编号接在末尾是因为编号只追加，家族仍是二族。
+
+- **事实**：DeepSeek V4 Pro 的 GA 版 `DeepSeek-V4-Pro-0813` 于 2026-08-12 上线
+  （OpenRouter `deepseek/deepseek-v4-pro-0813`，`created` 15:42:44Z，描述原文
+  "This is the GA release of DeepSeek V4 Pro"）。旧的 `deepseek/deepseek-v4-pro` 仍在服务，
+  `created` 停在 2026-04-24 —— **那是 preview**。
+- **目录现在装的是 preview**：`deepseek-v4-pro` 的 11 格全部来自 2026-04-26 的 V4 model card。
+  对得上厂商自己的 `DeepSeek-V4-Pro-Preview` 列（`hle-no-tools` 37.7 两边逐位相同）。
+- **量级**：厂商 GA 表里同族两列差得离谱 —— DeepSWE **12.8 → 62.7**、Terminal 2.1 **72.1 → 87.9**、
+  AutomationBench **12.8 → 31.8**、Cybergym **52.7 → 83.3**。串一格就是 Flash 那次
+  「49.25 印成 100」的同一种事故，只是这次能提前拦。
+- ⚠ **闸门未必救得了**：跨源分歧 >20% 只在**同一格已有另一个源**时才响。GA 的分若落在
+  `deepseek-v4-pro` 现在的**空格**上（十列里目录只有 4 列有 preview 的数），没有分歧可比，
+  静默生效，看板上就是「preview 记录突然变强了」。
+- ⚠ **危险的是 5 条全局通配**：`DeepSeek V4 Pro` / `DeepSeek-V4-Pro` / `deepseek-v4-pro` /
+  `DeepSeek V4` / `deepseek-v4-pro-thinking` 现在都 `effort: "*"` 无条件指向这条记录。
+  各源开始发 GA 分时，**不改 slug 的源**（AA 是确定的那个：Flash 那次它就没改）会让裸串原地换意思。
+- ⇒ **判据，按可靠性排**：
+  1. **数字**。preview 与 GA 差 2×–5×，比任何字符串都好认 —— 和 ARC 那 37 条「用分数确认归属」同一个手法。
+  2. **源自己分不分列**。OpenRouter、LiveBench、Epoch、LMArena 印 `-0813`；分列的源里裸串**就是** preview。
+  3. **日期**。源的 `evaluation_date` / 模型 `created` 在 2026-08-12 之前 ⇒ preview。
+- ⇒ **动手顺序**（GA 分第一次出现时）：先照 Flash 的剧本 —— 裸串加 `file` scope 或
+  `effort` 限定，GA 串写显式 alias；**别先改目录记录的显示名**，改名会让 11 格 preview 的分
+  当场挂到 GA 名下，那正是要防的事。preview 的分怎么退役，走 `supersededRows`，逐格写理由。
+
 ---
 
 ## 三族：工具本身在骗你
