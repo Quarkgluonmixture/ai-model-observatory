@@ -1,19 +1,25 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-12:Qwen 的 Max 档已定案并修完(owner 选 **fetcher 层归一**),
-分支 `fix/qwen-max-product-tier`,九项检查全绿。覆盖率 66.4% → **67.0%**,
-观测 2141 → **2159**,被审计的目录值 321 → **325**(其中 2 格有值无据,见下)。⚠ 三个**已发布**观测数字被移动
-(`qwen3.8-max` Terminal 67.416→81.27、`qwen3.7-max` Terminal 61.049→74.53、
-`qwen3.8-max` HLE 43.6→43),都是精度/源类规则正常生效,细节在 `LOG.md` 2026-08-12。
+**接手点** — 2026-08-12(第四轮):**DeepSeek V4 Pro 转正了,而我们一个分都没入 —— 这是对的。**
+GA 是真的(OpenRouter `deepseek-v4-pro-0813`,15:42:44Z,描述写明 GA;官方 API 文档已切),
+但官方 changelog 还没有 0813 条目、HF 没有权重仓库、归档里零行 ⇒ 今天建记录是一整行空格,
+`report:gaps` 自己就是这么判的。**紧急的是另一件**:目录那条 `deepseek-v4-pro` 装的是四月
+**preview** 的分,而五条裸串 alias 全是 `effort:"*"` 全局通配 ⇒ 和 Flash 那次 49.25/100 同形,
+只是这次赶在第一天。防线落成 **`GOTCHAS.md` 24**(判据 + 动手顺序),**本轮一条 alias 都没动**
+(GA 分还没出现,现在改就是猜第一个源怎么拼)。厂商表入档卡在 `source_url`,三个选项在 `TODO.md`。
 
-**那件更大的也做完了**(你 8-12 批的):`intelligence` 与 `cost_per_task_usd` **整批**改走
-batch-14,`speed` / `latency` 故意不动(前两者单向移动 = 换了标度;后两者双向 = 活属性)。
-**39 处目录值移动,本项目至今最大的一次**。审计 323/325,剩 2 格无据是真话见 `TODO.md`。
-⚠⚠ 路上发现 `artificial-analysis.mjs` **只读 slug 不读显示名**,AA 有 **135 个模型**把操作点
-只写在名字里 ⇒ 这些行 effort 全空,而空 effort 正是对**目录 default 档**的桶,
-**max 档的分被当成 default 档的分**。已修 fetcher + 重解归档。细节 `GOTCHAS.md` 23。
-⚠ 我上一轮报的「glm-5.2 intelligence 34→52.6 是最大的标度漂移」**是错的**,那就是这个桶错位,
-修完就消失了 —— 异常值大得不像同类时,先怀疑它不是同类。
+**收录地板:已定「不放开」**。它不是写死的 49,是当前每模型平均格数(1398÷29=48.2),
+所以会**自我强化地塌** —— 收 9 个候选,覆盖率 67.0%→**53.5%**、地板→**38.6**。
+四档实测在 `LOG.md` 2026-08-12 收尾条,**别重新论证**。派生出来的两件在 `TODO.md`
+(那段免责声明改成「最新发布」看板 · OpenAI 三个 Pro 档可能永远进不来,与地板无关)。
+
+**顺手修**:`qwen3.7-max` 同一个侧栏上同时显示 `PROPRIETARY` 和一个 `open weights` 标签
+—— 全目录唯一一条。漂的是 tag(`open` 被审计,tags 没有任何检查够得到)。
+⇒ **被审计的那份往往是对的,漂的是读者看见的那份。**
+
+**在此之前**(8-12 前两轮,细节全在 `LOG.md`):Qwen 的 Max 是**产品档不是 effort**、
+`intelligence`/`costTask` **整批**推到 batch-14(39 处目录值移动,至今最大一次)、
+AA 有 135 个模型把操作点**只写在显示名里**(`GOTCHAS.md` 21/22/23)。
 
 ⚠⚠ 通用判据(这次又验证一遍):**「契约全绿」只覆盖检查够得到的东西** —— 解析不到的行被
 `check-model-provenance.mjs` 直接 `continue`,所以 323/325 的**范围是解析得到的行**。
@@ -21,11 +27,9 @@ batch-14,`speed` / `latency` 故意不动(前两者单向移动 = 换了标度;�
 ⚠ 本机 `npm run test:sites` 需要 GNU `timeout`(macOS 没有,exit 69)—— 要真跑得给它一个 shim,
 **别把 exit 69 当成跳过即通过**。
 
-在此之前 2026-08-10 八个 PR **全部合并并已发布**(#65–#72)：站上线在 `https://quarkspace.top`
-(ICP 页脚 + `check:deployment` 首次真的在跑) · gaps 报告分三层并折叠 · 两个分类器自测进 CI ·
-**batch 30 SWE-Bench Pro 脚本化** · 判定逻辑收进 `app/upstream-variants.ts`(唯一的家)。
-`TODO.md` 里其余**全是要你定的**：CyberBench 两列 · 8 块板的轴与 core/observe ·
-`vals-mmlu-pro` 那一个断言 · hermes 死了要不要推微信。等批复的只有公安备案(约 2026-09-09)。
+再往前 2026-08-10 八个 PR 全部合并并已发布(站上线、gaps 分三层、两个分类器自测进 CI、
+batch 30 脚本化、判定逻辑收进 `app/upstream-variants.ts`)——细节在 `LOG.md`。
+`TODO.md` 里其余**全是要你定的**。等批复的只有公安备案(约 2026-09-09)。
 
 Snapshot for the next session. One page. 现场状态在这里；**动手前的自查在 `GOTCHAS.md`**；
 历史在 `LOG.md`；未来在 `TODO.md`。都不能替代 `AGENTS.md`——它是操作合同，改任何东西之前先读它。
@@ -106,44 +110,28 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 **推送前**：`gh auth switch -u Quarkgluonmixture`（个人账号）。仓库密钥：`AA_API_KEY`、
 `PUSHPLUS_TOKEN`，两个都是可选的——缺了对应步骤跳过自己，不会让任何检查变红。
 
-**微信推送**（2026-08-07 从 4 条补到 7 条，补的三条全是「本来坏了也没人知道」）：
+**微信推送 7 条**（2026-08-07 从 4 条补到 7）：站上新增模型 · 归档完整性失败/恢复 ·
+AA 刷新 PR 没开成 · AA 刷新整体失败 · **main 检查变红**（EdgeOne 合并即发布不看 CI ⇒
+「站已上线且契约在失败」）· GitHub 每日 job 超 36h。策略仍是「只在异常时说话」，
+补的三条是这条通道**够不着的那几个异常**。逐条落在哪个 workflow、砍掉的六条为什么砍
+→ `docs/ARCHITECTURE.md` §10。
 
-| 何时 | 在哪 |
-|---|---|
-| 站上新增模型 | `ci.yml` |
-| 归档完整性失败 / 恢复 | `upstream.yml` |
-| AA 刷新但 PR 没开成 | `open-aa-pr.sh` |
-| **AA 刷新整体失败**（挂在开 PR 之前的任何一步） | `aa-refresh.yml` |
-| **main 检查变红**——EdgeOne 合并即发布不看 CI，所以这是「站已经上线且契约在失败」 | `ci.yml` |
-| **GitHub 每日 job 超 36h 没跑完** | hermes（`npm run check:heartbeat -- --github`） |
-
-「只在异常时说话」的策略没变，补的是这条通道**够不着的那几个异常**。
-砍掉的六条为什么砍，在 `docs/ARCHITECTURE.md` §10。
-
-**沉默现在可诊断**：两个调度器互相看守，只用已有产物。hermes 每轮开头查 GitHub（36h 阈值，
-推微信）；每日 job 查 main 上最近的非 bot 提交（3 天阈值，只写进 gaps issue、不推微信）。
-阈值为什么是 36h / 3 天，写在 `scripts/check-heartbeat.mjs` 头部。
+**沉默可诊断**：两个调度器互相看守（hermes 查 GitHub 36h→推微信；每日 job 查 main 最近
+非 bot 提交 3 天→只写 gaps issue）。阈值理由在 `scripts/check-heartbeat.mjs` 头部。
 
 ---
 
-## 现在要盯的三件事
+## 现在要盯的两件事
 
-1. **明早第一次看到分层后的 gaps issue**：上游那一节应当是**折叠的一行**,计数**不含**地板下的候选
-   (8-10 本地实测 58)。若 7 个上游名字都算成 gap,就是 `clears` 没生效。**顺手在站上点开那个折叠**:
-   应当 6 个名字、零 `(batch)`/`(Fast)`,且**要有** Luna Pro / Terra Pro / Sol Pro(被噪音挤掉过的三个)。
+1. **DeepSeek GA 的分第一次落进归档的那天** —— 照 `GOTCHAS.md` 24 的动手顺序走，
+   **先 alias 再目录，别先改显示名**。判据和量级都在那条里，这里不复述。
 2. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。Scale 加一个模型就该开 PR;
    ⚠ 它读的是 RSC flight，**不是稳定 API** —— 挂了应当是**大声 throw**(六条断言),
    不该是"看板变小了"。真挂了先看 `docs/ARCHITECTURE.md` §9 里 SWE-Bench Pro 那行。
-3. ~~LMArena 每天都会动 → 每天一次 tier-A 自动提交~~ **2026-08-11 证实**:`d795df0`「Refresh
-   live boards」里 `batch-22-arena` 改了 708 行,静默直推 main,没推微信。按设计工作。
-   仍然值得看的只剩「太吵就放宽取整阈值」这个编辑判断。
-4. ⚠ **别再用「契约全绿」当「数字被检查过了」**。8-11 提出、8-12 兑现:解析不到的行被
-   `check-model-provenance.mjs` 直接跳过,所以 325/325 的**范围是解析得到的行**;而解析得到的
-   那些里,每格只取**第一个**给出它的批次(`GOTCHAS.md` 22)。判一个数有没有被守住,
-   要问「有哪条检查真的够得到它」,不是「检查过了没有」。
-5. **`check:models` 尾部那节新报告**(8-12 起):早批次占坑且与最新读数差 >5% 的参数格。
-   它**不失败**,而且**永远不会归零**——intelligence / costTask 已整批推走,剩下的全是
-   speed / latency 这两个活属性。别把它当欠账。
+
+~~分层后的 gaps issue~~ **2026-08-12 本地实测已验证**:上游那节是折叠的、只计过地板的,
+Luna Pro / Terra Pro / Sol Pro 三个都在列,零 `(batch)`/`(Fast)`。按设计工作。
+LMArena 天天自动提交那条也已在 8-11 证实。两条都退役,剩下的编辑判断在 `TODO.md`。
 
 ---
 
