@@ -45,5 +45,5 @@
     "https://www.vals.ai/benchmarks/web_search"
   ],
   "note": "Read from the `props` attribute Astro server-renders onto each board's <astro-island>, which is where the whole leaderboard lives — /benchmarks is an index with no scores, and that page is what two earlier passes measured before recording Vals as publishing nothing machine-readable. score is the published `accuracy` (already 0-100). harness and reasoning_effort come from the row's own fields rather than from prose. evaluation_date is null on every row on purpose: Vals dates the BOARD, not the run. model_raw is the published `provider/model` string, verbatim — attribution stays the alias step's decision. source_kind is independent throughout: Vals is a third party even on the private sets it owns, which this project distinguishes from a board a benchmark's own authors publish.",
-  "retrievedDate": "2026-08-11"
+  "retrievedDate": "2026-08-12"
 }
