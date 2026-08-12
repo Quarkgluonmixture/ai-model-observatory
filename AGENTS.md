@@ -97,7 +97,11 @@ npm run check:models  # every catalog number vs the source archive
 npm run check:prices  # a promotional price that reached the catalog
 npm run build
 npm run check:beian   # the ICP filing reached every prerendered route — needs the build above
+npm run test:sites    # bounded Sites build + artifact validation; needs GNU timeout
 ```
+
+⚠ `test:sites` exits **69** where GNU `timeout` is absent (macOS ships none). That is "could not
+run", not "passed" — CI is Linux and runs it for real, so do not read a local 69 as green.
 
 `npm run check:upstream` re-reads every scripted source and diffs it cell by cell. It needs the
 network, so it runs daily rather than on every PR — see `.github/workflows/upstream.yml`. It
@@ -232,11 +236,23 @@ cells and saw that every one of them said `appeared`.
 Model records are hand-authored because they also carry editorial content — inclusion,
 display name, colour, tags, ordering — that has no source to generate from. Every *number*
 on them is audited instead: `npm run check:models` fails when a catalog value contradicts
-`data/sources/`, and reports how many values have no archive row at all. It audits 321 values —
-including context window and open-weights status, which nothing checked until one of them turned
-out to be inventing an open model — and it fails on a `model_raw` that differs from an existing
+`data/sources/`, and reports how many values have no archive row at all. It prints the count it
+audited — 325 on 2026-08-12; read the command's own output rather than this line — including
+context window and open-weights status, which nothing checked until one of them turned
+out to be inventing an open model, and it fails on a `model_raw` that differs from an existing
 alias only in casing, because alias resolution is case-sensitive and such a row is silently
 dropped from ingest.
+
+Two things that count are **not** in that number, and both have bitten:
+
+- **A row it cannot resolve is skipped, not reported.** The audited count's denominator is rows
+  whose model string has an alias. Qwen's Max tier spent weeks outside it — see
+  `scripts/lib/product-tiers.mjs` and `GOTCHAS.md` 21.
+- **Each field takes the first batch that supplies it, in file-name order.** An early
+  hand-transcribed batch therefore holds the slot against every later scripted read, and the value
+  it froze stays "backed" however far the source has moved. `supersededRows` is how a newer reading
+  is allowed to win, per model and per field. The check now *reports* the slots in this position;
+  it does not fail on them, because chasing a continuously re-measured latency is not the goal.
 
 So: put the operating parameters in the archive first, then write the record. For a model
 Artificial Analysis already covers, that is one command — and batch 14 keeps AA's **whole** list,

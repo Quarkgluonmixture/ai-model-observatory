@@ -213,16 +213,24 @@ export const MODELS: ModelRecord[] = [
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
     cfg(null, 46, 0.34, 123.3, 25.39, 2, 12, false, 0.2),
   ]),
-  // intelligence is null because Artificial Analysis has not measured this model, not because it
-  // is weak: 25 benchmark-native and independent rows already resolve to it (LiveBench 2026-06-25,
-  // Epoch's GPQA run, DeepSWE v1.1) plus twelve columns from Qwen's own release table. Price,
-  // cache price and context come from the QwenCloud marketplace card (batch 21) — Alibaba's
-  // Model Studio table and QwenCloud's own list-price table both still carry only the 3.7 family.
+  // ⚠ This comment used to open "intelligence is null because Artificial Analysis has not measured
+  // this model". That was never true after 2026-08-11: AA's parameter API had measured it, and both
+  // AA fetchers were splitting its slug `qwen3-8-max` into model `qwen3-8` plus effort `max`, so
+  // four parameter rows and six evaluation rows resolved to nothing and the record stayed all-null.
+  // A row that cannot be resolved is skipped by check:models rather than reported, which is why
+  // 321/321 stayed green through all of it. See scripts/lib/product-tiers.mjs. Fixed 2026-08-12.
+  // Price, cache price and context still come from the QwenCloud marketplace card (batch 21) —
+  // Alibaba's Model Studio table and QwenCloud's list-price table both still carry only the 3.7
+  // family. The other four now come from batch 14, like every other model here.
   m("qwen3.8-max", "Qwen3.8 Max", "Alibaba", "#1c5f6e", false, 1000, ["coding", "agents", "vision"], [
-    cfg(null, null, null, null, null, 2, 6, false, 0.17),
+    cfg(null, 58.1, 1.132, 81.57, 2.81, 2, 6, false, 0.17),
   ]),
+  // costTask was 1.28 until 2026-08-12, transcribed from AA's leaderboard into batch 07. AA has
+  // since re-measured it at 0.5413 and batch 14 carries that, but the audit takes whichever
+  // archive row it reads first and batch 07 sorts earlier, so nothing failed. See the
+  // supersededRows entry, and TODO for the other 44 fields in the same position.
   m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["open weights", "fast", "multilingual"], [
-    cfg(null, 46, 1.28, 199.6, 2.45, 2.5, 7.5, false, 0.25),
+    cfg(null, 46, 0.5413, 199.6, 2.45, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
     cfg(null, 39.4, 0.2424, 56.59, 2.09, 0.4, 1.6, false, 0.04),

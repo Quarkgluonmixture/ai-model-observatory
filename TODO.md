@@ -53,58 +53,32 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] **明早看归属闸门接 DeepSeek V4 Flash 0731**。ARC 2026-08-07 验证了它（AGI-1/-2 各 3 档），
       行已在归档、alias 故意没写——闸门 tier 1 认得出。这是「fetcher 收行 → 闸门归属 → 自合」
       端到端跑通的第一个活例子，值得看一眼它到底自合了还是留了 PR。
-- [ ] **`qwen3.6-max` 只有 1 格（只有 gpqa），看板上已经躺着一条空行**。新地板 38 挡得住未来的，
-      没回头清理过去的。它带 `preview` 标签，可能是有意留的——要不要留是编辑判断，交给你。
+- [ ] ~~**`qwen3.6-max` 只有 1 格（只有 gpqa）**~~ —— **2026-08-12 起是 5 格**(补上 HLE·no tools
+      30.8 · SciCode 46.9 · AA-LCR 72 · IFBench 76.6),同一个 Max 档解析 bug 卡住的。
+      它仍在地板 38 以下、仍带 `preview` 标签,**要不要留还是编辑判断,交给你** —— 变的只是
+      「空行」这个理由已经不成立了。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
 
 ## 小口子
 
-- [ ] ⭐ **要你定:AA 把 Qwen 的 Max 档放在 `effort` 里,目录把它当族名 —— 这一格自动修不了。**
-      原条目写的是「下次 AA 刷新时一并更新」,**2026-08-11 证伪**:那次刷新(PR #74)如期发生,
-      没更新,而且机制上永远不会。逐条实测:
-      - AA 参数 API 把旗舰拼成**裸词干 + effort 单列**:`qwen3-8`/`max`、`qwen3-7`/`max`、
-        `qwen3-6`/`max`、`qwen3`/`max`。四条 `resolveModelId(...)` **全部 undefined**
-        (Plus 档不受影响:`qwen3-7-plus` 有自己的 slug,解析正常)。
-      - `check-model-provenance.mjs:71` 对解析不到的行**直接跳过** ⇒ 这四行连被检查的资格都没有,
-        所以「321/321 backed · 0 contradictions」为真,但它的**范围是解析得到的行**。
-      - ⚠ **光加别名不管用**:同文件 `:219` 按 `模型id|effort` 分桶,`qwen3.8-max` 的
-        configuration effort 是 `null`,只会去 `|null` 桶取值;effort 为 `max` 的行落进 `|max` 桶,
-        对那一格依然不可见。而 `max` 在 `claude-opus-5_max` / `gpt-5.6-sol_max` 上是**真 effort**,
-        「统一把 max 并进族名」会错到别家头上。
-      - 代价(2026-08-11 实测,归档值取 PR #74 刷新后):
-
-        | 目录 | 现在写着 | AA 参数 API 这一行 |
-        |---|---|---|
-        | `qwen3.8-max` | intel/cost/speed/latency **全 null**(全目录唯一一个) | 58.1 / 1.132 / 81.57 / 2.81 |
-        | `qwen3.7-max` | 46 · **1.28** · 199.6 · 2.45 | 46.7 · **0.5413** · 201.87 · 2.31 |
-        | `qwen3.6-max` | 40 · null · 45.9 · 3.29 | 41.1 · null · 50.21 · 3.5 |
-
-        `qwen3.7-max` 那行**有据**——来自 `batch-07-aa-leaderboard` 与 `batch-08-operating`,
-        都是 AA 的**旧读数**,所以契约全绿。但 AA 现在这一行的 cost **差 2.4 倍**,
-        而漂移闸门看不见它 ⇒ 站上挂着过期的旗舰成本,不会有任何检查报出来。
-        这是「报告干净 ≠ 网站干净」发生在**参数**上,不是观测格上。
-      - ⚠⚠ **代价不止参数,还有观测格。** `batch-26-aa-evaluations` 把这个模型也只拼成
-        `qwen3-8`(档位在 `reasoning_effort` 里),**6 条观测行同样解析不到、从没进过板**:
-        `gpqa` 92.7 · `hle-no-tools` 43 · `scicode` 52.9 · `aa-lcr` 74.33 · `terminal` 81.27 ·
-        `tau3-banking` 51.34。所以这一条拼法的总账是 **4 个参数 + 6 个观测格**。
-        `npm run ingest` 其实**天天在报**它(`6 x qwen3-8 (max)`),只是混在 700 多条
-        「上一代、故意不映射」里,和噪音长得一模一样 —— 报了等于没报。
-      - ⚠⚠ **它还让一句写下来的话变成假的。** `data/model-aliases.json` 里 terminal 那条
-        `acknowledgedDisagreements` 写着「三个读数……The catalog keeps all three rows」,
-        而 `check:data` 实际只打印 **67.416 vs 86.6 两个**——AA 的 81.27 正是那 6 条里的一条,
-        从没附上过。**而 81.27 恰恰是那段论证的中间点**(它用来说明差距是 scaffold 不是错误)。
-        已在该条 reason 后就地加 `CORRECTION 2026-08-11`,没有删原文。
-      - **两个都站得住的选项**(要你选一个,机械件我来):
-        (a) **fetcher 层归一**:对着一份闭合的「厂商产品档」清单(Alibaba 的 max/plus,不是 effort)
-            把档位并回 `model_raw`、effort 置空。好处是目录语义不动;代价是要维护第二份闭合清单。
-        (b) **目录层认账**:把这三条记录的 configuration effort 从 `null` 改成 `max`。
-            好处是不写新规则;代价是给一个没有 effort 维度的族**造出**一个维度。
-      - ⚠ 无论选哪个,合并那一刻 `qwen3.7-max` 的 cost 会从 1.28 动到 0.5413 ——
-        **这是已发布数字的移动**,正好撞三条件第二条,按章程就不该无人值守地做。
-      - 顺带:`data/model-aliases.json` 里 `Qwen3.8 Max` 那条的 reason 写着「AA 的评测板比参数 API
-        先收录这个模型,所以目录有 GDPval 分而没有 intelligence」——**那句话现在过期了**,
-        参数 API 已经有它,只是拼法解析不到。定案时一并改掉,别让下一个人再查一遍。
+- [ ] ⭐ **要你定:早批次占坑的那批参数格,要不要整批推到最新读数。**
+      2026-08-12 修 Qwen Max 那一格时量出来的,**比原问题大得多**。机制与判断依据在
+      `GOTCHAS.md` 22;这里只放待决的部分。
+      - `check:models` 尾部现在会**报**「早批次占坑且与最新读数差 >5%」的格子(报告,不失败)。
+        **数量以那条输出为准**,别在这里抄一个会漂的数 —— 跑 `npm run check:models` 看尾部那节。
+        2026-08-12 首次打印 35 格,分布在约十个模型上。
+      - 已经动了**一格**:`qwen3.7-max` 的 costTask 1.28 → 0.5413(你 8-12 明确点头的那一个,
+        2.4 倍差、旗舰成本)。走 `supersededRows`,逐格逐字段,理由写在条目里。
+      - **没动其余的,是故意的**:一半留在 2026-07 的读数、一半是当前读数,比两边都统一更糟。
+        要动就整批动,那是一次「已发布数字大范围移动」,按章程不该无人值守做。
+      - ⚠ 不能一刀改成「永远取最新」:AA **持续重测** speed / latency,追抖动不是目的;
+        而「第一个给出它的行获胜」正是手抄批次能给尚无脚本源的字段兜底的原因。
+      - 值得先看的几条(2026-08-12 读数):`glm-5.2` intelligence **34 vs 52.6**(能力数,
+        不是速度抖动)· `inkling-small` speed 93.5 vs 145.24 · `claude-opus-5` xhigh latency
+        37.73 vs 21.62 · `gpt-5.6-sol` / `terra` / `luna` 的 costTask 普遍高估 20–44%。
+      - 我的倾向:**intelligence 与 costTask 整批推到 batch-14,speed / latency 不动**
+        —— 前两者是版本绑定的量,后两者按 AA 自己的说法是持续重测的活属性。
 - [ ] 观察一周：LMArena 每天都动，会不会天天产生自动提交。太吵就放宽取整阈值。
 - [ ] ARC 的两条「显示名说该映射、`modelGroup` 说不是」的字符串
       （`openai-gpt-5-5-2026-04-23-high`、`google-gemini-3-1-pro-preview`）现在按两个带日期的快照

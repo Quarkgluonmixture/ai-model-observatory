@@ -1021,6 +1021,12 @@
       "modelId": "qwen3.6-max"
     },
     {
+      "modelRaw": "qwen3-6-max",
+      "effort": "*",
+      "modelId": "qwen3.6-max",
+      "reason": "Artificial Analysis' slug spelling, which only became visible on 2026-08-12: AA writes the Max tier where it writes reasoning effort, so both AA fetchers had been splitting this into model `qwen3-6` plus effort `max` and it resolved to nothing. See scripts/lib/product-tiers.mjs. AA's display name for the row is 'Qwen3.6 Max Preview', the same model the catalog carries as a preview record, and its release date (2026-04-20) matches. The sibling strings qwen3-max and qwen-2-5-max became visible in the same change and stay unmapped: the catalog holds no Qwen3 Max or Qwen2.5 Max record, and rule 8 says an unattributable string is reported, not guessed."
+    },
+    {
       "modelRaw": "inkling-small",
       "effort": "*",
       "modelId": "inkling-small"
@@ -1152,7 +1158,7 @@
       "modelRaw": "Qwen3.8 Max",
       "effort": "*",
       "modelId": "qwen3.8-max",
-      "reason": "Artificial Analysis' GDPval-AA leaderboard (batch 19), which spells families as display labels with a space. It appeared in the 2026-08-06 refresh — AA's evaluation boards picked this model up before its parameter API did, which is why the catalog record carries a GDPval score and no intelligence index. The other Qwen string in the same batch is 'Qwen3 8B (Reasoning)' at 213 Elo, a different model entirely; this one is 1739."
+      "reason": "Artificial Analysis' GDPval-AA leaderboard (batch 19), which spells families as display labels with a space. It appeared in the 2026-08-06 refresh. The other Qwen string in the same batch is 'Qwen3 8B (Reasoning)' at 213 Elo, a different model entirely; this one is 1739. || CORRECTION 2026-08-12: this reason used to end 'AA's evaluation boards picked this model up before its parameter API did, which is why the catalog record carries a GDPval score and no intelligence index'. The first half was true on 2026-08-06 and false by 2026-08-11; the second half was never the reason. The parameter API did carry this model — as slug `qwen3-8-max`, which both AA fetchers were splitting into model `qwen3-8` plus effort `max`, so it resolved to nothing. The record was all-null because of a parse, not because of a gap in AA. Fixed 2026-08-12; see scripts/lib/product-tiers.mjs."
     },
     {
       "modelRaw": "Qwen3.8-Max",
@@ -2461,13 +2467,20 @@
       "benchmark": "swe-pro",
       "supersededBy": "batch-30-swe-pro",
       "reason": "Batch 02 transcribed the SWE-Bench Pro public board by hand. Batch 30 reads the same board out of the page's own React Server Component payload (`RSC: 1`), and the readings agree row for row: 25 rows, the same 5 asterisked models on mini-swe-agent and 20 on SWE-Agent, the same scores. One measurement read twice, so only the scripted reading is ingested -- and the scripted one is what gives this board a drift check and an automatic refresh, which a frozen hand transcription can never have. The transcription was accurate; that is not why it is superseded."
+    },
+    {
+      "file": "batch-07-aa-leaderboard",
+      "modelRaw": "Qwen3.7 Max",
+      "field": "cost_per_task_usd",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "NOT the usual reason. Every other entry here supersedes a hand transcription with a scripted read of the SAME measurement; this one supersedes an OLDER measurement with a newer one. Batch 07 read 1.28 off AA's leaderboard; AA has since re-measured the same model at 0.5413, and batch 14 carries that. Both readings are real and both stay archived. || Why it needs an entry at all: check-model-provenance fills each field from whichever archive row it reads FIRST, and batch-07 sorts before batch-14, so the catalog could publish 1.28 forever and the audit would keep calling it backed. That is not specific to this model -- measured 2026-08-12, 45 catalog fields across ten models sit in exactly this position, batches 06/07/08 holding the slot against a batch-14 value more than 5% away. This entry moves ONE of them, because the 2.4x cost gap on a flagship was the one that got ruled on. The other 44 are a single open decision in TODO, deliberately not taken here: moving them piecemeal would leave the catalog half on 2026-07 readings and half on current ones, which is worse than either. || Scoped to modelRaw + field so nothing else in batch 07 is affected, the same way the two Inkling context_k entries are scoped."
     }
   ],
   "acknowledgedDisagreements": [
     {
       "modelId": "qwen3.8-max",
       "benchmark": "terminal",
-      "reason": "Three readings of Terminal-Bench 2.1 for this model, and the spread is scaffold, not error: Vals AI 67.416, Artificial Analysis 81.27 (batch 26), and Qwen's own release table 86.6 (batch 17). Rule 6 says a system benchmark measures model + scaffold + tools + budget, and none of the three ran the same one. Vals names a harness per row on this board — Claude Code, Codex, Cursor CLI appear on other models — and names none on this row; Qwen's table names none at all, and its figure is the highest of the three, which is the direction §9 already records for vendor numbers on system benchmarks (up to +8 points on Terminal-Bench; here +19 over Vals). The catalog keeps all three rows and shows the benchmark-native/independent one as primary. Not an attribution error: every reading is of the string each source publishes for Qwen3.8 Max, and the model exams the same three sources share agree to within a point. || CORRECTION 2026-08-11: 'The catalog keeps all three rows' was not true when it was written. Batch 26 spells this model `qwen3-8` with the tier in `reasoning_effort`, that string resolves to nothing, and check:data prints this disagreement as '67.416 vs 86.6' -- two readings, not three. The middle reading is the one the argument above rests on, and it never reached the board. Five more cells from the same six unresolved rows are stranded with it (gpqa 92.7, hle-no-tools 43, scicode 52.9, aa-lcr 74.33, tau3-banking 51.34). The argument still stands on its own terms; what was wrong was the claim that the catalog could show it. Fixing it is the open TODO decision about Alibaba's Max tier, not an edit to this entry."
+      "reason": "Three readings of Terminal-Bench 2.1 for this model, and the spread is scaffold, not error: Vals AI 67.416, Artificial Analysis 81.27 (batch 26), and Qwen's own release table 86.6 (batch 17). Rule 6 says a system benchmark measures model + scaffold + tools + budget, and none of the three ran the same one. Vals names a harness per row on this board — Claude Code, Codex, Cursor CLI appear on other models — and names none on this row; Qwen's table names none at all, and its figure is the highest of the three, which is the direction §9 already records for vendor numbers on system benchmarks (up to +8 points on Terminal-Bench; here +19 over Vals). The catalog keeps all three rows and shows the benchmark-native/independent one as primary. Not an attribution error: every reading is of the string each source publishes for Qwen3.8 Max, and the model exams the same three sources share agree to within a point. || CORRECTION 2026-08-11: 'The catalog keeps all three rows' was not true when it was written. Batch 26 spells this model `qwen3-8` with the tier in `reasoning_effort`, that string resolves to nothing, and check:data prints this disagreement as '67.416 vs 86.6' -- two readings, not three. The middle reading is the one the argument above rests on, and it never reached the board. Five more cells from the same six unresolved rows are stranded with it (gpqa 92.7, hle-no-tools 43, scicode 52.9, aa-lcr 74.33, tau3-banking 51.34). The argument still stands on its own terms; what was wrong was the claim that the catalog could show it. Fixing it is the open TODO decision about Alibaba's Max tier, not an edit to this entry. || RESOLVED 2026-08-12: that decision was taken -- AA's Max is a product tier, not an effort, and both AA fetchers now keep it in the slug (scripts/lib/product-tiers.mjs). All six rows resolve, so 81.27 is on the board and the sentence at the top of this entry is true again. The printed spread stays '67.416 vs 86.6' because check:data prints the extremes; the source list on that line now names three sources, which is where to read that the middle one arrived."
     }
   ],
   "mergedInOneSource": []

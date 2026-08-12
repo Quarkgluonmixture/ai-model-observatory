@@ -72,15 +72,23 @@
 // evaluation, and every such rewrite would move a published number. Run it on demand —
 // `AA_API_KEY=… node scripts/fetch-source.mjs aa-evals` — and read `describe-change` afterwards.
 
+import { isProductTier } from "../lib/product-tiers.mjs";
+
 const API = "https://artificialanalysis.ai/api/v2/data/llms/models";
 
 // AA suffixes the operating point onto the slug, the same convention batch 14 already relies on.
 // Kept identical to that fetcher rather than shared, because the day they diverge is the day one
 // of them is wrong and a shared helper would hide which.
+//
+// The one thing that IS shared is the list of suffixes that are product tiers rather than
+// operating points (`scripts/lib/product-tiers.mjs`) — that is an editorial fact about a vendor's
+// naming, and a second copy of it would drift. This fetcher stranded six observation cells on it.
 const EFFORTS = ["non-reasoning", "reasoning", "minimal", "medium", "xhigh", "high", "low", "max"];
 const splitEffort = (slug) => {
   for (const effort of EFFORTS) {
-    if (slug.endsWith(`-${effort}`)) return { modelRaw: slug.slice(0, -(effort.length + 1)), effort };
+    if (!slug.endsWith(`-${effort}`)) continue;
+    if (isProductTier(slug, effort)) break;
+    return { modelRaw: slug.slice(0, -(effort.length + 1)), effort };
   }
   return { modelRaw: slug, effort: null };
 };

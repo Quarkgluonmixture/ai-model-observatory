@@ -67,13 +67,28 @@ const isArena = (row) => /(^|\/\/|\.)(lm)?arena\.ai/.test(row.source_url ?? "");
 
 const effortIndex = new Map();
 const modelIndex = new Map();
+// Every reading of a parameter field, with the batch it came from, so the report at the end can
+// say when the value being audited against is not the newest one on file. See `staleSlots`.
+const slotReadings = new Map();
+const auditedKeys = new Set();
 for (const row of rows) {
   const modelId = resolveModelId(row.model_raw, row.effort, row.file);
   if (!modelId) continue;
 
+  // Each field takes whichever row supplies it FIRST, and files are read in name order — so an
+  // early batch holds the slot against every later one, and a value it froze there stays "backed"
+  // however far the source has since moved. That is not hypothetical: batch 07 pinned Qwen3.7
+  // Max's cost at 1.28 while AA's current reading was 0.5413, and this audit called it green.
+  // `supersededRows` is how the archive says which reading wins, and it was already honoured on
+  // the price path below — it just was never consulted here, on the four fields where the same
+  // question arises most often. Scoped entries only; nothing matches unless one names this file.
   const perEffort = effortIndex.get(`${modelId}|${norm(row.effort)}`) ?? {};
   for (const field of ["intelligence_index", "cost_per_task_usd", "output_tokens_per_s", "latency_first_chunk_s"]) {
-    if (row[field] != null && perEffort[field] == null) perEffort[field] = row[field];
+    if (row[field] == null) continue;
+    if (supersededBy(row.file, null, null, field, row.model_raw)) continue;
+    const slot = `${modelId}|${norm(row.effort)}|${field}`;
+    slotReadings.set(slot, [...(slotReadings.get(slot) ?? []), { file: row.file, value: row[field] }]);
+    if (perEffort[field] == null) perEffort[field] = row[field];
   }
   effortIndex.set(`${modelId}|${norm(row.effort)}`, perEffort);
 
@@ -217,6 +232,8 @@ for (const model of MODELS) {
     // effort column still describes the configuration the catalog labels, but a source that
     // does split by effort must win wherever it actually published a value.
     const key = `${model.id}|${norm(configuration.effort)}`;
+    auditedKeys.add(key);
+    auditedKeys.add(`${model.id}|null`);
     const archive = { ...(effortIndex.get(`${model.id}|null`) ?? {}), ...(effortIndex.get(key) ?? {}) };
     const at = `${model.id} (${configuration.effort ?? "default"})`;
     if (!effortIndex.has(key) && !effortIndex.has(`${model.id}|null`) && configuration.intelligence != null) {
@@ -311,4 +328,41 @@ if (disputed.length) {
 if (legacy.length) {
   console.log("\nNo archive row behind these (not necessarily wrong, just unsourced):");
   for (const entry of legacy) console.log(`  ${entry}`);
+}
+
+// A slot that several batches have measured, where the audit is using the earliest of them.
+//
+// This is not a contradiction and it must not fail: the audit's rule is "the first batch that
+// supplies a field wins", batches are read in name order, and that rule is what lets a hand
+// transcription back a catalog value no scripted source has reached yet. But the same rule means
+// a value frozen by an early batch stays "backed" no matter how far the source has since moved,
+// and the audit will keep reporting 100% while the site publishes a stale number. Qwen3.7 Max's
+// cost per task sat at batch 07's 1.28 for as long as this file has existed, against a batch 14
+// reading of 0.5413 — a 2.4x gap on a flagship, and 321/321 green throughout.
+//
+// So the gap gets printed. Deciding which reading a catalog record should publish is editorial —
+// AA re-measures speed and latency continuously and chasing every wobble is not the goal — and
+// `supersededRows` is where that decision is written down, per model and per field.
+const staleSlots = [];
+for (const [slot, readings] of slotReadings) {
+  const [modelId, effort, field] = slot.split("|");
+  if (!auditedKeys.has(`${modelId}|${effort}`) || readings.length < 2) continue;
+  const ordered = [...readings].sort((a, b) => a.file.localeCompare(b.file));
+  const used = ordered[0];
+  const newest = ordered[ordered.length - 1];
+  if (used.file === newest.file || used.value === newest.value) continue;
+  const drift = Math.abs(used.value - newest.value) / Math.max(Math.abs(used.value), Math.abs(newest.value));
+  if (drift <= 0.05) continue;
+  staleSlots.push(
+    `${modelId} (${effort === "null" ? "default" : effort}) ${field}: using ${used.value} ` +
+      `from ${used.file.replace(/\.jsonl$/, "")}, newest reading is ${newest.value} ` +
+      `from ${newest.file.replace(/\.jsonl$/, "")} (${(100 * drift).toFixed(0)}% apart)`,
+  );
+}
+if (staleSlots.length) {
+  console.log(
+    `\nAn earlier batch holds the slot against a newer reading more than 5% away ` +
+      `(${staleSlots.length}; reported, not failed — see supersededRows):`,
+  );
+  for (const entry of staleSlots.sort()) console.log(`  ${entry}`);
 }

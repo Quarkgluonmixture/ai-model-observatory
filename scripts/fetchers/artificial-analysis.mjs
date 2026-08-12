@@ -31,14 +31,21 @@
 // seventeen-key `evaluations` object this endpoint's three-key version does not have. GDPval-AA
 // is still not in either, and is still read by rendering its board (batch 19).
 
+import { isProductTier } from "../lib/product-tiers.mjs";
+
 const API = "https://artificialanalysis.ai/api/v2/language/models/free";
 
 // AA suffixes the operating point onto the slug. Splitting it off keeps effort in its own field,
 // where check:models looks for it, and leaves one alias per model family.
+//
+// Except where the suffix is a product tier and not an operating point — see
+// `scripts/lib/product-tiers.mjs` for which, and for the four parameter rows this cost.
 const EFFORTS = ["non-reasoning", "reasoning", "minimal", "medium", "xhigh", "high", "low", "max"];
 const splitEffort = (slug) => {
   for (const effort of EFFORTS) {
-    if (slug.endsWith(`-${effort}`)) return { modelRaw: slug.slice(0, -(effort.length + 1)), effort };
+    if (!slug.endsWith(`-${effort}`)) continue;
+    if (isProductTier(slug, effort)) break;
+    return { modelRaw: slug.slice(0, -(effort.length + 1)), effort };
   }
   return { modelRaw: slug, effort: null };
 };
