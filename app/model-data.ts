@@ -229,7 +229,10 @@ export const MODELS: ModelRecord[] = [
   // since re-measured it at 0.5413 and batch 14 carries that, but the audit takes whichever
   // archive row it reads first and batch 07 sorts earlier, so nothing failed. See the
   // supersededRows entry, and TODO for the other 44 fields in the same position.
-  m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["open weights", "fast", "multilingual"], [
+  // ⚠ 不要给这条加回 "open weights"。`open` 是 false 且被 check:models 审计,tag 是纯文案没人审 ——
+  // 2026-08-12 之前两者并存,同一个侧栏上同时显示 PROPRIETARY 和一个 open weights 标签。
+  // Alibaba 的 Max 档是闭源 API(开源的是 Qwen3-235B 那类数字型号)。全目录只有这一条漂过。
+  m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["fast", "multilingual"], [
     cfg(null, 46.7, 0.5413, 199.6, 2.45, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
