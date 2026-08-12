@@ -158,51 +158,51 @@ const m = (
 
 export const MODELS: ModelRecord[] = [
   m("claude-opus-5", "Claude Opus 5", "Anthropic", "#c8794d", false, 1000, ["reasoning", "vision", "agents"], [
-    cfg("max", 61, 2.34, 53.8, 92.61, 5, 25, true, 0.5),
-    cfg("xhigh", 60, 1.8, 53.7, 37.73, 5, 25, false, 0.5),
-    cfg("high", 59, 1.23, 53.3, 17.77, 5, 25, false, 0.5),
+    cfg("max", 63.1, 2.34, 53.8, 92.61, 5, 25, true, 0.5),
+    cfg("xhigh", 62.5, 1.8, 53.7, 37.73, 5, 25, false, 0.5),
+    cfg("high", 61.5, 1.23, 53.3, 17.77, 5, 25, false, 0.5),
   ]),
   m("claude-fable-5", "Claude Fable 5", "Anthropic", "#9c4f35", false, 1000, ["knowledge work", "writing", "coding"], [
-    cfg("max", 60, 3.15, 66.9, 90.02, 10, 50, false, 1),
+    cfg("max", 62.1, 3.1396, 66.9, 90.02, 10, 50, false, 1),
   ]),
   m("gpt-5.6-sol", "GPT-5.6 Sol", "OpenAI", "#bf8b18", false, 1000, ["reasoning", "coding", "presentation"], [
-    cfg("max", 59, 1.86, 64.9, 149.14, 5, 30, false, 0.5),
-    cfg("xhigh", 58, 1.17, 60.7, 54.02, 5, 30, false, 0.5),
-    cfg("high", 56, 0.77, 57, 17.08, 5, 30, false, 0.5),
+    cfg("max", 60.9, 1.2312, 64.9, 149.14, 5, 30, false, 0.5),
+    cfg("xhigh", 59, 0.8072, 60.7, 54.02, 5, 30, false, 0.5),
+    cfg("high", 57.3, 0.5477, 57, 17.08, 5, 30, false, 0.5),
   ]),
   m("kimi-k3", "Kimi K3", "Moonshot", "#6d62cf", true, 1050, ["open weights", "webdev", "long context"], [
-    cfg("max", 57, 0.86, 35.4, 3.94, 3, 15, true, 0.3),
+    cfg("max", 59.7, 0.8375, 35.4, 3.94, 3, 15, true, 0.3),
   ]),
   m("gpt-5.6-terra", "GPT-5.6 Terra", "OpenAI", "#ecbb55", false, 1000, ["fast", "reasoning", "multimodal"], [
-    cfg("max", 55, 0.73, 131.8, 198.08, 2.5, 15, false, 0.25),
-    cfg("xhigh", 52, 0.43, 111.1, 29.72, 2.5, 15, false, 0.25),
+    cfg("max", 56.6, 0.508, 131.8, 198.08, 2.5, 15, false, 0.25),
+    cfg("xhigh", 52.8, 0.305, 111.1, 29.72, 2.5, 15, false, 0.25),
   ]),
   m("grok-4.5", "Grok 4.5", "xAI", "#42576b", false, 500, ["coding", "reasoning", "realtime"], [
-    cfg("high", 54, 0.44, 57.9, 8.62, 2, 6, false, 0.5),
+    cfg("high", 55.8, 0.3601, 57.9, 8.62, 2, 6, false, 0.5),
   ]),
   // List price, not the $2/$10 introductory rate that runs to 2026-08-31: a temporary discount
   // is not comparable against every other model's list price. Cache falls back to the standard
   // tenth-of-input default because the official page prices cache only under the promotion.
   m("claude-sonnet-5", "Claude Sonnet 5", "Anthropic", "#df9a72", false, 1000, ["coding", "agents", "fast"], [
-    cfg("max", 53, 1.72, 79.1, 167.49, 3, 15),
+    cfg("max", 55.3, 1.72, 79.1, 167.49, 3, 15),
   ]),
   m("claude-opus-4.8", "Claude Opus 4.8", "Anthropic", "#a35f42", false, 1000, ["reasoning", "coding", "agents"], [
-    cfg("max", 56, 2.0318, 61.3, 10.06, 5, 25, false, 0.5),
+    cfg("max", 57.3, 2.0318, 61.3, 10.06, 5, 25, false, 0.5),
   ]),
   m("glm-5.2", "GLM-5.2", "Z.ai", "#177f72", true, 1000, ["open weights", "coding", "low latency"], [
-    cfg("max", 51, 0.29, 118.3, 1.43, 1.4, 4.4, false, 0.26),
+    cfg("max", 52.6, 0.3083, 118.3, 1.43, 1.4, 4.4, false, 0.26),
   ]),
   m("muse-spark-1.1", "Muse Spark 1.1", "Meta", "#2d71b9", false, 1050, ["fast", "creative", "webdev"], [
-    cfg("xhigh", 51, 0.29, 130, 2.64, 1.25, 4.25, true),
+    cfg("xhigh", 53.2, 0.29, 130, 2.64, 1.25, 4.25, true),
   ]),
   m("gpt-5.5", "GPT-5.5", "OpenAI", "#8d751e", false, 1000, ["reasoning", "codex", "long context"], [
-    cfg("xhigh", 55, 1.1748, 64.6, 99.32, 5, 30, false, 0.5),
+    cfg("xhigh", 56.3, 1.1748, 64.6, 99.32, 5, 30, false, 0.5),
   ]),
   m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, ["fast", "vision", "long context"], [
-    cfg("high", 50, 0.69, 171.5, 23.83, 1.5, 9, false, 0.15),
+    cfg("high", 52, 0.69, 171.5, 23.83, 1.5, 9, false, 0.15),
   ]),
   m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, ["very fast", "vision", "arena"], [
-    cfg("high", 50, 0.56, 217.2, 15.11, 1.5, 7.5, true, 0.15),
+    cfg("high", 51.6, 0.56, 217.2, 15.11, 1.5, 7.5, true, 0.15),
   ]),
   // textElo is null, not 1436: that Arena score was measured 2026-07-27, four days before this
   // model existed, and belongs to the V4 Flash preview. LMArena has not published the 0731
@@ -211,7 +211,7 @@ export const MODELS: ModelRecord[] = [
     cfg(null, 50, 0.03, null, null, 0.14, 0.28, false, 0.003),
   ]),
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
-    cfg(null, 46, 0.34, 123.3, 25.39, 2, 12, false, 0.2),
+    cfg(null, 47.7, 0.3346, 123.3, 25.39, 2, 12, false, 0.2),
   ]),
   // ⚠ This comment used to open "intelligence is null because Artificial Analysis has not measured
   // this model". That was never true after 2026-08-11: AA's parameter API had measured it, and both
@@ -230,13 +230,13 @@ export const MODELS: ModelRecord[] = [
   // archive row it reads first and batch 07 sorts earlier, so nothing failed. See the
   // supersededRows entry, and TODO for the other 44 fields in the same position.
   m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["open weights", "fast", "multilingual"], [
-    cfg(null, 46, 0.5413, 199.6, 2.45, 2.5, 7.5, false, 0.25),
+    cfg(null, 46.7, 0.5413, 199.6, 2.45, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
     cfg(null, 39.4, 0.2424, 56.59, 2.09, 0.4, 1.6, false, 0.04),
   ]),
   m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["open weights", "value", "reasoning"], [
-    cfg("max", 44, 0.05, 64.4, 1.68, 0.435, 0.87, false, 0.004),
+    cfg("max", 45.3, 0.05, 64.4, 1.68, 0.435, 0.87, false, 0.004),
   ]),
   // --- Added from data/sources/batch-06-operating.jsonl -------------------------------
   // Field sources: intelligence / speed / latency = Artificial Analysis model pages.
@@ -246,41 +246,41 @@ export const MODELS: ModelRecord[] = [
   // row for a configuration the field stays null and the model is absent from the value
   // lens, rather than being given a made-up cost.
   m("gpt-5.6-luna", "GPT-5.6 Luna", "OpenAI", "#f0cf82", false, 1050, ["fast", "reasoning", "value"], [
-    cfg("max", 51, 0.07, 184.4, 116.5, 1, 6, false, 0.1),
-    cfg("xhigh", 49, 0.04, 181.6, 37.91, 1, 6, false, 0.1),
-    cfg("high", 46, 0.03, 163.3, 8.89, 1, 6, false, 0.1),
-    cfg("medium", 38, 0.02, 163.5, 2.38, 1, 6, false, 0.1),
-    cfg("low", 33, 0.01, 174.3, 1.53, 1, 6, false, 0.1),
-    cfg("non-reasoning", 27, 0.02, 168.1, 0.77, 1, 6, false, 0.1),
+    cfg("max", 52.3, 0.0471, 184.4, 116.5, 1, 6, false, 0.1),
+    cfg("xhigh", 50.1, 0.0316, 181.6, 37.91, 1, 6, false, 0.1),
+    cfg("high", 47, 0.0216, 163.3, 8.89, 1, 6, false, 0.1),
+    cfg("medium", 38.9, 0.0113, 163.5, 2.38, 1, 6, false, 0.1),
+    cfg("low", 33.9, 0.01, 174.3, 1.53, 1, 6, false, 0.1),
+    cfg("non-reasoning", 26.8, 0.0117, 168.1, 0.77, 1, 6, false, 0.1),
   ]),
   m("kimi-k2.6", "Kimi K2.6", "Moonshot", "#8b7fe0", true, 256, ["open weights", "value", "reasoning"], [
-    cfg("reasoning", 44, null, 57.9, 2.76, 0.95, 4, false, 0.16),
-    cfg("non-reasoning", 35, null, 40.5, 2.81, 0.95, 4, false, 0.16),
+    cfg("reasoning", 45.1, null, 57.9, 2.76, 0.95, 4, false, 0.16),
+    cfg("non-reasoning", 35.4, null, 40.5, 2.81, 0.95, 4, false, 0.16),
   ]),
   m("kimi-k2.7-code", "Kimi K2.7 Code", "Moonshot", "#5b4fbe", true, 256, ["open weights", "coding"], [
-    cfg(null, 42, 0.22, 51.6, 2.82, 0.95, 4, false, 0.19),
+    cfg(null, 43, 0.22, 51.6, 2.82, 0.95, 4, false, 0.19),
   ]),
   m("minimax-m3", "MiniMax-M3", "MiniMax", "#c2557a", true, 1000, ["open weights", "value", "fast"], [
-    cfg(null, 44, 0.14, 77.2, 1.32, 0.3, 1.2, false, 0.06),
+    cfg(null, 45.4, 0.14, 77.2, 1.32, 0.3, 1.2, false, 0.06),
   ]),
   m("inkling", "Inkling", "Thinking Machines", "#3f8f6d", true, 1000, ["open weights", "reasoning"], [
-    cfg("xhigh", 41, null, 85.1, 2.0, 1, 4.05, false, 0.17),
+    cfg("xhigh", 42.3, null, 85.1, 2.0, 1, 4.05, false, 0.17),
   ]),
   m("inkling-small", "Inkling Small", "Thinking Machines", "#6fb094", true, 1000, ["open weights", "fast"], [
-    cfg(null, 40, 0.07, 93.5, 1.64, 0.3, 1.2, false, 0.06),
+    cfg(null, 41.2, 0.07, 93.5, 1.64, 0.3, 1.2, false, 0.06),
   ]),
   m("qwen3.6-plus", "Qwen3.6 Plus", "Alibaba", "#4aa3b4", false, 1000, ["fast", "value", "multilingual"], [
-    cfg(null, 40, 0.36, 53.8, 2.41, 0.5, 3, false, 0.05),
+    cfg(null, 40.5, 0.36, 53.8, 2.41, 0.5, 3, false, 0.05),
   ]),
   m("qwen3.6-max", "Qwen3.6 Max Preview", "Alibaba", "#2a6f7d", false, 256, ["multilingual", "preview"], [
-    cfg(null, 40, null, 45.9, 3.29, 1.3, 7.8, true, 0.13),
+    cfg(null, 41.1, null, 45.9, 3.29, 1.3, 7.8, true, 0.13),
   ]),
   m("grok-4.3", "Grok 4.3", "xAI", "#6b7f93", false, 1000, ["reasoning", "deprecated"], [
-    cfg("high", 38, null, 147.5, 18.88, 1.25, 2.5, false, 0.2),
+    cfg("high", 37.9, null, 147.5, 18.88, 1.25, 2.5, false, 0.2),
     cfg("non-reasoning", 25, 0.29, 124.7, 0.81, 1.25, 2.5, false, 0.2),
   ]),
   m("gemini-3-flash", "Gemini 3 Flash", "Google", "#8fb8ee", false, 1000, ["fast", "deprecated"], [
-    cfg("non-reasoning", 27, null, 176.0, 0.82, 0.5, 3, false, 0.05),
+    cfg("non-reasoning", 27.9, null, 176.0, 0.82, 0.5, 3, false, 0.05),
   ]),
 ];
 

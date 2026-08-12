@@ -234,7 +234,25 @@ for (const model of MODELS) {
     const key = `${model.id}|${norm(configuration.effort)}`;
     auditedKeys.add(key);
     auditedKeys.add(`${model.id}|null`);
-    const archive = { ...(effortIndex.get(`${model.id}|null`) ?? {}), ...(effortIndex.get(key) ?? {}) };
+    // AA names an operating point in two dimensions and the catalog names it in one. "DeepSeek V4
+    // Pro (Reasoning, Max Effort)" is archived as `reasoning max`, because dropping the mode is
+    // what once put a reasoning and a non-reasoning row in the same cell; the catalog labels the
+    // same operating point `max`. So a bare level also accepts a compound effort ending in it —
+    // but ONLY when exactly one exists. If a model publishes both `reasoning high` and
+    // `non-reasoning high`, that is the collision the two-dimension rule exists to keep apart, and
+    // this stays silent rather than guessing which one the catalog meant. Measured 2026-08-12:
+    // 6 compound rows in batch 14, across 6 models, none of them ambiguous.
+    const compound = configuration.effort
+      ? [...effortIndex.keys()].filter((candidate) => candidate.endsWith(` ${configuration.effort}`) &&
+          candidate.startsWith(`${model.id}|`))
+      : [];
+    const viaCompound = compound.length === 1 ? effortIndex.get(compound[0]) : undefined;
+    const archive = {
+      ...(effortIndex.get(`${model.id}|null`) ?? {}),
+      ...(viaCompound ?? {}),
+      ...(effortIndex.get(key) ?? {}),
+    };
+    if (compound.length === 1) auditedKeys.add(compound[0]);
     const at = `${model.id} (${configuration.effort ?? "default"})`;
     if (!effortIndex.has(key) && !effortIndex.has(`${model.id}|null`) && configuration.intelligence != null) {
       legacy.push(`${at} - no archive row for this configuration`);

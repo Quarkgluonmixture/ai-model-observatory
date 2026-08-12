@@ -50,6 +50,32 @@ const splitEffort = (slug) => {
   return { modelRaw: slug, effort: null };
 };
 
+// The slug is not the whole story. **135 of AA's models put the operating point ONLY in the
+// display name**: the slug is `glm-5-2` and the name is "GLM-5.2 (max)". Reading the slug alone
+// files that as effort-null, which is the bucket the audit compares a catalog record's DEFAULT
+// configuration against — so a max-effort intelligence index lands on a non-reasoning record and
+// nothing can tell. Measured on this archive 2026-08-12: batch 07 carries GLM-5.2 twice, 34 for
+// the bare row and 51 for "(max)", while batch 14 filed the 52.6 max reading as effort-null. That
+// one collision was the entire "glm-5.2 intelligence moved 34 → 52.6" finding, and it was not a
+// re-measurement at all.
+//
+// `scripts/fetchers/aa-evaluations.mjs` hit this first on the other AA endpoint and its header
+// explains the two-dimension rule this copy follows: AA writes "(Reasoning, Max Effort)" — a MODE
+// and a LEVEL — and taking either token alone publishes a wrong operating point. Both are kept.
+// Deliberately a second copy rather than a shared helper, for the reason that file states: the day
+// the two endpoints disagree is the day one of them is wrong, and sharing would hide which.
+const LEVELS = ["minimal", "medium", "xhigh", "high", "low", "max"];
+const MODES = ["non-reasoning", "reasoning"];
+const effortFromName = (name) => {
+  const match = /\(([^)]+)\)\s*$/.exec(name ?? "");
+  if (!match) return null;
+  const parts = match[1].split(",").map((part) => part.trim().toLowerCase().replace(/\s*effort\s*$/, ""));
+  const level = parts.find((part) => LEVELS.includes(part)) ?? null;
+  const mode = parts.find((part) => MODES.includes(part)) ?? null;
+  if (level && mode) return `${mode} ${level}`;
+  return level ?? mode;
+};
+
 const round = (value, dp) => (typeof value === "number" && Number.isFinite(value) ? Number(value.toFixed(dp)) : null);
 
 export const artificialAnalysis = {
@@ -83,7 +109,9 @@ export const artificialAnalysis = {
     for (const model of models) {
       const slug = model.slug;
       if (!slug) continue;
-      const { modelRaw, effort } = splitEffort(slug);
+      const { modelRaw, effort: slugEffort } = splitEffort(slug);
+      // Only consulted when the slug says nothing, same order as the evaluations fetcher.
+      const effort = slugEffort ?? effortFromName(model.name);
       const evaluations = model.evaluations ?? {};
       const pricing = model.pricing ?? {};
       const performance = model.performance ?? {};

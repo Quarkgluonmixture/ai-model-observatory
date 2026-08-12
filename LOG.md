@@ -512,3 +512,51 @@ supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。
 
 **本机限制**:`npm run test:sites` 需要 GNU `timeout`,macOS 没有,直接 exit 69。
 用 `/tmp` 下一个 shim 让它真跑了一遍(build + artifact 校验 + 1 test pass),**没有当作「跳过即通过」**。
+
+## 2026-08-12(第二轮)— 整批推 intelligence + costTask;路上发现 batch-14 的 effort 从来没读全 `#decision` `#ship` `#measure` `#incident`
+
+**裁决**:owner 说「做」。范围 = `intelligence_index` 与 `cost_per_task_usd` 整体改走 batch-14,
+`speed` / `latency` 不动。
+
+**⚠ 先自我修正上一条**:上一轮我把「`glm-5.2` intelligence 34 → 52.6」当成最大的一条标度漂移
+报给了 owner。**那是错的。** 它是 effort 落错桶 —— batch-14 把 `GLM-5.2 (max)` 的 52.6
+记成 effort 空,而目录的 default 档正好读那个桶。修好之后这一条从名单上消失。
+⇒ 教训:**一个异常值大得不像同类,先怀疑它不是同类**(进 `GOTCHAS.md` 22 的补注)。
+
+**由此挖出的真问题** `#incident`
+`scripts/fetchers/artificial-analysis.mjs` **只读 slug**,不读显示名。AA 有 **135 个模型**
+把操作点只写在名字里(slug `glm-5-2` / 名字 `GLM-5.2 (max)`)⇒ 这 135 行 effort 全空,
+而空 effort 正是审计拿来对**目录 default configuration** 的桶。**max 档的分被当成 default 档的分**。
+`aa-evaluations.mjs`(batch 26)**早就修了同一个坑**,它的头注释还写着 batch 14「依赖同一个约定」——
+两处实现同一个约定,注释说一样不等于一样。已把 `effortFromName` 补进 batch-14 的 fetcher,
+并用 `backfill-aa-reparse.mjs` 规则 2 把归档里 135 行重解回来(`note` 保着 `AA 名称 …` 原文,
+所以不用 API key;守卫是名字必须真的解析出操作点,已有 effort 的行绝不覆盖)。
+
+**方向统计**(effort 修正后重测,这才是干净的数):
+
+| 字段 | 上升 | 下降 | 不变(±2%) | 结论 |
+|---|---|---|---|---|
+| `intelligence_index` | **37** | **0** | 12 | 全体单向、**零大异常** ⇒ 换了标度 |
+| `cost_per_task_usd` | 3 | **21** | 15 | 强单向 ⇒ 口径变了 |
+| `output_tokens_per_s` | 双向 | | | 活属性 |
+| `latency_first_chunk_s` | 双向 | | | 活属性 |
+
+37 涨 0 跌不是重测噪声。batch-14 自报 **intelligence index v4.1**,batch-06/07/08 手抄时
+**没记版本号** ⇒ 证不出是哪一版,但证得出不是同一版。所以问题不是「数过期」,是
+**通用能力排名在拿两把尺子互相比**,而且每加一个新模型就多一格新标度。
+
+**做法**:`supersededRows` 加 4 条,**按字段整批**(06/07/08 的 intelligence、07 的 cost),
+不逐模型 —— 决定是关于标度的,不是关于某个模型的,逐模型列等于给同一个决定开第二个家。
+目录侧 51 处值用脚本改(带 old-value 守卫,第一次跑索引差一位、51 条全 MISMATCH 拒写,
+**守卫比脚本本身值钱**)。
+
+**结果**:39 处目录值移动 —— 本项目至今最大的一次数字移动。审计 323/325。
+
+**剩下的 2 格无据是真话不是回归** `#decision`:`deepseek-v4-flash` 的目录 configuration 写
+`cfg(null, …)`(没名字的操作点),而 AA 对它发布两个(`non-reasoning` 29.3、`reasoning max` 51.8),
+目录那个 50 来自后者、从没标出来。改法是一个字(`null` → `"max"`),但 **effort 标签是读者看得见的**,
+属于编辑判断 ⇒ 留给 owner,写进 `TODO.md`。
+
+**顺带**:审计学会了「bare level 对上唯一一个 `<mode> <level>`」——AA 写
+`(Reasoning, Max Effort)` 是 mode+level 两维,目录只写 level。**有两个候选就拒绝匹配**,
+因为那正是 `_doc` 里记着的 reasoning/non-reasoning 撞格事故。实测 batch-14 复合行 6 条、零歧义。

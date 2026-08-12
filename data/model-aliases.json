@@ -2469,6 +2469,30 @@
       "reason": "Batch 02 transcribed the SWE-Bench Pro public board by hand. Batch 30 reads the same board out of the page's own React Server Component payload (`RSC: 1`), and the readings agree row for row: 25 rows, the same 5 asterisked models on mini-swe-agent and 20 on SWE-Agent, the same scores. One measurement read twice, so only the scripted reading is ingested -- and the scripted one is what gives this board a drift check and an automatic refresh, which a frozen hand transcription can never have. The transcription was accurate; that is not why it is superseded."
     },
     {
+      "file": "batch-06-operating",
+      "field": "intelligence_index",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "See the batch-07 intelligence_index entry below — same decision, same evidence, applied to every hand-transcribed batch that carries this field."
+    },
+    {
+      "file": "batch-08-operating",
+      "field": "intelligence_index",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "See the batch-07 intelligence_index entry below — same decision, same evidence."
+    },
+    {
+      "file": "batch-07-aa-leaderboard",
+      "field": "intelligence_index",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "The catalog's general-capability column was comparing two different scales against each other. Measured 2026-08-12 across every configuration both sides carry, with batch 14's operating points corrected first (see below): intelligence moved UP on 37 and DOWN on 0. A unanimous direction is not re-measurement noise; batch 14 declares `intelligence index v4.1` in its meta and batches 06/07/08 -- hand-read on 2026-07-31 and 08-01 -- record no version at all, so which version they are cannot be proven, only that they are not this one. Every model added since is drafted from batch 14, so the mixture grew with the catalog rather than staying put. || The one apparent outlier was not one: glm-5.2 read 34 against batch 14's 52.6, and that was an operating point collision, not a scale change -- batch 07 carries GLM-5.2 twice (34 bare, 51 for '(max)') while batch 14 filed its max reading as effort-null because the fetcher read only the slug. Fixing that first was a precondition for this entry; unfixed, superseding wholesale would have filed max-effort scores onto default configurations. || Scoped to the field, not to a model: a per-model list would be a second place to keep this decision, and the decision is about the scale, which is not per model."
+    },
+    {
+      "file": "batch-07-aa-leaderboard",
+      "field": "cost_per_task_usd",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Same shape as the intelligence entry above and taken with it: cost per task moved DOWN on 21 configurations and UP on 3, which is a change in how AA computes the figure (or in the prices behind it), not a re-measurement wobble. Left on batch 07 the catalog published costs 20-45% high across the whole GPT-5.6 family, and the value lens ranks on this number. || Speed and latency are deliberately NOT superseded: they moved in both directions (speed 14 up / 5 down, latency 4 up / 12 down), which is exactly what AA's own documentation says they are -- continuously re-measured properties of a hosted endpoint. Chasing those would put the daily job in permanent disagreement with the catalog, which is the reason batch 14 is on-demand in the first place."
+    },
+    {
       "file": "batch-07-aa-leaderboard",
       "modelRaw": "Qwen3.7 Max",
       "field": "cost_per_task_usd",
