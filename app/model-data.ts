@@ -110,6 +110,28 @@ const cfg = (
   cache: number | null = null,
 ): ModelConfiguration => ({ effort, intelligence, costTask, speed, latency, price: { input, output, cache: cache ?? input / 10 }, preliminary });
 
+/**
+ * Tags that are NOT editorial, and therefore must never be typed by hand.
+ *
+ * `tags` drives the filter chips and reads as decoration, so it was left as free text while every
+ * field beside it grew a contract. That is exactly where the catalog's only self-contradiction
+ * grew: `qwen3.7-max` carried an `open weights` tag while its `open` field said false, and the
+ * dossier printed PROPRIETARY and the tag side by side, in one panel, for weeks. `check:models`
+ * audits `open`; nothing could reach the tag. The audited copy was the correct one and the drifted
+ * copy was the one the reader saw.
+ *
+ * So these two stop being copies. `open weights` is rendered from `open`, `preview` from the
+ * published name, and passing either by hand throws rather than being silently dropped — a silent
+ * filter would leave the stale hand-written tag sitting in the file looking authoritative.
+ *
+ * Deliberately NOT here: `vision` and `multimodal`. They are equally derivable in principle, from
+ * `architecture.input_modalities` on the upstream feed, but no catalog field holds a modality
+ * today, so deriving them would mean inventing the fact rather than moving it. That needs a
+ * fetcher, not a rename. Everything else — `fast`, `value`, `coding`, `reasoning` — is genuinely
+ * editorial positioning with no source to generate from, and stays hand-written.
+ */
+const DERIVED_TAGS = new Set(["open weights", "preview"]);
+
 const m = (
   id: string,
   name: string,
@@ -117,9 +139,21 @@ const m = (
   color: string,
   open: boolean,
   contextK: number,
-  tags: string[],
+  editorialTags: string[],
   configurations: ModelConfiguration[],
 ): ModelRecord => {
+  const handWritten = editorialTags.filter((tag) => DERIVED_TAGS.has(tag));
+  if (handWritten.length) {
+    throw new Error(
+      `${id}: ${handWritten.map((t) => `"${t}"`).join(", ")} is derived from the record, not written on it. ` +
+      "Set `open` / the display name and delete the tag; see DERIVED_TAGS.",
+    );
+  }
+  const tags = [
+    ...(open ? ["open weights"] : []),
+    ...(/\bpreview\b/i.test(name) ? ["preview"] : []),
+    ...editorialTags,
+  ];
   const [flagship] = configurations;
   // Derived, not typed. Arena publishes no per-effort boards, so an Elo was never a property of a
   // configuration — it lived on one because that is where the field happened to be. A model with
@@ -170,7 +204,7 @@ export const MODELS: ModelRecord[] = [
     cfg("xhigh", 59, 0.8072, 60.7, 54.02, 5, 30, false, 0.5),
     cfg("high", 57.3, 0.5477, 57, 17.08, 5, 30, false, 0.5),
   ]),
-  m("kimi-k3", "Kimi K3", "Moonshot", "#6d62cf", true, 1050, ["open weights", "webdev", "long context"], [
+  m("kimi-k3", "Kimi K3", "Moonshot", "#6d62cf", true, 1050, ["webdev", "long context"], [
     cfg("max", 59.7, 0.8375, 35.4, 3.94, 3, 15, true, 0.3),
   ]),
   m("gpt-5.6-terra", "GPT-5.6 Terra", "OpenAI", "#ecbb55", false, 1000, ["fast", "reasoning", "multimodal"], [
@@ -189,7 +223,7 @@ export const MODELS: ModelRecord[] = [
   m("claude-opus-4.8", "Claude Opus 4.8", "Anthropic", "#a35f42", false, 1000, ["reasoning", "coding", "agents"], [
     cfg("max", 57.3, 2.0318, 61.3, 10.06, 5, 25, false, 0.5),
   ]),
-  m("glm-5.2", "GLM-5.2", "Z.ai", "#177f72", true, 1000, ["open weights", "coding", "low latency"], [
+  m("glm-5.2", "GLM-5.2", "Z.ai", "#177f72", true, 1000, ["coding", "low latency"], [
     cfg("max", 52.6, 0.3083, 118.3, 1.43, 1.4, 4.4, false, 0.26),
   ]),
   m("muse-spark-1.1", "Muse Spark 1.1", "Meta", "#2d71b9", false, 1050, ["fast", "creative", "webdev"], [
@@ -207,7 +241,7 @@ export const MODELS: ModelRecord[] = [
   // textElo is null, not 1436: that Arena score was measured 2026-07-27, four days before this
   // model existed, and belongs to the V4 Flash preview. LMArena has not published the 0731
   // release yet. An empty cell is the honest answer until it does.
-  m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, ["open weights", "extreme value", "new"], [
+  m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, ["extreme value", "new"], [
     cfg(null, 50, 0.03, null, null, 0.14, 0.28, false, 0.003),
   ]),
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
@@ -229,16 +263,18 @@ export const MODELS: ModelRecord[] = [
   // since re-measured it at 0.5413 and batch 14 carries that, but the audit takes whichever
   // archive row it reads first and batch 07 sorts earlier, so nothing failed. See the
   // supersededRows entry, and TODO for the other 44 fields in the same position.
-  // ⚠ 不要给这条加回 "open weights"。`open` 是 false 且被 check:models 审计,tag 是纯文案没人审 ——
-  // 2026-08-12 之前两者并存,同一个侧栏上同时显示 PROPRIETARY 和一个 open weights 标签。
-  // Alibaba 的 Max 档是闭源 API(开源的是 Qwen3-235B 那类数字型号)。全目录只有这一条漂过。
+  // Alibaba 的 Max 档是闭源 API(开源的是 Qwen3-235B 那类数字型号),所以 `open` 是 false。
+  // 这里原本有一条「⚠ 不要手工加回 open weights」的告警,因为 2026-08-12 之前两者并存,同一个
+  // 侧栏上同时显示 PROPRIETARY 和一个 open weights 标签。告警已经删掉 —— 不是因为不再危险,
+  // 而是因为那个 tag 现在由 `open` 派生(见 DERIVED_TAGS),手写它会抛错而不是悄悄显示出来。
+  // 规矩靠注释记着就会被忘,靠构造函数记着不会。
   m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["fast", "multilingual"], [
     cfg(null, 46.7, 0.5413, 199.6, 2.45, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
     cfg(null, 39.4, 0.2424, 56.59, 2.09, 0.4, 1.6, false, 0.04),
   ]),
-  m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["open weights", "value", "reasoning"], [
+  m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["value", "reasoning"], [
     cfg("max", 45.3, 0.05, 64.4, 1.68, 0.435, 0.87, false, 0.004),
   ]),
   // --- Added from data/sources/batch-06-operating.jsonl -------------------------------
@@ -256,26 +292,26 @@ export const MODELS: ModelRecord[] = [
     cfg("low", 33.9, 0.01, 174.3, 1.53, 1, 6, false, 0.1),
     cfg("non-reasoning", 26.8, 0.0117, 168.1, 0.77, 1, 6, false, 0.1),
   ]),
-  m("kimi-k2.6", "Kimi K2.6", "Moonshot", "#8b7fe0", true, 256, ["open weights", "value", "reasoning"], [
+  m("kimi-k2.6", "Kimi K2.6", "Moonshot", "#8b7fe0", true, 256, ["value", "reasoning"], [
     cfg("reasoning", 45.1, null, 57.9, 2.76, 0.95, 4, false, 0.16),
     cfg("non-reasoning", 35.4, null, 40.5, 2.81, 0.95, 4, false, 0.16),
   ]),
-  m("kimi-k2.7-code", "Kimi K2.7 Code", "Moonshot", "#5b4fbe", true, 256, ["open weights", "coding"], [
+  m("kimi-k2.7-code", "Kimi K2.7 Code", "Moonshot", "#5b4fbe", true, 256, ["coding"], [
     cfg(null, 43, 0.22, 51.6, 2.82, 0.95, 4, false, 0.19),
   ]),
-  m("minimax-m3", "MiniMax-M3", "MiniMax", "#c2557a", true, 1000, ["open weights", "value", "fast"], [
+  m("minimax-m3", "MiniMax-M3", "MiniMax", "#c2557a", true, 1000, ["value", "fast"], [
     cfg(null, 45.4, 0.14, 77.2, 1.32, 0.3, 1.2, false, 0.06),
   ]),
-  m("inkling", "Inkling", "Thinking Machines", "#3f8f6d", true, 1000, ["open weights", "reasoning"], [
+  m("inkling", "Inkling", "Thinking Machines", "#3f8f6d", true, 1000, ["reasoning"], [
     cfg("xhigh", 42.3, null, 85.1, 2.0, 1, 4.05, false, 0.17),
   ]),
-  m("inkling-small", "Inkling Small", "Thinking Machines", "#6fb094", true, 1000, ["open weights", "fast"], [
+  m("inkling-small", "Inkling Small", "Thinking Machines", "#6fb094", true, 1000, ["fast"], [
     cfg(null, 41.2, 0.07, 93.5, 1.64, 0.3, 1.2, false, 0.06),
   ]),
   m("qwen3.6-plus", "Qwen3.6 Plus", "Alibaba", "#4aa3b4", false, 1000, ["fast", "value", "multilingual"], [
     cfg(null, 40.5, 0.36, 53.8, 2.41, 0.5, 3, false, 0.05),
   ]),
-  m("qwen3.6-max", "Qwen3.6 Max Preview", "Alibaba", "#2a6f7d", false, 256, ["multilingual", "preview"], [
+  m("qwen3.6-max", "Qwen3.6 Max Preview", "Alibaba", "#2a6f7d", false, 256, ["multilingual"], [
     cfg(null, 41.1, null, 45.9, 3.29, 1.3, 7.8, true, 0.13),
   ]),
   m("grok-4.3", "Grok 4.3", "xAI", "#6b7f93", false, 1000, ["reasoning", "deprecated"], [
