@@ -93,6 +93,14 @@ jobs:
       - name: Replay the record measurement windows
         run: node scripts/lib/archive.mjs --self-test
 
+      # `check:prices` above runs as of today, and a scheduled term is silent until its date — so
+      # today's green says nothing about whether it will ever fire. This re-runs the same contract
+      # on both sides of every announced effective date. It reads the child process's exit status
+      # rather than a pipeline's, which is the trap that made the first hand-run of this assertion
+      # report green on both sides.
+      - name: Assert every announced price change will fail the contract on its date
+        run: node --test scripts/check-scheduled-prices.test.mjs
+
       - name: Build production application
         run: npm run build
 

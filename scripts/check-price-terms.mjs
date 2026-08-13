@@ -14,7 +14,13 @@ import { MODELS } from "../app/model-data.ts";
 const SOURCE_DIR = "data/sources";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-const today = new Date(new Date().toISOString().slice(0, 10));
+// `--as-of YYYY-MM-DD` exists for the self-test at the bottom and nothing else. A scheduled term
+// is a guard that fires on a date, so the only way to know it fires is to ask it about that date;
+// without this the assertion would be "it will go red on the 16th", which is a claim, not a test.
+const asOf = process.argv[process.argv.indexOf("--as-of") + 1];
+const today = new Date(
+  process.argv.includes("--as-of") ? asOf : new Date().toISOString().slice(0, 10),
+);
 const models = new Map(MODELS.map((model) => [model.id, model]));
 
 const errors = [];
@@ -36,6 +42,41 @@ for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".meta
 
     const { input, output } = model.price;
     const quotes = (price) => price.input === input && price.output === output;
+
+    // A promotion is a price with an END date. A scheduled change is the mirror image: a price
+    // with a START date, announced before it applies. Both exist because the catalog has one
+    // price field and no way to say "until" or "from", and both fail the same way if ignored —
+    // the number on the site quietly stops being what the vendor charges.
+    //
+    // Written because DeepSeek announced peak/off-peak billing from 2026-08-16 while nothing in
+    // this repo watches a vendor pricing page: the only official DeepSeek price in the archive is
+    // a hand-read snapshot from 2026-08-01, and the audit PREFERS official rows, so the frozen
+    // copy outranks the Artificial Analysis rows that do move. Left alone, the site would have
+    // gone on quoting the old price with every contract green.
+    if (term.scheduled) {
+      const daysUntil = Math.round((new Date(term.scheduled.effectiveFrom) - today) / DAY_MS);
+      const listed = money(term.listPrice);
+      const coming = money(term.scheduled);
+      if (daysUntil > 0) {
+        if (quotes(term.scheduled)) {
+          errors.push(
+            `${where}: catalog quotes ${coming}, which does not take effect until ` +
+              `${term.scheduled.effectiveFrom} (${daysUntil} day(s) away). Quote ${listed} until then.`,
+          );
+        } else if (!quotes(term.listPrice)) {
+          notes.push(`${where}: catalog shows ${money(model.price)}, term lists ${listed} — re-archive the price or retire the term`);
+        } else {
+          notes.push(`${where}: ${listed} → ${coming} in ${daysUntil} day(s), on ${term.scheduled.effectiveFrom} (${term.source})`);
+        }
+      } else if (!quotes(term.scheduled)) {
+        errors.push(
+          `${where}: the published price changed to ${coming} on ${term.scheduled.effectiveFrom} ` +
+            `(${-daysUntil} day(s) ago) and the catalog still shows ${money(model.price)}. ` +
+            `Re-archive from ${term.source}, update the record, then retire this term.`,
+        );
+      }
+      continue;
+    }
     const daysLeft = Math.round((new Date(term.promotional.endsOn) - today) / DAY_MS);
 
     if (quotes(term.promotional)) {
@@ -74,5 +115,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Price terms passed: ${checked} promotion(s) checked, none quoted by the catalog, ${notes.length} ready to retire.`,
+  `Price terms passed: ${checked} term(s) checked, none quoted by the catalog before it applies, ${notes.length} note(s).`,
 );
