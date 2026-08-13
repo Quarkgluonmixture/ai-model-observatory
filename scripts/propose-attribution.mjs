@@ -33,6 +33,9 @@
 //   - a string published only inside another maker's release table. Those are competitor columns:
 //     a maker publishing a rival's score states no harness, effort or date.
 //   - a string whose every row is superseded by a later batch.
+//   - a bare string that has a DATED sibling anywhere in the archive and does not positively
+//     agree with it. See `datedSiblingDisagrees` for why this is a fifth refusal rather than a
+//     widening of the first.
 //
 // The `intelligence`-style judgement calls — is this worth cataloguing, what colour, what tags —
 // are not here. This file only answers "which model is this string".
@@ -161,6 +164,52 @@ const siblingInSameSource = (raw, base) => {
   return null;
 };
 
+// The fifth refusal: one string whose meaning changed on a date.
+//
+// The first refusal compares strings inside ONE file, because a board printing two names is that
+// board saying they are two models. It cannot see the shape that actually costs money here: a
+// source that never renames its slug. Artificial Analysis kept `deepseek-v4-flash` across a
+// re-train, so within AA's file there is no sibling to notice, while LiveBench, Epoch and LMArena
+// print `-0731` in a different file. One global alias then reported a preview's 49.25 as the
+// release's 100, and nothing failed. `deepseek-v4-pro` is set up to repeat it: the catalog record
+// holds the April preview's cells and five bare strings resolve to it with `effort: "*"`, while
+// the GA `-0813` slug went live 2026-08-12.
+//
+// So the sibling search is widened across files, and narrowed to DATED suffixes only. A date is
+// the one suffix that never means an operating point: `pro`, `lite` and `mini` are model
+// distinctions the tiers already handle, and a version like `Muse Spark 1.1` is a different model
+// with its own record. Four digits is the shortest real date (MMDD) and the longest version
+// fragment is two, which is what separates `-0813` from `1.1` without a list to maintain.
+//
+// A dated sibling alone does not refuse, because a maker may date a snapshot of the SAME model:
+// a human mapped `qwen3.7-max-20260517` onto `qwen3.7-max` for exactly that reason. What refuses
+// is the absence of positive agreement. If the two strings agree on a like-for-like cell they are
+// one model and the date is a snapshot; if they conflict they are two; and if they share no cell
+// at all there is no evidence either way, which is the case GOTCHAS 24 warns about — the GA score
+// lands in a cell the preview never filled, so no disagreement gate can fire. Refusing on absent
+// evidence is the same reasoning as the rest of this file: a refusal costs a delay, a wrong alias
+// costs a wrong number nobody can see.
+const DATE_SUFFIX = /^[0-9]{4,8}$/;
+const datedSiblingDisagrees = (raw, base) => {
+  for (const other of rowsByString.keys()) {
+    if (other === raw) continue;
+    const otherBase = norm(stripEffort(other) ?? other);
+    if (!otherBase.startsWith(base)) continue;
+    if (!DATE_SUFFIX.test(otherBase.slice(base.length))) continue;
+    let agree = 0, conflict = 0;
+    for (const a of rowsByString.get(raw) ?? []) {
+      for (const b of rowsByString.get(other) ?? []) {
+        if (a.cell !== b.cell) continue;
+        const rel = Math.abs(a.score - b.score) / Math.max(1e-9, Math.abs(b.score));
+        if (rel <= TIGHT) agree++; else if (rel > CONFLICT) conflict++;
+      }
+    }
+    if (agree > 0 && conflict === 0) continue;               // a dated snapshot of the same model
+    return { other, agree, conflict };
+  }
+  return null;
+};
+
 const tier1 = (raw) => {
   // Unstripped FIRST. "max" is an effort for Anthropic and OpenAI and a product tier for Alibaba,
   // so stripping before matching turned `qwen-3-8-max` into `qwen-3-8` and lost the family whose
@@ -228,6 +277,15 @@ const judge = (raw) => {
   if (base !== null && scopedBases.has(norm(base))) {
     return { verdict: "escalate", why: `"${base}" carries a file-scoped alias, which is a human saying it means different models on different boards — every effort variant of it inherits that` };
   }
+  if (base !== null) {
+    const dated = datedSiblingDisagrees(raw, norm(base));
+    if (dated) {
+      const evidence = dated.conflict
+        ? `they conflict on ${dated.conflict} like-for-like cell(s)`
+        : "they share no like-for-like cell, so nothing settles whether it is the same model";
+      return { verdict: "escalate", why: `the archive also publishes the dated "${dated.other}" — ${evidence}. A dated release makes the undated string mean different models before and after that date, which an alias cannot express` };
+    }
+  }
   return tier1(raw) ?? tier2(raw);
 };
 
@@ -246,6 +304,59 @@ const TRAPS = [
   "gpt-5.4-mini-xhigh", "Gemini 3 Pro", "gpt-5.6", "GPT-5.6", "gpt-5.6-luna-pro",
   "gpt-5.5-pre-release", "gpt-5.5-pro-pre-release", "deepseek-v4-flash",
 ];
+
+// ---------------------------------------------------------------- self-test
+// The backtest can only measure a rule against events that already happened, and the fifth
+// refusal was written for one that has not: `deepseek-v4-pro-0813` went GA on 2026-08-12 and no
+// board has published under it yet, so the archive holds no dated sibling and the rule is silent.
+// Shipping it on that basis would be shipping an untested rule for the only case it exists for.
+//
+// So the scenario is simulated instead: the GA string is injected with the vendor's own published
+// GA numbers on cells the preview never filled — DeepSWE 62.7 against the preview's 12.8, Terminal
+// 2.1 87.9 against 72.1 — which is the exact shape GOTCHAS 24 predicts, a score landing where no
+// disagreement gate can see it. The assertion is that `deepseek-v4-pro` stops resolving. It runs
+// in CI beside the backtest, because a refactor that quietly drops this rule would otherwise show
+// up as five points of RECOVERED reproduction and look like an improvement.
+// Both directions, because a refusal that never lifts is not a rule, it is an outage. The subject
+// is chosen at runtime rather than hard-coded: the first string the gate maps cleanly today. That
+// keeps the test measuring the fifth refusal instead of accumulating a second reason to fail as
+// the archive changes underneath it.
+//
+// Worth recording, because it changed what this rule is for: `deepseek-v4-pro` was the intended
+// subject and turned out to escalate ALREADY — `batch-22-arena.jsonl` publishes both it and
+// `deepseek-v4-pro-high-preview`, so the first refusal covers it. The proposal path was never the
+// exposure. The exposure is the five `effort: "*"` aliases a human wrote before that was known,
+// which no gate in this file can reach. See GOTCHAS 24.
+if (args.includes("--self-test")) {
+  const failures = [];
+  const subject = [...rowsByString.keys()].find((raw) => judge(raw).verdict === "map");
+  if (!subject) {
+    console.log("FAILED no published string maps cleanly, so the fifth refusal cannot be tested in either direction");
+    process.exit(1);
+  }
+  const mapped = judge(subject);
+  const sibling = `${subject}-0813`;
+  const cellOf = (raw) => (rowsByString.get(raw) ?? [])[0]?.cell ?? "deepswe|2026||";
+
+  // Direction 1 — the GA shape from GOTCHAS 24: the dated release scores on a cell the older
+  // reading never filled, so no disagreement gate can see it. Must refuse.
+  rowsByString.set(sibling, [{ cell: "a-cell-nothing-else-fills|v1||", score: 62.7, src: "simulated GA board", file: "simulated.jsonl" }]);
+  const unseen = judge(subject);
+  // Direction 2 — a dated snapshot of the SAME model, the `qwen3.7-max-20260517` shape. The two
+  // strings agree where they overlap, so the date is a snapshot and the mapping must survive.
+  rowsByString.set(sibling, [{ cell: cellOf(subject), score: rowsByString.get(subject)[0].score, src: "simulated snapshot", file: "simulated.jsonl" }]);
+  const agreeing = judge(subject);
+  rowsByString.delete(sibling);
+
+  if (unseen.verdict !== "escalate") failures.push(`a dated sibling sharing no cell left "${subject}" mapping to ${unseen.modelId} — the fifth refusal is not firing`);
+  if (agreeing.verdict !== "map" || agreeing.modelId !== mapped.modelId) failures.push(`an AGREEING dated sibling broke "${subject}" (${agreeing.verdict} ${agreeing.why ?? agreeing.modelId}) — the rule refuses snapshots of the same model`);
+
+  console.log(`Self-test on "${subject}" (maps to ${mapped.modelId}):`);
+  console.log(`  dated sibling, no shared cell  → ${unseen.verdict}${unseen.verdict === "escalate" ? "" : ` ${unseen.modelId}`}`);
+  console.log(`  dated sibling, agreeing score  → ${agreeing.verdict}${agreeing.verdict === "map" ? ` ${agreeing.modelId}` : ` ${agreeing.why}`}`);
+  for (const line of failures) console.log(`  FAILED ${line}`);
+  process.exit(failures.length ? 1 : 0);
+}
 
 if (args.includes("--backtest")) {
   const humanCalls = config.aliases.filter((a) => a.modelId && !a.file);

@@ -60,6 +60,15 @@ jobs:
       - name: Replay the attribution gate against every human decision
         run: npm run propose:attribution -- --backtest
 
+      # The backtest can only measure the gate against events that already happened, and the fifth
+      # refusal exists for one that has not: a maker dating a re-trained release under a slug some
+      # board never renames. So that scenario is simulated, in both directions — a dated sibling
+      # sharing no cell must refuse, an agreeing one must not. Without this, a refactor that drops
+      # the rule reads as five points of RECOVERED reproduction in the line above and looks like a
+      # win.
+      - name: Replay the dated-release refusal against a simulated GA slug
+        run: npm run propose:attribution -- --self-test
+
       # Two classifiers decide, unattended, which upstream rows count as evidence and which upstream
       # names are models at all — and both used to be self-tests somebody had to remember to run.
       # That is the shape `check:mobile` had until 2026-08-07, and it rotted the same way: a comment
