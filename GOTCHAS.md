@@ -99,6 +99,18 @@ string can mean two different models」）。编号接在末尾是因为编号�
   `effort` 限定，GA 串写显式 alias；**别先改目录记录的显示名**，改名会让 11 格 preview 的分
   当场挂到 GA 名下，那正是要防的事。preview 的分怎么退役，走 `supersededRows`，逐格写理由。
 
+**⚙ 守卫现状(2026-08-13 加;这条仍未退休)** —— 已自动化的与仍靠人的,分清楚:
+- ✅ **自动拒收**:`data/model-aliases.json` 的 `modelWindows` 给 `deepseek-v4-pro` 挂了
+  `validUntil: 2026-08-12`,**带日期**的行(含声明了 `retrievedDateIsMeasurement` 的参数批次)
+  不再落进这条记录,而是报成 unmapped。`scripts/lib/archive.mjs --self-test` 九向断言。
+- ✅ **自动不新增**:归属闸门第五条拒绝 —— 不再为「档案里有带日期兄弟串」的裸串自动写 alias。
+- ⚠ **仍守不住**:**没有 `evaluation_date` 且批次未声明**的行照样进来(这些串下 73 行里 38 行
+  无日期)。收窄靠给行补日期,不靠把比较写严 —— self-test 已把这个洞钉成断言。
+- ⚠ **上面「5 条全局通配」过时**:实测 **10 条** alias 指向这条记录;「11 格」也是子集,
+  整条记录 58 格 ⇒ 见 26。
+- ❌ **完全靠人**:记录身份本身(这条变 GA、还是 preview 另立),以及 preview 的分怎么退役。
+  ⇒ **守卫只是把「静默写错」换成「大声缺」,没有替你做决定。**
+
 ---
 
 ## 三族：工具本身在骗你
