@@ -205,7 +205,9 @@ for (const [modelId, cells] of Object.entries(OBSERVATIONS_BY_CELL)) {
     const byCell = new Map();
     for (const { raw } of rows) {
       if (!raw.benchmark || isDropped(raw.benchmark)) continue;
-      const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file);
+      // Windowed like ingest: the one-source-one-cell gate must see the same rows the catalog
+      // does, or it audits a set of rows nobody ships.
+      const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file, raw.evaluation_date);
       if (!modelId) continue;
       const key = `${modelId}|${raw.benchmark}|${raw.harness ?? "-"}|${raw.reasoning_effort ?? "-"}`;
       (byCell.get(key) ?? byCell.set(key, new Set()).get(key)).add(raw.model_raw);

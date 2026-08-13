@@ -85,6 +85,14 @@ jobs:
           node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test
           node scripts/aa-new-models.mjs --self-test
 
+      # A measurement window only ever pays off in a future it prevents: with it in place today,
+      # `npm run ingest` writes a byte-identical file, so nothing else in this workflow can tell it
+      # from a no-op. This asserts it in both directions on the real alias config, and pins the
+      # undated-row hole as a decision rather than letting somebody tighten it into a silent loss
+      # of half a record's evidence.
+      - name: Replay the record measurement windows
+        run: node scripts/lib/archive.mjs --self-test
+
       - name: Build production application
         run: npm run build
 
