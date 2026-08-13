@@ -82,6 +82,23 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] **`vision` / `multimodal` 两个 tag 仍是手写。** 原理上可从上游 feed 的
       `architecture.input_modalities` 派生,但目录里没有任何字段存 modality,派生等于凭空
       发明事实 ⇒ 要做是一个 fetcher chunk(堆 2),不是改个名。
+
+## ⭐ 价格链(2026-08-13 起,有硬期限)
+
+- [ ] ⏰ **2026-08-16 DeepSeek 换峰谷计价,契约那天会自己红。** 已落档 batch 31 + `priceTerms`
+      的 `scheduled` 形状,实测 8-15 exit 0 / 8-16 exit 1。那天要做的:按 `batch-31` 的
+      `quotingRule` 用**峰时价**(list)重抓入档 → 改记录 → 退休该条款。
+      ⚠⚠ **但先答上面 preview 那节的问题**:定价页只印裸串、不印 `-0813`,按 `GOTCHAS.md` 24
+      判据 2 那两个价属于 **GA**,而目录那条是 preview。**先定记录身份,价格跟着身份走。**
+      如果那天身份还没定,正确动作是**让它红着**,不是把 GA 的价填进 preview 记录。
+- [ ] ⭐ **让 AA 当价格漂移探针(不是当权威)。** 已定:官方厂商页仍是报价权威(价格是售卖条款
+      不是测量,而 AA 会把档位结构压成一个数);但现在 `priceRow` 优先官方源、而官方源是
+      **手抄快照**,于是会动的 AA 行被忽略、涨价后契约照样全绿。
+      要做的:AA 每日行与目录 list price 差超阈值 ⇒ 报"手抄的官方行可能过期了"。
+      比给每个厂商写 fetcher 便宜得多,因为 AA 已覆盖所有厂商。阈值待定。
+- [ ] **价格仍然进不了 ingest。** `ingest.mjs` 参数循环只收 Elo,价格全靠手打进
+      `model-data.ts`、再由 `check-model-provenance` 事后审。要不要让价格也走 ingest 派生,
+      是个独立决定(会动 51 条 stale slot 的处理方式,见 `GOTCHAS.md` 22)。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
 

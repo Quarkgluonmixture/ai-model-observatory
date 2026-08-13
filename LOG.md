@@ -456,3 +456,69 @@ gaps 57 · build 过)。日期已接进**所有观测行调用点**(ingest / rep
 版本卖。判据是**有没有被 GA 取代**,不是名字里有没有那个词(`GOTCHAS.md` 25)。
 顺带纠正一个被反复引用的数:24 和 CHECKPOINT 写的「`deepseek-v4-pro` 的 11 格」是
 **四月 model card 那部分**,整条记录实测 **58 格**(`GOTCHAS.md` 26)。
+
+---
+
+## 2026-08-13(第二轮)— 价格链:窗口补到参数路径,并让 DeepSeek 8-16 改价那天契约自己红 `#decision` `#ship` `#measure` `#incident`
+
+**起点是一句用户观察**:DeepSeek 官网说要涨价,能不能实时反映到性价比榜。查下去发现三件事,
+一件比一件靠后:
+
+**① 价格数据每天到,但进不了目录。** `batch-14-aa-parameters` 是脚本源
+(`fetchers/artificial-analysis.mjs`),带 `price_input_per_m` 等三个字段。但 `ingest.mjs` 的参数
+循环第一句就是 `if (raw.text_elo == null && raw.code_elo == null) continue` —— **参数批次里只有
+Elo 进目录,价格一格都不进**。站上的价格是 `model-data.ts` 里手打的。
+
+**② 厂商价格这条链连第一米都没有。** 12 个脚本源没有一个盯厂商定价页。档案里唯一的官方
+DeepSeek 价格行在 `batch-08`,`collectedWith` 写着 "browsing model" —— **手抄的,8-01**。
+⭐ 而 `check-model-provenance` 的 `priceRow` **优先采信 `source_kind === "official"`** ——
+原则完全正确,但叠上"官方那份是冻住的手抄快照"就成了:**被优先采信的恰好是不会更新的那份**,
+会动的 AA 行排在它后面被忽略。涨价之后契约照样全绿。这是「一个事实只设一个权威来源」的一个
+新变种 —— 不是有两份副本,是**权威的那份没有活性**。
+
+**③ 涨的不是价,是计价结构。** 实测官方页(2026-08-13 读):8-16 16:00 UTC 起改峰谷计价,
+峰时 01:00–04:00 与 06:00–10:00 UTC(7 小时),谷时为峰时半价。v4-pro 输入 0.435→**1.32**(3.03×)、
+输出 0.87→**3.96**(4.55×);**连谷时(0.66/1.98)都比现价贵一倍以上**。Flash 同形。
+性价比榜(`intelligence / costTask`)现在 flash 1667× 第 1、luna 1110× 第 2、pro 906× 第 3;
+按峰时价 pro 约掉到 216×(第 5)—— ⚠ **价格倍数是实测,costTask 倍数是推算**(AA 的 cost-per-task
+按它自己的 token 配比加权,配比未知),所以"会掉"是稳的,"掉到第几"不稳。
+
+**做了两件(user 点的 1 + 3):**
+
+**参数行纳入记录窗口。** 昨天那道窗口只盖观测行,而价格走参数行、参数行没有 `evaluation_date`
+⇒ 窗口对价格完全失效。新增 `measurementDateOf(raw, meta)`:行自己的日期优先,否则**只有声明了
+`retrievedDateIsMeasurement` 的批次**才用 `retrievedDate` 兜底。
+⭐ **兜底不能一刀切,这是动手前量出来的**:`batch-22-arena` 的 `retrievedDate` 恰好是 2026-08-12
+(GA 当天 15:42 UTC 上线,晚于那批任何一票),而 Arena Elo 是几周累积。一刀切会删掉
+`deepseek-v4-pro` 已发布的 1458/1445 两个真数,去防一件没发生的事 ⇒ `GOTCHAS.md` 27。
+声明了的 8 个参数批次 retrievedDate 全 < 8-12 ⇒ **ingest 产物逐字节不变**。
+
+**把 8-16 落档并让契约那天自己红。** batch 31(**只有 meta**:当前价与 batch-08 一致,重 archive
+只是占坑重复;而 8-16 的价还没生效,写成观测行等于给一个没到的日期发布数字)。`priceTerms` 支持
+第二种形状:promotion 是**带结束日**的价,`scheduled` 是镜像 —— **带生效日**的价。生效前目录提前
+报新价则红,生效当天起还报旧价则**红**。`check:prices` 是日常 job 自动合并的闸门之一 ⇒ 那天
+宁可停发,不发错价。
+
+⚠ **验这件事时又踩了管道退出码**:`node … | tail -5; echo $?` 两侧都得 0,差点写下"两侧都通过"。
+`$?` 是 `tail` 的。`upstream.yml` 里早写着 pipefail 是承重件(并注明 `4239916` 曾把红着的
+`check:models` 直推 main)—— **规则写在别处不等于当场想得起来**。⇒ `GOTCHAS.md` 28,
+并把断言落成 `scripts/check-scheduled-prices.test.mjs`(子进程读 `status`,没有管道能骗人),
+实测 8-15 exit 0 / 8-16 exit 1 / 今天 exit 0,已进 CI。
+
+**决定:价格不改用 AA 当权威,改让 AA 当哨兵。** 用户问"要不价格都按 AA,反正没促销"。
+不改的理由:价格不是测量,是**售卖条款**,厂商页按定义是权威;而 AA 会把**档位结构压成一个数** ——
+这次峰/谷两档 AA 只会印一个,印哪个我们不知道,等于把"目录报哪一档"这个决定悄悄外包出去
+(`batch-08` 的 `tiersNotArchived` 当初就是专门定这件事的)。但用户点中的问题是真的,
+所以正解是**各干各的**:官方页仍是报价权威,AA 的每日脚本行当**漂移探针** —— AA 与目录 list price
+差超阈值 ⇒ 手抄的官方行过期了,报出来。比"给每个厂商写 fetcher"便宜得多,因为 AA 已覆盖所有厂商。
+未做,进 `TODO.md`。
+
+**报价规则不用重新定**:`check-price-terms.mjs` 开头已写「目录只报 list price」,而谷时价没有
+`endsOn`、不是促销,是**有条件的档位**,对上 `batch-08` 的 `tiersNotArchived` 先例(Google
+Batch/Flex、阿里区域价)⇒ **峰时价 = list = 目录报的那个**,谷时记录不报。两条既有惯例合起来
+就是答案,不是一个新决定。
+
+⚠⚠ **留给你的那件事变紧了**:DeepSeek 定价页只印 `deepseek-v4-flash` 和 `deepseek-v4-pro`,
+**不印 `-0813`**。按 24 的判据 2,不分列的源里裸串就是在服役的那个 = **GA**。所以这两个新价属于
+一个**本目录还没有记录**的模型,填进现有那条 preview 记录就是 GA 条款挂在 preview 测量上。
+⇒ **先定记录身份,价格跟着身份走**,不是反过来。写进了 batch 31 的 `modelIdentityWarning`。

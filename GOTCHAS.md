@@ -301,3 +301,28 @@ string can mean two different models」）。编号接在末尾是因为编号�
   拿它去估计影响面(比如"删掉才 11 格,不疼")就会差 5 倍。
 - ⇒ **别人写下的计数只在它自己那句话的语境里成立**;换个用途就重新数一遍
   (`OBSERVATIONS_BY_CELL[id]` 的 key 数)。
+
+### 27. `retrievedDate` 只对「页面上的快照」等于测量日期,对「累积出来的测量」不等于
+2026-08-13,给参数行补测量窗口时,**动手前量出来的**,不是事后修的。
+- 参数行没有 `evaluation_date`,唯一能当测量时间的替身是批次的 `retrievedDate`。
+- **一刀切会出事**:`batch-22-arena` 的 `retrievedDate` 恰好是 2026-08-12 —— DeepSeek GA 当天
+  15:42 UTC 才上线,晚于那批里的任何一票;而 Arena Elo 是**几周投票累积**的。按 retrievedDate
+  兜底会把它判进 GA 窗口外、删掉 `deepseek-v4-pro` 已发布的 **1458 text / 1445 code**,
+  去防一件根本没发生的事。
+- ⇒ 分两类:**点时快照**(定价页上的价、AA 页面上的参数)—— 读它的那天就是它的日期;
+  **累积测量**(Elo、投票、长期榜)—— 读它的那天什么都不是。
+- ⇒ 所以做成**批次自己声明** `retrievedDateIsMeasurement`,默认 false = 旧行为。
+  `scripts/lib/archive.mjs --self-test` 里有一条专门断言 **batch-22-arena 不许声明**,
+  防的就是后人"顺手统一一下"。
+- ⇒ 一般化:**给一个字段找替身之前,先问这个字段量的是一个时刻还是一段时间。**
+
+### 28. 管道之后的 `$?` 不是你以为的那个命令的 —— 又踩了一次
+2026-08-13。验"契约会不会在 8-16 变红"时跑 `node … | tail -5; echo $?`,两边都得 0,
+差点据此说"两侧都通过"。`$?` 取的是 **`tail`** 的退出码。
+- `upstream.yml` 里早写着这条(「pipefail is load-bearing, not hygiene」,并注明
+  `4239916` 曾把一个红着的 `check:models` 直推 main)。**规则写在别处不等于当场想得起来。**
+- ⇒ 要断言退出码,就**别接管道**:单跑 `cmd >/dev/null 2>&1; echo $?`,
+  或 `set -o pipefail`,或 `${PIPESTATUS[0]}`。
+- ⇒ 更稳的是**别用 shell 断言**:`scripts/check-scheduled-prices.test.mjs` 用子进程读 `status`,
+  没有管道可以骗人。
+- ⇒ 同族:这跟 5 族「我以为我知道数据长什么样」是一个病 —— **验证工具本身也要验证**。
