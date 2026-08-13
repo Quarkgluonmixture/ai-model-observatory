@@ -57,6 +57,31 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
       30.8 · SciCode 46.9 · AA-LCR 72 · IFBench 76.6),同一个 Max 档解析 bug 卡住的。
       它仍在地板 38 以下、仍带 `preview` 标签,**要不要留还是编辑判断,交给你** —— 变的只是
       「空行」这个理由已经不成立了。
+      ⚠ 2026-08-13 补:这条现在挂在下面那节 preview 规矩上,别单独定。
+
+## ⭐ 要你定:preview 记录的规矩(2026-08-13 挂起)
+
+机制侧已经做完,并且**不依赖这个决定**(归属闸门第五条拒绝 · tags 派生 · 记录测量窗口,
+见 `LOG.md` 2026-08-13)。剩下的是纯编辑判断,两个问题:
+
+- [ ] **preview 该不该有自己的目录记录?** 目录里现在**两种先例并存**:`deepseek-v4-flash`
+      走 Flash 解法(一条记录 = 在服役的那个,preview 留档案不入库),而 `qwen3.6-max` 是
+      preview 自己占一条记录。定一次,以后就是规则。
+      ⚠ **不能按显示名执行** —— 名字带 Preview 的还有 `gemini-3.1-pro`(**59 格**,全目录
+      第二满),Google 把 Preview 当在售版本卖上几个月。判据是**上游有没有一个取代它的
+      GA**,不是名字里有没有那个词;详见 `GOTCHAS.md` 25。
+- [ ] **`deepseek-v4-pro` 的测量窗口什么时候解除、怎么解除。** 现在 `data/model-aliases.json`
+      的 `modelWindows` 里挂着 `validUntil: 2026-08-12`,GA 分一律不落进这条 preview 记录
+      (实测 ingest 逐字节不变,是纯守卫)。解除**不是代码改动**,就是上面那个决定:这条
+      记录变成 GA 模型,还是 preview 留自己的记录、GA 另开一条。
+      ⚠ 两个都得**等第一块板真发 GA 分**才能动 —— 第一个源决定串怎么拼(`GOTCHAS.md` 24)。
+      ⚠ 它**只守会写 `evaluation_date` 的源**:这 10 个串下 73 行里有 38 行没有日期,那 38 行
+      仍然放行。收窄靠给行补日期,不靠把比较写严(`scripts/lib/archive.mjs --self-test`
+      把这个洞钉成了断言,改严会红)。
+
+- [ ] **`vision` / `multimodal` 两个 tag 仍是手写。** 原理上可从上游 feed 的
+      `architecture.input_modalities` 派生,但目录里没有任何字段存 modality,派生等于凭空
+      发明事实 ⇒ 要做是一个 fetcher chunk(堆 2),不是改个名。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
 

@@ -393,3 +393,66 @@ benches=72`，逐档重算）：
 **例外**：OpenAI 三个 Pro 档（Sol Pro 2 格、Luna Pro / Terra Pro 各 0 格）7 月初就发了，
 一个多月没动 —— 不是等得不够久，是 Pro 属**双模型系统**，第三方板基本不测
 （`model-aliases.json` 的 `_doc` 早写了这个判断）。这类等到明年也进不来，是个**与地板无关**的独立问题。
+
+---
+
+## 2026-08-13 — preview/GA 串号:把「发现 + 拒收」交给 cron,只留下命名决定给人 `#decision` `#ship` `#measure`
+
+**起点是一个问题而不是一个 bug**:preview 和 GA 本来就是俩模型(跟 Flash / Flash-0731 一样),
+那有没有**全自动**的应对办法。答案是有,但边界得先划清:**能全自动的是发现和拒收,不是命名**。
+现在这套的危险不在于没人处理,在于处理之前那段时间它会**静默写错**;把静默改成大声缺,
+时间压力就没了。做完三件,互相独立、都能单独回滚。
+
+**一、归属闸门加第五条拒绝:带日期的兄弟串**(`propose-attribution.mjs`)
+第一条拒绝比的是**同一个文件**里的两个串。它看不见真正花钱的形状 —— 源自己从不改 slug:
+AA 跨过一次重训仍叫 `deepseek-v4-flash`,所以 AA 文件内部没有兄弟可比,而 LiveBench / Epoch /
+LMArena 在**别的文件**里印 `-0731`。第五条把兄弟搜索跨文件展开,并收窄到只认日期后缀
+(四位是最短真日期 MMDD、版本号碎片最长两位,这条界线不用维护清单)。
+**有日期兄弟本身不拒绝** —— 厂商会给同一个模型发带日期的快照(`qwen3.7-max-20260517` 就是
+人工这么判的);拒绝的触发条件是**拿不出正面证据**:同格吻合 = 同一个模型,冲突 = 两个,
+共享零格 = 没有任何东西能 settle 它,而那正是 `GOTCHAS.md` 24 预测的形状。
+`#measure` 同一份档案改前 vs 改后:reproduced **133 → 128**,contradicted **0 → 0**,
+trap false-positive **0 → 0**。代价的 5 条全是 `openai-gpt-5-6-luna-*`(ARC 拼法,带日期快照
+但零共享格)。另约 190 对命中全是本来就 unmapped 的上一代串,不花钱。
+复现:`node scripts/propose-attribution.mjs --backtest`。
+
+⭐ **路上查明一件事,它改变了这条链的重点**:`deepseek-v4-pro` **本来就在 escalate** ——
+`batch-22-arena` 同时印了 `deepseek-v4-pro-high-preview`,第一条拒绝早就覆盖了它。
+⇒ **提议路径从来不是敞口**。敞口是**已经写好的那些 alias**,任何闸门都够不着。
+(这是 self-test 的前置断言失败逼出来的 —— 断言写对了,被测的假设是错的。)
+
+**二、tags 里派生的两个改成从记录算出来**(`app/model-data.ts`)
+`tags` 驱动展示、读起来像装饰,所以它旁边每个字段都长出了契约,只有它还是自由文本 ——
+目录唯一一条自相矛盾就长在这(`qwen3.7-max` 的 `open` 是 false 而 tag 写着 open weights,
+dossier 面板同时印 PROPRIETARY 和那个标签)。现在 `open weights` 由 `open` 渲染、`preview`
+由发布名渲染,**手写任何一个都抛错**(静默过滤会把陈旧的手写 tag 留在文件里、看起来仍然权威)。
+`#measure` 29/29 一致;**反向抓到一条**:`gemini-3.1-pro` 名叫 "Gemini 3.1 Pro Preview" 却
+从来没有 preview 标签 —— 手写那份不只会写错,**它还漏**。抛错路径实测过(给 kimi-k3 手写
+⇒ 模块加载即失败,build 全线挡住)。
+`qwen3.7-max` 上那条「⚠ 不要手工加回」的告警删了:**规矩靠注释记着会被忘,靠构造函数不会。**
+
+**三、给记录加测量窗口**(`modelWindows`,`scripts/lib/archive.mjs`)
+这是唯一真正的敞口。**十个**字符串(不是 GOTCHAS 24 列的五个)以 `effort:"*"` 指向
+`deepseek-v4-pro`,而那条记录装的是四月 preview 的测量。file scope 分不开 —— 同一块板、
+同一个串、同一个 effort,两边只有日期不同。窗口挂在**记录**上而不是 alias 上,因为
+**cutover 是一个事实**:写进十条 alias 就是十份副本,而且**第十一条(闸门下周无人值守写的
+那条)一出生就没人守**。
+`#measure` 关键断言:`npm run ingest` 产物**逐字节不变**,`observations.generated.ts` 没进
+修改列表 ⇒ 今天零影响,是纯守卫。契约全绿(29 models · 1400/2088 · 67.0% · 溯源 323/325 ·
+gaps 57 · build 过)。日期已接进**所有观测行调用点**(ingest / report-gaps / check-model-data),
+不制造第二条代码路径(`GOTCHAS.md` 19 那个坑)。
+⚠ **明写的洞**:未标日期的行仍放行 —— 73 行里 38 行没有 `evaluation_date`,对 null 失败关闭
+等于今天丢一半现有证据、去防一批还不存在的行。`--self-test` 把这个洞**钉成断言**,
+免得后人"顺手改严"时静默丢证据。
+
+**为什么三件都配了 self-test**:这三个守卫的共同点是**在今天的数据上跟"什么都没做"无法区分**
+(窗口让 ingest 逐字节不变;第五条拒绝的目标字符串至今没有任何板发过)。
+⇒ **不断言就等于没有**,而且更糟:一次把规则删掉的重构会在 backtest 里表现为
+「reproduction 涨了 5 点」,**看起来像改进**。三个都进了 CI。
+
+**没做、留给你的**:preview 到底收不收 —— 见 `TODO.md` 新增那节。
+⭐ 差点做错:本来要按「不收 preview」去退 `qwen3.6-max`,动手前量了一下 ——
+名字带 Preview 的还有 `gemini-3.1-pro`,**59 格,全目录第二满**,Google 把 Preview 当在售
+版本卖。判据是**有没有被 GA 取代**,不是名字里有没有那个词(`GOTCHAS.md` 25)。
+顺带纠正一个被反复引用的数:24 和 CHECKPOINT 写的「`deepseek-v4-pro` 的 11 格」是
+**四月 model card 那部分**,整条记录实测 **58 格**(`GOTCHAS.md` 26)。
