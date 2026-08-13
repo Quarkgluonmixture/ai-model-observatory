@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-12",
+  "checkedAt": "2026-08-13",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -435,6 +435,7 @@
       "https://openai.com/index/how-chatgpt-protects-privacy",
       "https://openai.com/index/how-confessions-can-keep-language-models-honest",
       "https://openai.com/index/how-countries-can-end-the-capability-overhang",
+      "https://openai.com/index/how-enterprises-put-ai-to-work",
       "https://openai.com/index/how-news-organizations-are-using-ai",
       "https://openai.com/index/how-openai-is-approaching-2024-worldwide-elections",
       "https://openai.com/index/how-people-are-using-chatgpt",
@@ -858,6 +859,7 @@
       "https://openai.com/index/retro-contest",
       "https://openai.com/index/retro-contest-results",
       "https://openai.com/index/review-completed-altman-brockman-to-continue-to-lead-openai",
+      "https://openai.com/index/ringcentral",
       "https://openai.com/index/rl2",
       "https://openai.com/index/roboschool",
       "https://openai.com/index/robots-that-learn",
@@ -1101,7 +1103,6 @@
       "https://deepmind.google/blog/gemini-3-flash-frontier-intelligence-built-for-speed/",
       "https://deepmind.google/blog/gemini-achieves-gold-medal-level-at-the-international-collegiate-programming-contest-world-finals/",
       "https://deepmind.google/blog/gemini-for-science-ai-experiments-and-tools-for-a-new-era-of-discovery/",
-      "https://deepmind.google/blog/gemini-robotics-15-brings-ai-agents-into-the-physical-world/",
       "https://deepmind.google/blog/gemini-robotics-2-brings-whole-body-intelligence-to-robots/",
       "https://deepmind.google/blog/gemini-robotics-er-1-6/",
       "https://deepmind.google/blog/gemini-robotics-er-2-powering-robotics-with-video-understanding-task-orchestration-and-multi-robot-collaboration/",
@@ -1139,6 +1140,7 @@
       "https://deepmind.google/blog/powering-the-future-of-robotics-in-europe/",
       "https://deepmind.google/blog/project-genie-experimenting-with-infinite-interactive-worlds/",
       "https://deepmind.google/blog/protecting-people-from-harmful-manipulation/",
+      "https://deepmind.google/blog/putting-sign-language-ai-into-users-hands/",
       "https://deepmind.google/blog/revealing-a-key-protein-behind-heart-disease/",
       "https://deepmind.google/blog/securing-the-future-of-ai-agents/",
       "https://deepmind.google/blog/sima-2-an-agent-that-plays-reasons-and-learns-with-you-in-virtual-3d-worlds/",
@@ -1182,6 +1184,7 @@
     "x-ai": [
       "/news/grok-4-1-fast",
       "/news/grok-4-5",
+      "/news/grok-4-6",
       "/news/grok-custom-voices",
       "/news/grok-voice-think-fast-1",
       "/news/grok-voice-think-fast-2"
