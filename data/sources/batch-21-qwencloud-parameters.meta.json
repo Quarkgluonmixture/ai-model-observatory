@@ -1,6 +1,7 @@
 {
   "batch": "21 · QwenCloud operating parameters",
   "retrievedDate": "2026-08-06",
+  "retrievedDateIsMeasurement": true,
   "collectedWith": "scripts/lib/render.mjs (headless Chrome) against the QwenCloud Model Marketplace card and the QwenCloud docs changelog. Both are client-rendered: a plain fetch of the card returns a shell with no prices.",
   "filtered": true,
   "filterRule": "Only qwen3.8-max is archived. The marketplace publishes one card per model and the rest either duplicate batch 08's rows or belong to models the catalog does not track; a card can be re-read at any time, so archiving them without a catalog question to answer would add rows and no cells.",

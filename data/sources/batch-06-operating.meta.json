@@ -1,6 +1,7 @@
 {
   "batch": "06 · model operating parameters",
   "retrievedDate": "2026-07-31",
+  "retrievedDateIsMeasurement": true,
   "collectedWith": "docs/INGEST-PROMPT.md batch 6, browsing model",
   "filtered": true,
   "filterRule": "LMArena rendered 384 text and 106 code rows; the transcript kept the ~36/34 that cover catalog models and current-generation candidates. Artificial Analysis and vendor pricing pages were transcribed in full for the target models.",

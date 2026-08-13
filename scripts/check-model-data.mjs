@@ -8,7 +8,7 @@ import {
   DEFAULT_ACTIVE_ID,
   DEFAULT_COMPARE_IDS,
 } from "../app/model-data.ts";
-import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
+import { buildResolvers, loadAliasConfig, measurementDateOf, readArchiveFiles } from "./lib/archive.mjs";
 
 const aliasConfig = loadAliasConfig();
 const errors = [];
@@ -201,13 +201,13 @@ for (const [modelId, cells] of Object.entries(OBSERVATIONS_BY_CELL)) {
   const { resolveModelId, isDropped } = buildResolvers(aliasConfig);
   const exempt = new Set((aliasConfig.mergedInOneSource ?? []).map((entry) => `${entry.file}|${entry.modelId}`));
   const { batches } = readArchiveFiles();
-  for (const { file, rows } of batches) {
+  for (const { file, meta, rows } of batches) {
     const byCell = new Map();
     for (const { raw } of rows) {
       if (!raw.benchmark || isDropped(raw.benchmark)) continue;
       // Windowed like ingest: the one-source-one-cell gate must see the same rows the catalog
       // does, or it audits a set of rows nobody ships.
-      const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file, raw.evaluation_date);
+      const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file, measurementDateOf(raw, meta));
       if (!modelId) continue;
       const key = `${modelId}|${raw.benchmark}|${raw.harness ?? "-"}|${raw.reasoning_effort ?? "-"}`;
       (byCell.get(key) ?? byCell.set(key, new Set()).get(key)).add(raw.model_raw);

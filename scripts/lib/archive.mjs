@@ -18,6 +18,26 @@ export const ALIAS_FILE = join(ROOT, "data/model-aliases.json");
 
 export const loadAliasConfig = () => JSON.parse(readFileSync(ALIAS_FILE, "utf8"));
 
+/**
+ * When a row was MEASURED, for the record windows below — not when it was filed.
+ *
+ * Observation rows carry `evaluation_date` and answer for themselves. Parameter rows do not, and
+ * that is the gap the windows were blind to: prices travel the parameter path, and a price is
+ * exactly the kind of fact a maker changes under an unchanged slug.
+ *
+ * `retrievedDate` is the obvious substitute and is only sometimes valid, so the batch has to say
+ * so rather than have it assumed. A price read off a vendor page on a date IS that date's price.
+ * An Arena Elo is not: it is weeks of votes, and `batch-22-arena` happens to be stamped
+ * 2026-08-12 — the day DeepSeek's GA went live at 15:42 UTC, hours after any vote in it. Assuming
+ * the substitute everywhere would have refused that batch and deleted two published Elo (1458 text
+ * / 1445 code) to guard against a mixup that had not happened. Measured before it was written, not
+ * after it broke.
+ *
+ * Default is null, i.e. undated, i.e. the behaviour before windows existed. A batch opts in.
+ */
+export const measurementDateOf = (raw, meta) =>
+  raw?.evaluation_date ?? (meta?.retrievedDateIsMeasurement ? meta.retrievedDate ?? null : null);
+
 const aliasKey = (modelRaw, effort) => `${modelRaw}|${effort ?? "null"}`;
 
 /**
@@ -183,6 +203,30 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\
     const got = resolveModelId(raw, "*", null, date);
     console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
     if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
+  }
+
+  // The parameter path, which is where prices travel and where the window was blind until
+  // 2026-08-13. A parameter row has no `evaluation_date`, so everything here turns on whether the
+  // batch declared that its retrieval dates its rows.
+  const paramCases = [
+    ["a declaring batch fetched before the GA date still resolves", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-11" }, "deepseek-v4-pro"],
+    ["a declaring batch refetched after it is refused", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-20" }, undefined],
+    ["a NON-declaring batch is untouched, however late", { retrievedDate: "2026-08-20" }, "deepseek-v4-pro"],
+  ];
+  for (const [label, meta, expected] of paramCases) {
+    const got = resolveModelId("deepseek-v4-pro", "*", null, measurementDateOf({}, meta));
+    console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
+    if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
+  }
+
+  // Arena must be the batch that does NOT declare: it is stamped 2026-08-12, the day the GA went
+  // live hours later, and it supplies deepseek-v4-pro's published Elo. Declaring it would delete
+  // two real numbers to guard against a mixup that had not happened.
+  const arena = JSON.parse(readFileSync(join(SOURCE_DIR, "batch-22-arena.meta.json"), "utf8"));
+  if (arena.retrievedDateIsMeasurement) {
+    failures.push("batch-22-arena declares its retrieval dates its rows — an Elo is accumulated votes, and this drops published numbers");
+  } else {
+    console.log("  ok   batch-22-arena does not claim its retrieval dates its rows");
   }
   console.log(failures.length ? "self-test FAILED" : "self-test passed");
   process.exit(failures.length ? 1 : 0);

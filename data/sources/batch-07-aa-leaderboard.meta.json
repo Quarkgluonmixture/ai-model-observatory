@@ -1,6 +1,7 @@
 {
   "batch": "07 · Artificial Analysis leaderboard main table",
   "retrievedDate": "2026-07-31",
+  "retrievedDateIsMeasurement": true,
   "collectedWith": "direct fetch of the leaderboard page; the batch-06 browsing run had hit an Internal Error on it",
   "filtered": true,
   "filterRule": "The table lists ~230 rows. Archived here are the rows for catalog models and their published effort variants.",

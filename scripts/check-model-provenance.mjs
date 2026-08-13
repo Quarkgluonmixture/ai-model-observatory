@@ -13,7 +13,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { MODELS } from "../app/model-data.ts";
-import { buildResolvers } from "./lib/archive.mjs";
+import { buildResolvers, measurementDateOf } from "./lib/archive.mjs";
 
 // fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
 // leading slash that fs cannot resolve. The agent maintaining this runs there.
@@ -35,7 +35,10 @@ const promotions = new Set();
 for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".meta.json"))) {
   const meta = JSON.parse(readFileSync(join(SOURCE_DIR, file), "utf8"));
   for (const term of meta.priceTerms ?? []) {
-    promotions.add(`${term.modelId}|${term.promotional.input}|${term.promotional.output}`);
+    // A term may be a promotion (a price with an end date) or a scheduled change (one with a
+    // start date). Only the promotional kind must be kept out of the price checks; a scheduled
+    // price is not published yet, so no archive row can be quoting it.
+    if (term.promotional) promotions.add(`${term.modelId}|${term.promotional.input}|${term.promotional.output}`);
   }
 }
 
@@ -50,7 +53,11 @@ for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".json
   }
   if (!meta.schema?.startsWith("Model operating parameters")) continue;
   for (const line of readFileSync(join(SOURCE_DIR, file), "utf8").split("\n").filter((l) => l.trim())) {
-    rows.push({ ...JSON.parse(line), file, retrievedDate: meta.retrievedDate ?? "" });
+    const raw = JSON.parse(line);
+    // `measuredOn` is carried per row rather than derived later, because the audit flattens every
+    // batch into one list and loses the meta. Only batches that declare their retrieval dates
+    // their rows supply one; see `measurementDateOf`.
+    rows.push({ ...raw, file, retrievedDate: meta.retrievedDate ?? "", measuredOn: measurementDateOf(raw, meta) });
   }
 }
 
@@ -72,7 +79,7 @@ const modelIndex = new Map();
 const slotReadings = new Map();
 const auditedKeys = new Set();
 for (const row of rows) {
-  const modelId = resolveModelId(row.model_raw, row.effort, row.file);
+  const modelId = resolveModelId(row.model_raw, row.effort, row.file, row.measuredOn);
   if (!modelId) continue;
 
   // Each field takes whichever row supplies it FIRST, and files are read in name order — so an
