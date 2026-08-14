@@ -76,6 +76,24 @@ jobs:
           node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test
           node scripts/aa-new-models.mjs --self-test
 
+      # Every assertion above this line is about the data. This one is about the alarm, and it is
+      # the first of its kind in this file — which is the reason it exists.
+      #
+      # On 2026-08-14 the daily job went red (Vals published a board the fetcher could not read),
+      # the integrity notifier ran, and it delivered nothing: `sed ... | head -40` took SIGPIPE on a
+      # large drift block, `set -euo pipefail` exited the script before the issue and before the
+      # push, and `upstream.yml` swallowed the non-zero status with `|| echo "::warning::"`. The step
+      # was green, no issue was opened, no phone rang, and the failure was found ten hours later by
+      # somebody opening the Actions tab. The alarm failed in proportion to the size of what it was
+      # alarming about — every small drift for weeks before that alerted correctly.
+      #
+      # `--self-test` replays that morning's log shape and then runs the whole path in a dry run
+      # where `gh` and the push are no-ops, so a rewrite that breaks delivery fails here rather than
+      # on the morning it is needed. Verified 2026-08-14 by putting the old pipeline back: two of its
+      # five assertions go red. No network, no key, nothing sent.
+      - name: Replay the integrity notifier against the log shape that silenced it
+        run: bash scripts/publish-integrity-issue.sh --self-test
+
       - name: Build production application
         run: npm run build
 
