@@ -329,6 +329,10 @@ string can mean two different models」）。编号接在末尾是因为编号�
 - ⇒ 一般化:**给一个字段找替身之前,先问这个字段量的是一个时刻还是一段时间。**
 
 ### 28. 管道之后的 `$?` 不是你以为的那个命令的 —— 又踩了一次
+**2026-08-14 第三次,变形出现**:`node --test … ; echo $?` 得 exit=0,而 `grep -E '^# (pass|fail)'`
+零匹配 —— 看起来"跑了但没有断言"。真相是默认 reporter 用 `ℹ pass 3` 而不是 `# pass 3`,
+换 `--test-reporter=tap` 一看是 3 用例 3 过 0 败。**「零匹配的检查」和「没跑的检查」长得一样**,
+而这次是我的 grep 模式错,不是测试没跑。⇒ 断言"它真的跑了"要看**用例数**,别靠一个 grep 模式。
 2026-08-13。验"契约会不会在 8-16 变红"时跑 `node … | tail -5; echo $?`,两边都得 0,
 差点据此说"两侧都通过"。`$?` 取的是 **`tail`** 的退出码。
 - `upstream.yml` 里早写着这条(「pipefail is load-bearing, not hygiene」,并注明
@@ -338,3 +342,48 @@ string can mean two different models」）。编号接在末尾是因为编号�
 - ⇒ 更稳的是**别用 shell 断言**:`scripts/check-scheduled-prices.test.mjs` 用子进程读 `status`,
   没有管道可以骗人。
 - ⇒ 同族:这跟 5 族「我以为我知道数据长什么样」是一个病 —— **验证工具本身也要验证**。
+
+### 29. 报警器会在**正比于它要报的事情的规模**上失灵,而失灵的样子是绿色
+2026-08-14。日常 job 红了(Vals 新板读不出),完整性通知这一步跑了,**issue 没开、微信没推**,
+而那一步在 Actions 里显示✅。人是十小时后翻 Actions 才发现的。
+- 机制两层。里层:`publish-integrity-issue.sh` 里 `detail="$(sed -n '/…/,/^$/p' "$LOG" | head -40)"`
+  —— `head` 拿够 40 行就关管道,`sed` 吃 SIGPIPE,`set -o pipefail` 把它变成赋值的非零状态,
+  `set -e` 于是在开 issue 之前退出。**只在 sed 的输出超过管道缓冲区时触发**(实测 ~1KB 段落
+  exit 0、~400KB exit 141)⇒ 小漂移一直正常报警,**漂移越大越必然静默**。
+  外层:`upstream.yml` 用 `|| echo "::warning::…"` 吞掉非零 ⇒ 步骤变绿。
+- ⇒ 命令替换里**不要让第二个进程去关第一个进程的管道**:封顶用 `awk 'NR<=40'` / `awk … {exit}`,
+  别用 `| head -n`。同族:与坑 28 一个病(管道会骗你),只是这次骗的是 `set -e` 不是 `$?`。
+- ⇒ **报警链路也要有 self-test**。这个仓库所有断言都是关于数据的,通知侧一条都没有,
+  而通知失败的样子是绿色。`publish-integrity-issue.sh --self-test` 现在重放那天的日志形状,
+  并用 dry-run(`gh`/推送换成 no-op)跑**完整条路径** —— 只走到 body 之前的 dry-run 抓不到这个 bug。
+  已进 CI。验证过它有解释力:把旧管道放回去,五条断言里两条转红。
+- ⚠ 仍未做的两件(留在 `TODO.md`):那两句 `|| echo "::warning::"` 仍把失败吞成绿色;
+  `upstream.yml` 定性 integrity 用的是一句 `grep -q "no longer matches its archive"`,
+  **分不出「值被改写」和「值新增」**,那天的 availability 失败因此走了 integrity 通道。
+
+### 30. `git add` 撞到一个已被 `git rm` 的路径 ⇒ **整条命令失败、什么都没 stage**,而紧跟的 commit 照样成功
+2026-08-14。`git add a b c public/favicon.png`(那个文件此前已 `git rm`)→
+`fatal: pathspec 'public/favicon.png' 未匹配任何文件`。git add 对 pathspec 错误是**全或无**,
+所以 a/b/c 一个都没进 index;而下一句 `git commit` 用**之前**残留的 staged 内容(两个删除)提交成功,
+commit message 却描述着完整改动。**已经推上去之后才发现**(站上等于没有图标)。
+- 机制:失败在 `git add`,成功在 `git commit`,两个命令之间没有任何东西对账。
+  在 `&&` 串或多行 heredoc 脚本里尤其隐形——一条 fatal 滚过去了,后面照跑。
+- ⇒ commit 前**必看** `git diff --cached --name-only`(全局规则本来就要求,这次是我跳了)。
+  更硬的做法:`git add … && git diff --cached --name-only` 用 `&&` 串起来,让 add 的失败挡住后面。
+- ⇒ 已经推出去了就 `--amend` + `--force-with-lease`,然后**核对 PR head 是否换成新 SHA**
+  (`gh pr view N --json headRefOid` vs `git rev-parse HEAD`)——推送成功≠PR 看到了。
+
+### 31. 生成模型交付的「SVG 图标」有三种坏法,都能通过肉眼验收
+2026-08-14。同一个图标要了三轮,三种坏法各中一次:
+- **位图套壳**:零个 `<path>`,只有一个 `<image href="data:image/png;base64,…">`。2.3MB,
+  解出来的 PNG 与原始生图 **sha1 完全相同**。缩放不会变清晰,只是文件大 40 倍。
+- **把画布外的黑边描进矢量**:第一句是 `<rect width="1254" height="1254" fill="#000"/>`
+  —— 生图工具的画布底色被当成设计元素描下来了,四角会渲染成黑方块(实测 128px 四角 `(0,0,0)`)。
+- **静默残次**:另一版是真矢量但只剩两个颜色,网格和准星整个丢了,肉眼在小图上看不出少了东西。
+- ⇒ 收到「SVG」先数元素:`grep -c '<image\|base64,\|<path\|<rect'`;再渲染读**四角像素**;
+  再数**用到的颜色数**与原设计对比。
+- ⇒ favicon 的战场是 **16px**,而生成图是按大图构图的。实测:某版墨迹只铺到画布 53%,
+  剩下是纸白底板 —— 而底板在浅色标签栏上等于透明,于是 16px 里一半像素什么都没画。
+  **「太淡」的第一诊断不是笔画细,是图没铺满画布**(先按加粗修过一次,方向错了)。
+  量化口径:在**真实标签栏底色上**渲染 16px 数深色像素占比(实测 10% 看不清 / 17% 可用 / 26% 清晰)。
+  1254 画布上 24 单位的刻度渲染出来是 0.31px —— 这种细节加粗到任何值都救不回,该删。

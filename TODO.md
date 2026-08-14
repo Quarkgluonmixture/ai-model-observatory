@@ -28,6 +28,19 @@ Epoch 的 zip 确实发布 FrontierMath，读进来的却是退役题集（见 `
 ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，见 `LOG.md` 2026-08-07 第四轮。
 探测细节住在 `scripts/fetchers/arcprize.mjs` 的头注释里，不在这。
 
+## ⭐ 要你定:通知侧的两件(2026-08-14,报警器静默失灵之后)
+
+机制侧已修(#79:SIGPIPE + `--self-test` 进 CI,见 `GOTCHAS.md` 29)。剩下两件是策略,不是 bug:
+
+- [ ] **`upstream.yml` 要不要停止把通知失败吞成绿色。** 那两句 `|| echo "::warning::"` /
+      `|| true` 是 07:03 那次"步骤显示绿色"的直接原因。改它等于说"通知发不出去该让 job 变红",
+      而 `notify-pushplus.mjs` 头部写着相反的理由(通道没配不该让 job 变红)——同一问题的两面。
+      折中方案:区分"通道没配"(跳过,绿)与"脚本自己崩了"(红)。
+- [ ] **integrity 与 availability 要不要拆成两条通道。** 现在 `upstream.yml:82` 用一句
+      `grep -q "no longer matches its archive"` 定性,**分不出「值被改写」和「值新增」** ——
+      §10 的表格早把这两件事定成不同 verdict。8-14 那次 availability 失败因此走了 integrity 通道
+      (幸好被 #79 修的那个 bug 挡住,没发错名字)。要定的是:读不出源该不该也推手机。
+
 ## 自动化剩下的缺口（2026-08-07 第六轮后，详情在 `docs/ARCHITECTURE.md` §10）
 
 三个做掉了（手机探针进 CI · 空行第四条 · 线上站验证机制——**2026-08-10 起真的在跑了**，
@@ -59,29 +72,26 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
       「空行」这个理由已经不成立了。
       ⚠ 2026-08-13 补:这条现在挂在下面那节 preview 规矩上,别单独定。
 
-## ⭐ 要你定:preview 记录的规矩(2026-08-13 挂起)
+## preview 记录的规矩:2026-08-14 已定,剩下的等数据
 
-机制侧已经做完,并且**不依赖这个决定**(归属闸门第五条拒绝 · tags 派生 · 记录测量窗口,
-见 `LOG.md` 2026-08-13)。剩下的是纯编辑判断,两个问题:
+**规则已定**(理由与实测在 `LOG.md` 2026-08-14 条,**别重新论证**):**一条记录 = 一个在服役的版本**,
+Flash 的解法。preview 的行留在归档里不入库,不是删掉。名字优先抄厂商发布过的那个。
 
-- [ ] **preview 该不该有自己的目录记录?** 目录里现在**两种先例并存**:`deepseek-v4-flash`
-      走 Flash 解法(一条记录 = 在服役的那个,preview 留档案不入库),而 `qwen3.6-max` 是
-      preview 自己占一条记录。定一次,以后就是规则。
-      ⚠ **不能按显示名执行** —— 名字带 Preview 的还有 `gemini-3.1-pro`(**59 格**,全目录
-      第二满),Google 把 Preview 当在售版本卖上几个月。判据是**上游有没有一个取代它的
-      GA**,不是名字里有没有那个词;详见 `GOTCHAS.md` 25。
-- [ ] **`deepseek-v4-pro` 的测量窗口什么时候解除、怎么解除。** 现在 `data/model-aliases.json`
-      的 `modelWindows` 里挂着 `validUntil: 2026-08-12`,GA 分一律不落进这条 preview 记录
-      (实测 ingest 逐字节不变,是纯守卫)。解除**不是代码改动**,就是上面那个决定:这条
-      记录变成 GA 模型,还是 preview 留自己的记录、GA 另开一条。
-      ⚠ 两个都得**等第一块板真发 GA 分**才能动 —— 第一个源决定串怎么拼(`GOTCHAS.md` 24)。
-      ⚠ 它**只守会写 `evaluation_date` 的源**:这 10 个串下 73 行里有 38 行没有日期,那 38 行
-      仍然放行。收窄靠给行补日期,不靠把比较写严(`scripts/lib/archive.mjs --self-test`
-      把这个洞钉成了断言,改严会红)。
+已做:`deepseek-v4-pro` 显示名 → **"DeepSeek V4 Pro Preview"**(`preview` 标签自动派生)。
+`#deadend` 日期后缀 "0424" 已否 —— 厂商没印过这个数字,而 Flash 证明第三方日期会差一天(坑见 LOG)。
 
-- [ ] **`vision` / `multimodal` 两个 tag 仍是手写。** 原理上可从上游 feed 的
-      `architecture.input_modalities` 派生,但目录里没有任何字段存 modality,派生等于凭空
-      发明事实 ⇒ 要做是一个 fetcher chunk(堆 2),不是改个名。
+**Qwen 与 Gemini 两条查过、不动**:`Qwen3.6 Max Preview`(5 格)和 `Gemini 3.1 Pro Preview`(59 格)
+上游都是**精确同名**,且各自族里**没有取代它们的 GA** ⇒ 按 `GOTCHAS.md` 25 的判据它们不是待转正的
+preview,名字是对的。
+
+剩下的两件都**只等数据**,不等决定:
+
+- [ ] **等 GA 读数够到地板再翻转 `deepseek-v4-pro`。** 今天只有 1 格 GA 读数(被窗口拦住的
+      DeepSWE 62.8),地板 49。翻转动作:名字去掉 Preview → 撤 `modelWindows` → preview 的旧行
+      改成不映射(Flash 那样留档不入库) → 删掉 `upstream-evidence.mjs` 里那条 pin(self-test
+      会自己打 note 提醒)。⚠ 那天覆盖率会掉一截,因为 58 格里大部分要退出。
+- [ ] **或者等 DeepSeek 自己把裸名条目改名**(它给 Flash 就是这么做的:裸名后来变成 `0423`)。
+      改了就照抄,零发明。
 
 ## ⭐ 价格链(2026-08-13 起,有硬期限)
 
@@ -91,11 +101,6 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
       ⚠⚠ **但先答上面 preview 那节的问题**:定价页只印裸串、不印 `-0813`,按 `GOTCHAS.md` 24
       判据 2 那两个价属于 **GA**,而目录那条是 preview。**先定记录身份,价格跟着身份走。**
       如果那天身份还没定,正确动作是**让它红着**,不是把 GA 的价填进 preview 记录。
-- [ ] ⭐ **让 AA 当价格漂移探针(不是当权威)。** 已定:官方厂商页仍是报价权威(价格是售卖条款
-      不是测量,而 AA 会把档位结构压成一个数);但现在 `priceRow` 优先官方源、而官方源是
-      **手抄快照**,于是会动的 AA 行被忽略、涨价后契约照样全绿。
-      要做的:AA 每日行与目录 list price 差超阈值 ⇒ 报"手抄的官方行可能过期了"。
-      比给每个厂商写 fetcher 便宜得多,因为 AA 已覆盖所有厂商。阈值待定。
 - [ ] **价格仍然进不了 ingest。** `ingest.mjs` 参数循环只收 Elo,价格全靠手打进
       `model-data.ts`、再由 `check-model-provenance` 事后审。要不要让价格也走 ingest 派生,
       是个独立决定(会动 51 条 stale slot 的处理方式,见 `GOTCHAS.md` 22)。
