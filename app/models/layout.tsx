@@ -13,15 +13,15 @@ import type { Metadata } from "next";
 // Asserted after `next build` by reading the prerendered HTML of both routes — the question is not
 // "is the file there" but "did the right href reach each route".
 //
-// Swapping in a PNG is a one-line change on each side: point at `/favicon-models.png` and drop the
-// file in `public/`. The name is the only contract.
+// The artwork is a 256×256 PNG rather than SVG because it came out of an image model; the name is
+// the only contract, so replacing the file needs no edit here.
 export const metadata: Metadata = {
   title: "AI Model Observatory · AI 模型观测站",
   description:
     "Bilingual frontier AI model rankings, benchmarks, capability radar charts, and token pricing.",
   icons: {
-    icon: "/favicon-models.svg",
-    shortcut: "/favicon-models.svg",
+    icon: "/favicon-models.png",
+    shortcut: "/favicon-models.png",
   },
 };
 
