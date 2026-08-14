@@ -11,6 +11,13 @@
 //     for `<tr>`, `<table>`, `fetch(` or an `/api/` path answers no. There is nothing to find in
 //     the JavaScript chunks because the data never travels separately from the page.
 //
+// One board now breaks that second sentence, and it is why the loop below skips instead of
+// throwing when a board with no catalog column has no island: `rsi_index` (first seen
+// 2026-08-14) is a client-only React component whose whole dataset — 3 models, 5 research
+// tasks, `score` 0-1, no `overall` — is bundled inside its JS chunk, `props="{}"`. Boards that
+// map to a catalog column still hard-fail on a missing island, because that is a restyle of a
+// board this project publishes.
+//
 // What licensed replacing the transcription: batch 05 hand-read six CorpFin v2 rows —
 // 73.19 / 71.83 / 71.56 / 71.29 / 68.57 / 68.53 — and this file's `overall` task gives
 // 73.194 / 71.834 / 71.562 / 71.29 / 68.57 / 68.532 for the same six models. Six of six, so
@@ -160,14 +167,30 @@ export const vals = {
     const rows = [];
     const collected = [];
     const noColumn = [];
+    const noIsland = [];
 
     for (const slug of slugs) {
       const html = await fetchText(`${SITE}/benchmarks/${slug}`);
       const props = readAstroIslandProps(html, "benchmarkView");
       if (!props) {
-        // Every board page carries this island. Its absence is a restyle, not an empty board, and
-        // writing the batch without this slug would silently drop a column.
-        throw new Error(`${slug}: no benchmarkView island — the page changed shape`);
+        // A board that maps to a catalog column and has lost its island is a restyle, and
+        // writing the batch without it would silently drop a published column. That stays a
+        // hard error — this is the alarm that fires the day Vals rebuilds the boards we show.
+        if (KNOWN.has(slug) || SUBTASKS.has(slug)) {
+          throw new Error(`${slug}: no benchmarkView island — the page changed shape`);
+        }
+        // A board with no catalog column cannot silently drop one: it would land under
+        // `vals-<slug>` and be refused at ingest anyway. Skip it and name it in the meta,
+        // so the batch says what it did not read. The first such board is `rsi_index`
+        // (seen 2026-08-14, the run whose whole-source failure this branch replaces): Vals
+        // built it as a client-only React component whose data is bundled inside the JS
+        // chunk rather than server-rendered into props, and it is not the same kind of board
+        // either — 3 models, 5 research tasks (compression, lm_training, …), `score` 0-1,
+        // no `overall`. Collecting it is a taxonomy decision away, not a fetch away: the day
+        // a column wants it, the hard branch above fires and forces the parser to learn its
+        // shape instead of skipping past it.
+        noIsland.push(slug);
+        continue;
       }
       const view = unwrapAstroProps(props);
       const board = view.benchmarkView?.default ?? view.benchmarkView;
@@ -228,10 +251,17 @@ export const vals = {
     rows.sort((a, b) =>
       a.benchmark.localeCompare(b.benchmark) || b.score - a.score || a.model_raw.localeCompare(b.model_raw));
 
+    // The skip above is per-board and bounded by it; a fetch that read NOTHING means every
+    // board restyled at once, and letting it through would let the next `--live` refresh
+    // rewrite this batch empty. 40+ boards going dark together is a restyle, not an empty site.
+    if (rows.length === 0) throw new Error(`read ${slugs.length} boards and collected nothing — the pages changed shape`);
+
     return {
       rows,
       version: `${slugs.length} boards`,
-      summary: `${rows.length} rows across ${collected.length} board view(s) from ${slugs.length} boards`,
+      summary:
+        `${rows.length} rows across ${collected.length} board view(s) from ${slugs.length} boards` +
+        (noIsland.length ? `; ${noIsland.length} unreadable board(s) skipped: ${noIsland.join(", ")}` : ""),
       meta: {
         batch: "29 · Vals AI",
         collectedWith: "scripts/fetchers/vals.mjs",
@@ -245,7 +275,12 @@ export const vals = {
           "put one model's condition against another's in one column. Boards with no catalog " +
           "column yet are collected under `vals-<slug>` and refused at ingest with a reason, so " +
           "adding the column later costs no re-collection: " +
-          (noColumn.length ? noColumn.join(", ") : "none"),
+          (noColumn.length ? noColumn.join(", ") : "none") +
+          ". Boards whose page carries no server-rendered board at all — a client-only component " +
+          "with the data bundled in its JS chunk — are skipped and named here rather than allowed " +
+          "to fail the whole source; they have no catalog column, so nothing published depends " +
+          "on them: " +
+          (noIsland.length ? noIsland.join(", ") : "none"),
         release: "rolling",
         sources: [INDEX, ...slugs.map((slug) => `${SITE}/benchmarks/${slug}`)],
         note:
