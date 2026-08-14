@@ -1,0 +1,31 @@
+{
+  "batch": "31 · DeepSeek peak/off-peak billing, announced 2026-08-13, effective 2026-08-16",
+  "retrievedDate": "2026-08-13",
+  "collectedWith": "read directly from the vendor's published pricing page; no fetcher watches vendor pricing pages yet, which is why this batch exists at all",
+  "schema": "Price terms only. This batch carries NO .jsonl, deliberately — see rowsNotArchived.",
+  "sources": ["https://api-docs.deepseek.com/quick_start/pricing/"],
+  "rowsNotArchived": "The page's CURRENT prices were re-read and are unchanged from batch 08 (v4-pro $0.435/$0.87, v4-flash $0.14/$0.28), so archiving them again would add rows that duplicate a slot batch 08 already holds. The prices taking effect on 2026-08-16 must not be archived as observation rows either: they are not in force, and a row carrying them would be a published-looking number for a date that has not arrived. Both facts live in priceTerms below, which is exactly what that mechanism is for.",
+  "note": "DeepSeek is replacing flat per-token pricing with peak/off-peak billing at 16:00 UTC on 2026-08-16. Peak is 01:00-04:00 and 06:00-10:00 UTC (7 hours); every other hour is off-peak at half the peak rate. This is a rate-card change, not a promotion: off-peak has no end date, so it is a conditional tier in the sense of batch 08's tiersNotArchived (Google Batch/Flex, Alibaba regional list prices), not a discount with an expiry.",
+  "quotingRule": "The catalog quotes list price — check-price-terms.mjs states the rule and batch 08 applies it to Google Standard, Alibaba Singapore and Thinking Machines Serverless. Peak is the undiscounted rate a caller pays without scheduling around the clock, so peak is what the catalog should quote from 2026-08-16. Off-peak is recorded here and deliberately not quoted.",
+  "tiersNotArchived": {
+    "deepseek-v4-pro": "Off-peak (all hours outside 01:00-04:00 and 06:00-10:00 UTC): $0.66 input cache-miss, $0.022 input cache-hit, $1.98 output per 1M tokens.",
+    "deepseek-v4-flash": "Off-peak, same windows: $0.22 input cache-miss, $0.007 input cache-hit, $0.66 output per 1M tokens."
+  },
+  "modelIdentityWarning": "⚠ This page lists exactly two DeepSeek models, `deepseek-v4-flash` and `deepseek-v4-pro`. It does NOT print `-0813`. By GOTCHAS 24's second criterion — whether the source itself splits the release out — an unsplit source's bare string means the model in service, which since 2026-08-12 is the GA release. The catalog's `deepseek-v4-pro` record holds the April PREVIEW. So these prices belong to a model this catalog does not yet have a record for, and typing them onto the existing record would attach GA terms to preview measurements. The measurement window on that record (modelWindows in data/model-aliases.json) refuses dated rows from 2026-08-12 onward for exactly this reason. Resolve the record identity first; the price follows it, not the other way round.",
+  "priceTerms": [
+    {
+      "modelId": "deepseek-v4-pro",
+      "retrievedOn": "2026-08-13",
+      "listPrice": { "input": 0.435, "output": 0.87 },
+      "scheduled": { "input": 1.32, "output": 3.96, "effectiveFrom": "2026-08-16" },
+      "source": "https://api-docs.deepseek.com/quick_start/pricing/"
+    },
+    {
+      "modelId": "deepseek-v4-flash",
+      "retrievedOn": "2026-08-13",
+      "listPrice": { "input": 0.14, "output": 0.28 },
+      "scheduled": { "input": 0.44, "output": 1.32, "effectiveFrom": "2026-08-16" },
+      "source": "https://api-docs.deepseek.com/quick_start/pricing/"
+    }
+  ]
+}

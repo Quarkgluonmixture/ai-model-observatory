@@ -37,7 +37,7 @@ import {
 import { FETCHERS } from "./fetchers/index.mjs";
 import { PROVIDER_LOOKUPS } from "../app/api/live-models/route.ts";
 import { tierWordOf, variantOf } from "../app/upstream-variants.ts";
-import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
+import { buildResolvers, loadAliasConfig, measurementDateOf, readArchiveFiles } from "./lib/archive.mjs";
 import { buildEvidenceIndex, dilutionFloor, sameFamily } from "./lib/upstream-evidence.mjs";
 
 const args = process.argv.slice(2);
@@ -201,10 +201,12 @@ say("## Archived rows waiting on a catalog model");
 say();
 
 const waiting = new Map();
-for (const { file, rows } of batches) {
+for (const { file, meta, rows } of batches) {
   for (const { raw } of rows) {
     if (isDropped(raw.benchmark)) continue;
-    if (resolveModelId(raw.model_raw, raw.reasoning_effort, file)) continue;
+    // Same arguments as ingest, date included: a row this report calls attributable while ingest
+    // refuses it is the two-code-paths bug this repo has already shipped once.
+    if (resolveModelId(raw.model_raw, raw.reasoning_effort, file, measurementDateOf(raw, meta))) continue;
     // A per-file refusal is a decision already made, not an uncollected model. Listing it here
     // would put a permanent, un-actionable line in the gaps issue every release.
     if (isRefused(raw.model_raw, raw.reasoning_effort, file)) continue;

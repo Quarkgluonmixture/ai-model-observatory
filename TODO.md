@@ -57,8 +57,88 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
       30.8 · SciCode 46.9 · AA-LCR 72 · IFBench 76.6),同一个 Max 档解析 bug 卡住的。
       它仍在地板 38 以下、仍带 `preview` 标签,**要不要留还是编辑判断,交给你** —— 变的只是
       「空行」这个理由已经不成立了。
+      ⚠ 2026-08-13 补:这条现在挂在下面那节 preview 规矩上,别单独定。
+
+## ⭐ 要你定:preview 记录的规矩(2026-08-13 挂起)
+
+机制侧已经做完,并且**不依赖这个决定**(归属闸门第五条拒绝 · tags 派生 · 记录测量窗口,
+见 `LOG.md` 2026-08-13)。剩下的是纯编辑判断,两个问题:
+
+- [ ] **preview 该不该有自己的目录记录?** 目录里现在**两种先例并存**:`deepseek-v4-flash`
+      走 Flash 解法(一条记录 = 在服役的那个,preview 留档案不入库),而 `qwen3.6-max` 是
+      preview 自己占一条记录。定一次,以后就是规则。
+      ⚠ **不能按显示名执行** —— 名字带 Preview 的还有 `gemini-3.1-pro`(**59 格**,全目录
+      第二满),Google 把 Preview 当在售版本卖上几个月。判据是**上游有没有一个取代它的
+      GA**,不是名字里有没有那个词;详见 `GOTCHAS.md` 25。
+- [ ] **`deepseek-v4-pro` 的测量窗口什么时候解除、怎么解除。** 现在 `data/model-aliases.json`
+      的 `modelWindows` 里挂着 `validUntil: 2026-08-12`,GA 分一律不落进这条 preview 记录
+      (实测 ingest 逐字节不变,是纯守卫)。解除**不是代码改动**,就是上面那个决定:这条
+      记录变成 GA 模型,还是 preview 留自己的记录、GA 另开一条。
+      ⚠ 两个都得**等第一块板真发 GA 分**才能动 —— 第一个源决定串怎么拼(`GOTCHAS.md` 24)。
+      ⚠ 它**只守会写 `evaluation_date` 的源**:这 10 个串下 73 行里有 38 行没有日期,那 38 行
+      仍然放行。收窄靠给行补日期,不靠把比较写严(`scripts/lib/archive.mjs --self-test`
+      把这个洞钉成了断言,改严会红)。
+
+- [ ] **`vision` / `multimodal` 两个 tag 仍是手写。** 原理上可从上游 feed 的
+      `architecture.input_modalities` 派生,但目录里没有任何字段存 modality,派生等于凭空
+      发明事实 ⇒ 要做是一个 fetcher chunk(堆 2),不是改个名。
+
+## ⭐ 价格链(2026-08-13 起,有硬期限)
+
+- [ ] ⏰ **2026-08-16 DeepSeek 换峰谷计价,契约那天会自己红。** 已落档 batch 31 + `priceTerms`
+      的 `scheduled` 形状,实测 8-15 exit 0 / 8-16 exit 1。那天要做的:按 `batch-31` 的
+      `quotingRule` 用**峰时价**(list)重抓入档 → 改记录 → 退休该条款。
+      ⚠⚠ **但先答上面 preview 那节的问题**:定价页只印裸串、不印 `-0813`,按 `GOTCHAS.md` 24
+      判据 2 那两个价属于 **GA**,而目录那条是 preview。**先定记录身份,价格跟着身份走。**
+      如果那天身份还没定,正确动作是**让它红着**,不是把 GA 的价填进 preview 记录。
+- [ ] ⭐ **让 AA 当价格漂移探针(不是当权威)。** 已定:官方厂商页仍是报价权威(价格是售卖条款
+      不是测量,而 AA 会把档位结构压成一个数);但现在 `priceRow` 优先官方源、而官方源是
+      **手抄快照**,于是会动的 AA 行被忽略、涨价后契约照样全绿。
+      要做的:AA 每日行与目录 list price 差超阈值 ⇒ 报"手抄的官方行可能过期了"。
+      比给每个厂商写 fetcher 便宜得多,因为 AA 已覆盖所有厂商。阈值待定。
+- [ ] **价格仍然进不了 ingest。** `ingest.mjs` 参数循环只收 Elo,价格全靠手打进
+      `model-data.ts`、再由 `check-model-provenance` 事后审。要不要让价格也走 ingest 派生,
+      是个独立决定(会动 51 条 stale slot 的处理方式,见 `GOTCHAS.md` 22)。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
+
+## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建、数据还没来）
+
+背景与判据全在 `GOTCHAS.md` 24，**别在这里复述**。这里只放要动手的：
+
+- [ ] **等 GA 分第一次落进归档**。今天归档里 `0813` 零行（`grep -r 0813 data/sources/` 唯一命中是
+      一个小数），`report:gaps` 已把 `deepseek/deepseek-v4-pro-0813` 列进「上游已发布、归档里什么都没有」
+      那 5 个 —— 系统自己看见了，判定正确，**今天建记录等于画一整行空格**。
+      第一批分到的那天照坑 24 的「动手顺序」走：先 alias 再目录，别先改显示名。
+- [ ] ⭐ **要你定：厂商 GA 表要不要按转录入档，用什么当 `source_url`。**
+      owner 2026-08-12 提供了 DeepSeek 官方发布图（四列：Pro-0813 / Flash-0731 / Pro-Preview /
+      Flash-Preview，十行 agent 基准）。**图的真实性已交叉验证**：其中 Flash-0731 那一列的九项
+      （Terminal 82.7 · NL2Repo 54.2 · Cybergym 76.7 · DeepSWE 54.4 · Toolathlon 70.3 ·
+      ALE 25.2 · AutomationBench 25.1 · DSBench-FullStack 68.7 · DSBench-Hard 59.6）与官方
+      changelog 2026-07-31 条目**逐位相同**，Pro-Preview 那一列的 HLE 37.7 与目录现有值也逐位相同。
+      卡住的**只有 URL**：截至 2026-08-12 官方 changelog（中英两版）都还没有 0813 条目，
+      HF 也还没有 `DeepSeek-V4-Pro-0813` 仓库 —— 也就是说这张表**先于官方文档渠道发布**。
+      三个选项：(a) 等 changelog 上线，用 `capture-release-tables.mjs` 正规抓（可复跑，最干净）；
+      (b) 现在按转录入档，`source_url` 指向 changelog 页并在 note 里写明「表来自官方发布图，
+      条目当时未上线」；(c) 不入厂商表，只等第三方板。
+      ⚠ 选 (b) 要想清楚：这个项目从来没有过 `source_url` 指不到那张表的行。
+
+## 收录门槛：2026-08-12 已定「不放开」，剩下的是别的事
+
+**地板不动这件事已经定了**，理由与四档实测（收 9 个 → 覆盖率 67.0% 掉到 53.5%、地板 48.2 塌到
+38.6）在 `LOG.md` 2026-08-12 收尾条，**别在这里复述、也别重新论证**。这里只放派生出来的活：
+
+- [ ] ⭐ **要你定：把「上游新出 N 个模型」那段从免责声明改成「最新发布」看板。**
+      现在的文案连说两句自己不是什么（"不是缺陷清单，也不是待办"）然后折叠。同一份数据
+      —— 9 个模型 + 发布日 + 还差多少格 —— 正着写就是访客最想看的那块。
+      **覆盖率一个点都不掉**，它们本来就不在分母里。数据也现成（`app/api/live-models` 已经在算）。
+      要做的是展示层：`app/models/page.tsx` 那段 + `app/upstream-variants.ts` 的判定不用动。
+- [ ] **OpenAI 三个 Pro 档可能永远进不来，这与地板无关。** Sol Pro 7-09 发布至今 2 格，
+      Luna Pro / Terra Pro 各 0 格。不是等得不够久：Pro 是**双模型系统**，第三方板基本不测
+      （`model-aliases.json` 的 `_doc`「GPT 5.6 Sol (Max + Pro) - a two-model system」早写了）。
+      要不要给这一类另一种处理方式，是独立判断题。**先放着**，等你想清楚 Pro 档在这个目录里算什么。
+- [ ] 小：`qwen3.7-max` 摘掉假的 `open weights` 之后只剩两个 tag（别的记录都是三个）。
+      补第三个是编辑判断，交给你；不补也不影响任何检查。
 
 ## 小口子
 

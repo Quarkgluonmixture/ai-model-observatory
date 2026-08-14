@@ -5,7 +5,7 @@ Append-only。发生了什么，以及**为什么**。做完的事从 `TODO.md` 
 标签固定五个，可多标：`#decision`（决定做/不做/回退）· `#measure`（测量结果，**必须带 n / 日期 /
 怎么复现**）· `#deadend`（试过不行，连同排除它的证据）· `#incident`（踩坑/事故）· `#ship`（落地）。
 
-**更早的条目已轮转到 `LOG-archive/LOG-2026-08.md`（26 条，至 2026-08-09 第二轮）。**
+**更早的条目已轮转到 `LOG-archive/LOG-2026-08.md`（34 条，至 2026-08-10 「假阴性:一条子串过滤」）。**
 轮转不该让旧条目失联——检索一律两边一起搜：
 
 ```bash
@@ -15,294 +15,6 @@ grep -n -A4 '#measure' LOG.md LOG-archive/*.md   # 所有数字连同出处
 ```
 
 ---
-
-## 2026-08-09（第三轮）— Vals AI 变成脚本源（batch 29）：第八次推翻「没有路」
-
-### 为什么两遍都没找到
-
-§9 记的是「两遍都没找到机器可读路径」。两个原因叠在一起：
-
-1. **`/benchmarks` 是索引页，不是榜单**——上面一个分数都没有，而两遍探的都是它。
-   真正的板在 `/benchmarks/<slug>`，37 个。
-2. **板本身没有「数据文件」**：Vals 用 Astro，Astro 把组件的 props 直接**服务端渲染进
-   `props="…"` 属性**。整块榜单就在 HTML 里，以 HTML 转义的 JSON 形式存在。所以
-   查 `<table>` / `<tr>` / `fetch(` / `/api/` 全部答「没有」——在一个装着整块板的页面上。
-   JS chunk 里也找不到，因为数据从不单独传输。
-
-CorpFin v2 那一页 1.16 MB，解出来是 131 模型 × 4 个 task 视图，每格带 accuracy / latency /
-stderr / cost_per_test / harness / reasoning_effort / provider。手抄版本是 **6 行**，只有 accuracy。
-
-⚠ 我自己第一次爬也失败了，两个 bug：Astro 的 import 是相对路径 `./`（我的正则只认 `/_astro/`），
-以及 Vals 挡 `python-urllib`（curl 通）。**「爬不到」先怀疑自己的爬法。**
-
-### 允许 supersede 的证据
-
-`overall` 是榜单默认展示的那一栏：batch-05 手抄的 6 行 CorpFin
-（73.19 / 71.83 / 71.56 / 71.29 / 68.57 / 68.53）与本文件的
-73.194 / 71.834 / 71.562 / 71.29 / 68.57 / 68.532 **6/6 对上**。
-
-另外三个视图（`exact_pages` / `max_fitting_context` / `shared_max_context`）**不是**同一个数的
-另一种读法，是**三种不同的上下文条件**；LegalBench 的 `issue_tasks` 之类是子集。与 `overall`
-并列会把一个模型的条件对上另一个模型的条件（第 4 条）。所以只读 `overall`，
-外加 batch-05 当初刻意单列的两个子项（CyberBench poc/patch、Web Search finance/legal）。
-
-alias 27 条，分两级、都写了理由：
-- **23 条机械**：Vals 发的是 `provider/model`，去掉 provider 前缀后与目录 id **逐字相同**——
-  就是归属闸门 tier 1 的规则，手工套用（因为没有重叠格可供 tier 2 印证）。
-- **4 条靠数字印证**：`anthropic/claude-opus-4-8`（点写成杠）、`meta/muse_spark_1_1`（下划线）、
-  `google/gemini-3.1-pro-preview`（带 provider 前缀）、`minimax/MiniMax-M3`（厂商自己的大小写）。
-  每条都在共享的板上给出**同一个分数**才收。⚠ 我第一版把印证数字**编错了**（写了 91.0 / 69.12 /
-  87.24），实测是 88.6 / 69.912 / 82.725 —— 理由里的数字必须实测后再写。
-
-### 两个版本陷阱，都是 `check:data` 抓的、不是想出来的
-
-1. **Vals 的 `version` 是「Vals 这块板的版次」，不是基准的版本**。它把自己的 GPQA Diamond 板叫
-   `1`——那句话对 GPQA 是哪个 split 一无所知。写进共享列就成了 `v2.1` 和已有的 `2.1` 同格，
-   check:data 直接报「一个格里混了两个版本」。
-2. **但「一律填 null」也不免费**：`ingest` 会丢掉「既没有发布版本、又没有 `versionFallbacks`」
-   的行。`terminal` 没有 fallback，于是一律 null **悄悄删掉了全部 50 行 Terminal-Bench**，
-   而七项契约全绿——归档里有，看板上没有。现在共享列是一张**显式表**。
-   ⭐ 教训：**null 不是中立值**；在有 fallback 的列上它是「继承」，在没有的列上它是「丢弃」。
-
-### 一条 acknowledgedDisagreements
-
-Qwen3.8 Max 在 Terminal-Bench 2.1 上有三个读数：Vals 67.416、AA 81.27（batch 26）、
-Qwen 自家发布表 86.6（batch 17）。第 6 条：系统基准量的是 模型+脚手架+工具+预算，三家跑的不是
-同一套。Vals 这块板逐行写 harness（别的模型上是 Claude Code / Codex / Cursor CLI），**这一行没写**；
-Qwen 的表一个都没写，而且它最高——正是 §9 早就记下的「厂商在系统基准上偏高」的方向（那里记的是
-+8 分，这里是比 Vals 高 19 分）。
-
-### 结果
-
-- 观测 1635 → 2086 行；cell 1121 → 1349（53.7% → **64.6%**）。
-- **新增 227 格**，**51 个已有数字变化**。多数是精度（68.1 → 68.133），但有两个是**证据等级**变了：
-  Qwen3.8 Max · Terminal-Bench 86.6（厂商）→ 67.416（独立），
-  Gemini 3.1 Pro Preview · MMMU-Pro 80.5 → 88.208。**第 3 条在起作用**：独立读数压过厂商读数。
-- 2,421 行里 953 行进目录，其余是目录不收的上一代（180 个未映射字符串）与 16 块没有列的板
-  （全部归档 + 写明拒绝理由，将来开列不用重采）。
-- ⚠ **189 格落在单源列上**——Vals 自己那 12 列按定义只有它一家。
-
-### 自维护比例
-
-15 / 29 批次可脚本重读；11,137 / 1,751 行 = 86.4%。但**别读这个比例**：1,751 行里有 464 行已被
-supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。而且排序变了——按「还在裸奔的行数」
-排，第一名是 `batch-17-qwen3.8-release`（465，可发布帖是冻结的，没有漂移可查，所以它最大但最不值得做），
-然后才是 batch-05 剩下的 LMArena 439 行。按文件大小排会指向 batch-05，而 batch-05 正是今天修掉的那个。
-
-## 2026-08-09（第四轮）— 那「16 块没有列的板」其实不是一类东西
-
-### 量完之后是三堆
-
-用「这块板上有多少个**目录里的**模型」当尺子，而不是「有多少行」：
-
-| 堆 | 板 | 结论 |
-|---|---|---|
-| **列已经存在，缺的只是接线** | `programbench`→`program`(22 模型)、`terminal-bench-2`→`terminal-20`(10) | 不是分类学判断，直接接 |
-| **拒绝理由已过期** | `cyberbench` poc/patch | 原文「每个只有 2-3 行，不足以成列」——那是手抄时代的行数，实际各 18 个目录模型 |
-| **明确不该开** | math500 0 · mgsm 0 · poker_agent 0 · medqa 1 · aime 2 | 开一列分母 +29 格、最多填 2 格 |
-| **真判断（留给 owner）** | legal_bench 23 · tax_eval_v2 23 · emb 23 · hlab 22 · medcode 21 · sage 21 · time_horizon 7 · case_law 6 | 定轴 + core/observe |
-
-### ProgramBench：差点顺手改错，被文档里一句话拦住
-
-先做的是「同名不同物」检查 —— 这个项目栽过（ALE-Bench vs Agents' Last Exam 只共享三个字母）。
-证据够硬：Vals 板的描述与 `facebookresearch/programbench` 的 GitHub 描述是**同一句话**
-（"Can Language Models Rebuild Programs From Scratch?"）。
-
-然后我给 `program` 加了 `versionFallbacks`，理由写的是「实测该列 0 行归档、没什么可混淆的」。
-**这句话是错的**，而且错得很典型：我查的是**生成的 store**（0 行），不是**归档**。
-归档里躺着 batch-02 的 **15 行**，来自 ProgramBench **自己的榜单**（`source_kind: benchmark`，
-不是 §9 说的「厂商数字」），**全部因为没有版本而被 ingest 丢掉**。
-⇒ 那条拒绝不是在保护这一列，是在**清空**它。加上 fallback 之后，这 15 行里有 7 行也一并回来了。
-
-⚠ 但 §9 那句话里还有一半是对的，而且是**我差点踩的那一半**：
-「ProgramBench 官方 Resolved score 给 GPT-5.5 是 0.5%，而某厂商表给同一格 70.8」。
-真正防住它的**不是拒绝版本，是选对 task 视图**：Vals 发四个视图，
-`partial`（Raw Pass Rate）给 GPT-5.5 正是 **70.775**，而 `overall` 与 `strict`（Fully Resolved）
-**逐位相同**、是 **0.5** —— 与官方榜单的 0.5 一致。我读的是 `overall`，所以两个源同尺度。
-归档里今天没有任何 raw pass rate 行；真来了，跨源分歧闸门会在那一格失败。
-
-⭐ **两条教训，都是「查错了对象」**：
-1. 「这一列是空的」要查**归档**，不是查生成产物 —— 生成产物是空的，可能正因为有东西被丢掉了。
-2. **null 不是中立值**（第二次撞上，今天第一次是 terminal 50 行）：有 fallback 的列上它是「继承」，
-   没有的列上它是「丢弃」。
-
-### 结果
-
-- cell 1349 → **1374（64.6% → 65.8%）**，`program` 从空列变成 29 行 / 23 模型
-  （7 benchmark-native + 22 independent），`terminal-20` 从 11 行变 21 行。
-- **没有任何已有数字被改动**；`unverifiable-cells: 0` —— 这两列现在各有两个来源，
-  是这轮里唯一**降低**单源暴露的改动。
-- cyberbench 的拒绝理由重写成实测状态：「行太少」那半条已死，「Vals 这块板逐行 harness 全是 null、
-  而它的 SWE-bench / Terminal-Bench 板会写 Claude Code / Codex / Cursor CLI」那半条还站得住，
-  所以它从「归档待议」升级成 TODO 里的**活决定**。
-
-## [2026-08-09 17:52] Session 收尾：三轮脚本化上线 + 拆出 GOTCHAS.md  #ship #decision
-
-- **#ship** 今天三个 PR 全部合进 main：#61（batch 28 FrontierMath）· #62（batch 29 Vals 全部 37 块板）· #63（ProgramBench 与 Terminal-Bench 2.0 接上已有的列）。覆盖率 **52.4% → 65.8%**（1094 → 1374 格），自维护批次 14/28 → 15/29。
-- **#measure** 收尾时实测（n 见括号）：真正裸奔的手抄行 **1,287**（1,751 减去已 supersede 的 464）；`program` 列 0 → 29 行 / 23 模型；`terminal-20` 11 → 21 行；全量 12 源漂移检查健康值 **36 秒**（GDPval 14s、MMMU 15s）。
-- **#decision** 新建 `GOTCHAS.md`（四件套的第五件）。触发条件两条都满足：快照被坑类条目顶过硬上限（151 行 vs ~120），且坑 1「null 不是中立值」**当天踩了两次**。快照里那些条目是**搬走**不是复制，快照只留按号指针。
-- **#decision** 明确**不做**的两件，理由都写进了文件而不是只留在对话里：hermes 死了不补微信推送（维持 owner 8-06 那次 10→4 的裁剪，判据写进 TODO）；5 块目录模型 ≤2 个的 Vals 板不开列（理由写进 `droppedBenchmarks`，附实测数）。
-- **下一步全是要 owner 定的**：CyberBench 两列开不开 · 8 块板的轴与 core/observe · `vals-mmlu-pro` 那一个断言 · `productionUrl`。见 `TODO.md`。
-
-## [2026-08-10] ICP 备案页脚：挂在根 layout,不挂在页面  #ship #decision #measure
-
-- **#ship** 备案下来了(`quarkspace.top`,京ICP备2026050077号-1),新增 `app/site-beian.tsx`
-  + `app/site-beian.module.css`,由 `app/layout.tsx` 在 `{children}` **之后**渲染一次。
-  两条路由实测各渲染一次(`grep -F` 精确匹配,不是 `grep` —— 见 `GOTCHAS.md` 坑 8):
-  `/` 与 `/models` 的 **服务端 HTML** 里都有备案号 + `beian.miit.gov.cn` 链接 + `rel=noopener`。
-  服务端渲染这点是要紧的:核验方不一定跑 JS。
-- **#decision** 挂根 layout 而不是两个页面各写一份。理由不是省事,是**以后加的第三条路由**
-  会漏——per-page 页脚的失败模式是静默的,而备案漏挂是监管问题不是显示问题。
-- **#decision** 两个号不能混用:`京ICP备2026050077号` 是主体号,页脚要挂的是**服务号**
-  (带 `-1`)。「挂主体号」那个说法是广东备案的情形,北京照抄会不合规。理由进 `docs/ARCHITECTURE.md` §6。
-- **#decision** 页脚颜色**写死**,不引用任何一边的变量。因为它渲染在两套调色板之上,而 `.home`
-  作用域里 globals.css 的 `--muted`/`--line` **仍然在 scope 内** —— 引用哪一套都会在另一个站上画错。
-- **#measure** 手机契约两条路由都实测过(生产构建 + 真设备模拟,320/390/430):
-  **无横向溢出**,无新增 <9px 文本(残留那条 `span > small @7.2px` 是评分表溯源标签,
-  `docs/UI.md` §2 写明的例外,与本次无关),无触摸目标告警(链接手机上 `min-height:40px`)。
-  ≤800px 的底栏避让走 `:global(.shell) ~ .strip`,产物里实测编译成
-  `.shell~.site-beian-module__…__strip` —— `.shell` 是全局类所以选得中;`.home` 是 CSS module
-  类名会被哈希,选不中(也不需要,个人站没有 fixed 元素)。
-- **⚠ 只有 owner 能解的阻塞**:`quarkspace.top` 与 `www.quarkspace.top` **两个都不解析**
-  (8.8.8.8 / 1.1.1.1 / 223.5.5.5 查 A 记录全空;域名 ACTIVE、NS 已指 DNSPod,缺的是记录本身)。
-  腾讯要求主域名与 www **都能正常访问**才算合格,所以页脚做完了备案这件事**还没完**。
-  `data/deployment.json` 的 `productionUrl` 因此继续留 `null` —— 指向一个不解析的域名
-  只会让每日 job 因为与数据无关的理由变红。
-- **补记(同日)**:公安联网备案已提交至**西城驻区大队**,30 个自然日审核(约 2026-09-09 前出结果,
-  短信通知)。这与上面的 ICP 是**两个不同的主管部门**(MIIT vs 公安),批下来之后页脚要挂**第二个**
-  号、链到 `www.beian.gov.cn`。因为页脚是根 layout 的单一组件,那会是**一个文件的改动** ——
-  这正是当初不做 per-page 页脚换来的东西。备案预留手机号**不入库**(公开仓库不放个人号码)。
-- **同日下午:域名绑定完成,站上线在 `quarkspace.top`**。
-  **#measure** 三个 host 全部 200 + TLS 验证通过(`43.174.24x.110`);备案号在
-  `quarkspace.top` × `www` × `/` × `/models` 的**服务端 HTML** 里 **2×2 全绿**(逐格实测,
-  不是抽一格)。EdgeOne 默认域名 `ai-model-observatory-lhi0hg2y.edgeone.cool` 同一份构建。
-  **#decision** `productionUrl` 填 apex 而不是 www:两个都绑了、都独立 200、互不跳转,所以这是
-  **选一个**而不是发现一个;不选会让每日检查在没人引用的 host 上通过。⇒ `check:deployment`
-  **从此真的在跑**(此前从未跑过一次),首跑绿:线上服务的目录名与 `main` 一致(29 × 72,9 chunk)。
-  **⭐ 教训(顺序)**:EdgeOne 绑域名是**三步**且顺序要紧 —— 先 `edgeonereclaim.<domain>` 的 TXT
-  证归属,**之后**才发 per-host CNAME 目标。**归属权验证不服务任何一个字节**:过了验证域名依然
-  可以完全不解析(当天上午就是这个状态,而我一度把"文档里写着不解析"当成了当前事实)。
-  **⭐ 边界**:`check:deployment` 比的是 `main` vs 线上(抓半截部署),**它不看备案号显示没显示** ——
-  所以那个 2×2 是手工实测的,没有假装被自动化覆盖。
-
-## [2026-08-10] gaps 报告分三层:真队列 / 无证据 / 定价档  #ship #decision #incident
-
-- **起因**:owner 说那份「上游已在提供、目录还没有的模型」清单「看着非常膈应,按理说该全自动化」。
-  查下来结论**和直觉相反** —— 自动化早就有(`add-model-and-merge.sh` 四道闸门,每日在跑),
-  今天的判定是「不该收」,提议器原话 `Nothing qualifies. That is the expected steady state`。
-  病灶在**呈现**:一份 never-fails 的清单把三类东西混排,读起来像 8 件待办,实际 2 件排队 +
-  6 件永远不该收。
-- **⭐ 走错一次路,值得记**:我先改了 `report-gaps.mjs`,跑完发现那一节今天只有 2 行、
-  `tiers=0` —— 那 8 行**根本不是这个报告出的**。真正的出处是 `aa-new-models.mjs`
-  (输出带「发布」二字)。`report-gaps` 的 `catalogNeedles` 过滤器早就把 `(batch)` 挡掉了
-  (id 含 `claude-opus-5`),AA 侧没有这道。⇒ **动手前先确认那段文字是谁打印的**,
-  同一件事在这个仓库有多个检测器,症状一样、代码不同。
-- **#ship 两处都做了分层**(渲染契约:非工作项一律**段落内联反引号**,不用 `- \`id\`` 列表行 ——
-  `publish-gaps-issue.sh` 靠那个 bullet 形状认「今天新出现的模型」,既有 `images` 组就是这么做的)。
-  `report-gaps` 还补了「**还差 N 格**到地板」,并按接近地板排序(原来按发布日期,新≠该收)。
-  地板差值用 `floor + 1 - cells`(过地板要**严格大于**平均),muse-spark-1.2 = 差 18 不是 17。
-- **#decision 档位判据是合取**:关键词闭合清单 **且** 归档 0 行。带证据的 `(batch)` 留在队列里
-  给人看 —— 贵的错是静默丢掉真模型,不是多印一行。`preview` **故意不在**清单里:目录里
-  `Gemini 3.1 Pro Preview` / `Qwen3.6 Max Preview` 各自成记录(preview 是不同权重,batch 是
-  同权重不同价)。分类器加了 `--self-test`,14/14 过 —— 因为它是这次改动**唯一的风险面**
-  (太贪就会让真模型不再被报告),而这个脚本要 API key 才能整体跑,自测是本地唯一的验证手段。
-- **#ship 不只是观感**:档位被计进 `<!-- aa-new-models: N -->` 会**触发一次没意义的 AA 重抓**
-  (591 个配置读回来学不到东西)。现在从计数和触发里都排除了。
-- **#incident 顺带撞出一件旧账(不是本次引入)**:`upstream-evidence.mjs --self-test` 实测
-  **70% recovery / 1 个幻影格**(`deepseek-v4-flash` 的 `ifbench`),而注释里写着 89% / 0。
-  那个模型正是「一个字符串两个模型」那个案例,最可能是 `norm` 混了两种拼法。**要紧**是因为
-  这个计数器决定谁过地板、而自动上板按它合并。注释已改成带日期的实测值(**没有**把注释改成
-  好看的数字了事),真修记进 `TODO.md`。⚠ 两个 `--self-test` 都不在 CI ⇒ 漂了没人知道。
-- **补:两个自测挂进 CI,并纠正我自己上一条记录**。owner 选了「先修计数器再挂 CI」,而查下去
-  发现**没有计数器要修** —— `upstream-evidence.mjs` 顶部**本来就写着**这个 over-count 存在且刻意保留。
-  我上一条把它记成「漂移 / `norm` 混了拼法 / 需要修」是**错的**,已在原处改正(注释、TODO 都改)。
-- **⭐ 实测把因果翻过来了**:`batch-26-aa-evaluations` 里裸 slug `deepseek-v4-flash` 带**两套完整分数**
-  (gpqa 71.6 与 90.8 · hle 7.8 与 38.6 · aa-lcr 37.33 与 74.33),**所有行 `effort` 都是 null** ——
-  批次里没有任何字段能分开两者。所以它在该批次故意不映射(第 8 条),计数器按字符串照样匹配上。
-  ⇒ 真修是**拿 AA 用来区分那两个条目的字段重抓这个批次**,不在计数器里。记进 TODO,
-  **没有猜 alias**(AGENTS 里 49.25 挂在 100 分模型名下那段教训就是这个形状)。
-- **#ship 自测从「打印」变成「闸门」**:未钉住的 over-count → 失败(按**格**钉,不按模型,
-  钉住的模型再长一格算新发现);mean recovery < 60% → 失败(下限是回归护栏不是目标,今天 70%,
-  当初写的 89% 随归档变大和 effort 守卫收紧而下降,属预期)。钉住的豁免**不再出现**只报告不失败 ——
-  归档每天在动,让「已知问题消失」把 CI 弄红是错的激励。
-- **#measure 失败路径实证过**(照这个仓库给 `add-model-and-merge.sh` 做过的那样):探针把豁免清空 +
-  下限抬到 99 → **exit 1** 且两条 FAIL 都打印;正常路径 exit 0,那格标 `ifbench (pinned)`。
-  没验过失败路径的闸门不算闸门。
-
-## [2026-08-10] 纠正:batch-26 没有问题,是我读错了字段名  #incident #decision
-
-- **撤回上一条的结论。** 我说 `batch-26-aa-evaluations` 里那两套分数「没有任何字段能分开、必须重抓」
-  —— **错的**。字段叫 **`reasoning_effort`**,我用 `r.get('effort')` 取值(那个键不存在),
-  于是每行都返回 None,据此下了结论,还照这个结论改写了 `upstream-evidence.mjs` 顶部**原本正确**
-  的注释,并开了一条「要你定:怎么重抓」的 TODO。注释已恢复成准确版本(并留了一句
-  「不要再推导出那个结论」),TODO 已删。
-- **实测的真实情况**(四个 AA 条目,每个都有自己的 `reasoning_effort`、AA 显示名、独立 source_url):
-  `reasoning max` = `DeepSeek V4 Flash 0731 (Reasoning, Max Effort)`,发布 2026-07-31 = 目录记录;
-  另外三个(`non-reasoning` 与两个 `-0420`)全是发布 **2026-04-24** 的四月版。
-- **⭐ 而且 alias 早就写好了**:`{modelRaw: deepseek-v4-flash, effort: "reasoning max",
-  file: batch-26-aa-evaluations, modelId: deepseek-v4-flash}`,那 6 格(gpqa 90.8 · hle 38.6 ·
-  scicode 49.9 · aa-lcr 74.33 · tau3-banking 39.38 · terminal 78.65)**都已在库中**(逐格实测)。
-  它的 reason 里甚至写着「Found by the evidence counter's self-test」—— 正是这次争论的那个机制。
-  ⇒ **这件事早就被正确处理过了**,我等于把一个已解决的问题重新发明成了一个未解决的问题。
-- **⭐⭐ 教训(比这次改动重要)**:**JSON 字段名要对着一行真实数据核,不要凭语义猜**。
-  `.get('effort')` vs `reasoning_effort` —— Python 的 `.get` 对不存在的键**静默返回 None**,
-  于是「字段缺失」和「值为空」长得一模一样,而我把前者读成了后者。这跟坑 1「null 不是中立值」
-  是同一族:**缺席被当成了一个值**。下次:下「某字段全为空」的结论前,先 `print` 一整行原始 JSON。
-- **保留的部分仍然有效**:#68 的钉住豁免 + CI 闸门与这个理由无关,照样成立(它挡的是**新**的
-  over-count)。只有解释文字是错的,已改。
-
-## [2026-08-10] batch 30:SWE-Bench Pro 从手抄变成脚本源(第九次推翻「没有路」) #ship #measure #decision
-
-- **#ship 机制**:`labs.scale.com` 是 Next.js App Router,所以对榜单 URL 发一个带 `RSC: 1` 头的
-  普通 GET,返回的 flight 流里**整块看板是内联未转义 JSON**(`"entries":[{model,rank,score,
-  confidenceInterval_upper,company,createdAt,maxScore,deprecated}]`),不需要浏览器。
-  没有 JSON 端点 —— 旧结论说的是这件事,它没错;错的是**只探了端点就收工**。
-- **⭐⭐ 那个星号是 harness,不是装饰**。页面自己两句话都在载荷里:
-  「We ran frontier models on Pro using the **SWE-Agent** scaffold」(默认)+
-  「\*Run with **mini-swe-agent** harness」(带星的行)。实测 5 星 / 20 无星,**与 batch-02 手抄的
-  5/20 逐行一致** —— 当年那位转录者读对了。⇒ fetcher 每次抓取都**断言这两句在**,不在就 throw;
-  读错星号 = 把两个脚手架并进一个格子,违反第 4 条,而且看起来跟真结果一模一样。
-- **#decision 不硬编码任何板级常量**。harness 两句 + `731 instances` 全部是断言而非假设;
-  `deprecated: true` 的行跳过(Scale 另有一个 deprecated 板);`tools_enabled` 留 null
-  (板子是 agentic 的,但它**没有**发布工具清单,写 true 就是替它断言)。
-- **#measure 失败路径逐条验过**(六条):缺默认 harness 句 / 缺星号脚注 / 缺 731 / 没有 entries /
-  entries 空数组 / HTTP 403 —— **全部 throw**,没有一条会静默返回小一号的看板。这很要紧:
-  静默空读会长得像「Scale 删掉了所有模型」,然后漂移检查会把它报成归档完整性失败。
-  括号配平也用「名字里带 `] [`」的行走真实解析路径验过(正则 `[^\]]*` 会在那里断掉)。
-- **#measure supersede 安全**:脚本串与手抄串**逐字相同**(`Muse Spark 1.1*`、`gpt-5.4 (xHigh)*`),
-  所以同一批 alias 继续命中。`describe-change` 实测:**「这次改动不改变任何已发布的数字」**
-  (0 moved / 0 unverifiable),3 行 swe-pro 观测原地换出处;重读自检报
-  「archive matches upstream, **25 cells verified**」—— 写 25 行核 25 格,对得上(GOTCHAS 坑 3)。
-- **⚠ 顺带发现一个复现不出来的数**:文档里的「还在裸奔 1,287 行 / 手抄 1,751 行」两种测法都对不上
-  (1,404 vs 1,226;手抄总行 1,573)。**我没有用第三个数去覆盖它**,而是在 TODO 里标注「先钉定义
-  再引用」。教训与今天早些时候那次同形:**别重写项目自己的判定逻辑**,要么用它的 resolver,
-  要么把定义找出来 —— 我第一版又手搓了一遍 supersede 匹配,和 resolver 差了 178 行。
-
-## [2026-08-10] 假阴性:一条子串过滤让 gaps 报告对 Flash Lite 全盲  #incident #ship #measure
-
-- **起因**:owner 追问那份上游清单。八行里七行如预期,**第八行 `Gemini 3.5 Flash Lite` 一个字都没出现**。
-- **根因**:`report-gaps.mjs` 用 `item.id.includes(catalogId)` 判断「目录已有」。
-  `google/gemini-3.5-flash-lite` **包含** `gemini-3.5-flash`(目录 id)⇒ 被判成已收录。
-  ⚠ **这是假阴性,比噪音危险**:噪音你看得见,漏报你看不见。
-- **⭐⭐ 同一个坑这个仓库已经付过一次代价**:`AGENTS.md` 里记着 `list.find(id => id.includes("gpt-5.6"))`
-  返回 `openai/gpt-5.6-luna-pro`、Sol 价格卡渲染成 $0.10/$0.60,所以 `PROVIDER_LOOKUPS` 改成了精确
-  匹配 —— **另一个文件里没改**。而且刺眼的是:这次冒出来的正是 `gpt-5.6-luna-pro` 那三个 `-pro`。
-  ⇒ 教训:**修一个类型的 bug 时,把同一类型的所有调用点一起找出来**,别只修报出来的那一处。
-- **#ship 修法是共用规则而不是再写一份**:把 `matches` 从 `buildEvidenceIndex` 的闭包里提出来,
-  导出成 `sameFamily(published, family)`(内部自己 norm,调用方无法忘记),`report-gaps` 直接用。
-  这个模块存在的理由本来就是「两个调用方要同一个数字,第二份副本会漂移」—— 过滤器是第三个调用方,
-  之前它自己发明了一个更差的规则。
-- **#measure 效果**:60 天窗口内上游可见条目 **2 → 7**(4 有证据 / 2 无证据 / 1 定价档)。
-  `gemini-3.5-flash-lite` **42 行证据、33 格**,是全场证据最好的候选(比 Muse Spark 1.2 的 31 格还多),
-  差 16 格到地板 —— 排序改成「按接近地板」之后它直接排第一。
-  副作用是好的:`claude-opus-5-fast` 现在落进「定价档」组 ⇒ 我昨天说「档位分类器在 report-gaps
-  里几乎是死代码」**不再成立** —— 它之前是被子串过滤**因为错误的理由**藏起来的。
-- **⭐ 自测当场教了我一件事**:给 `sameFamily` 钉 15 条用例时,
-  `"DeepSeek V4 Flash 0731 (Reasoning, Max Effort)"` 断言失败 —— 因为 `norm` 剥
-  `[\s._\-()]` **但不剥逗号**,`reasoning,maxeffort` 里那个逗号挡住了 effort 剥离。
-  **是我的期望写错了,不是代码错**;而 `norm` 不能改(文件写明必须与归属闸门的归一化一致)。
-  已把该用例期望改成 `false` 并写下原因 —— 这也是 recovery 只有 70% 的一个来源:**AA 的操作点带逗号**。
-  失败路径验过(把 Flash Lite 那条期望翻成 true → exit 1)。
 
 ## [2026-08-10] 收尾:上游那一节折叠 + 只计过地板的 + 四条 gotcha 编号  #ship #decision
 
@@ -560,3 +272,277 @@ supersede、不再供给任何东西，**真正还在裸奔的是 1,287 行**。
 **顺带**:审计学会了「bare level 对上唯一一个 `<mode> <level>`」——AA 写
 `(Reasoning, Max Effort)` 是 mode+level 两维,目录只写 level。**有两个候选就拒绝匹配**,
 因为那正是 `_doc` 里记着的 reasoning/non-reasoning 撞格事故。实测 batch-14 复合行 6 条、零歧义。
+
+---
+
+## 2026-08-12（第三轮）— DeepSeek V4 Pro 转正：**先建防线，一个分都不入** `#decision` `#measure` `#gotcha`
+
+owner 说「deepseek pro 正式版发布了，进我的观测台」。查完的结论是：**发布是真的，但今天没有
+任何一个分可以进**，而真正紧急的事是另一件 —— 目录现在装的是 preview，GA 的分正要往里灌。
+
+### 核实链（每一步都留着，因为下次还得这么查）
+
+| 问的问题 | 答案 | 怎么得到的 |
+|---|---|---|
+| GA 了吗 | **是**，2026-08-12T15:42:44Z | OpenRouter `deepseek/deepseek-v4-pro-0813`，描述原文 "This is the GA release of DeepSeek V4 Pro" |
+| 官方文档认吗 | 认 | `api-docs.deepseek.com` 首页把 `deepseek-v4-pro` 指向 **DeepSeek-V4-Pro-0813** |
+| 有官方发布帖吗 | **没有** | changelog 中英两版最新条目都还停在 2026-07-31（带 cache-buster 重抓两次） |
+| HF 有权重吗 | **没有** | `api/models?author=deepseek-ai` 最新是 `DeepSeek-V4-Flash-0731`（8-01） |
+| 归档里有 GA 的分吗 | **零行** | `grep -r 0813 data/sources/` 唯一命中是 `0.000813` 这个小数 |
+| 观测台自己看见了吗 | **看见了，判定还是对的** | `report:gaps` 把它列进「上游已发布、归档里什么都没有」那 5 个：「A record today draws an empty row across every column」 |
+
+### 为什么不入库
+
+规则 1 与规则 8 直接给出答案：没有证据就是 `N/A`，归属不猜。GA 记录今天建出来是一整行空格，
+还会拉低 cell coverage。**系统已经自己算对了这件事**，我要做的不是覆盖它。
+
+### 真正的活是防串档，而且这次是**事前**
+
+`AGENTS.md` 里那条「One published model string can mean two different models」是 Flash 用
+「LiveBench 49.25 被印成 100」换来的，**事后**才发现。Pro 现在处在同一个窗口的**第一天**：
+
+- 目录 `deepseek-v4-pro` 的 11 格全部来自 2026-04-26 的 V4 model card ⇒ 装的是 **preview**。
+  逐位核过：`hle-no-tools` 37.7 与厂商 GA 表里 `DeepSeek-V4-Pro-Preview` 那一列完全相同。
+- 同族两列差 2×–5×（DeepSWE **12.8 → 62.7**、Terminal 2.1 **72.1 → 87.9**）。串一格就是事故。
+- 而 `DeepSeek V4 Pro` / `DeepSeek-V4-Pro` / `deepseek-v4-pro` / `DeepSeek V4` /
+  `deepseek-v4-pro-thinking` 五条 alias 现在都是 `effort: "*"` **全局通配**。
+- ⚠ **闸门救不了**：跨源分歧 >20% 只在同一格已有另一个源时才响。GA 的分落在现在的**空格**上
+  没有分歧可比 —— 看板上表现为「preview 记录突然变强了」，一个字都不报。
+
+⇒ 落成 `GOTCHAS.md` **24**（判据按可靠性排：数字 > 源分不分列 > 日期；动手顺序：先 alias 再目录，
+**别先改显示名**），`TODO.md` 开一节。**这一轮不动任何 alias**：GA 的分还没出现，
+现在改就是在猜第一个发它的源会怎么拼 —— 那正是规则 8 禁止的事。
+
+### 两个方法论收获
+
+1. **`api-docs.deepseek.com` 任何路径都返回 200**（SPA fallback：`/news/news999999` 也 200，
+   45KB，渲染的是 quick-start 页）。差点据此写下「0813 的发布帖已经在了」。
+   ⇒ 又一次「200 不是验证」，和 `AGENTS.md` 里 HuggingFace 那条同形。**判存在要判内容，不判状态码。**
+2. **owner 给的截图能被验真，方法是拿它已知的那一列去对**。那张四列表里 `Flash-0731` 一列的九项
+   与官方 changelog 7-31 条目**逐位相同**，`Pro-Preview` 的 HLE 37.7 与目录现有值也逐位相同
+   ⇒ 表是真的。**卡住入档的不是真实性，是 `source_url`** —— 这张表先于官方文档渠道发布，
+   而本项目从来没有过 URL 指不到那张表的行。三个选项写进 `TODO.md`，交 owner 定。
+
+---
+
+## [2026-08-12 17:2x] 收尾：假 open-weights 标签 + 三组实测（GA 提升拆轴 / 国产开源定位 / 地板棘轮）`#ship` `#measure` `#decision` `#incident`
+
+### 修：全目录唯一一条自相矛盾的记录
+
+`qwen3.7-max` 的 `open` 是 `false`，tags 里却有 `"open weights"` —— 侧栏面板上
+`{active.open ? "OPEN WEIGHTS" : "PROPRIETARY"}` 和 `{active.tags.map(...)}` 相隔十几个字符，
+**同时**渲染 `PROPRIETARY` 和一个 `open weights` 标签。
+
+漂的是 tag，不是 `open`：`open` 被 `check:models` 审计（`AGENTS.md`「including context window and
+open-weights status」），tags 是纯编辑文案，**没有任何一条检查够得到它**。Alibaba 的 Max 档是闭源
+API（开源的是 Qwen3-235B 那类数字型号）⇒ `open: false` 是对的。只删不补，行上留注释防回加。
+修后 `check:models` 仍 **323/325**（tags 本来就不在分母里 —— 这正是它能漂的原因），lint 绿。
+
+⇒ 又一格「一个事实两个来源」。判据可复用：**被审计的那份往往是对的，漂的是读者看见的那份。**
+
+### 测一：这次后训练买到了什么（厂商表，n=11 格）
+
+`Pro-0813` vs `Pro-Preview`，11/11 全涨，平均 **+22.5 分**、中位 **1.58x**。但平均值骗人，拆轴才是结论：
+
+- **知识轴**（HLE 无工具，唯一一条）：37.7 → 42.7，**+5.0**（1.13x）
+- **agent 轴**（其余 9 条）：均值 **+25.7**；DeepSWE 12.8 → 62.7 = **4.9x**
+
+⇒ 买到的不是"更聪明"，是**把用工具、跑多步任务的能力从半残打开**。旁证：Flash 预览→0731 同样
+11 格平均 +21.8、中位 1.59x —— **两条曲线几乎重合**，说明是同一套后训练配方分别灌到两个模型，
+不是 Pro 独有的突破。复现：把图里四列敲进 python 逐格相减，数据在 `TODO.md` 那节引的官方表。
+
+### 测二：竞品列的口径是公道的（拿归档验的）
+
+DeepSeek 替别人跑的分**不是注水**，是拿最高档跑的：给 Opus-4.8 的 Terminal 85.0 对得上 AA 的
+max 档 84.64（归档 batch-26），DeepSWE 58.0 落在归档 max 59 / xhigh 54.4 之间；Fable 5 的
+DeepSWE 70.0 与归档 69.7–70 逐位吻合。**唯一虚的一格**是 Fable 5 的 Terminal 88.0（归档最高
+84.64），而那列本来就标着 `w/ fallback`。
+⇒ 「厂商表 = 不可信」是懒判断。**逐格拿归档核，能分出哪几格虚。**
+
+### 测三：GA 版在国产/开源里的落点 —— 老二，老大是 Kimi K3
+
+按厂商表的分插进目录现有排名（**混了源类，只作定位不作排名**）：K3 压着它四项
+（DeepSWE 68.5/62.7 · Toolathlon 76.5/74.1 · ALE 28.3/25.7 · HLE 无工具 46.9/42.7），
+DeepSeek 只在 Terminal 2.1 翻盘（87.9/85.0，全表第 3）。
+⚠ 两个折扣：厂商在 system 类基准偏高本项目量过最多 +8 分（打 5 分折 Terminal 就掉到第 8-9）；
+**GA 权重至今没放**（HF `deepseek-ai` 最新仍是 Flash-0731 / 8-01），严格讲它现在进不了开源榜。
+⚠ 站上现挂的 `deepseek-v4-pro` 是 **preview**（Terminal 第 22/27、Toolathlon 11/11 垫底）——
+`GOTCHAS.md` 24 防的就是这批分被 GA 静默顶掉。
+
+### 决策：**不放开收录地板**（owner 提问，我给判断，owner 未推翻）
+
+地板不是写死的 49，是**当前每模型平均格数**（1398 ÷ 29 = 48.2），所以它会**自我强化地塌**：
+收一个低于平均的 → 平均降 → 门槛降 → 下一批更容易进。实测四档（`filled=1398, models=29,
+benches=72`，逐档重算）：
+
+| 收进 | 覆盖率 | 掉 | 新地板 |
+|---|---|---|---|
+| 只收 Flash Lite（33 格）| 66.2% | 0.7 点 | 47.7 |
+| + Muse Spark 1.2（31 格）| 65.5% | 1.5 点 | 47.2 |
+| 4 个有证据的全收 | 61.7% | **5.3 点** | 44.4 |
+| 9 个全收（含 5 个零证据）| **53.5%** | **13.4 点** | **38.6** |
+
+⇒ **「稍微放开一点」在机制上不存在** —— 放开一次它会自己继续放开。地板保持不动。
+
+**但真正的不满不在门槛，在那段文案的语气**：现在它连说两句自己不是什么（"不是缺陷清单，也不是
+待办"）然后折叠起来。同一份数据（9 个模型 + 发布日 + 还差多少格）正着写成「最新发布」看板，
+覆盖率**一个点都不掉**（它们本来就不在分母里）。记进 `TODO.md`，等 owner 定。
+
+**等待策略是有效的，有实测**：Flash-0731 正式版发布后第三方板一周攒了 31 行在归档里等着
+（`report:gaps`「Archived rows waiting」那节）。旗舰没人不测。
+**例外**：OpenAI 三个 Pro 档（Sol Pro 2 格、Luna Pro / Terra Pro 各 0 格）7 月初就发了，
+一个多月没动 —— 不是等得不够久，是 Pro 属**双模型系统**，第三方板基本不测
+（`model-aliases.json` 的 `_doc` 早写了这个判断）。这类等到明年也进不来，是个**与地板无关**的独立问题。
+
+---
+
+## 2026-08-13 — preview/GA 串号:把「发现 + 拒收」交给 cron,只留下命名决定给人 `#decision` `#ship` `#measure`
+
+**起点是一个问题而不是一个 bug**:preview 和 GA 本来就是俩模型(跟 Flash / Flash-0731 一样),
+那有没有**全自动**的应对办法。答案是有,但边界得先划清:**能全自动的是发现和拒收,不是命名**。
+现在这套的危险不在于没人处理,在于处理之前那段时间它会**静默写错**;把静默改成大声缺,
+时间压力就没了。做完三件,互相独立、都能单独回滚。
+
+**一、归属闸门加第五条拒绝:带日期的兄弟串**(`propose-attribution.mjs`)
+第一条拒绝比的是**同一个文件**里的两个串。它看不见真正花钱的形状 —— 源自己从不改 slug:
+AA 跨过一次重训仍叫 `deepseek-v4-flash`,所以 AA 文件内部没有兄弟可比,而 LiveBench / Epoch /
+LMArena 在**别的文件**里印 `-0731`。第五条把兄弟搜索跨文件展开,并收窄到只认日期后缀
+(四位是最短真日期 MMDD、版本号碎片最长两位,这条界线不用维护清单)。
+**有日期兄弟本身不拒绝** —— 厂商会给同一个模型发带日期的快照(`qwen3.7-max-20260517` 就是
+人工这么判的);拒绝的触发条件是**拿不出正面证据**:同格吻合 = 同一个模型,冲突 = 两个,
+共享零格 = 没有任何东西能 settle 它,而那正是 `GOTCHAS.md` 24 预测的形状。
+`#measure` 同一份档案改前 vs 改后:reproduced **133 → 128**,contradicted **0 → 0**,
+trap false-positive **0 → 0**。代价的 5 条全是 `openai-gpt-5-6-luna-*`(ARC 拼法,带日期快照
+但零共享格)。另约 190 对命中全是本来就 unmapped 的上一代串,不花钱。
+复现:`node scripts/propose-attribution.mjs --backtest`。
+
+⭐ **路上查明一件事,它改变了这条链的重点**:`deepseek-v4-pro` **本来就在 escalate** ——
+`batch-22-arena` 同时印了 `deepseek-v4-pro-high-preview`,第一条拒绝早就覆盖了它。
+⇒ **提议路径从来不是敞口**。敞口是**已经写好的那些 alias**,任何闸门都够不着。
+(这是 self-test 的前置断言失败逼出来的 —— 断言写对了,被测的假设是错的。)
+
+**二、tags 里派生的两个改成从记录算出来**(`app/model-data.ts`)
+`tags` 驱动展示、读起来像装饰,所以它旁边每个字段都长出了契约,只有它还是自由文本 ——
+目录唯一一条自相矛盾就长在这(`qwen3.7-max` 的 `open` 是 false 而 tag 写着 open weights,
+dossier 面板同时印 PROPRIETARY 和那个标签)。现在 `open weights` 由 `open` 渲染、`preview`
+由发布名渲染,**手写任何一个都抛错**(静默过滤会把陈旧的手写 tag 留在文件里、看起来仍然权威)。
+`#measure` 29/29 一致;**反向抓到一条**:`gemini-3.1-pro` 名叫 "Gemini 3.1 Pro Preview" 却
+从来没有 preview 标签 —— 手写那份不只会写错,**它还漏**。抛错路径实测过(给 kimi-k3 手写
+⇒ 模块加载即失败,build 全线挡住)。
+`qwen3.7-max` 上那条「⚠ 不要手工加回」的告警删了:**规矩靠注释记着会被忘,靠构造函数不会。**
+
+**三、给记录加测量窗口**(`modelWindows`,`scripts/lib/archive.mjs`)
+这是唯一真正的敞口。**十个**字符串(不是 GOTCHAS 24 列的五个)以 `effort:"*"` 指向
+`deepseek-v4-pro`,而那条记录装的是四月 preview 的测量。file scope 分不开 —— 同一块板、
+同一个串、同一个 effort,两边只有日期不同。窗口挂在**记录**上而不是 alias 上,因为
+**cutover 是一个事实**:写进十条 alias 就是十份副本,而且**第十一条(闸门下周无人值守写的
+那条)一出生就没人守**。
+`#measure` 关键断言:`npm run ingest` 产物**逐字节不变**,`observations.generated.ts` 没进
+修改列表 ⇒ 今天零影响,是纯守卫。契约全绿(29 models · 1400/2088 · 67.0% · 溯源 323/325 ·
+gaps 57 · build 过)。日期已接进**所有观测行调用点**(ingest / report-gaps / check-model-data),
+不制造第二条代码路径(`GOTCHAS.md` 19 那个坑)。
+⚠ **明写的洞**:未标日期的行仍放行 —— 73 行里 38 行没有 `evaluation_date`,对 null 失败关闭
+等于今天丢一半现有证据、去防一批还不存在的行。`--self-test` 把这个洞**钉成断言**,
+免得后人"顺手改严"时静默丢证据。
+
+**为什么三件都配了 self-test**:这三个守卫的共同点是**在今天的数据上跟"什么都没做"无法区分**
+(窗口让 ingest 逐字节不变;第五条拒绝的目标字符串至今没有任何板发过)。
+⇒ **不断言就等于没有**,而且更糟:一次把规则删掉的重构会在 backtest 里表现为
+「reproduction 涨了 5 点」,**看起来像改进**。三个都进了 CI。
+
+**没做、留给你的**:preview 到底收不收 —— 见 `TODO.md` 新增那节。
+⭐ 差点做错:本来要按「不收 preview」去退 `qwen3.6-max`,动手前量了一下 ——
+名字带 Preview 的还有 `gemini-3.1-pro`,**59 格,全目录第二满**,Google 把 Preview 当在售
+版本卖。判据是**有没有被 GA 取代**,不是名字里有没有那个词(`GOTCHAS.md` 25)。
+顺带纠正一个被反复引用的数:24 和 CHECKPOINT 写的「`deepseek-v4-pro` 的 11 格」是
+**四月 model card 那部分**,整条记录实测 **58 格**(`GOTCHAS.md` 26)。
+
+---
+
+## 2026-08-13(第二轮)— 价格链:窗口补到参数路径,并让 DeepSeek 8-16 改价那天契约自己红 `#decision` `#ship` `#measure` `#incident`
+
+**起点是一句用户观察**:DeepSeek 官网说要涨价,能不能实时反映到性价比榜。查下去发现三件事,
+一件比一件靠后:
+
+**① 价格数据每天到,但进不了目录。** `batch-14-aa-parameters` 是脚本源
+(`fetchers/artificial-analysis.mjs`),带 `price_input_per_m` 等三个字段。但 `ingest.mjs` 的参数
+循环第一句就是 `if (raw.text_elo == null && raw.code_elo == null) continue` —— **参数批次里只有
+Elo 进目录,价格一格都不进**。站上的价格是 `model-data.ts` 里手打的。
+
+**② 厂商价格这条链连第一米都没有。** 12 个脚本源没有一个盯厂商定价页。档案里唯一的官方
+DeepSeek 价格行在 `batch-08`,`collectedWith` 写着 "browsing model" —— **手抄的,8-01**。
+⭐ 而 `check-model-provenance` 的 `priceRow` **优先采信 `source_kind === "official"`** ——
+原则完全正确,但叠上"官方那份是冻住的手抄快照"就成了:**被优先采信的恰好是不会更新的那份**,
+会动的 AA 行排在它后面被忽略。涨价之后契约照样全绿。这是「一个事实只设一个权威来源」的一个
+新变种 —— 不是有两份副本,是**权威的那份没有活性**。
+
+**③ 涨的不是价,是计价结构。** 实测官方页(2026-08-13 读):8-16 16:00 UTC 起改峰谷计价,
+峰时 01:00–04:00 与 06:00–10:00 UTC(7 小时),谷时为峰时半价。v4-pro 输入 0.435→**1.32**(3.03×)、
+输出 0.87→**3.96**(4.55×);**连谷时(0.66/1.98)都比现价贵一倍以上**。Flash 同形。
+性价比榜(`intelligence / costTask`)现在 flash 1667× 第 1、luna 1110× 第 2、pro 906× 第 3;
+按峰时价 pro 约掉到 216×(第 5)—— ⚠ **价格倍数是实测,costTask 倍数是推算**(AA 的 cost-per-task
+按它自己的 token 配比加权,配比未知),所以"会掉"是稳的,"掉到第几"不稳。
+
+**做了两件(user 点的 1 + 3):**
+
+**参数行纳入记录窗口。** 昨天那道窗口只盖观测行,而价格走参数行、参数行没有 `evaluation_date`
+⇒ 窗口对价格完全失效。新增 `measurementDateOf(raw, meta)`:行自己的日期优先,否则**只有声明了
+`retrievedDateIsMeasurement` 的批次**才用 `retrievedDate` 兜底。
+⭐ **兜底不能一刀切,这是动手前量出来的**:`batch-22-arena` 的 `retrievedDate` 恰好是 2026-08-12
+(GA 当天 15:42 UTC 上线,晚于那批任何一票),而 Arena Elo 是几周累积。一刀切会删掉
+`deepseek-v4-pro` 已发布的 1458/1445 两个真数,去防一件没发生的事 ⇒ `GOTCHAS.md` 27。
+声明了的 8 个参数批次 retrievedDate 全 < 8-12 ⇒ **ingest 产物逐字节不变**。
+
+**把 8-16 落档并让契约那天自己红。** batch 31(**只有 meta**:当前价与 batch-08 一致,重 archive
+只是占坑重复;而 8-16 的价还没生效,写成观测行等于给一个没到的日期发布数字)。`priceTerms` 支持
+第二种形状:promotion 是**带结束日**的价,`scheduled` 是镜像 —— **带生效日**的价。生效前目录提前
+报新价则红,生效当天起还报旧价则**红**。`check:prices` 是日常 job 自动合并的闸门之一 ⇒ 那天
+宁可停发,不发错价。
+
+⚠ **验这件事时又踩了管道退出码**:`node … | tail -5; echo $?` 两侧都得 0,差点写下"两侧都通过"。
+`$?` 是 `tail` 的。`upstream.yml` 里早写着 pipefail 是承重件(并注明 `4239916` 曾把红着的
+`check:models` 直推 main)—— **规则写在别处不等于当场想得起来**。⇒ `GOTCHAS.md` 28,
+并把断言落成 `scripts/check-scheduled-prices.test.mjs`(子进程读 `status`,没有管道能骗人),
+实测 8-15 exit 0 / 8-16 exit 1 / 今天 exit 0,已进 CI。
+
+**决定:价格不改用 AA 当权威,改让 AA 当哨兵。** 用户问"要不价格都按 AA,反正没促销"。
+不改的理由:价格不是测量,是**售卖条款**,厂商页按定义是权威;而 AA 会把**档位结构压成一个数** ——
+这次峰/谷两档 AA 只会印一个,印哪个我们不知道,等于把"目录报哪一档"这个决定悄悄外包出去
+(`batch-08` 的 `tiersNotArchived` 当初就是专门定这件事的)。但用户点中的问题是真的,
+所以正解是**各干各的**:官方页仍是报价权威,AA 的每日脚本行当**漂移探针** —— AA 与目录 list price
+差超阈值 ⇒ 手抄的官方行过期了,报出来。比"给每个厂商写 fetcher"便宜得多,因为 AA 已覆盖所有厂商。
+未做,进 `TODO.md`。
+
+**报价规则不用重新定**:`check-price-terms.mjs` 开头已写「目录只报 list price」,而谷时价没有
+`endsOn`、不是促销,是**有条件的档位**,对上 `batch-08` 的 `tiersNotArchived` 先例(Google
+Batch/Flex、阿里区域价)⇒ **峰时价 = list = 目录报的那个**,谷时记录不报。两条既有惯例合起来
+就是答案,不是一个新决定。
+
+⚠⚠ **留给你的那件事变紧了**:DeepSeek 定价页只印 `deepseek-v4-flash` 和 `deepseek-v4-pro`,
+**不印 `-0813`**。按 24 的判据 2,不分列的源里裸串就是在服役的那个 = **GA**。所以这两个新价属于
+一个**本目录还没有记录**的模型,填进现有那条 preview 记录就是 GA 条款挂在 preview 测量上。
+⇒ **先定记录身份,价格跟着身份走**,不是反过来。写进了 batch 31 的 `modelIdentityWarning`。
+
+---
+
+## [2026-08-13 收尾] 从 CHECKPOINT 挤出的 stale 快照(截至 8-13 的状态) `#decision`
+
+快照涨到 174 行、超硬上限 45%,按"历史爬进快照就往 LOG 挤"处理。以下四段**截至 2026-08-13**
+仍属实,但已经不是"下一个 session 要现场知道的事":
+
+- **`qwen3.7-max` 的假 open-weights 标签(8-12 顺手修)**:同一个侧栏同时显示 `PROPRIETARY`
+  和一个 `open weights` 标签,全目录唯一一条。漂的是 tag(`open` 被审计,tags 没有任何检查
+  够得到)。⇒ **被审计的那份往往是对的,漂的是读者看见的那份。**
+  **已于 8-13 从根上堵死**:该 tag 现由 `open` 字段派生,手写抛错(见本日第一条)。
+  留在快照里已无动作可做。
+- **8-12 前两轮**:Qwen 的 Max 是产品档不是 effort;`intelligence`/`costTask` 整批推到
+  batch-14(39 处目录值移动,至今最大一次);AA 有 135 个模型把操作点只写在显示名里
+  (`GOTCHAS.md` 21/22/23)。
+- **8-10 八个 PR 全部合并并已发布**:站上线、gaps 分三层、两个分类器自测进 CI、batch 30
+  脚本化、判定逻辑收进 `app/upstream-variants.ts`。
+- **两条观察已退役**:分层后的 gaps issue(8-12 本地实测:上游那节折叠、只计过地板、
+  三个 Pro 档都在列、零 `(batch)`/`(Fast)`,按设计工作);LMArena 天天自动提交(8-11 证实)。
+
+顺带修掉快照里三处过期的数:`GOTCHAS.md` 写「24 条」实际 28 条;LOG 写「第六轮轮转」
+实际第七轮(52a987f);现状表标题写 8-12 而表里是 8-13 实测。
+⇒ **快照里引用别处的计数,每次刷新都要重新数** —— 与 `GOTCHAS.md` 26 同形。

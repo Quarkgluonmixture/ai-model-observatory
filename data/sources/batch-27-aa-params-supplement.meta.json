@@ -1,6 +1,7 @@
 {
   "batch": "27 · AA model-page parameters supplement",
   "retrievedDate": "2026-08-08",
+  "retrievedDateIsMeasurement": true,
   "collectedWith": "Direct read of the Artificial Analysis model pages (https://artificialanalysis.ai/models/qwen3-7-plus and /qwen3-8-max). Both pages publish context window and open-weights status in their HTML overview; the AA parameter API that batch-14 reads publishes neither field, which is why these catalog values stayed unsourced.",
   "filtered": true,
   "filterRule": "Only the two catalog models whose open_weights had no archive row (qwen3.7-plus, qwen3.8-max); qwen3.7-plus context_k was also unsourced. Every other field those pages publish is already backed: qwen3.7-plus metrics from batch-14, qwen3.8-max price/context from batch-21. Those are left null here so this batch adds provenance and nothing else.",
