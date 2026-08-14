@@ -94,6 +94,15 @@ jobs:
       - name: Replay the integrity notifier against the log shape that silenced it
         run: bash scripts/publish-integrity-issue.sh --self-test
 
+      # The price drift probe reports into the gaps issue and never fails a job, so nothing else in
+      # this repository would notice it going quiet — and going quiet is its most likely failure:
+      # it reads AA's parameter batch through the fetcher registry, and a renamed batch would leave
+      # it printing "no drift" against zero rows. That direction is asserted (it must throw), along
+      # with the arithmetic and the suppression rule that decides which differences are NOT reported
+      # — a live promotion explains AA's discount, an expired one does not. No network, no key.
+      - name: Replay the price drift probe
+        run: node --experimental-strip-types scripts/check-price-drift.mjs --self-test
+
       - name: Build production application
         run: npm run build
 
