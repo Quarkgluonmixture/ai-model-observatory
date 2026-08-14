@@ -274,7 +274,25 @@ export const MODELS: ModelRecord[] = [
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
     cfg(null, 39.4, 0.2424, 56.59, 2.09, 0.4, 1.6, false, 0.04),
   ]),
-  m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["value", "reasoning"], [
+  // "Preview", and the word is load-bearing. Every cell on this record was measured on the April
+  // release: 37 of 58 carry only pre-GA dates, 21 carry none, and zero carry a date on or after the
+  // 2026-08-13 GA. Eleven come straight off the 2026-04-26 model card. Meanwhile DeepSeek's own GA
+  // table moves DeepSWE 12.8 → 62.7, Terminal 2.1 72.1 → 87.9 and Cybergym 52.7 → 83.3, so these
+  // numbers describe a different model from the one `deepseek-v4-pro-0813` serves. `modelWindows`
+  // stops GA readings landing here; the name is what stops the readings already here being read as
+  // GA. `_doc` records this exact failure happening once before — a preview's scores published under
+  // the name of the model that replaced it, for a week.
+  //
+  // Not a date suffix, which is what `deepseek-v4-flash` carries: "0731" is copied from what DeepSeek
+  // published (the HF repo is `DeepSeek-V4-Flash-0731`, the upstream name says 0731). Pro has no such
+  // date anywhere — HF is `DeepSeek-V4-Pro`, upstream is `DeepSeek: DeepSeek V4 Pro`, and the only
+  // dates available are third-party (an OpenRouter listing date, a model-card evaluation date). Flash
+  // shows why they cannot be substituted: it was listed 04-24 and named 0423. "Pro-Preview" is a
+  // column in DeepSeek's own GA table, so this name is copied rather than derived. When DeepSeek
+  // renames the bare entry — as it did for Flash — copy that instead.
+  //
+  // The `preview` tag comes from this name via DERIVED_TAGS, so there is nothing else to edit.
+  m("deepseek-v4-pro", "DeepSeek V4 Pro Preview", "DeepSeek", "#8467d6", true, 1000, ["value", "reasoning"], [
     cfg("max", 45.3, 0.05, 64.4, 1.68, 0.435, 0.87, false, 0.004),
   ]),
   // --- Added from data/sources/batch-06-operating.jsonl -------------------------------
