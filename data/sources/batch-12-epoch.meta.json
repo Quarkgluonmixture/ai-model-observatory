@@ -10,5 +10,5 @@
   ],
   "licence": "CC BY 4.0 — Epoch AI, 'AI Benchmarking Hub', https://epoch.ai/benchmarks",
   "note": "Fetched from the ZIP Epoch publishes at a fixed URL, not read off a page. Epoch's own evaluations are source_kind benchmark for FrontierMath (Epoch's own benchmark) and independent for GPQA (Epoch running someone else's), which is the distinction already recorded in sourceKindOverrides. The *_external rows are Epoch transcribing another board and are always independent, so a first-hand row outranks them automatically. Reasoning effort is split off the model string (claude-opus-5_max) onto the row. evaluation_date is Epoch's run timestamp for its own evaluations and null for the external files, which publish only the model's release date — dating a result with a model release would be a fabrication.",
-  "retrievedDate": "2026-08-11"
+  "retrievedDate": "2026-08-14"
 }

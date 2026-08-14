@@ -8,5 +8,5 @@
     "https://deepswe.datacurve.ai/"
   ],
   "note": "Fetched from the artifact the DeepSWE leaderboard page itself loads, not read off the screen. One row per published configuration — harness × model × reasoning effort — because DataCurve publishes each separately and they must not be merged. score is pass@1 at one decimal; pass@4, the 95% interval and the run count stay in the note rather than becoming separate columns, since the catalog carries one metric for this benchmark. evaluation_date is the finish date of the newest job included, NOT the artifact's generated_at, which moves on every rebuild and would make each re-fetch look like new data. This board is live: DataCurve appends runs and pass rates move, so a difference here is new data and opens a pull request, never a drift failure. Batch 02 transcribed 18 rows of the same board rounded to whole points; those are superseded by this batch, recorded in data/model-aliases.json.",
-  "retrievedDate": "2026-08-13"
+  "retrievedDate": "2026-08-14"
 }
