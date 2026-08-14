@@ -133,6 +133,19 @@ jobs:
             echo
             npm run --silent check:deployment 2>&1 | sed 's/^/- /' || true
           } >> gaps.md
+
+          # Every observation in this catalog is re-read and diffed every morning. Prices are not:
+          # `ingest` does not carry them, so a list price is typed in by hand from a vendor page and
+          # then audited against the same hand-copied snapshot it came from. A vendor raising its
+          # price leaves the whole contract green. AA is the one source that re-reads pricing for
+          # every maker on a schedule, so it is used here as a drift probe and explicitly not as an
+          # authority — see the header of scripts/check-price-drift.mjs. It reports into this issue
+          # rather than failing, for the same reason check:deployment does: a price the vendor moved
+          # is a fact somebody needs, not a reason to abandon the archive refresh.
+          {
+            echo
+            npm run --silent check:price-drift 2>&1 || echo "_The price drift probe could not run this time._"
+          } >> gaps.md
           sed -n 's/.*<!-- gaps: \([0-9]*\) -->.*/count=\1/p' gaps.md >> "$GITHUB_OUTPUT"
           cat gaps.md >> "$GITHUB_STEP_SUMMARY"
 

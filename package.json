@@ -15,6 +15,7 @@
     "check:data": "node --experimental-strip-types scripts/check-model-data.mjs",
     "check:models": "node --experimental-strip-types scripts/check-model-provenance.mjs",
     "check:prices": "node --experimental-strip-types scripts/check-price-terms.mjs",
+    "check:price-drift": "node --experimental-strip-types scripts/check-price-drift.mjs",
     "check:beian": "node --experimental-strip-types scripts/check-beian.mjs",
     "check:mobile": "node scripts/check-mobile.mjs",
     "check:upstream": "node scripts/fetch-source.mjs --check",
