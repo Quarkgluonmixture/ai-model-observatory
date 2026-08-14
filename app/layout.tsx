@@ -18,15 +18,20 @@ export const metadata: Metadata = {
   other: {
     "codex-preview": "development",
   },
-  // The mark is a Q for quarkspace drawn as a measuring ring. `/models` overrides this with its own
-  // icon — see the note there for why the two are told apart at all, and why both are vector.
+  // The mark is a Q for quarkspace: a ring with a gap, plus a tail with a gold nib. `/models`
+  // overrides this with its own icon — see the note there for why the two are told apart.
   //
-  // Two stroke widths are deliberately heavier than the artwork they came from, because a favicon's
-  // real size is 16px and 1254-unit units do not survive it: the ring was 70 (0.89px at 16px, under
-  // one device pixel, so it greyed out) and is now 100 (1.28px). Measured: dark pixels at 16px went
-  // from 11/256 to 21/256. The crosshair ticks went 12 → 24 and still only buy 0.31px — they are for
-  // 32px and up, and no amount of weight changes that. Composition, the dash gap that makes the ring
-  // a Q, the tail and the sparkle are untouched.
+  // It is drawn for 16px, and the first attempt was not. Thickening the artwork's strokes was the
+  // obvious fix and it was the wrong one: the real problem was that the mark occupied 53% of its
+  // canvas, so a 16px tab spent half its pixels on a paper plate that is invisible against a light
+  // tab bar. Measured in a real Chrome tab: 26/256 dark pixels, against 44/256 for the observatory
+  // icon beside it. Filling the canvas — ring radius 45% → 60% of the width — puts it at 67/256.
+  //
+  // The crosshair ticks and the centre sparkle are gone, and that is the deliberate part. At 16px
+  // they were not detail, they were four gold specks muddying the inside of the ring; a tick 24
+  // units wide on a 1254 canvas renders 0.31px and no weight fixes that. What survives is what
+  // still reads at 16px: the gap that makes the ring a Q, the tail, and one accent on its nib. The
+  // full detailed artwork is archived under `docs/assets/icons/`.
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
