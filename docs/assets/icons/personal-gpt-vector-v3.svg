@@ -15,11 +15,9 @@
   <!-- paper-white background -->
   <rect width="1254" height="1254" fill="#f7f5ef"/>
 
-  <!-- Q / measuring ring. stroke-width 70 -> 100: 70 renders 0.89px at 16px, which is under one
-       device pixel and greys out. 100 gives 1.28px. The dasharray still sums to the circumference
-       (2π·284 = 1785), so the opening that makes this a Q is unchanged. -->
+  <!-- Q / measuring ring -->
   <circle cx="625" cy="579" r="284"
-          fill="none" stroke="url(#ink)" stroke-width="100"
+          fill="none" stroke="url(#ink)" stroke-width="70"
           stroke-linecap="butt"
           stroke-dasharray="1586 198"
           transform="rotate(43 625 579)"/>
@@ -32,13 +30,11 @@
   <path d="M 852 842 L 894 800 L 952 894 Z"
         fill="url(#gold)"/>
 
-  <!-- crosshair ticks, 12 -> 24 thick, lengths and positions unchanged and re-centred on the ring
-       centre (625, 579). Twice the weight still only buys 0.31px at 16px, so these are for 32px and
-       up; see the layout comment in app/layout.tsx. -->
-  <rect x="613" y="362" width="24" height="64" fill="url(#gold)"/>
-  <rect x="613" y="740" width="24" height="64" fill="url(#gold)"/>
-  <rect x="405" y="567" width="65" height="24" fill="url(#gold)"/>
-  <rect x="777" y="567" width="65" height="24" fill="url(#gold)"/>
+  <!-- crosshair ticks -->
+  <rect x="619" y="362" width="12" height="64" fill="url(#gold)"/>
+  <rect x="619" y="740" width="12" height="64" fill="url(#gold)"/>
+  <rect x="405" y="574" width="65" height="12" fill="url(#gold)"/>
+  <rect x="777" y="574" width="65" height="12" fill="url(#gold)"/>
 
   <!-- central four-point sparkle -->
   <path d="M 625 522

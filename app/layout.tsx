@@ -18,6 +18,15 @@ export const metadata: Metadata = {
   other: {
     "codex-preview": "development",
   },
+  // The mark is a Q for quarkspace drawn as a measuring ring. `/models` overrides this with its own
+  // icon — see the note there for why the two are told apart at all, and why both are vector.
+  //
+  // Two stroke widths are deliberately heavier than the artwork they came from, because a favicon's
+  // real size is 16px and 1254-unit units do not survive it: the ring was 70 (0.89px at 16px, under
+  // one device pixel, so it greyed out) and is now 100 (1.28px). Measured: dark pixels at 16px went
+  // from 11/256 to 21/256. The crosshair ticks went 12 → 24 and still only buy 0.31px — they are for
+  // 32px and up, and no amount of weight changes that. Composition, the dash gap that makes the ring
+  // a Q, the tail and the sparkle are untouched.
   icons: {
     icon: "/favicon.svg",
     shortcut: "/favicon.svg",
