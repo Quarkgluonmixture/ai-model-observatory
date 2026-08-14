@@ -1,67 +1,63 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-13:**preview/GA 串号的机制侧做完了,剩下的是一个命名决定 + 一个 8-16 的硬期限。**
+**接手点** — 2026-08-14:**通知侧第一次有了断言;价格第一次有了漂移探针;Pro 记录的名字不再骗人。**
 
-分界线值得记住:**能全自动的是「发现 + 拒收」,不是「命名」**。危险从来不在于没人处理,
-而在于处理之前它会**静默写错**;改成大声缺,时间压力就没了。
-本日落地五件,都进 CI、都能单独回滚,实测与理由全在 `LOG.md` 2026-08-13 两条:
-归属闸门**第五条拒绝**(跨文件的带日期兄弟串)· `tags` 的 `open weights`/`preview` 改**派生**,
-手写抛错 · **`modelWindows`** 记录级测量窗口 · 窗口**补到参数路径**(批次声明
-`retrievedDateIsMeasurement`)· `priceTerms` 新形状 **`scheduled`**。
-⭐ 三个守卫的共同点:**在今天的数据上跟"什么都没做"无法区分**(ingest 逐字节不变),
-所以每件都配了 self-test —— **不断言就等于没有**。
+今天的问题不是"自动化够不够",而是**它防哪一类失败**。量出来是分裂的:采集侧很硬
+(**72 列里 53 列每日自动重读** —— 8-14 实测,复算 = `npm run report:column-automation`;
+七天里天天有一条 `Refresh live boards` 直推 main);
+报警侧几乎没有防线 —— 07:03 那次 job 红了,**通知一个都没发出去,而那一步显示绿色**,
+人是十小时后翻 Actions 才发现。⭐ 可推广的一句:**这个仓库所有断言都是关于数据的,
+而通知失败的样子是绿色**。机制见 `GOTCHAS.md` **29**(报警器在正比于它要报的规模上失灵)。
 
-⏰ **2026-08-16 16:00 UTC · DeepSeek 换峰谷计价**。v4-pro 输入 0.435→**1.32**、输出 0.87→**3.96**
-(峰时;谷时是峰时半价,**仍比现价贵一倍以上**)。已落档 `batch-31`,**契约那天会自己红**
-(实测 8-15 exit 0 / 8-16 exit 1),而 `check:prices` 是日常 job 自动合并的闸门 ⇒ 宁可停发,不发错价。
-⚠⚠ **那天别顺手把新价填进去**:定价页只印裸串、**不印 `-0813`**,按 `GOTCHAS.md` 24 判据 2
-这两个价属于 **GA**,而目录那条是 **preview**。**先定记录身份,价格跟着身份走**;
-身份没定就**让它红着** —— 红着是安全的,填错价不是。
+本日落地四件,理由与实测在 `LOG.md` 2026-08-14 条:报警链路修好并**第一次有了 self-test**(进 CI)·
+`check:price-drift` 上线(AA 当探针不当权威 ⇒ 只报不红,已声明促销自动闭嘴)· GA 守卫分支合入 ·
+两站图标分离并矢量化。
 
-⇒ **要你定的三件都在 `TODO.md`**:preview 该不该有自己的记录 · 窗口何时解除 · AA 当价格漂移探针。
-前两件得**等第一块板真发 GA 分**才能动(第一个源决定串怎么拼)。厂商表入档仍卡在 `source_url`。
+⭐ **preview 规矩已定**:一条记录 = 一个在服役的版本,preview 的行**留档不入库**(Flash 的解法);
+`deepseek-v4-pro` 显示名已改 **"DeepSeek V4 Pro Preview"**(`preview` 标签从名字派生)。
+剩下**只等数据**不等决定 —— 四步动作在 `TODO.md`。Qwen / Gemini 那两条 Preview 查过:
+上游精确同名且**族里无 GA 取代** ⇒ 按 `GOTCHAS.md` 25 **不动**。
 
-**收录地板:已定「不放开」**。它不是写死的数,是当前每模型平均格数(8-13 实测 1400÷29=48.3;
-复算 = `npm run propose:model` 头几行会打印它),所以会**自我强化地塌** —— 收 9 个候选,
-覆盖率 67.0%→**53.5%**、地板→**38.6**。四档实测在 `LOG.md` 2026-08-12 收尾条,**别重新论证**。
+⏰ **2026-08-16 16:00 UTC · DeepSeek 换峰谷计价**,契约自己会红(`batch-31`,实测 8-15 exit 0 /
+8-16 exit 1)。按 `quotingRule` 用**峰时价**重抓入档 → 改记录 → 退休该条款。
+⚠ 报的是 `deepseek-v4-flash`,与上面 Pro 那条 preview 记录**不是一回事**。
 
-⚠⚠ 通用判据:**「契约全绿」只覆盖检查够得到的东西** —— 解析不到的行被
-`check-model-provenance.mjs` 直接 `continue`,所以 323/325 的**范围是解析得到的行**。
-判一个数有没有被守住,**grep 哪条检查真的够得到它**,别问「有没有这个检查」。
-⚠ 本机 `npm run test:sites` 需要 GNU `timeout`(macOS 没有,exit 69)—— 要真跑得给它一个 shim,
-**别把 exit 69 当成跳过即通过**。
+⇒ **要你定的**:通知侧两件(吞成绿色 / integrity vs availability 分类)在 `TODO.md` 顶部一节。
 
-`TODO.md` 里其余**全是要你定的**。等批复的只有公安备案(约 2026-09-09)。
+**收录地板:已定「不放开」**。它不是写死的数,是当前每模型平均格数(复算 = `npm run propose:model`
+头几行会打印它),所以会**自我强化地塌**。四档实测在 `LOG.md` 2026-08-12 收尾条,**别重新论证**。
 
-Snapshot for the next session. One page. 现场状态在这里；**动手前的自查在 `GOTCHAS.md`**；
-历史在 `LOG.md`；未来在 `TODO.md`。都不能替代 `AGENTS.md`——它是操作合同，改任何东西之前先读它。
+⚠⚠ 通用判据:**「契约全绿」只覆盖检查够得到的东西**。判一个数有没有被守住,
+**grep 哪条检查真的够得到它**,别问「有没有这个检查」。
+⚠ 本机 `npm run test:sites` 需要 GNU `timeout`(macOS 没有,exit 69)—— **别把 exit 69 当跳过即通过**。
+
+Snapshot for the next session. One page. 现场状态在这里;**动手前的自查在 `GOTCHAS.md`**;
+历史在 `LOG.md`;未来在 `TODO.md`。都不能替代 `AGENTS.md`——它是操作合同,改任何东西之前先读它。
 
 ---
 
-## 现状（2026-08-13 实测）
+## 现状（2026-08-14 实测）
 
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2161 rows · 1400 / 2088 cells（67.0% cell coverage）** —— 8-13 实测,复算 = `npm run check:data` 末行 |
-| 源分类 | benchmark 918 / independent 1053 / vendor 190 |
+| 观测 | **2165 rows · 1403 / 2088 cells（67.2% cell coverage）** —— 8-14 实测,复算 = `npm run check:data` 末行 |
+| 源分类 | benchmark 920 / independent 1055 / vendor 190 |
 | 溯源 | **323 / 325**（99%；2 格有值无据 = `deepseek-v4-flash`，`TODO.md` 里是编辑判断）⚠ 分母是**解析得到的行**，见下 |
-| 归档 | **30 batches，其中 16 个可脚本重读**（8-10 实测 `meta.collectedWith`；batch 30 = SWE-Bench Pro）；⚠ **「裸奔 1,287 行」这个数复现不出来**（两种测法得 1,404 / 1,226），引用前先钉定义 |
+| 归档 | **30 batches，其中 16 个可脚本重读**（8-10 实测 `meta.collectedWith`）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
-⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。覆盖率这几天怎么走的，
-见 `LOG.md` 2026-08-06 起各条。
+⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。走势见 `LOG.md`。
 
 **域名 / 备案已定案**（两个域名 × 两条路由的服务端 HTML 都渲染 ICP，`check:deployment` 绿）——
-细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。⏳ 只剩：公安联网备案约 2026-09-09 出结果，
-批了在 `app/site-beian.tsx` 补第二个号链 `www.beian.gov.cn`（一个文件的事）。
+细节与三步绑定顺序 → `docs/ARCHITECTURE.md` §6。⏳ 只剩：公安联网备案约 2026-09-09 出结果，批了**只改一个常量** ——
+`app/beian-filing.ts` 的 `PUBLIC_SECURITY_FILING`（现在是 `null`）;`site-beian.tsx` 只渲染它,
+`check:beian` / `check:deployment` 不用改一个字就会开始断言它。
 
-**自动化真正剩下的**看 `TODO.md`（堆 1「只差你一个事实」8-10 已清空；剩下是下一个 chunk 与判断题）。
-⭐ **「上游有、目录没有」不是缺陷清单**,而它**由两处独立算出** —— `report:gaps`(存档证据链,
-只有过地板的才计入 issue 计数)和 `app/api/live-models/route.ts`(网站那份,运行时)。判定逻辑
-现在只有一个家 `app/upstream-variants.ts`(route 里 import 必须带 `.ts`)。⚠⚠ **报告干净不等于
-网站干净** → `GOTCHAS.md` 19 + `docs/ARCHITECTURE.md` §6「Two code paths…」。
+**自动化真正剩下的**看 `TODO.md`。⭐ **「上游有、目录没有」不是缺陷清单**,且它**由两处独立算出**
+(`report:gaps` 与 `app/api/live-models/route.ts`),判定逻辑只有一个家 `app/upstream-variants.ts`。
+⚠⚠ **报告干净 ≠ 网站干净** → `GOTCHAS.md` 19 + `docs/ARCHITECTURE.md` §6。
 
 ---
 
@@ -123,15 +119,16 @@ AA 刷新 PR 没开成 · AA 刷新整体失败 · **main 检查变红**（EdgeO
 
 ---
 
-## 现在要盯的两件事
+## 现在要盯的三件事
 
-1. **DeepSeek GA 的分第一次落进归档的那天** —— 照 `GOTCHAS.md` 24 的动手顺序走，
-   **先 alias 再目录，别先改显示名**。判据和量级都在那条里，这里不复述。
-2. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。Scale 加一个模型就该开 PR;
-   ⚠ 它读的是 RSC flight，**不是稳定 API** —— 挂了应当是**大声 throw**(六条断言),
-   不该是"看板变小了"。真挂了先看 `docs/ARCHITECTURE.md` §9 里 SWE-Bench Pro 那行。
+1. ⏰ **2026-08-16 峰谷计价** —— 见接手点。契约自己会红;**身份没定就让它红着**。
+2. **`deepseek-v4-pro` 的 GA 读数往上爬**（8-14 已到第一格:DeepSWE 62.8,被窗口拦住）。
+   够到地板才翻转,动作四步写在 `TODO.md`;⚠ 照 `GOTCHAS.md` 24 的顺序,**先 alias 再目录**。
+3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——
+   挂了应当是**大声 throw**(六条断言),不该是"看板变小了"。见 `docs/ARCHITECTURE.md` §9。
 
-3. ⏰ **2026-08-16 那天** —— 见上面接手点。契约会自己红;**身份没定就让它红着**。
+⭐ 明晨 07:00 UTC 那次 job 是三个新东西的第一次实战:价格探针往 gaps issue 写一节 ·
+报警器真红时 issue 与微信都该发出去 · `deepseek-v4-pro` 少一格的状态。
 
 ---
 
@@ -144,7 +141,7 @@ AA 刷新 PR 没开成 · AA 刷新整体失败 · **main 检查变红**（EdgeO
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**28** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。⭐ 动 DeepSeek 任何东西之前读 **24**（preview→GA 串号，判据 + 动手顺序）与 **25/26**（"preview"在名字里≠是个 preview；引用别人写的格数前先自己数）。⭐ 动**价格或参数批次**之前读 **27**（`retrievedDate` 只对页面快照等于测量日期）。⭐ 族：第五族 15–18「我以为我知道数据长什么样」、第六族 21–23「审计的取数口径本身就是盲区」、19 = 报告里干净≠网站上干净 |
+| `GOTCHAS.md` | **动手之前扫一遍**：**31** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。⭐ 动 DeepSeek 任何东西之前读 **24**（preview→GA 串号，判据 + 动手顺序）与 **25/26**（"preview"在名字里≠是个 preview；引用别人写的格数前先自己数）。⭐ 动**价格或参数批次**之前读 **27**。⭐ 动 **workflow / 通知 / 脚本封顶**之前读 **29**（报警器在正比于它要报的规模上失灵,而失灵的样子是绿色）;动 **git stage** 之前读 **30**;动**图标**之前读 **31**。⭐ 族：第五族 15–18「我以为我知道数据长什么样」、第六族 21–23「审计的取数口径本身就是盲区」、19 = 报告里干净≠网站上干净 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
