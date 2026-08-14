@@ -243,6 +243,26 @@ const KNOWN_OVERCOUNTS = [
     // it work for models that have no alias yet.
     reason: "one AA slug = 0731 release + April preview, separated only by effort, which this counter strips by design",
   },
+  {
+    model: "deepseek-v4-pro",
+    cells: ["deepswe"],
+    // Unlike the exemption above, this one is TEMPORARY and it marks an open decision rather than
+    // an inherent limit.
+    //
+    // DeepSWE published 62.8 for this family on 2026-08-13 and the daily job archived it on
+    // 2026-08-14 — the first board to score the GA release. The catalog record is the *preview*,
+    // and `modelWindows` in `data/model-aliases.json` holds `validUntil: 2026-08-12` precisely so a
+    // GA score cannot land silently in it. So the row is in the archive and the cell is not on the
+    // board, which is exactly what this counter reads as an over-count: it matches published
+    // STRINGS with effort stripped, and knows nothing about measurement windows — the same design
+    // that lets it work for a model with no alias yet.
+    //
+    // Nothing to repair in the counter. What retires this pin is the editorial decision in
+    // `TODO.md` (does the preview keep its own record, or does this become the GA record?) — and
+    // the self-test reports an exemption that stops occurring, so it will say so on its own the day
+    // the window lifts. Do NOT teach the matcher about windows to make it go away.
+    reason: "the GA release's first board score is archived while the record is still the preview, held out by modelWindows — retires when the preview/GA decision is taken",
+  },
 ];
 
 // Not a target, a regression guard. Measured 2026-08-10: 70%. It was 89% when this was written and

@@ -72,6 +72,45 @@
 - 机制：ARC 的 public eval 比 verified 板高约 11 分，基准名一模一样。
 - ⇒ 每个 fetcher 钉死一个 `*_Semi_Private` split；换 split 前先对已知模型逐位核。
 
+### 24. DeepSeek 的 preview→GA 是**同一个字符串换了模型**，Pro 正在重演 Flash 那一次
+2026-08-12 建立，**这次是事前**（Flash 那次是事后才发现的，见 `AGENTS.md`「One published model
+string can mean two different models」）。编号接在末尾是因为编号只追加，家族仍是二族。
+
+- **事实**：DeepSeek V4 Pro 的 GA 版 `DeepSeek-V4-Pro-0813` 于 2026-08-12 上线
+  （OpenRouter `deepseek/deepseek-v4-pro-0813`，`created` 15:42:44Z，描述原文
+  "This is the GA release of DeepSeek V4 Pro"）。旧的 `deepseek/deepseek-v4-pro` 仍在服务，
+  `created` 停在 2026-04-24 —— **那是 preview**。
+- **目录现在装的是 preview**：`deepseek-v4-pro` 的 11 格全部来自 2026-04-26 的 V4 model card。
+  对得上厂商自己的 `DeepSeek-V4-Pro-Preview` 列（`hle-no-tools` 37.7 两边逐位相同）。
+- **量级**：厂商 GA 表里同族两列差得离谱 —— DeepSWE **12.8 → 62.7**、Terminal 2.1 **72.1 → 87.9**、
+  AutomationBench **12.8 → 31.8**、Cybergym **52.7 → 83.3**。串一格就是 Flash 那次
+  「49.25 印成 100」的同一种事故，只是这次能提前拦。
+- ⚠ **闸门未必救得了**：跨源分歧 >20% 只在**同一格已有另一个源**时才响。GA 的分若落在
+  `deepseek-v4-pro` 现在的**空格**上（十列里目录只有 4 列有 preview 的数），没有分歧可比，
+  静默生效，看板上就是「preview 记录突然变强了」。
+- ⚠ **危险的是 5 条全局通配**：`DeepSeek V4 Pro` / `DeepSeek-V4-Pro` / `deepseek-v4-pro` /
+  `DeepSeek V4` / `deepseek-v4-pro-thinking` 现在都 `effort: "*"` 无条件指向这条记录。
+  各源开始发 GA 分时，**不改 slug 的源**（AA 是确定的那个：Flash 那次它就没改）会让裸串原地换意思。
+- ⇒ **判据，按可靠性排**：
+  1. **数字**。preview 与 GA 差 2×–5×，比任何字符串都好认 —— 和 ARC 那 37 条「用分数确认归属」同一个手法。
+  2. **源自己分不分列**。OpenRouter、LiveBench、Epoch、LMArena 印 `-0813`；分列的源里裸串**就是** preview。
+  3. **日期**。源的 `evaluation_date` / 模型 `created` 在 2026-08-12 之前 ⇒ preview。
+- ⇒ **动手顺序**（GA 分第一次出现时）：先照 Flash 的剧本 —— 裸串加 `file` scope 或
+  `effort` 限定，GA 串写显式 alias；**别先改目录记录的显示名**，改名会让 11 格 preview 的分
+  当场挂到 GA 名下，那正是要防的事。preview 的分怎么退役，走 `supersededRows`，逐格写理由。
+
+**⚙ 守卫现状(2026-08-13 加;这条仍未退休)** —— 已自动化的与仍靠人的,分清楚:
+- ✅ **自动拒收**:`data/model-aliases.json` 的 `modelWindows` 给 `deepseek-v4-pro` 挂了
+  `validUntil: 2026-08-12`,**带日期**的行(含声明了 `retrievedDateIsMeasurement` 的参数批次)
+  不再落进这条记录,而是报成 unmapped。`scripts/lib/archive.mjs --self-test` 九向断言。
+- ✅ **自动不新增**:归属闸门第五条拒绝 —— 不再为「档案里有带日期兄弟串」的裸串自动写 alias。
+- ⚠ **仍守不住**:**没有 `evaluation_date` 且批次未声明**的行照样进来(这些串下 73 行里 38 行
+  无日期)。收窄靠给行补日期,不靠把比较写严 —— self-test 已把这个洞钉成断言。
+- ⚠ **上面「5 条全局通配」过时**:实测 **10 条** alias 指向这条记录;「11 格」也是子集,
+  整条记录 58 格 ⇒ 见 26。
+- ❌ **完全靠人**:记录身份本身(这条变 GA、还是 preview 另立),以及 preview 的分怎么退役。
+  ⇒ **守卫只是把「静默写错」换成「大声缺」,没有替你做决定。**
+
 ---
 
 ## 三族：工具本身在骗你
@@ -251,3 +290,51 @@
   审计现在认「bare level 对上**唯一一个** `<mode> <level>`」,**有两个就拒绝**,不猜。
 - ⇒ 归档的 `note` 里保着 `AA 名称 …`,所以这 135 行不用 API key 也能重解回来
   (`scripts/backfill-aa-reparse.mjs` 规则 2)。**证据里留着原文,错的只是解析** —— 这是能补救的前提。
+
+### 25. 「preview」在名字里 ≠ 这条记录是个 preview —— 按名字执行会删掉 59 格
+2026-08-13。当时正要落实一条刚定的规矩「preview 不单独收记录」,动手前量了一下才没删错。
+- 目录里名字带 Preview 的有**两条**:`qwen3.6-max`(Qwen3.6 Max Preview,**5 格**)和
+  `gemini-3.1-pro`(Gemini 3.1 Pro Preview,**59 格,全目录第二满**)。
+- 差别不在名字,在**有没有被 GA 取代**:Google 和 Alibaba 会把 Preview 当**在售版本**卖上几个月,
+  它就是那个模型现在唯一能用的形态;而 DeepSeek 的 preview 已经被 `-0813` 取代了。
+- ⇒ 判据是**上游有没有一个取代它的 GA**,不是显示名里有没有那个词。
+  ⚠ 这条同时也是 24 的边界:24 的动手顺序只适用于「被取代」的那一类。
+- ⇒ 更一般的:**规则用词面执行之前,先把命中集合列出来数一遍**。这条规矩从提出到差点删掉
+  一条 59 格的记录,中间只隔了一次 `grep`。(同族:26 的 11 格 vs 58 格。)
+
+### 26. 引用别处写下的格数之前先自己数 —— 24 里的「11 格」是子集不是全集
+2026-08-13。`GOTCHAS.md` 24 和 `CHECKPOINT.md` 都写着「`deepseek-v4-pro` 的 11 格全部来自
+2026-04-26 的 model card」,读起来像"这条记录有 11 格"。**实测 58 格。**
+- 11 是**四月 model card 那部分**;另外约 47 格来自三方板(LiveBench / Vals / Epoch /
+  FrontierSWE 等),评测日期 2026-06-09 到 2026-08-06。
+- 这不影响 24 的结论 —— 那些三方读数全在 GA(8-12)**之前**,量的仍然是 preview 那个模型,
+  所以「整条记录都是 preview 的测量」依然成立,而且比原话更强。
+- ⇒ 但两句话的**用途**不同:24 想说的是"这些分的来源",容易被读成"这条记录的规模"。
+  拿它去估计影响面(比如"删掉才 11 格,不疼")就会差 5 倍。
+- ⇒ **别人写下的计数只在它自己那句话的语境里成立**;换个用途就重新数一遍
+  (`OBSERVATIONS_BY_CELL[id]` 的 key 数)。
+
+### 27. `retrievedDate` 只对「页面上的快照」等于测量日期,对「累积出来的测量」不等于
+2026-08-13,给参数行补测量窗口时,**动手前量出来的**,不是事后修的。
+- 参数行没有 `evaluation_date`,唯一能当测量时间的替身是批次的 `retrievedDate`。
+- **一刀切会出事**:`batch-22-arena` 的 `retrievedDate` 恰好是 2026-08-12 —— DeepSeek GA 当天
+  15:42 UTC 才上线,晚于那批里的任何一票;而 Arena Elo 是**几周投票累积**的。按 retrievedDate
+  兜底会把它判进 GA 窗口外、删掉 `deepseek-v4-pro` 已发布的 **1458 text / 1445 code**,
+  去防一件根本没发生的事。
+- ⇒ 分两类:**点时快照**(定价页上的价、AA 页面上的参数)—— 读它的那天就是它的日期;
+  **累积测量**(Elo、投票、长期榜)—— 读它的那天什么都不是。
+- ⇒ 所以做成**批次自己声明** `retrievedDateIsMeasurement`,默认 false = 旧行为。
+  `scripts/lib/archive.mjs --self-test` 里有一条专门断言 **batch-22-arena 不许声明**,
+  防的就是后人"顺手统一一下"。
+- ⇒ 一般化:**给一个字段找替身之前,先问这个字段量的是一个时刻还是一段时间。**
+
+### 28. 管道之后的 `$?` 不是你以为的那个命令的 —— 又踩了一次
+2026-08-13。验"契约会不会在 8-16 变红"时跑 `node … | tail -5; echo $?`,两边都得 0,
+差点据此说"两侧都通过"。`$?` 取的是 **`tail`** 的退出码。
+- `upstream.yml` 里早写着这条(「pipefail is load-bearing, not hygiene」,并注明
+  `4239916` 曾把一个红着的 `check:models` 直推 main)。**规则写在别处不等于当场想得起来。**
+- ⇒ 要断言退出码,就**别接管道**:单跑 `cmd >/dev/null 2>&1; echo $?`,
+  或 `set -o pipefail`,或 `${PIPESTATUS[0]}`。
+- ⇒ 更稳的是**别用 shell 断言**:`scripts/check-scheduled-prices.test.mjs` 用子进程读 `status`,
+  没有管道可以骗人。
+- ⇒ 同族:这跟 5 族「我以为我知道数据长什么样」是一个病 —— **验证工具本身也要验证**。

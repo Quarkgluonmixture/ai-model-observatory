@@ -1,6 +1,7 @@
 {
   "batch": "08 · operating parameters, second pass",
   "retrievedDate": "2026-08-01",
+  "retrievedDateIsMeasurement": true,
   "collectedWith": "docs/INGEST-PROMPT.md batch 8, browsing model",
   "filtered": true,
   "filterRule": "Artificial Analysis model pages archived in full for the 21 target configurations. Vendor pricing pages publish many tiers and regions; archived here is the tier the catalog quotes - Google Standard, Alibaba Singapore/International list price, Thinking Machines Serverless Inference - with the other tiers recorded in this note rather than as rows.",

@@ -10,7 +10,7 @@
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { buildResolvers, loadAliasConfig, readArchiveFiles } from "./lib/archive.mjs";
+import { buildResolvers, loadAliasConfig, measurementDateOf, readArchiveFiles } from "./lib/archive.mjs";
 
 // fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
 // leading slash that fs cannot resolve. The agent maintaining this runs there.
@@ -64,7 +64,10 @@ for (const { file, meta, rows: lines } of batches) {
       continue;
     }
 
-    const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file);
+    // The date goes in because an alias may be windowed: one published slug can mean a preview
+    // before a release date and the release after it, with the same board, string and effort on
+    // both sides. See the window notes in scripts/lib/archive.mjs.
+    const modelId = resolveModelId(raw.model_raw, raw.reasoning_effort, file, measurementDateOf(raw, meta));
 
     if (!modelId) {
       skipped.push({ file, line, modelRaw: raw.model_raw, effort: raw.reasoning_effort, benchmark: raw.benchmark });
@@ -159,7 +162,9 @@ const eloRows = [];
 for (const { file, meta, rows: lines } of parameterBatches) {
   for (const { raw } of lines) {
     if (raw.text_elo == null && raw.code_elo == null) continue;
-    const modelId = resolveModelId(raw.model_raw, raw.effort ?? null);
+    // Windowed like the observation loop. Only batches that declare `retrievedDateIsMeasurement`
+    // supply a date here, and the Arena batches deliberately do not — see `measurementDateOf`.
+    const modelId = resolveModelId(raw.model_raw, raw.effort ?? null, null, measurementDateOf(raw, meta));
     if (!modelId) continue;
     // `supersededRows` was checked in the observation loop and not here, which left a gap the
     // mechanism was written for: a hand-read Elo that a scripted fetch of the same board later

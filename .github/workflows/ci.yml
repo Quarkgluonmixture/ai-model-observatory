@@ -60,6 +60,15 @@ jobs:
       - name: Replay the attribution gate against every human decision
         run: npm run propose:attribution -- --backtest
 
+      # The backtest can only measure the gate against events that already happened, and the fifth
+      # refusal exists for one that has not: a maker dating a re-trained release under a slug some
+      # board never renames. So that scenario is simulated, in both directions — a dated sibling
+      # sharing no cell must refuse, an agreeing one must not. Without this, a refactor that drops
+      # the rule reads as five points of RECOVERED reproduction in the line above and looks like a
+      # win.
+      - name: Replay the dated-release refusal against a simulated GA slug
+        run: npm run propose:attribution -- --self-test
+
       # Two classifiers decide, unattended, which upstream rows count as evidence and which upstream
       # names are models at all — and both used to be self-tests somebody had to remember to run.
       # That is the shape `check:mobile` had until 2026-08-07, and it rotted the same way: a comment
@@ -75,6 +84,22 @@ jobs:
         run: |
           node --experimental-strip-types scripts/lib/upstream-evidence.mjs --self-test
           node scripts/aa-new-models.mjs --self-test
+
+      # A measurement window only ever pays off in a future it prevents: with it in place today,
+      # `npm run ingest` writes a byte-identical file, so nothing else in this workflow can tell it
+      # from a no-op. This asserts it in both directions on the real alias config, and pins the
+      # undated-row hole as a decision rather than letting somebody tighten it into a silent loss
+      # of half a record's evidence.
+      - name: Replay the record measurement windows
+        run: node scripts/lib/archive.mjs --self-test
+
+      # `check:prices` above runs as of today, and a scheduled term is silent until its date — so
+      # today's green says nothing about whether it will ever fire. This re-runs the same contract
+      # on both sides of every announced effective date. It reads the child process's exit status
+      # rather than a pipeline's, which is the trap that made the first hand-run of this assertion
+      # report green on both sides.
+      - name: Assert every announced price change will fail the contract on its date
+        run: node --test scripts/check-scheduled-prices.test.mjs
 
       # Every assertion above this line is about the data. This one is about the alarm, and it is
       # the first of its kind in this file — which is the reason it exists.

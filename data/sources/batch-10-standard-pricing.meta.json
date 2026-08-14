@@ -1,6 +1,7 @@
 {
   "batch": "10 · standard (non-promotional) vendor pricing",
   "retrievedDate": "2026-08-01",
+  "retrievedDateIsMeasurement": true,
   "collectedWith": "promoted from batch 08's capture, not a new retrieval",
   "filtered": false,
   "schema": "Model operating parameters, NOT benchmark scores. Carries the list price for models whose published rate is temporarily discounted.",

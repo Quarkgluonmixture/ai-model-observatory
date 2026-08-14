@@ -18,6 +18,26 @@ export const ALIAS_FILE = join(ROOT, "data/model-aliases.json");
 
 export const loadAliasConfig = () => JSON.parse(readFileSync(ALIAS_FILE, "utf8"));
 
+/**
+ * When a row was MEASURED, for the record windows below — not when it was filed.
+ *
+ * Observation rows carry `evaluation_date` and answer for themselves. Parameter rows do not, and
+ * that is the gap the windows were blind to: prices travel the parameter path, and a price is
+ * exactly the kind of fact a maker changes under an unchanged slug.
+ *
+ * `retrievedDate` is the obvious substitute and is only sometimes valid, so the batch has to say
+ * so rather than have it assumed. A price read off a vendor page on a date IS that date's price.
+ * An Arena Elo is not: it is weeks of votes, and `batch-22-arena` happens to be stamped
+ * 2026-08-12 — the day DeepSeek's GA went live at 15:42 UTC, hours after any vote in it. Assuming
+ * the substitute everywhere would have refused that batch and deleted two published Elo (1458 text
+ * / 1445 code) to guard against a mixup that had not happened. Measured before it was written, not
+ * after it broke.
+ *
+ * Default is null, i.e. undated, i.e. the behaviour before windows existed. A batch opts in.
+ */
+export const measurementDateOf = (raw, meta) =>
+  raw?.evaluation_date ?? (meta?.retrievedDateIsMeasurement ? meta.retrievedDate ?? null : null);
+
 const aliasKey = (modelRaw, effort) => `${modelRaw}|${effort ?? "null"}`;
 
 /**
@@ -39,6 +59,37 @@ export const buildResolvers = (config) => {
     if (alias.effort === "*") wildcardIndex.set(scope + alias.modelRaw, alias.modelId);
     else aliasIndex.set(scope + aliasKey(alias.modelRaw, alias.effort), alias.modelId);
   }
+
+  // A measurement window on the RECORD, not on the alias. File scope answers "which board is
+  // this?"; this answers "when was it measured?", and they are different questions because a
+  // maker can change what a slug serves without any board renaming anything. DeepSeek shipped V4
+  // Pro as a preview in April and as `deepseek-v4-pro-0813` on 2026-08-12, and ten strings resolve
+  // to the preview's record with `effort: "*"`. Nothing in file scope separates a June reading of
+  // one of those slugs from a September one — board, string and effort are identical on both sides
+  // and only the date differs. Unguarded, the GA numbers land on the preview's record and, per
+  // GOTCHAS 24, land in cells the preview never filled, where no disagreement gate can see them.
+  // That is the Flash accident with a delay fuse.
+  //
+  // Keyed by modelId rather than by alias because the cutover is ONE fact. Written per alias it
+  // would be ten copies of a date, and — worse — the eleventh alias, the one the attribution gate
+  // writes unattended next week, would be born unguarded. A record that stops accepting readings
+  // after a date says so once, and every route into it inherits that.
+  //
+  // `validUntil` is EXCLUSIVE and compared as an ISO date string, which sorts correctly.
+  //
+  // An undated row counts as in-window, and that is a deliberate hole rather than an oversight:
+  // 38 of the 73 rows published under a bare V4 Pro string carry no `evaluation_date` at all, so
+  // failing closed on null would drop half the existing evidence today to guard against rows that
+  // do not exist yet. The guard covers every source that dates its rows and misses every source
+  // that does not. Narrowing it means getting dates onto those rows, not tightening this test.
+  const windows = new Map((config.modelWindows ?? []).map((entry) => [entry.modelId, entry]));
+  const inWindow = (modelId, evaluationDate) => {
+    const window = windows.get(modelId);
+    if (!window || !evaluationDate) return true;
+    if (window.validFrom && evaluationDate < window.validFrom) return false;
+    if (window.validUntil && evaluationDate >= window.validUntil) return false;
+    return true;
+  };
 
   // Transcribed benchmarks the dashboard deliberately does not carry, each with a reason.
   // `benchmark` is a "/"-separated list, which cannot express a published label that contains a
@@ -74,14 +125,21 @@ export const buildResolvers = (config) => {
      * scores stays archived without being ingested. `has` rather than `??`, because the whole
      * point of such an entry is that its value is empty.
      */
-    resolveModelId: (modelRaw, effort, file) => {
-      const scope = file ? `${String(file).replace(/\.jsonl$/, "")}|` : null;
-      if (scope) {
-        const exact = scope + aliasKey(modelRaw, effort);
-        if (aliasIndex.has(exact)) return aliasIndex.get(exact) ?? undefined;
-        if (wildcardIndex.has(scope + modelRaw)) return wildcardIndex.get(scope + modelRaw) ?? undefined;
-      }
-      return aliasIndex.get(aliasKey(modelRaw, effort)) ?? wildcardIndex.get(modelRaw);
+    resolveModelId: (modelRaw, effort, file, evaluationDate) => {
+      // Resolution is unchanged; the window is applied to whatever it produced. Written as a
+      // wrapper on the existing lookup rather than woven into it so that a row leaving the
+      // catalog is always a window decision and never an accident of lookup order.
+      const resolved = (() => {
+        const scope = file ? `${String(file).replace(/\.jsonl$/, "")}|` : null;
+        if (scope) {
+          const exact = scope + aliasKey(modelRaw, effort);
+          if (aliasIndex.has(exact)) return aliasIndex.get(exact) ?? undefined;
+          if (wildcardIndex.has(scope + modelRaw)) return wildcardIndex.get(scope + modelRaw) ?? undefined;
+        }
+        return aliasIndex.get(aliasKey(modelRaw, effort)) ?? wildcardIndex.get(modelRaw);
+      })();
+      if (resolved && !inWindow(resolved, evaluationDate)) return undefined;
+      return resolved;
     },
     /**
      * True when this file deliberately refuses the string, rather than the catalog simply not
@@ -111,6 +169,68 @@ export const buildResolvers = (config) => {
     droppedBenchmarks,
   };
 };
+
+// ---------------------------------------------------------------- self-test
+//
+//   node scripts/lib/archive.mjs --self-test
+//
+// A measurement window is a guard whose whole value is in a future it is supposed to prevent, so
+// on today's archive it is indistinguishable from having done nothing: `npm run ingest` writes a
+// byte-identical file with it in place, which is the point and also the problem. Three directions
+// are asserted instead, against the real alias config rather than a fixture, because the thing
+// most likely to break this is somebody editing that config.
+//
+// The third assertion pins the hole deliberately. An undated row still resolves, and a future
+// reader who tightens that will drop half of this record's evidence — so it fails here as a
+// changed decision rather than passing quietly as a stricter rule.
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\]/, "")) && process.argv.includes("--self-test")) {
+  const config = loadAliasConfig();
+  const { resolveModelId } = buildResolvers(config);
+  const window = (config.modelWindows ?? []).find((entry) => entry.modelId === "deepseek-v4-pro");
+  const failures = [];
+  if (!window?.validUntil) failures.push("no measurement window on deepseek-v4-pro — the GA guard is not configured");
+
+  const cases = window?.validUntil
+    ? [
+        ["a reading from before the GA date resolves", "DeepSeek V4 Pro", "2026-08-06", "deepseek-v4-pro"],
+        ["a reading dated ON the GA date is refused", "DeepSeek V4 Pro", window.validUntil, undefined],
+        ["a reading from after the GA date is refused", "deepseek-v4-pro", "2026-09-01", undefined],
+        ["an UNDATED reading still resolves (the documented hole)", "deepseek-v4-pro", null, "deepseek-v4-pro"],
+        ["an unwindowed record is untouched by any date", "Claude Opus 5", "2026-09-01", "claude-opus-5"],
+      ]
+    : [];
+  for (const [label, raw, date, expected] of cases) {
+    const got = resolveModelId(raw, "*", null, date);
+    console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
+    if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
+  }
+
+  // The parameter path, which is where prices travel and where the window was blind until
+  // 2026-08-13. A parameter row has no `evaluation_date`, so everything here turns on whether the
+  // batch declared that its retrieval dates its rows.
+  const paramCases = [
+    ["a declaring batch fetched before the GA date still resolves", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-11" }, "deepseek-v4-pro"],
+    ["a declaring batch refetched after it is refused", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-20" }, undefined],
+    ["a NON-declaring batch is untouched, however late", { retrievedDate: "2026-08-20" }, "deepseek-v4-pro"],
+  ];
+  for (const [label, meta, expected] of paramCases) {
+    const got = resolveModelId("deepseek-v4-pro", "*", null, measurementDateOf({}, meta));
+    console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
+    if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
+  }
+
+  // Arena must be the batch that does NOT declare: it is stamped 2026-08-12, the day the GA went
+  // live hours later, and it supplies deepseek-v4-pro's published Elo. Declaring it would delete
+  // two real numbers to guard against a mixup that had not happened.
+  const arena = JSON.parse(readFileSync(join(SOURCE_DIR, "batch-22-arena.meta.json"), "utf8"));
+  if (arena.retrievedDateIsMeasurement) {
+    failures.push("batch-22-arena declares its retrieval dates its rows — an Elo is accumulated votes, and this drops published numbers");
+  } else {
+    console.log("  ok   batch-22-arena does not claim its retrieval dates its rows");
+  }
+  console.log(failures.length ? "self-test FAILED" : "self-test passed");
+  process.exit(failures.length ? 1 : 0);
+}
 
 /**
  * Reads every batch with its sidecar meta. `parameterBatches` carry model operating
