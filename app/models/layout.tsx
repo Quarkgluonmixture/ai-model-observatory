@@ -13,15 +13,23 @@ import type { Metadata } from "next";
 // Asserted after `next build` by reading the prerendered HTML of both routes — the question is not
 // "is the file there" but "did the right href reach each route".
 //
-// The artwork is a 256×256 PNG rather than SVG because it came out of an image model; the name is
-// the only contract, so replacing the file needs no edit here.
+// The artwork is hand-written SVG, and the reason is a measurement rather than a preference: a
+// favicon's real size is 16px, and at 16px a 3×3 grid is one dark smudge — each cell lands on about
+// 2 pixels. So the observatory mark is 2×2 (~5px per cell), with the fourth cell outlined instead of
+// filled, which is the only part that carries the "partial coverage" idea. An image model produced a
+// 3×3 version twice, once as a raster and once traced to vector; both are legible at 32px and mush
+// at 16. Vector also lets the small end be tuned at all — no stroke here is thinner than 2.2 units
+// on a 32 viewBox, so nothing disappears when the browser scales it down.
+//
+// Source artwork for both marks is archived under `docs/assets/icons/`. The name is the only
+// contract, so replacing the file needs no edit here.
 export const metadata: Metadata = {
   title: "AI Model Observatory · AI 模型观测站",
   description:
     "Bilingual frontier AI model rankings, benchmarks, capability radar charts, and token pricing.",
   icons: {
-    icon: "/favicon-models.png",
-    shortcut: "/favicon-models.png",
+    icon: "/favicon-models.svg",
+    shortcut: "/favicon-models.svg",
   },
 };
 
