@@ -5,7 +5,7 @@ Append-only。发生了什么，以及**为什么**。做完的事从 `TODO.md` 
 标签固定五个，可多标：`#decision`（决定做/不做/回退）· `#measure`（测量结果，**必须带 n / 日期 /
 怎么复现**）· `#deadend`（试过不行，连同排除它的证据）· `#incident`（踩坑/事故）· `#ship`（落地）。
 
-**更早的条目已轮转到 `LOG-archive/LOG-2026-08.md`（34 条，至 2026-08-10 「假阴性:一条子串过滤」）。**
+**更早的条目已轮转到 `LOG-archive/LOG-2026-08.md`（41 条，至 2026-08-12 — Qwen 的 Max 是**产品档**不是 effort;顺手挖出「先到先得」占坑）。**
 轮转不该让旧条目失联——检索一律两边一起搜：
 
 ```bash
@@ -15,215 +15,6 @@ grep -n -A4 '#measure' LOG.md LOG-archive/*.md   # 所有数字连同出处
 ```
 
 ---
-
-## [2026-08-10] 收尾:上游那一节折叠 + 只计过地板的 + 四条 gotcha 编号  #ship #decision
-
-- **#decision owner 说「那些应该不是缺陷吧」—— 对,而且是我让它读起来像缺陷的。**
-  `report:gaps` 设计上 never fails,它头上就写着「a missing model is not a defect in the commit
-  under review」;但我上一版把**整个队列**都计进 `gapCount`,而那个数决定 GitHub issue 开不开。
-  ⇒ 现在**只有过了地板的候选才计数**:地板下的谁也加不了(要等源去评测),把它计进去等于
-  拿不存在的活把 issue 钉在 open,读者两天就学会跳过整份报告。
-- **#ship 整节折叠**(`<details>`,GitHub issue 正文里可渲染),摘要一行带四个分组的数,并明写
-  **「Nothing in this section is a defect」**。⚠ `</details>` 关在「本侧缺陷」之前 ——
-  死掉的价格 lookup、没有 lookup 的目录模型**留在外面并继续计数**,因为那两样今天就能修。
-  实测 `publish-gaps-issue.sh` 的 `- \`id\`` 解析在折叠内仍然认得出 4 个模型(它不在乎嵌套)。
-  计数从 60 → 58。
-- **#ship 文档**:`ARCHITECTURE.md` §8 的 CI 清单**本来就是不全的**(缺 backtest 与手机探针),
-  一并补齐成十项,并写明后四项各自是"因为某个无人值守的判断被信任而非被测试"才加的;
-  §8 另加一段讲清「印出来的」与「计入的」不是一回事。`AGENTS.md` 补两个自测的用途与
-  「钉住的 over-count 不算失败、新的算」。README 的 maintains-itself 表补一句。
-  `CHECKPOINT.md` 刷新接手点/归档行(30 批次 16 脚本化)/CI 行/16 个源,并**退役**了 8-09 那三条
-  过期观察项(batch 29 的 51 个数字、「明早三个第一次」——都已在 LOG),换成明早真正该看的两件。
-- **⭐⭐ `GOTCHAS.md` 新增第五族「我以为我知道数据长什么样」(坑 15–18)**。拆出来的理由是
-  **同一天踩了三次同形错**:`.get('effort')` 静默 None(15)· 手搓 supersede 判定差 178 行(16)·
-  子串过滤造成假阴性(17)。第 18 条是写自测时当场被教育的 `norm` 不剥逗号、且**不能改**。
-  三次的代价都不是"跑不通",是**写下一个自信的假结论并据此改了文档** —— 这才是要防的。
-
-## [2026-08-10b] 网站上那份「上游模型」从没拿到过滤器 —— 而噪音在遮三个真模型  #fix #decision #gotcha
-
-- **起因**:owner 说「为啥网站上还是这个…这个你不是折叠了吗」。我上一轮折叠的是
-  `report:gaps` 打的那份 GitHub issue。**同一句话有两条代码路径**:
-  `scripts/report-gaps.mjs`(AA 存档证据链)与 `app/api/live-models/route.ts`(OpenRouter 运行时)。
-  `tierOf` / `variantOf` 我在前者写过、在 `aa-new-models.mjs` 又写了一遍,
-  **读者唯一看得到的那一条从来没有**。issue 干净 ≠ 网站干净 → **GOTCHAS 19**。
-- **⚠ 代价不止难看(这条是这轮最重要的发现)**:route 的 `.slice(0, 8)` 是**最后一道**,
-  那 5 条 `(batch)` / `(Fast)` 正占着 8 个名额里的 5 个 ⇒ `GPT-5.6 Luna Pro` / `Terra Pro` /
-  `Sol Pro` **三个真模型、目录里都没有、全被挤出列表**,一个字都看不到。
-  实测(真 feed):过滤前 8 条(5 噪音 3 真)→ 过滤后 **6 条,全是真模型**。
-  **静默截断读起来就是「就这些了」** ⇒ route 现在同时返回 `freshTotal`,页面在被截时明说
-  「下面只列出最近 N 个」。
-- **#decision 不写第三份判定逻辑**(GOTCHAS 16 的直接应用):新建
-  `app/upstream-variants.ts` 作为**唯一的家**,route 与两个脚本都 import,两份旧拷贝删掉。
-  ⚠ route 里必须写 **`.ts` 扩展名** —— `report-gaps.mjs` 是用 Node 直接跑 `route.ts` 的,
-  app→app 的 import 没有打包器替它猜(`allowImportingTsExtensions` 本来就开着)。
-  `aa-new-models.mjs --self-test` 现在跑的就是共享模块,14/14 仍过 ⇒ CI 那道闸自动覆盖了新家。
-- **#decision 两个调用方严格程度不同,是故意的**:脚本能读存档,所以要求
-  「关键词 **且** 存档为空」——一条 `(Fast)` 若真有证据,会留在队列里而不是消失进档位行;
-  route 在 edge 上没有存档,只有关键词一条。不对称只可能让**网站的折叠少显示一个名字**,
-  `report:gaps` 仍会报 ⇒ 失败方向是安全的。已写进模块注释。
-- **#ship 网站侧折叠**:`<details>`,摘要一行给数,展开第一句直说
-  **「这不是缺陷清单,也不是待办」**+ 收录的真实门槛(存档里有观测行)+ 档位已排除。
-- **#gotcha 顺带两个(→ GOTCHAS 20)**:`<small>` 继承 80% ⇒ 9px 块里是 **7.2px**,
-  `check:mobile` 立刻报;折叠起来看不见**不等于**可以低于地板(点开就读得到),所以改字号、
-  不加豁免。更值得记的是:`check-mobile.mjs` 的控件选择器原本 **没有 `summary`** ——
-  我加的第一个折叠控件它量不到,而**检查器不选中的东西永远通过**。补进选择器后,
-  用「把高度压到 10px 看它报不报」**证明**了探测在跑(`details.fresh-note > summary h=13`),
-  不是加了行就当生效。
-- 实测收尾:tsc 0、lint 0、`check:data` 2133 观测 / 1382 格 / 66.2%、provenance 321/321、
-  `ingest` 无 diff、prod build + `check:mobile` 三个宽度全过、`report:gaps` 仍是 58。
-  发布的数字一个没动(这轮完全没碰 `data/`)。
-- 另:`tsconfig.tsbuildinfo` 是 `tsc --noEmit --incremental` 的缓存,进 `.gitignore`,不提交。
-
-## [2026-08-10 17:29] Session 收尾:第 8 个 PR 上线 + LOG 第六轮轮转  #ship #measure
-
-- **#ship PR #72 合并并已发布**。线上实测(不是读代码):合并前 `total=None shown=8`(旧版,
-  含 5 条档位)→ 发布后 `total=6 shown=6`,零档位,**被挤掉的三个 Pro 都露出来了**。
-  `check:deployment` 绿(生产与 main 一致),折叠文案确实在已发布的 chunk `0weqi4lnk7d49.js` 里
-  —— 「本地过了」和「线上是这一版」是两件事,分别验的。
-- 今日共 **8 个 PR**(#65–#72,实测 `gh pr list --state merged` 按 mergedAt 过滤,不是数记忆)。
-- **LOG 第六轮轮转**:667 行 / 17 条 → 最早 7 条并入 `LOG-archive/LOG-2026-08.md`(19 → 26 条),
-  live LOG 留 10 条 / 363 行。账目对得上(667 = 363 + 304),七个标题逐个核过 archive 有、LOG 无。
-- **#measure TODO 那条「明早(8-08)验三件事」过期两天,实测后只删掉一件**:
-  ③ `auto/attribution` 8-08 确实开了 #58 ⇒ 删;① `auto/refresh-aa` 该分支只有 8-07 的 #48、
-  之后没有新的 ⇒ 「`Argument list too long` 修好了」**从未被观测证实**,只是没再报错;
-  ② 「Is the queue being worked?」那一节在 `report-gaps.mjs` 里 **grep = 0**,根本不存在。
-  ⇒ 教训与今天的主线同形:**「没再报错」不等于「被证实跑通了」;「期待写在 TODO 里」不等于
-  「代码里有」**。已把这条重写成实测后仍未决的两件,而不是整条删掉充当做完。
-
-## [2026-08-11] 三条「文档说的」被实测推翻,其中一条是 §10 自己  #measure #incident #decision
-
-今天的 cron 报告说 PR #74 已 merge-ready、采集队列无活可干。核 PR 时顺手把 CHECKPOINT 与 TODO 里
-「等观测证实」的条目逐个对今天的产物量了一遍,三条翻了。
-
-- **#measure ① `auto/refresh-aa` 自己开 PR —— 证实了。** #74 就是它开的,`gh: Argument list too
-  long` 确实修好了。TODO 里那条「从未被观测证实」可删。CI run `31479167215` 的 `headSha` 与
-  `gh pr view` 的 `headRefOid` 逐字一致(3adb53b),测的是当前 head 不是旧提交。
-- **#incident ② 「Is the queue being worked?」不是没建,是我上一轮 grep 错了地方。** 它在
-  `upstream.yml:118-123`,直接 `node scripts/check-heartbeat.mjs --agent` 拼进 `gaps.md`——
-  按 npm script 名 `check:heartbeat` 去 grep 永远找不到它。**教训:负面结论换一种拼法再问一遍**,
-  尤其是「grep = 0 所以没建」这种用输出证明输入不存在的推断。真正留下的半个问题是 `--agent`
-  分不清 agent 与 owner,答的是「队列有没有人做」而不是「hermes 活着吗」。
-- **#incident ③ §10 那句「AA's index fills itself in later, on a normal refresh, with no code
-  change」——证伪。** 刷新如期到了(#74),`qwen3.8-max` 仍是全目录唯一一个 intelligence 为 null
-  的记录。根因不在刷新脚本:AA 参数 API 把旗舰拼成**裸词干 + 档位单列**(`qwen3-8`/`max`),
-  四条(`qwen3-8`/`qwen3-7`/`qwen3-6`/`qwen3`)`resolveModelId` 全 undefined;
-  `check-model-provenance.mjs:71` 对解析不到的行直接跳过 ⇒ **它们连被检查的资格都没有**。
-  所以「321/321 backed · 0 contradictions」为真,而它的**范围是解析得到的行**。
-  ⚠ 光加别名也不行:`:219` 按 `id|effort` 分桶,这条记录的 configuration effort 是 `null`,
-  带 `max` 的行落进 `|max` 桶,对那一格依然不可见。而 `max` 在 `claude-opus-5_max` 上是真 effort
-  ⇒ 没有一刀切的规则。**这是「厂商拿 Max/Plus 当产品档、目录拿 effort 当维度」的语义冲突**,
-  是判断题,写进 TODO 待裁,没有替你定。
-  代价不只是那条空记录:`qwen3.7-max` 的 cost 目录写 1.28(有据,来自 batch-07/08 的**旧** AA
-  读数),AA 现在这一行是 0.5413,**差 2.4 倍**,而漂移闸门看不见 ⇒ 站上挂着过期的旗舰成本。
-  **一个任何检查都够不到的数字,不是被检查过的数字** —— 和「报告干净≠网站干净」同形,低一层。
-- **#decision 没有替你合 #74,也没有替你补别名。** 前者被本地权限分类器拦下(`gh pr merge`),
-  后者按章程本就不该无人值守做:合并那一刻 `qwen3.7-max` 的 cost 会移动,正撞三条件第二条。
-- **#measure 一个数字的两份副本对不上,已在 §10 就地标注**:§10 写「1,287 rows at risk」,
-  TODO 写「这个数复现不出来(1,404 / 1,226)」。同一个问题两个文档两个答案,正是单一真源要防的。
-  没有写第三个数,只在 §10 标了「争议中、钉死判定式之前不要引用」。
-- **#ship 个人站那条 Kaggle 文案换成最终结果**:private 0.780 · 571 队第 131(真相源
-  `autonomous-agent-prediction-beta/docs/final-results.md`,含复算命令)。原文「public 约 0.817,
-  130 队里前三分之一」是赛中快照,名次也不对(public 实为 286/571)。新文案带上竞争带
-  Spearman 0.142 这个赛后结论——追了一整场的那个分数几乎不预测最终成绩。
-
-## [2026-08-11b] 补测:同一条拼法还卡着 6 个观测格,并让一句写下来的话变成假的  #measure #incident
-
-上一条只算了参数。做自动化盘点时想验「有没有哪一步在报未解析的行」,顺手把账算全了。
-
-- **`npm run ingest` 天天在报它** —— 输出里就有 `6 x qwen3-8 (max)`。所以「没有报告」这个
-  说法是错的,**真正的问题是它和噪音长得一样**:那份未匹配清单有 700 多条,绝大多数是
-  「上一代、故意不映射」(§10 自己说这是**故意留着**的)。一条能对上目录已有族的字符串,
-  混在故意不映射的堆里,**报了等于没报**。⇒ 缺的不是报告,是**分级**。
-- **那 6 条不是参数,是观测行。** `batch-26-aa-evaluations` 把这个模型也只拼成 `qwen3-8`
-  (档位在 `reasoning_effort` 里):`gpqa` 92.7 · `hle-no-tools` 43 · `scicode` 52.9 ·
-  `aa-lcr` 74.33 · `terminal` 81.27 · `tau3-banking` 51.34。**一条拼法的总账 = 4 个参数 + 6 个格。**
-  而 §10 记着 batch 26 加进来正是为了给 `aa-lcr`/`hle-no-tools`/`scicode` **第二个读数**、
-  把它们移出单源列 —— 对这个模型,那第二个读数从没落地。
-- **#incident 它让一句写下来的话变成假的。** terminal 那条 `acknowledgedDisagreements` 写着
-  「三个读数……The catalog keeps all three rows」,而 `check:data` 实际打印的是
-  **67.416 vs 86.6**——只有两个。缺的 81.27 正是那 6 条之一,**而它恰恰是那段论证的中间点**
-  (用来论证差距是 scaffold 不是错误)。论证本身没塌,塌的是「目录能把它展示出来」这半句。
-  已在 reason 后加 `CORRECTION 2026-08-11`,原文一字未删。
-  ⇒ 教训:**写在 reason 里的证据也要有人核它到底在不在板上**。这类字段没有任何检查读它,
-  它是纯散文,而散文会漂。
-
-## [2026-08-11c] 自动化盘点:补上两个缺口,其中一个是「测试存在但没有调用方」  #ship #measure #gotcha
-
-盘点全部自动化后动手补了两件,都不是新功能——一件是**手工验过一次就再没有网**的要求,
-一件是**已经写好却从没在任何流程里跑过**的测试。
-
-- **#gotcha `test:sites` 是孤儿。** 实测:全仓库对它**只有 1 处引用**,就是 `package.json:26`
-  它自己的定义。CI 没有、日更 job 没有、三份文档都没提。它断言的正是两站合并后根 layout 的
-  meta 还在——恰恰是改个人站最容易从另一条路由碰坏的东西。
-  **它为什么烂掉值得记**:`build:sites` 需要 GNU `timeout`,macOS 上根本跑不起来
-  ⇒ 本地没人能发现它坏没坏。这和 08-07 之前的 `check:mobile` 同形,同一个修法。
-  ⇒ 教训:**「在 package.json 里」不等于「在契约里」**。最便宜的审计 = 逐个 script 名 grep
-  调用方并数一数。
-- **#ship 备案号从此有回归网,而且是两层。** `npm run check:beian` 读 `next build` 写出的
-  预渲染 HTML,任一路由缺号就 **exit 1**(CI 硬失败);`check:deployment` 加了线上那一半,
-  探 apex `/`、apex `/models`、www `/` 三对,报告而不失败(与它既有性格一致)。
-  两者问的**不是同一个问题**:构建对了但没部署上去,域名照样不合规。
-- **#measure 两个方向都测了,不是只看它说 yes。** `check:beian`:把 `models.html` 里的号抹掉
-  → exit **1** 且点名 `/models`;补回 → exit **0**。`check:deployment`:对 `example.com`
-  → 正确报出 apex `/` 与 www 都没有备案号。
-- **#gotcha 排序是承重的,写反过一次。** 备案探针一开始放在 staleness 检查**之后**,而后者在
-  `/models` 取不到时会早退 —— 于是 `example.com` 那次负向测里备案结论**根本没打印**。
-  而「没跑」和「跑了没问题」在输出上长得一模一样。已把它挪到早退之前,并把这条理由写进代码注释。
-- **#decision 备案号搬进 `app/beian-filing.ts` 单一真源**(页脚 + 两个检查 import 同一个常量,
-  不是三份拷贝)。`PUBLIC_SECURITY_FILING` 先留 `null` —— 9-09 公安备案批下来**只改这一个常量**,
-  页脚自动多一条链、两个检查自动开始断言它,**两处检查一个字都不用改**。
-- 契约命令清单散在 6 个文件里(§8 · AGENTS · README · CHECKPOINT · AGENT-OPERATIONS ×2),
-  这次逐个同步过。⚠ 这本身就是个待办:**清单有六份副本,迟早漂**。
-
----
-
-## 2026-08-12 — Qwen 的 Max 是**产品档**不是 effort;顺手挖出「先到先得」占坑 `#decision` `#ship` `#measure` `#incident`
-
-**裁决**:owner 在两个方案里选了 (a) **fetcher 层归一**(另一个是目录层把 effort 填成 `max`),
-并明确点头「把站上那个过期的 1.28 改成 0.5413」。
-
-**做了什么**
-- `scripts/lib/product-tiers.mjs`(新):闭合规则 —— 某个后缀是**厂商产品档**而非操作点时,
-  切之前就别切。目前只有一条:`qwen*` 的 `max`。**按厂商前缀而不是按 stem 列表**,
-  否则 Alibaba 下一个旗舰出来时它会**静默**失效(那正是这次要终结的失败模式)。
-- 两个 AA fetcher 各自的 `splitEffort` 都接上它。**split 逻辑仍然是两份**(原注释的理由成立:
-  分叉那天你要看得出是哪一份错了);**共用的只有那份编辑事实**,免得漂。
-- `scripts/backfill-product-tier-split.mjs`(新,一次性):档案里已经收下的行按修正后的切法重解。
-  两个批次都是 on-demand 源、都要 `AA_API_KEY`,不重解就得等下一次手动刷新。
-  **不是手改证据**:`source_url` 原样带着 AA 发布的 slug,脚本重算出来的 `model_raw`
-  必须和它**逐字节相同**才写,否则拒绝并 exit 1。44 行,0 拒绝,幂等。
-- 别名补 `qwen3-6-max`;`qwen3-max` / `qwen-2-5-max` **故意不映射**(目录没有这两个记录,规则 8)。
-
-**结果**(实测,不是估算):观测 2141 → **2159**,格子 1386 → **1398**,覆盖率 66.4% → **67.0%**。
-目录被审计的值 321 → **325**(`qwen3.8-max` 四格从 null 变成有据)。
-⚠ **三个已发布的观测数字被移动了**,都是精度规则正常生效的结果,不是 bug:
-`qwen3.8-max` Terminal-Bench 67.416 → **81.27**、`qwen3.7-max` Terminal-Bench 61.049 → **74.53**
-(系统基准在同一源类里取最高,AA 的读数进来了)、`qwen3.8-max` HLE·no tools 43.6 → **43**
-(vendor → independent,规则 3)。10 个新格落在**单源列**上,没有第二个源能反驳。
-
-**顺手挖出来的、比原问题大得多的东西** `#measure`
-`check:models` 建索引时每格取**第一个**给出它的行,而档案按**文件名**读 ⇒
-`batch-06/07/08`(手抄 AA)永远排在 `batch-14`(脚本 AA)前面。**一个早批次冻住的值,
-不管源后来漂多远都还是「backed」**。`qwen3.7-max` 的 cost 因此在 1.28 上停了很久,
-而 AA 现在是 0.5413 —— 审计一路 100% 绿。
-`supersededRows` 这个机制**早就有**,但只在 price / Elo 路径上被调用;参数四格从来没查过它。
-已补调用,并在 `check:models` 尾部加了一节**报告**(不失败):早批次占坑且与最新读数差 >5% 的格子。
-2026-08-12 首次打印 **35 格**,最大的一条是 `glm-5.2` intelligence **34 vs 52.6**。
-
-**只动了其中一格,是故意的** `#decision`:owner 点头的是 `qwen3.7-max` 的 cost 那一格。
-其余 34 格没动 —— 一半停在 2026-07 读数、一半是当前读数,比两边都统一更糟;整批推是一次
-「已发布数字大范围移动」,按三条件不该无人值守做。待决条目在 `TODO.md` 小口子第一条,
-我的倾向写在那里(intelligence + costTask 整批推,speed / latency 不动)。
-
-**为什么这一切没有被任何检查抓住** `#incident`
-`check-model-provenance.mjs` 对 `resolveModelId` 解析不到的行**直接 `continue`**。
-解析不到 ⇒ 不参与审计 ⇒「321/321 · 0 contradictions」为真,而它的**范围是解析得到的行**。
-`npm run ingest` 天天在报 `6 x qwen3-8 (max)`,混在 5000 多条「上一代、故意不映射」里,
-和噪音长得一模一样。⇒ 判一个数有没有被守住,**grep 哪条检查真的够得到它**。
-两条都进了 `GOTCHAS.md`(21 / 22)。
-
-**本机限制**:`npm run test:sites` 需要 GNU `timeout`,macOS 没有,直接 exit 69。
-用 `/tmp` 下一个 shim 让它真跑了一遍(build + artifact 校验 + 1 test pass),**没有当作「跳过即通过」**。
 
 ## 2026-08-12(第二轮)— 整批推 intelligence + costTask;路上发现 batch-14 的 effort 从来没读全 `#decision` `#ship` `#measure` `#incident`
 
@@ -619,3 +410,19 @@ Batch/Flex、阿里区域价)⇒ **峰时价 = list = 目录报的那个**,谷�
 
 产出:`batch-32` 123 行 × 8 列 × 18 标签,7 条竞品拒绝,9 个未映射标签带**分四类**的理由。
 GLM-5.2 54→57 格,生成文件 +10 行零删失,`describe-change` 5 格来源升级、**无已有数字被改动**。
+
+## [2026-08-15 11:43] 收尾时发现 tier-B 第三个条件此前无法触发 `#incident` `#ship`
+
+想给两个自合脚本的逃生口清单补上新增的 `withdrawnRows`,**补完顺手验了一下 —— 没拦住**。
+再查才知道补一个键名不解决问题:判据本身是坏的。
+`grep '^+.*"mergedInOneSource"'` 匹配的是**给键命名的那一行**,而那行在文件一生中只出现一次 ——
+引入这个键的那天。往**已存在**的键里追加条目从不碰它,而三个键今天都在配置里
+⇒ **这道闸门此前根本无法触发**(实测:追加一条真条目再跑那条 grep,零输出、放行)。
+- ⇒ 为什么这条重要:tier-B 三条件里前两条都有独立机制在跑,第三条「没有写例外」是唯一只靠这行
+  grep 的,而它恰恰是人最难通过读 diff 复核的一条 —— 逃生口的全部意义就是"这需要一个人判断"。
+- ⇒ 新增 `scripts/check-exemptions-untouched.mjs`:把问题问到**解析后的配置**上,比对每个逃生口
+  的条目数,变多就 exit 1。只看变多(删例外是人在退休判断,不可能让失败的契约变绿)。CI 挂 self-test。
+- ⚠ 这条是**在验证一个小改动时**掉出来的,不是审计出来的。⇒ 补丁写完顺手验一次的成本极低,
+  而它这次买到的是"一个从来没生效过的安全条件"。与 `GOTCHAS.md` **29** 同族:失灵的样子是绿色。
+
+**顺带**:LOG 轮转(第八次),41 条归档到 `LOG-archive/LOG-2026-08.md`,在册 8 条。
