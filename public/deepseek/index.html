@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Strandbound · 弦缚</title>
+<meta name="description" content="太空歌剧生物收集 RPG：与异星生命结契，为宇宙重新唱出和弦。" />
+<meta name="theme-color" content="#05070f" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<style>
+  html, body { margin: 0; padding: 0; background: #020409; overflow: hidden; height: 100%; }
+  #game { display: block; cursor: default; }
+  #boot-error { position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    color: #ffd0a0; font-family: monospace; font-size: 14px; text-align: center; padding: 2em; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="boot-error"></div>
+<script>
+  // 离线支持（仅 http/https 环境；file:// 下自动跳过）
+  if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  }
+</script>
+<script src="game.js"></script>
+<script>
+  // 兜底：模块化入口已打包进 game.js；此占位确保旧缓存不报错
+</script>
+</body>
+</html>

@@ -47,7 +47,7 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | 溯源 | **322 / 324**（99%；2 格有值无据 = `deepseek-v4-flash`，`TODO.md` 里是编辑判断）⚠ 分母是**解析得到的行** |
 | 归档 | **31 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；所以编号到 32），其中 16 个可脚本重读 ⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
-| 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
+| 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台 · **`/deepseek` 静态游戏**（8-15 起，不走 `app/layout.tsx` ⇒ **没有备案页脚**，owner 明确选的，坑 **35**），同一个仓库，EdgeOne Pages |
 
 ⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。
 
@@ -137,7 +137,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**34** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
+| `GOTCHAS.md` | **动手之前扫一遍**：**35** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。

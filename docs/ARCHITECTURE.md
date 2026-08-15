@@ -404,6 +404,8 @@ deployment that answers on only one of them is a filing problem even though the 
 It is implemented as `app/site-beian.tsx` + `app/site-beian.module.css`, rendered once from
 `app/layout.tsx` **after `{children}`**, so every route carries it — including a route added later
 by someone who never reads this section. That is the whole reason it is not a per-page footer.
+It reaches every route that goes **through that layout**; `/deepseek` does not, and the exception
+is recorded at the end of this section rather than left for `check:beian` to imply it away.
 The strip hardcodes its colours: it renders above both palettes (`--muted`/`--line` from
 globals.css, `--h-*` from `home.module.css`), and under `.home` the globals variables are still in
 scope, so reading either set would paint it wrong on one of the two sites. Below 800px it clears
@@ -441,6 +443,29 @@ The apex and `www` each serve independently; neither redirects to the other.
 what the live site serves. Note what that check does and does not prove. It compares `main` against
 production, so it catches a stalled or partial deploy; it says nothing about whether the filing is
 displayed, which is why the 2×2 matrix above was measured by hand rather than added to it.
+
+### `/deepseek` is a static game, not a Next route
+
+`public/deepseek/` holds the build output of a separate project (`strandbound`, a self-contained
+HTML5 canvas game) — 13 files, 552KB, copied in whole. It is served as static files, and two
+consequences follow from that; both are gotcha **35**.
+
+Next serves `public/` by **exact path** and does not resolve a directory to its `index.html`.
+Measured on a local production build: `/deepseek` → 404, `/deepseek/` → 308 into that same 404,
+`/deepseek/index.html` → 200. `next.config.ts` therefore redirects `/deepseek` to the file. It
+points at the file rather than rewriting the directory because the game's asset paths are all
+relative and would resolve one directory up under a bare `/deepseek`, and because a service worker's
+scope is its own directory — a page served at `/deepseek` is outside `/deepseek/` and would lose the
+offline path. The redirect is 307: the shareable URL is `/deepseek`, and a permanent one would be
+cached on every device that ever opened it.
+
+**This route does not carry the ICP filing, by decision** (owner, 2026-08-15 — the game is
+fullscreen and installable as a PWA, and a footer strip costs both). The important part is not the
+decision but what it does to the checks: `check:beian` reads `.next/server/app/*.html`, a static
+route never appears there, and the check reports "3 route(s) × 1 filing(s)" green while the host
+serves a fourth. Reversing the decision is one file: add a small filing link to
+`public/deepseek/index.html` and assert that file in `check:beian` too, reading the number from
+`app/beian-filing.ts` so a second copy cannot drift.
 
 ## 7. Change playbooks
 

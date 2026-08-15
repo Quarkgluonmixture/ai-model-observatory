@@ -1,0 +1,18 @@
+{
+  "name": "STRANDBOUND · 弦缚",
+  "short_name": "弦缚",
+  "description": "太空歌剧生物收集 RPG：与异星生命结契，为宇宙重新唱出和弦。",
+  "lang": "zh-CN",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#020409",
+  "theme_color": "#05070f",
+  "icons": [
+    { "src": "icons/icon-32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

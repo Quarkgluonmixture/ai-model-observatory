@@ -12,6 +12,11 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Third-party build artifact, not source: `public/deepseek/game.js` is an esbuild bundle
+    // produced by another repository and copied in whole. Measured with `--no-ignore`, linting it
+    // emits 627 warnings and 0 errors — so it would not have failed the job, it would have buried
+    // every real warning under a minified file nothing here can edit.
+    "public/deepseek/**",
   ]),
 ]);
 

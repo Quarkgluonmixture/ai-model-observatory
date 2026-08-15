@@ -426,3 +426,43 @@ GLM-5.2 54→57 格,生成文件 +10 行零删失,`describe-change` 5 格来源�
   而它这次买到的是"一个从来没生效过的安全条件"。与 `GOTCHAS.md` **29** 同族:失灵的样子是绿色。
 
 **顺带**:LOG 轮转(第八次),41 条归档到 `LOG-archive/LOG-2026-08.md`,在册 8 条。
+
+## [2026-08-15 收尾] 第三条路由 `/deepseek`:一个静态游戏,以及它**不带**备案页脚这个决定 `#ship` `#decision` `#incident`
+
+**做了什么**:把另一个仓库(`../strandbound`,一个纯静态 HTML5 canvas 游戏,DeepSeek 写的)
+的构建产物整目录放进 `public/deepseek/`(13 个文件 552KB,实测),站上多一条 `/deepseek`。
+它是**静态资源,不是 Next 路由** —— 这个区别是下面两件事的根源。
+
+**踩到的第一件:`public/` 下的目录没有索引解析** `#incident`
+Next 只按**精确路径**服务 `public/`。本地生产构建实测:`/deepseek` → **404**,
+`/deepseek/` → 308 到那个同一个 404,只有 `/deepseek/index.html` → 200。
+⇒ `next.config.ts` 加 307 到 `/deepseek/index.html`。**指向文件而不是 rewrite 目录**是有原因的:
+游戏的资源路径全是相对的(`game.js`、`icons/…`、`./sw.js`),在 `/deepseek/index.html` 下正确,
+在裸 `/deepseek` 下会解析到上一层全断;落在真文件 URL 上也让 service worker 的 scope
+(`/deepseek/`)**覆盖注册它的那个页面**,离线/PWA 才成立。307 不是 308:能分享的 URL 是
+`/deepseek`,永久跳转会被每一台开过它的手机缓存,这条路由的形状就再也改不动了。
+
+**第二件是个决定,不是 bug** `#decision`
+`app/layout.tsx` 在 `{children}` 之后渲染备案条,§6 写着这样"每条路由都带它,包括以后由
+没读过这一节的人加的路由"。**这条路由恰恰是那个例外**:它不走 layout,自带 HTML。
+而 `check:beian` 只读 `.next/server/app/*.html` ⇒ 它**够不到**这个文件,今天照报
+「3 route(s) × 1 filing(s)」全绿。owner 8-15 明确选了「先不管,直接丢进去」——
+游戏全屏、PWA 可安装、离线可玩,这三样都保住。
+⇒ **记在这里的理由是:绿色不是证据**。下一次有人读 `check:beian` 的输出,它说的是
+"三条预渲染路由带着备案号",不是"全站带着备案号"。这与 `GOTCHAS.md` **19/29/34** 同族
+(报告干净 ≠ 网站干净;失灵的样子是绿色),新开的坑 **35** 把两件都记成动手前的自查。
+⇒ 要翻这个决定是**一个文件的事**:往 `public/deepseek/index.html` 里加一条 12px 的备案链接,
+并让 `check:beian` 也断言这个文件(号码从 `app/beian-filing.ts` 复核,不另开一份真相)。
+
+**实测**(本地 `next build` + `next start -p 3111`)`#measure`
+- `/deepseek` 307 → `/deepseek/index.html` 200;`/deepseek/` 308 → 307 → 200;`/`、`/models`、
+  `/api/live-models` 都仍是 200。
+- headless Chrome(CDP 设备模拟,**生产构建**不是 dev server):844×390 与 390×844 两个尺寸
+  都能启动,canvas 真的画了东西,**零 uncaught exception**;点「新游戏」后
+  `localStorage` 出现 `strandbound.save.auto`,触屏摇杆 / E 键 / 菜单键都在。
+  唯一的 console 噪音是 AudioContext 的 autoplay 警告(没有用户手势,预期内)。
+- 游戏本身两个显示问题(**在游戏那边,不在本仓库**):844×390 横屏标题页副标题压住标题、
+  菜单最后两项掉出屏幕;竖屏两行说明文字出右边界。已回报给 owner。
+- `lint` / `check:data` / `check:models` / `check:prices` / `check:beian` 全 exit 0。
+  `public/deepseek/**` 进了 eslint 的 globalIgnores:那是别的项目的 esbuild 产物,
+  在这里报出来的是别人的风格,而且这边没有任何能动它的手。
