@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-14",
+  "checkedAt": "2026-08-15",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -1225,6 +1225,7 @@
       "/news/anthropic-economic-index-connector",
       "/news/claude-opus-5",
       "/news/claude-sonnet-5",
+      "/news/claude-text-watermark",
       "/news/cognizant-anthropic",
       "/news/donation-public-first-action",
       "/news/economic-futures-research-fund-agenda",
@@ -1232,7 +1233,6 @@
       "/news/improving-fable-5-s-biology-safeguards",
       "/news/investigating-incidents-cybersecurity-evals",
       "/news/position-open-weights-models",
-      "/news/rare-disease-research-grants",
       "/news/redeploying-fable-5",
       "/news/tino-cuellar"
     ],
