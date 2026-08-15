@@ -1,0 +1,11 @@
+{
+  "batch": "32 · GLM-5.2 release table",
+  "collectedWith": "scripts/capture-release-tables.mjs glm52",
+  "filtered": false,
+  "release": "glm52",
+  "sources": [
+    "https://z.ai/blog/glm-5.2"
+  ],
+  "note": "GLM-5.2 release(2026-06-16)的性能表,整表抄录:123 行,8 个已发布模型列,18 个 benchmark 标签,3 个分区。页面是客户端渲染的,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。厂商发布材料:全表没有标注 harness、reasoning effort 或运行日期,evaluation_date 记的是发布日。表里的竞品列一并归档为证据,但只有 GLM-5.2 会被 alias 采纳 —— 竞争对手发布的竞品分数没有 harness、effort、版本,源优先级低于任何一个给出这些信息的榜单。双数字格取第一个数为指标、第二个进 note。未映射的标签记在 model-aliases.json 的 droppedBenchmarks 里,免得下一代发布时重新推导一遍。 星号脚注是页面自己写的:`*: refers to their scores of full set.`,只打在竞品上。核对过它不改变目录口径 —— 带星的 GPT-5.5 41.4*/52.2* 与目录既有 41.4[Full]/52.2[Full] 逐位相同,不带星的 DeepSeek 37.7/48.2 同样等于目录的 37.7/48.2[Full],所以 GLM-5.2 自己那两个不带星的数按 Full 采。⚠ 三个标签**故意不映射**,理由各不相同:「ProgramBench」63.7 —— 这一列上目录同时holds 官方榜的 0 与 Vals 的 0.5,相差六十多分,是 TODO 里记着的混指标陷阱,再加一个厂商表的读数不解决任何问题;「Terminal Bench 2.1 Best Reported Harness」82.7 (Claude Code) —— 每一格的 harness 不同,那不是一个可比的列;「FrontierSWE Dominance as of 26/6/16」74.4 —— 目录那列是 2026-07 榜,这是六月快照,不同版本。另外拒收「MCP-Atlas Public Set」(76.8,与目录 mcp-atlas 的官方 77.8 不是同一个 split)与「Tool-Decathlon」(48.2,与目录 toolathlon Verified 的 59.88/59.9 差 20%,不同 split);AIME 2026 / HMMT 两行 / NL2Repo 目录没有列。",
+  "retrievedDate": "2026-08-15"
+}

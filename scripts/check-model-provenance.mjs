@@ -130,7 +130,15 @@ const disputed = [];
 // and a slash namespaces a publisher (zai-org/glm-4.7 is a different string from glm-4.7 on
 // purpose); folding either would invent collisions between models that really are distinct.
 const spell = (raw) => raw.toLowerCase().replace(/[\s\-_]+/g, "");
-const aliasRawLower = new Map([...aliasFor.keys()].map((raw) => [spell(raw), raw]));
+// Refusals are excluded, and the reason is the harm this check claims. A near-miss against a
+// MAPPING really does lose a row: spell it right and ingest would have taken it. A near-miss
+// against a refusal (`modelId: null`) loses nothing — spell it right and the row is still refused,
+// so "silently dropped from ingest" would be false. Found 2026-08-15 adding batch 32's competitor
+// refusals: naming `GLM-5.1` as refused-in-this-file made the check report ten rows in four other
+// batches that were already unmapped and would stay unmapped either way.
+const aliasRawLower = new Map(
+  [...aliasFor.entries()].filter(([, modelId]) => modelId != null).map(([raw]) => [spell(raw), raw]),
+);
 for (const file of readdirSync(SOURCE_DIR).filter((name) => name.endsWith(".jsonl")).sort()) {
   for (const line of readFileSync(join(SOURCE_DIR, file), "utf8").split("\n").filter((l) => l.trim())) {
     let parsed;

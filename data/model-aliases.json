@@ -1946,6 +1946,55 @@
       "effort": "*",
       "modelId": "glm-5.2",
       "reason": "Vals publishes `provider/model`. Dropping the provider prefix leaves this string byte-identical to the catalog id, which is the attribution gate's tier-1 rule applied by hand because no cell overlaps yet for it to corroborate against. No other Vals string strips to this id."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Pro",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "GLM-5.1",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "GPT-5.5",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "MiniMax M3",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "Qwen3.7-Max",
+      "effort": "*",
+      "file": "batch-32-glm52-release",
+      "modelId": null,
+      "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
     }
   ],
   "benchmarkSplits": [
@@ -2211,6 +2260,21 @@
     {
       "benchmark": "vals-public-benefits-bench-v1",
       "reason": "The retired v1 board of a column the catalog already has at v1.1 (`vals-public-benefits`). Not a missing column and not a second reading: v1 and v1.1 are different question sets and rule 4 forbids merging them, and batch 05's own v1.1 rows are already superseded by batch 29. Archived as the record of what the v1 board published; nothing wants it in a cell."
+    },
+    {
+      "benchmarks": [
+        "AIME 2026",
+        "HMMT Nov. 2025",
+        "HMMT Feb. 2026",
+        "NL2Repo",
+        "ProgramBench",
+        "Terminal Bench 2.1 Best Reported Harness",
+        "FrontierSWE Dominance as of 26/6/16",
+        "MCP-Atlas Public Set",
+        "Tool-Decathlon"
+      ],
+      "file": "batch-32-glm52-release",
+      "reason": "Z.AI 的发布表里未进目录的九个标签,理由分四类,写在这里免得下一代发布时重新推导一遍。(1) 目录没有这一列:AIME 2026 / HMMT 两行 / NL2Repo。(2) 混指标:ProgramBench 63.7 —— 这一列上目录同时holds 官方榜的 0 与 Vals 的 0.5,相差六十多分,再加一个厂商表读数不解决任何问题,该列的口径是 TODO 里未决的判断题。(3) 不是可比的列:Terminal Bench 2.1 Best Reported Harness 82.7 每一格的 harness 都不同。(4) 不同版本或不同 split:FrontierSWE Dominance as of 26/6/16 是六月快照而目录那列是 2026-07 榜;MCP-Atlas Public Set 76.8 与目录 mcp-atlas 的官方 77.8 不是同一个 split;Tool-Decathlon 48.2 与目录 toolathlon Verified 的 59.88/59.9 差 20%,同样不是一个 split。"
     }
   ],
   "versionFallbacks": [
