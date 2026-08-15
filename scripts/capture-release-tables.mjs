@@ -69,6 +69,45 @@ const RELEASES = {
       "OSWorld 2.0": { id: "osworld2", version: "2.0", tools: true, dual: "partial score" },
     },
   },
+  glm52: {
+    label: "GLM-5.2 release",
+    maker: "Z.AI",
+    // NOT docs.bigmodel.cn. That page is the model card and carries the same claims as prose
+    // ("在 FrontierSWE 上仅落后 Opus 4.8 约 1%") with no numbers at all — measured 2026-08-15, its
+    // `.md` source is 29KB with zero table rows. The benchmark table is on the blog post, and the
+    // blog is a client-rendered shell: fetching it returns 598 bytes.
+    url: "https://z.ai/blog/glm-5.2",
+    batch: "batch-32-glm52-release",
+    batchLabel: "32 · GLM-5.2 release table",
+    published: "2026-06-16",
+    noteName: "GLM-5.2",
+    keep: "GLM-5.2",
+    extraNote:
+      "星号脚注是页面自己写的:`*: refers to their scores of full set.`,只打在竞品上。核对过它不改变目录口径 —— " +
+      "带星的 GPT-5.5 41.4*/52.2* 与目录既有 41.4[Full]/52.2[Full] 逐位相同,不带星的 DeepSeek 37.7/48.2 " +
+      "同样等于目录的 37.7/48.2[Full],所以 GLM-5.2 自己那两个不带星的数按 Full 采。" +
+      "⚠ 三个标签**故意不映射**,理由各不相同:" +
+      "「ProgramBench」63.7 —— 这一列上目录同时holds 官方榜的 0 与 Vals 的 0.5,相差六十多分," +
+      "是 TODO 里记着的混指标陷阱,再加一个厂商表的读数不解决任何问题;" +
+      "「Terminal Bench 2.1 Best Reported Harness」82.7 (Claude Code) —— 每一格的 harness 不同," +
+      "那不是一个可比的列;" +
+      "「FrontierSWE Dominance as of 26/6/16」74.4 —— 目录那列是 2026-07 榜,这是六月快照,不同版本。" +
+      "另外拒收「MCP-Atlas Public Set」(76.8,与目录 mcp-atlas 的官方 77.8 不是同一个 split)与" +
+      "「Tool-Decathlon」(48.2,与目录 toolathlon Verified 的 59.88/59.9 差 20%,不同 split);" +
+      "AIME 2026 / HMMT 两行 / NL2Repo 目录没有列。",
+    carried: {
+      HLE: { id: "hle-no-tools", version: "Full", tools: false },
+      "HLE w/ Tools": { id: "hle-tools", version: "Full", tools: true },
+      CritPt: { id: "critpt", version: "2026", tools: false },
+      IMOAnswerBench: { id: "imo-answer", version: "2026", tools: false },
+      "GPQA-Diamond": { id: "gpqa", version: "Diamond", tools: false },
+      "SWE-bench Pro": { id: "swe-pro", version: "Public", tools: true },
+      DeepSWE: { id: "deepswe", version: "v1.1", tools: true },
+      "Terminal Bench 2.1 Terminus-2": { id: "terminal", version: "2.1", tools: true },
+      PostTrainBench: { id: "posttrain", version: "v1.1", tools: true },
+      "SWE-Marathon": { id: "marathon", version: "v1.1", tools: true },
+    },
+  },
 };
 
 const args = process.argv.slice(2);
@@ -112,6 +151,15 @@ for (const table of tables) {
   const header = (table[0] ?? []).map((cell) => cell.trim());
   const models = header.slice(1).filter(Boolean);
   if (models.length === 0) continue;
+
+  // ...and a table can pass that test and still not be results. Z.AI's post opens with a
+  // speculative-decoding table (`Method | Acceptance Length`), whose header has a column and whose
+  // rows are `Baseline`, `+ IndexShare + KV Share` — read as a results table it archives four rows
+  // under a model called "Acceptance Length". A results table for this capture is one that carries
+  // at least one label the `carried` map names; nothing else in the post is a model × benchmark
+  // grid. Asserted rather than assumed: re-running qwen3.8 through this rule reproduces
+  // batch-17 byte for byte, so the rule reads Qwen's page the same way it always did.
+  if (!table.some((cells) => release.carried[(cells[0] ?? "").trim()])) continue;
 
   for (const cells of table.slice(1)) {
     const label = (cells[0] ?? "").trim();

@@ -41,10 +41,10 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2165 rows · 1403 / 2088 cells（67.2% cell coverage）** —— 8-14 实测,复算 = `npm run check:data` 末行 |
+| 观测 | **2170 rows · 1401 / 2088 cells（67.1% cell coverage）** —— 8-15 实测,复算 = `npm run check:data` 末行 |
 | 源分类 | benchmark 920 / independent 1055 / vendor 190 |
 | 溯源 | **323 / 325**（99%；2 格有值无据 = `deepseek-v4-flash`，`TODO.md` 里是编辑判断）⚠ 分母是**解析得到的行**，见下 |
-| 归档 | **30 batches，其中 16 个可脚本重读**（8-10 实测 `meta.collectedWith`）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
+| 归档 | **32 batches，其中 16 个可脚本重读**（8-10 实测 `meta.collectedWith`）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台，同一个仓库，EdgeOne Pages |
 
@@ -141,7 +141,7 @@ AA 刷新 PR 没开成 · AA 刷新整体失败 · **main 检查变红**（EdgeO
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**31** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。⭐ 动 DeepSeek 任何东西之前读 **24**（preview→GA 串号，判据 + 动手顺序）与 **25/26**（"preview"在名字里≠是个 preview；引用别人写的格数前先自己数）。⭐ 动**价格或参数批次**之前读 **27**。⭐ 动 **workflow / 通知 / 脚本封顶**之前读 **29**（报警器在正比于它要报的规模上失灵,而失灵的样子是绿色）;动 **git stage** 之前读 **30**;动**图标**之前读 **31**。⭐ 族：第五族 15–18「我以为我知道数据长什么样」、第六族 21–23「审计的取数口径本身就是盲区」、19 = 报告里干净≠网站上干净 |
+| `GOTCHAS.md` | **动手之前扫一遍**：**33** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。⭐ 动 DeepSeek 任何东西之前读 **24**（preview→GA 串号，判据 + 动手顺序）与 **25/26**（"preview"在名字里≠是个 preview；引用别人写的格数前先自己数）。⭐ 动**价格或参数批次**之前读 **27**。⭐ 动 **workflow / 通知 / 脚本封顶**之前读 **29**（报警器在正比于它要报的规模上失灵,而失灵的样子是绿色）;动 **git stage** 之前读 **30**;动**图标**之前读 **31**;⭐ **接手任何「未提交」的交接**之前读 **32**(沙箱里的工作树不是存储),**采一张厂商发布表**之前读 **33**(别的厂商可能已经填过那些格)。⭐ 族：第五族 15–18「我以为我知道数据长什么样」、第六族 21–23「审计的取数口径本身就是盲区」、19 = 报告里干净≠网站上干净 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
