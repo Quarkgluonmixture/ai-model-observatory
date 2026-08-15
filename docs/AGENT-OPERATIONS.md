@@ -79,7 +79,24 @@ Violate none of these, whatever a task seems to require.
    in a diff, stop and report it.
 7. **Never add a data source you have not opened yourself.** See "Traps" below — this is where
    every real error has come from.
-8. **Never touch the ICP filing footer.** `app/site-beian.tsx` and `app/site-beian.module.css` carry
+8. **Push a branch before you can no longer push one.** Your work exists only after it is on the
+   remote. You run in a sandbox that disappears when your budget does, and it takes the working
+   tree with it — measured 2026-08-15, when a shift finished every judgement on the GLM-5.2 release
+   table, ran every check green, and ended with the report `改动还在工作区，尚未 commit/push`. There
+   was no working area left to commit: the tree on the owner's machine was clean, the remote had no
+   branch, and nothing was recoverable from stash or dangling objects. A whole shift survived as
+   prose.
+   So: **the moment you have one committable thing, commit it and push a branch** — before the
+   contract run, before the report, before anything optional. Then keep appending commits to that
+   branch as you go. An open pull request is safe (tier-B's three conditions still gate the merge,
+   and a human can close it); unpushed work is not. If you are near your limit, push what you have
+   and say what is unfinished in the pull request body — a branch with one honest commit is worth
+   more than a perfect description of files nobody has.
+   ⛔ And when you hand back: **never tell the next reader to run `git add -A`**. This repository
+   stages explicit paths, a hook refuses the wildcard, and on a machine where a person is also
+   working it sweeps up their in-progress files. Name the paths you touched.
+9. **Never touch the ICP filing footer.** The number itself lives in `app/beian-filing.ts`;
+   `app/site-beian.tsx` and `app/site-beian.module.css` render it. It is
    a legally required number, and `app/layout.tsx` renders them on every route. Do not delete them,
    do not move them into a page, do not reword the number, and do not "tidy" the literal colours or
    the `:global(.shell) ~ .strip` clearance — both are deliberate and `docs/ARCHITECTURE.md` §6 says
