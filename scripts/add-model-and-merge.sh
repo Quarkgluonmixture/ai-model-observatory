@@ -71,8 +71,7 @@ set +e
 set -e
 
 # An exemption is exactly the judgement a human owes. This gate may not write one either.
-if git diff data/model-aliases.json | grep -qE '^\+.*"(acknowledgedDisagreements|mergedInOneSource)"'; then
-  echo "An exemption was written to make this pass — that is a human's call."
+if ! node scripts/check-exemptions-untouched.mjs main; then
   green=no
 fi
 

@@ -52,9 +52,13 @@ set -e
 
 # An exemption is exactly the judgement a human owes. The gate may not write one, and if a diff
 # contains one, something else did.
-if git diff --name-only | grep -q 'data/model-aliases.json' &&
-   git diff data/model-aliases.json | grep -qE '^\+.*"(acknowledgedDisagreements|mergedInOneSource)"'; then
-  echo "An exemption was written to make this pass — that is a human's call."
+#
+# ⚠ This used to be `git diff … | grep '^+.*"mergedInOneSource"'`, which matches the line that NAMES
+# the key — a line that appears once in the file's life, the day the key is introduced. Appending an
+# entry to a key that already exists never touches it, so the guard had stopped being able to fire:
+# measured 2026-08-15 by appending a real exemption and running the grep, which printed nothing.
+# The check now compares entry counts across the two revisions; see the script's header.
+if ! node scripts/check-exemptions-untouched.mjs main; then
   green=no
 fi
 
