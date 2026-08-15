@@ -28,6 +28,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FETCHERS, fetcherById } from "./fetchers/index.mjs";
+import { loadAliasConfig } from "./lib/archive.mjs";
 
 // fileURLToPath, not .pathname: on Windows a file URL's pathname is "/C:/..." — a
 // leading slash that fs cannot resolve. The agent maintaining this runs there.
@@ -69,6 +70,35 @@ const readArchive = (fetcher) =>
   readFileSync(pathsFor(fetcher).jsonl, "utf8").trim().split("\n").map((line) => JSON.parse(line));
 
 const serialise = (rows) => rows.map((row) => JSON.stringify(row)).join("\n") + "\n";
+
+// ## Rows the source itself withdrew, acknowledged in writing
+//
+// An append-only board freezes its question set, not the list of models run against it — so a row
+// that APPEARS contradicts nothing, while a row that CHANGED or VANISHED is the archive being
+// contradicted, and that is a person's call. That rule is right and it has one gap: a source can
+// re-run a model under a different published string, which lands as a vanish plus an appearance and
+// leaves the check red every single day until somebody edits the archive.
+//
+// Measured 2026-08-15: LiveBench replaced 23 `grok-4.6-xhigh` rows (effort in the string) with 23
+// `grok-4.6` rows (no effort stated) under the same frozen 2026-06-25 release, and 20 of the 23
+// scores differ. Accepting that silently would delete the only record anybody has of the xhigh run;
+// refusing it leaves a daily WeChat push that trains its reader to ignore the channel. Both are bad
+// in the way this repository keeps saying is the expensive direction — a refusal nobody can audit,
+// or an alarm nobody reads.
+//
+// So this is the third escape hatch, and deliberately the same shape as the two in the alias config
+// (`acknowledgedDisagreements`, `mergedInOneSource`): it takes effect only with a written reason.
+// It silences a VANISH and never a CHANGE — a moved number is still an integrity failure — and the
+// rows it covers are kept in the archive when the batch is rewritten, which is the whole point.
+const withdrawnFor = (batch) =>
+  (loadAliasConfig().withdrawnRows ?? []).filter((entry) => entry.file === batch);
+
+// Matched on the row, never on the diff key: `model_raw` can itself contain a slash (Vals publishes
+// `grok/grok-4.6`), so splitting the key would silently match the wrong thing.
+const isWithdrawn = (row, entries) =>
+  entries.some((entry) =>
+    entry.modelRaw === row.model_raw &&
+    (entry.benchmark === undefined || entry.benchmark === row.benchmark));
 
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -196,19 +226,40 @@ for (const fetcher of selected) {
     : (row) => row.score;
   const upstream = new Map(rows.map((row) => [cellKey(row), cellValue(row)]));
   const stored = new Map((archived ?? []).map((row) => [cellKey(row), cellValue(row)]));
+  const storedRow = new Map((archived ?? []).map((row) => [cellKey(row), row]));
+
+  // Acknowledged withdrawals are separated from real ones here, not filtered out of the report:
+  // an exclusion nobody can see is indistinguishable from a check that stopped looking.
+  const acknowledged = withdrawnFor(fetcher.batch);
+  const usedAcks = new Set();
 
   const changed = [];
   const gone = [];
+  const withdrawn = [];
   for (const [key, score] of stored) {
-    if (!upstream.has(key)) gone.push(key);
+    if (!upstream.has(key)) {
+      const row = storedRow.get(key);
+      const ack = acknowledged.find((entry) => isWithdrawn(row, [entry]));
+      if (ack) { withdrawn.push(key); usedAcks.add(ack); } else gone.push(key);
+    }
     else if (upstream.get(key) !== score) changed.push(`${key}: archived ${score} -> upstream ${upstream.get(key)}`);
   }
   const added = [...upstream.keys()].filter((key) => !stored.has(key));
   const differences = [
     ...changed.map((entry) => `changed  ${entry}`),
     ...gone.map((entry) => `removed  ${entry} (in the archive, absent upstream)`),
+    ...withdrawn.map((entry) => `withdrawn ${entry} (acknowledged in withdrawnRows; kept in the archive)`),
     ...added.map((entry) => `appeared ${entry} (upstream, missing from the archive)`),
   ];
+
+  // An acknowledgement that stops matching anything is reported, never failed on: the archive moves
+  // and a green run turning red because a known problem went away is the wrong incentive. Same rule
+  // as the pinned exemptions in scripts/lib/upstream-evidence.mjs.
+  for (const entry of acknowledged) {
+    if (!usedAcks.has(entry)) {
+      console.log(`note: withdrawnRows entry ${fetcher.batch}/${entry.modelRaw} no longer matches any archived row — delete it.`);
+    }
+  }
 
   // Reported for a pinned source and never failed on: a new release is new data, and the old
   // rows stay valid for the release they name. Collecting it is a catalog decision, not a fetch.
@@ -235,6 +286,9 @@ for (const fetcher of selected) {
   // 2026-06-25 seven weeks after publishing it — 46 cells, every one of them `appeared`, no
   // published number touched — and a rule that reads any difference as drift turned the daily job
   // red for it. A permanently red integrity check is a broken integrity check.
+  // `withdrawn` is deliberately absent: that is the acknowledgement doing its job. `changed` is
+  // deliberately present: a moved number is an integrity failure no written reason can excuse,
+  // because the row is still published and now says something else.
   const rewritten = changed.length > 0 || gone.length > 0;
 
   if (fetcher.versioning === "pinned" || (fetcher.versioning === "append-only" && rewritten)) {
@@ -258,7 +312,20 @@ for (const fetcher of selected) {
 
   if (checkOnly) continue;
 
-  writeFileSync(pathsFor(fetcher).jsonl, serialise(rows));
+  // The half that makes the acknowledgement worth anything. This path rewrites the batch from
+  // upstream, so without it the next scheduled refresh would delete exactly the rows the written
+  // reason says to keep — the exemption would silence the alarm and then lose the data anyway,
+  // which is strictly worse than either option it was meant to replace.
+  //
+  // Only rows that are acknowledged AND absent upstream are carried over: an acknowledged model
+  // that comes back gets its upstream row, not a stale copy.
+  const preserved = (archived ?? []).filter(
+    (row) => isWithdrawn(row, acknowledged) && !upstream.has(cellKey(row)),
+  );
+  if (preserved.length) {
+    console.log(`Kept ${preserved.length} withdrawn row(s) that upstream no longer publishes (withdrawnRows).`);
+  }
+  writeFileSync(pathsFor(fetcher).jsonl, serialise([...rows, ...preserved]));
   writeFileSync(
     pathsFor(fetcher).meta,
     JSON.stringify({ ...meta, retrievedDate: today() }, null, 2) + "\n",

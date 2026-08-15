@@ -2500,6 +2500,14 @@
       "reason": "NOT the usual reason. Every other entry here supersedes a hand transcription with a scripted read of the SAME measurement; this one supersedes an OLDER measurement with a newer one. Batch 07 read 1.28 off AA's leaderboard; AA has since re-measured the same model at 0.5413, and batch 14 carries that. Both readings are real and both stay archived. || Why it needs an entry at all: check-model-provenance fills each field from whichever archive row it reads FIRST, and batch-07 sorts before batch-14, so the catalog could publish 1.28 forever and the audit would keep calling it backed. That is not specific to this model -- measured 2026-08-12, 45 catalog fields across ten models sit in exactly this position, batches 06/07/08 holding the slot against a batch-14 value more than 5% away. This entry moves ONE of them, because the 2.4x cost gap on a flagship was the one that got ruled on. The other 44 are a single open decision in TODO, deliberately not taken here: moving them piecemeal would leave the catalog half on 2026-07 readings and half on current ones, which is worse than either. || Scoped to modelRaw + field so nothing else in batch 07 is affected, the same way the two Inkling context_k entries are scoped."
     }
   ],
+  "withdrawnRows": [
+    {
+      "file": "batch-09-livebench",
+      "modelRaw": "grok-4.6-xhigh",
+      "noticedOn": "2026-08-15",
+      "reason": "LiveBench re-ran this model under a different published string and withdrew the old one: 23 rows of `grok-4.6-xhigh` (effort in the string) were replaced by 23 rows of `grok-4.6` (no effort stated) under the same frozen 2026-06-25 release, and 20 of the 23 scores differ — e.g. summarize 71.7 -> 68.083, theory-of-mind 90.385 -> 86.538, python 50 -> 55. So this is a re-measurement, not a correction and not a rename, and the drift check could not say so: it keys on the model string, and the string changed at the same time as the values, so every pair read as one vanish plus one appearance and the summary line said `0 value(s) changed`. Kept rather than deleted because the archive is the only record that the xhigh run was ever published; nothing in the catalog is affected either way, since grok-4.6 has no record and these rows resolve to nothing (measured 2026-08-15: 0 rows in app/observations.generated.ts). Retire this entry if LiveBench republishes an effort-labelled grok-4.6 row — the check reports an acknowledgement that stops matching."
+    }
+  ],
   "modelWindows": [
     {
       "modelId": "deepseek-v4-pro",
