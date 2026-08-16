@@ -241,8 +241,13 @@ export const MODELS: ModelRecord[] = [
   // textElo is null, not 1436: that Arena score was measured 2026-07-27, four days before this
   // model existed, and belongs to the V4 Flash preview. LMArena has not published the 0731
   // release yet. An empty cell is the honest answer until it does.
+  // Peak/off-peak billing took effect 2026-08-16 16:00 UTC. The catalog quotes the PEAK row
+  // ($0.44 / $1.32 / $0.014) because peak is the undiscounted list price and off-peak is a
+  // conditional tier — same call as quoting list over the introductory rate elsewhere here
+  // (batch-31 quotingRule, batch-33 evidence). "extreme value" survives on the costTask axis
+  // ($0.03/task, AA-measured), not the token-price axis.
   m("deepseek-v4-flash", "DeepSeek V4 Flash 0731", "DeepSeek", "#6e56c6", true, 1000, ["extreme value", "new"], [
-    cfg(null, 50, 0.03, null, null, 0.14, 0.28, false, 0.003),
+    cfg(null, 50, 0.03, null, null, 0.44, 1.32, false, 0.014),
   ]),
   m("gemini-3.1-pro", "Gemini 3.1 Pro Preview", "Google", "#2567bd", false, 1000, ["vision", "arena", "long context"], [
     cfg(null, 47.7, 0.3346, 123.3, 25.39, 2, 12, false, 0.2),

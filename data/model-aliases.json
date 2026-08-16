@@ -1768,6 +1768,13 @@
       "reason": "Same call as the batch-14 entry and for the same reason, scoped again because a file-scoped alias covers one file. AA never renamed its slug: `deepseek-v4-flash` is 'DeepSeek V4 Flash 0731 (Reasoning, Max Effort)', released 2026-07-31, which is this catalog record. Pinned to the effort rather than wildcarded, because the SAME model_raw in this batch also carries the 2026-04-24 preview: AA publishes `deepseek-v4-flash-non-reasoning` ('DeepSeek V4 Flash (Non-reasoning)', 2026-04-24) and the fetcher splits that suffix off, so both meanings land under one string separated only by effort. `reasoning max` takes the release; `non-reasoning` stays unmapped, exactly as the batch-14 note says it must. Found by the evidence counter's self-test, which reported five cells for this model that the catalog does not have -- the rows were sitting in the archive with nothing attaching them."
     },
     {
+      "modelRaw": "deepseek-v4-flash",
+      "effort": "*",
+      "file": "batch-33-deepseek-peak-pricing",
+      "modelId": "deepseek-v4-flash",
+      "reason": "Batch 33 is the vendor pricing page after peak/off-peak billing took effect, and it pins its own bare string: the table's MODEL VERSION row reads 'DeepSeek-V4-Flash-0731', the GA this catalog record holds, so the row is this model and its PEAK price is the list price the catalog quotes. Scoped to the file because the same bare string means the OPPOSITE on boards that publish both releases (batch-14/26 notes: LiveBench, Epoch and LMArena print -0731 for the official, so bare there is the April preview) -- one string, two meanings, each resolved by its own source."
+    },
+    {
       "modelRaw": "deepseek-v4-flash-0731-high",
       "effort": "*",
       "modelId": "deepseek-v4-flash",
@@ -2323,6 +2330,48 @@
     }
   ],
   "supersededRows": [
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "DeepSeek V4 Flash 0731",
+      "field": "price_input_per_m",
+      "supersededBy": "batch-33-deepseek-peak-pricing",
+      "reason": "Batch 08 archived the flat list price ($0.14/M input) before DeepSeek moved flash to peak/off-peak billing on 2026-08-16; batch 33 reads the same vendor page after the switchover and its PEAK row is the undiscounted list price the catalog quotes under the batch-31 quotingRule. Both rows stay in the archive; this entry routes the provenance check to batch 33 for this field. Scoped per modelRaw+field because batch 08's row also carries speed and latency that batch 33 does not measure -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "DeepSeek V4 Flash 0731",
+      "field": "price_output_per_m",
+      "supersededBy": "batch-33-deepseek-peak-pricing",
+      "reason": "Same switchover as price_input_per_m: flat $0.28/M output superseded by the PEAK row's $1.32/M. Field-scoped for the same reason -- the row's other fields are untouched."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "DeepSeek V4 Flash 0731",
+      "field": "price_cache_per_m",
+      "supersededBy": "batch-33-deepseek-peak-pricing",
+      "reason": "Same switchover: cache-hit $0.003/M superseded by the PEAK row's $0.014/M. Field-scoped as above."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "DeepSeek-V4-Flash-0731",
+      "field": "price_input_per_m",
+      "supersededBy": "batch-33-deepseek-peak-pricing",
+      "reason": "Same model, same switchover, second spelling: batch 08 carries the flat price under both the spaced and the hyphenated raw string, so both spellings need their own entry -- supersededRows matches on the exact model_raw."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "DeepSeek-V4-Flash-0731",
+      "field": "price_output_per_m",
+      "supersededBy": "batch-33-deepseek-peak-pricing",
+      "reason": "Same as the spaced-spelling entry: flat $0.28/M output superseded by the PEAK row's $1.32/M."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "DeepSeek-V4-Flash-0731",
+      "field": "price_cache_per_m",
+      "supersededBy": "batch-33-deepseek-peak-pricing",
+      "reason": "Same as the spaced-spelling entry: cache-hit $0.003/M superseded by the PEAK row's $0.014/M."
+    },
     {
       "file": "batch-01-reasoning-math",
       "benchmark": "frontiermath",
