@@ -93,8 +93,13 @@ preview,名字是对的。
 
 剩下的两件都**只等数据**,不等决定:
 
-- [ ] **等 GA 读数够到地板再翻转 `deepseek-v4-pro`。** 今天只有 1 格 GA 读数(被窗口拦住的
-      DeepSWE 62.8),地板 49。翻转动作:名字去掉 Preview → 撤 `modelWindows` → preview 的旧行
+- [ ] **等 GA 读数够到地板再翻转 `deepseek-v4-pro`。** 2026-08-17 实测 **36 格**(LiveBench 23 +
+      Vals 13,复算 = 用 `buildEvidenceIndex` 查 `deepseek-v4-pro-0813` 与 `deepseek/deepseek-v4-pro-0813`
+      两种串),地板 **49**,还差 13 —— 8-14 记的「只有 1 格」已作废,三天涨了 35 格。
+      ⚠ 别指望厂商发布表帮着够地板:证据计数器**按设计把 release-capture 批次整批排除**
+      (`upstream-evidence.mjs` 的 `releaseCapture`),所以 batch 35 一格都不算。
+      ⚠ Vals 那 20 行里有 7 行落在目录**没开的列**上,开那些列会同时把分母抬上去,不是捷径。
+      翻转动作:名字去掉 Preview → 撤 `modelWindows` → preview 的旧行
       改成不映射(Flash 那样留档不入库) → 删掉 `upstream-evidence.mjs` 里那条 pin(self-test
       会自己打 note 提醒)。⚠ 那天覆盖率会掉一截,因为 58 格里大部分要退出。
 - [ ] **或者等 DeepSeek 自己把裸名条目改名**(它给 Flash 就是这么做的:裸名后来变成 `0423`)。
@@ -102,38 +107,28 @@ preview,名字是对的。
 
 ## ⭐ 价格链(2026-08-13 起,有硬期限)
 
-- [ ] ⏰ **2026-08-16 DeepSeek 换峰谷计价,契约那天会自己红。** 已落档 batch 31 + `priceTerms`
-      的 `scheduled` 形状,实测 8-15 exit 0 / 8-16 exit 1。那天要做的:按 `batch-31` 的
-      `quotingRule` 用**峰时价**(list)重抓入档 → 改记录 → 退休该条款。
-      ⚠⚠ **但先答上面 preview 那节的问题**:定价页只印裸串、不印 `-0813`,按 `GOTCHAS.md` 24
-      判据 2 那两个价属于 **GA**,而目录那条是 preview。**先定记录身份,价格跟着身份走。**
-      如果那天身份还没定,正确动作是**让它红着**,不是把 GA 的价填进 preview 记录。
+- [ ] ⏰ **峰谷计价:flash 那半 2026-08-17 做完(batch 33 + PR #92 + 退休 term),`deepseek-v4-pro`
+      那半仍然红着,而且是 owner 明确要它红着。** 契约报「published price changed to $1.32/$3.96 …
+      catalog still shows $0.435/$0.87」,但那个新价属于 **GA**(定价页只印裸串、不印 `-0813`,
+      按 `GOTCHAS.md` 24 判据 2),目录那条是 preview。**先定记录身份,价格跟着身份走** ——
+      把 GA 的价填进 preview 记录是错的,删掉这条 term 也是错的(那是拆守卫)。
+      ⇒ 它**跟着上面那条「翻转」一起解决**,不单独解决。
+      ⚠ 代价记着:契约红着的时候**每天的 `upstream.yml` 也过不去**(它跑同一套契约),
+      自动刷新与自动开 PR 一并停摆 —— 8-16、8-17 两天都是这样挂的。
 - [ ] **价格仍然进不了 ingest。** `ingest.mjs` 参数循环只收 Elo,价格全靠手打进
       `model-data.ts`、再由 `check-model-provenance` 事后审。要不要让价格也走 ingest 派生,
       是个独立决定(会动 51 条 stale slot 的处理方式,见 `GOTCHAS.md` 22)。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
 
-## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建、数据还没来）
+## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建、数据在路上：2026-08-17 实测 36/49）
 
 背景与判据全在 `GOTCHAS.md` 24，**别在这里复述**。这里只放要动手的：
 
-- [ ] **等 GA 分第一次落进归档**。今天归档里 `0813` 零行（`grep -r 0813 data/sources/` 唯一命中是
-      一个小数），`report:gaps` 已把 `deepseek/deepseek-v4-pro-0813` 列进「上游已发布、归档里什么都没有」
-      那 5 个 —— 系统自己看见了，判定正确，**今天建记录等于画一整行空格**。
-      第一批分到的那天照坑 24 的「动手顺序」走：先 alias 再目录，别先改显示名。
-- [ ] ⭐ **要你定：厂商 GA 表要不要按转录入档，用什么当 `source_url`。**
-      owner 2026-08-12 提供了 DeepSeek 官方发布图（四列：Pro-0813 / Flash-0731 / Pro-Preview /
-      Flash-Preview，十行 agent 基准）。**图的真实性已交叉验证**：其中 Flash-0731 那一列的九项
-      （Terminal 82.7 · NL2Repo 54.2 · Cybergym 76.7 · DeepSWE 54.4 · Toolathlon 70.3 ·
-      ALE 25.2 · AutomationBench 25.1 · DSBench-FullStack 68.7 · DSBench-Hard 59.6）与官方
-      changelog 2026-07-31 条目**逐位相同**，Pro-Preview 那一列的 HLE 37.7 与目录现有值也逐位相同。
-      卡住的**只有 URL**：截至 2026-08-12 官方 changelog（中英两版）都还没有 0813 条目，
-      HF 也还没有 `DeepSeek-V4-Pro-0813` 仓库 —— 也就是说这张表**先于官方文档渠道发布**。
-      三个选项：(a) 等 changelog 上线，用 `capture-release-tables.mjs` 正规抓（可复跑，最干净）；
-      (b) 现在按转录入档，`source_url` 指向 changelog 页并在 note 里写明「表来自官方发布图，
-      条目当时未上线」；(c) 不入厂商表，只等第三方板。
-      ⚠ 选 (b) 要想清楚：这个项目从来没有过 `source_url` 指不到那张表的行。
+- [ ] **翻转那天记得 batch 35 里已经有 GA 的官方数字了**,不用再去找源:八列全部
+      file-scoped `modelId: null`,把 `DeepSeek-V4-Pro-0813` 那条改成指向记录即可。
+      ⚠ 「HLE (wo / w tools)」一行装着目录**两列**,采纳时要把 with-tools 那个数拆成第二行
+      (现在只以原文留在行的 note 里)。
 
 ## 收录门槛：2026-08-12 已定「不放开」，剩下的是别的事
 

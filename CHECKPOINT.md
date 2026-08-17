@@ -15,12 +15,15 @@
 - **tier-B 第三个条件此前无法触发**:逃生口闸门只 grep「键第一次出现」那行,而键早就存在。
   ⇒ 改成比对**解析后的条目数**,CI 挂 self-test。这条是**验证一个小改动时掉出来的**。
 
-⏰ **2026-08-16 16:00 UTC · DeepSeek 换峰谷计价**,契约自己会红(`batch-31`,实测 8-15 exit 0 /
-8-16 exit 1)。按 `quotingRule` 用**峰时价**重抓入档 → 改记录 → 退休该条款。
-⚠ 报的是 `deepseek-v4-flash`,与 Pro 那条 preview 记录**不是一回事**。
+⏰ **峰谷计价那天到了,契约按设计自己红了**(2026-08-16)。**flash 那半 8-17 做完**:batch 33 +
+PR #92 + 把满足了的 term 移进 `retiredTerms` —— 只改价不退休 term,它会开始**断言反面**(新坑 **37**)。
+**pro 那半 owner 裁决「等」,继续红着**:GA 证据 8-17 实测 **36 格 / 地板 49**,差 13
+(8-14 那句「只有 1 格」已作废)。⚠⚠ **红着的代价是每天的 `upstream.yml` 也过不去**(跑同一套契约)
+—— 自动刷新与自动开 PR 从 8-16 起停摆,恢复的前提就是 pro 那条。
 
 ⭐ **preview 规矩已定**:一条记录 = 一个在服役的版本,preview 的行**留档不入库**(Flash 的解法);
-`deepseek-v4-pro` 显示名已是 **"DeepSeek V4 Pro Preview"**。剩下**只等数据**,四步动作在 `TODO.md`。
+`deepseek-v4-pro` 显示名已是 **"DeepSeek V4 Pro Preview"**。剩下**只等数据**,四步动作在 `TODO.md`;
+GA 的官方发布表 8-17 已入档(**batch 35**,八列全不采纳、0 格变化),翻转那天不用再找源。
 Qwen / Gemini 那两条 Preview 查过:上游精确同名且族里无 GA 取代 ⇒ 按坑 25 **不动**。
 
 ⇒ **要你定的三件**都在 `TODO.md` 顶部:通知侧两件(吞成绿色 / integrity vs availability 分类)·
@@ -42,11 +45,11 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2170 rows · 1401 / 2088 cells（67.1% cell coverage）** —— 8-15 实测,复算 = `npm run check:data` 末行 |
+| 观测 | **2170 rows · 1401 / 2088 cells（67.1% cell coverage）** —— 8-17 复测未变,复算 = `npm run check:data` 末行 |
 | 源分类 | benchmark 920 / independent 1050 / vendor 200 |
 | 溯源 | **322 / 324**（99%；2 格有值无据 = `deepseek-v4-flash`，`TODO.md` 里是编辑判断）⚠ 分母是**解析得到的行** |
-| 归档 | **31 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；所以编号到 32），其中 16 个可脚本重读 ⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
-| 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
+| 归档 | **33 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**，34 在 #93 那条未合的分支上），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-17 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`；8-10 记的 16 已过时）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
+| 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ batch 35 之后**至少 +76**（那一批八列全不采纳）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法 |
 | 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台 · **`/deepseek` 静态游戏**（8-15 起，不走 `app/layout.tsx` ⇒ **没有备案页脚**，owner 明确选的，坑 **35**），同一个仓库，EdgeOne Pages |
 | Persona Lab | **`https://quarkspace.top/persona` 已上线**（2026-08-17 实测）：`qwen3.7-flash` 快速候选编译 + 候选筛选后直接探针；服务端凭据已配置且访问口令受保护。线上保存浏览器本地历史，完整 SQLite/JSONL 研究实验仍走本地 Encode Persona harness。 |
 
@@ -118,9 +121,11 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. ⏰ **2026-08-16 峰谷计价** —— 见接手点。契约自己会红;**身份没定就让它红着**。
-2. **`deepseek-v4-pro` 的 GA 读数往上爬**（8-14 已到第一格:DeepSWE 62.8,被窗口拦住）。
+1. ⏰ **`check:prices` 红着,而且要它红着** —— 见接手点。⚠ 它同时**卡住每天的 `upstream.yml`**,
+   所以「让它红着」是有持续代价的选择,不是零成本的等待。
+2. **`deepseek-v4-pro` 的 GA 读数往上爬**(8-17 实测 **36 格 / 地板 49**,三天从 1 格涨上来)。
    够到地板才翻转,动作四步写在 `TODO.md`;⚠ 照 `GOTCHAS.md` 24 的顺序,**先 alias 再目录**。
+   ⚠ 厂商发布表(batch 35)**不算进这 36**——证据计数器按设计整批排除 release-capture。
 3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——
    挂了应当是**大声 throw**(六条断言),不该是"看板变小了"。见 `docs/ARCHITECTURE.md` §9。
 
@@ -138,7 +143,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**35** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
+| `GOTCHAS.md` | **动手之前扫一遍**：**37** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
