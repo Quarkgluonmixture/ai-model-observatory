@@ -108,6 +108,65 @@ const RELEASES = {
       "SWE-Marathon": { id: "marathon", version: "v1.1", tools: true },
     },
   },
+  dsv4pro: {
+    label: "DeepSeek-V4-Pro-0813 GA release",
+    maker: "DeepSeek",
+    // NOT the official changelog post. api-docs.deepseek.com/news/news260813 publishes this exact
+    // table as a PNG (`/img/v4_260813_benchmark_table_en.png`) — measured 2026-08-17, the page has
+    // zero `<table>` elements and its price table is an image too. The same table is the model
+    // card's markdown on Hugging Face, which the site server-renders into the page's only table,
+    // so this is a re-runnable capture rather than an OCR of a picture.
+    url: "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
+    batch: "batch-35-deepseek-v4-pro-ga-release",
+    batchLabel: "35 · DeepSeek-V4-Pro-0813 GA release table",
+    // 34 is taken by the OpenAI repricing batch on an open branch; numbers are never reused.
+    published: "2026-08-13",
+    noteName: "DeepSeek-V4-Pro-0813",
+    keep: "DeepSeek-V4-Pro-0813",
+    rowNote:
+      "厂商发布材料:行上不写 harness / reasoning effort —— 表下 Note 1 只对「code-agent 任务」整体声明了 " +
+      "DeepSeek Harness minimal mode 与 max effort,没说哪几行算,摊到行上是判断不是抄录(原文在批次 meta 里);" +
+      "运行日期同样未标注,evaluation_date 记的是发布日",
+    adoption:
+      "这一批的表**不是客户端渲染的**:官方 changelog 那篇把表发成了 PNG,而 Hugging Face 把 model card 的 " +
+      "markdown 表格服务端渲染成页面上唯一一个 `<table>`,脚本读的就是它 —— 仍然可复跑,只是不靠等应用画完。" +
+      "本批次**一个模型列都不采纳**,八列全部在 model-aliases.json 里写了 file-scoped `modelId: null`。" +
+      "GA 串 `DeepSeek-V4-Pro-0813` 在目录里还没有记录 —— `deepseek-v4-pro` 装的是四月 preview,记录身份未翻转" +
+      "(判据与动手顺序见 GOTCHAS 24),所以这批是**为翻转那天备好的证据**,不是今天要发布的数。" +
+      "⚠ 其中 `GLM-5.2`、`Kimi K3`、`DeepSeek-V4-Flash-0731` 三个串**有全局通配 alias**,不显式挡住," +
+      "厂商发布表的数会直接写进这三条目录记录。" +
+      "evaluation_date 记的是发布日;双数字格取第一个数为指标、第二个进 note;" +
+      "拒收的标签这次记在下面的 extraNote 里而不是 droppedBenchmarks —— 两条是「目录没这列」、" +
+      "两条是厂商自己声明的内部题集,都不该变成一条全局生效的 benchmark 拒收规则。",
+    extraNote:
+      "交叉验证过这就是 owner 2026-08-12 提供的那张官方发布图:Flash-0731 那一列的九项" +
+      "(Terminal 82.7 · NL2Repo 54.2 · Cybergym 76.7 · DeepSWE 54.4 · Toolathlon 70.3 · ALE 25.2 · " +
+      "AutomationBench 25.1 · DSBench-FullStack 68.7 · DSBench-Hard 59.6)与官方 changelog 2026-07-31 " +
+      "条目逐位相同,Pro-Preview 的 HLE 37.7 与目录既有值也逐位相同。" +
+      "⚠ 「HLE (wo / w tools)」一行里装着**目录的两列**:第一个数进 hle-no-tools,第二个数是 hle-tools 的口径," +
+      "本脚本每行只出一格,所以工具档的数**只以原文留在行的 note 里**,采纳那天要把它拆成第二行。" +
+      "⚠ 表下 Note 1 是这张表罕见地给了脚手架与 effort:「For the code-agent tasks among the public " +
+      "benchmarks above, DeepSeek-V4-Pro-0813 is evaluated with the minimal mode of DeepSeek Harness as " +
+      "the agent framework, using the `max` reasoning effort level with `temperature = 1.0, top_p = 0.95`.」" +
+      "—— 但它没说**哪几行**算 code-agent 任务,把它摊到具体行是判断不是抄录,所以行上仍记 harness / " +
+      "reasoning_effort 为 null,原文留在这里。" +
+      "拒收四个标签,理由分两种:「NL2Repo」「Cybergym」「AutomationBench (Public)」目录没有这三列;" +
+      "「DSBench-FullStack †」「DSBench-Hard †」带的 † 是厂商自己的脚注,原文写明两者都是 internal test set" +
+      "(internal full-stack development test set / internal test set of difficult coding-agent problems)," +
+      "内部题集没有公开定义可核,永远不该开成列。",
+    carried: {
+      "HLE (wo / w tools)": {
+        id: "hle-no-tools",
+        version: "Full",
+        tools: false,
+        dual: "同格第二个数是 HLE with tools(目录 hle-tools 列的口径,本行未采)",
+      },
+      "Terminal Bench 2.1": { id: "terminal", version: "2.1", tools: true },
+      DeepSWE: { id: "deepswe", version: "v1.1", tools: true },
+      "Toolathlon-Verified": { id: "toolathlon", version: "Verified", tools: true },
+      "Agents' Last Exam": { id: "ale", version: "ALE-V1", tools: true },
+    },
+  },
 };
 
 const args = process.argv.slice(2);
@@ -180,7 +239,10 @@ for (const table of tables) {
       const notes = [`${release.noteName} 发布页「${section ?? "performance"}」分区,原样抄录 ${label} 一行`];
       if (secondary && carried?.dual) notes.push(`${carried.dual} ${secondary}`);
       else if (secondary) notes.push(`页面同格第二个数 ${secondary},语义未标注,未采用`);
-      notes.push("厂商发布材料:未标注 harness、reasoning effort 或运行日期");
+      // Every release so far states no harness and no effort, so the row says so. A release that
+      // states them says something else — the row is the evidence, and a sentence that is false on
+      // every row is worse than the same sentence being false once in the meta.
+      notes.push(release.rowNote ?? "厂商发布材料:未标注 harness、reasoning effort 或运行日期");
 
       rows.push({
         model_raw: model,
@@ -217,12 +279,18 @@ const meta = {
   sources: [release.url],
   note:
     `${release.label}(${release.published})的性能表,整表抄录:${rows.length} 行,${columns.length} 个已发布模型列,` +
-    `${new Set(rows.map((row) => row.benchmark)).size} 个 benchmark 标签,${sectionsSeen} 个分区。页面是客户端渲染的,` +
-    `采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。` +
-    `厂商发布材料:全表没有标注 harness、reasoning effort 或运行日期,evaluation_date 记的是发布日。` +
-    `表里的竞品列一并归档为证据,但只有 ${release.keep} 会被 alias 采纳 —— 竞争对手发布的竞品分数没有 harness、` +
-    `effort、版本,源优先级低于任何一个给出这些信息的榜单。双数字格取第一个数为指标、第二个进 note。` +
-    `未映射的标签记在 model-aliases.json 的 droppedBenchmarks 里,免得下一代发布时重新推导一遍。` +
+    `${new Set(rows.map((row) => row.benchmark)).size} 个 benchmark 标签,${sectionsSeen} 个分区。` +
+    // The house sentences below are true of every release captured so far: the page renders client
+    // side, the vendor states no harness, only `keep` is adopted, refusals go to droppedBenchmarks.
+    // A release that breaks any of them replaces the whole block via `adoption` rather than being
+    // described by a generated sentence that is false about its own batch — a meta is evidence
+    // about evidence, and this template has no way to be half-true.
+    (release.adoption ??
+      `页面是客户端渲染的,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。` +
+        `厂商发布材料:全表没有标注 harness、reasoning effort 或运行日期,evaluation_date 记的是发布日。` +
+        `表里的竞品列一并归档为证据,但只有 ${release.keep} 会被 alias 采纳 —— 竞争对手发布的竞品分数没有 harness、` +
+        `effort、版本,源优先级低于任何一个给出这些信息的榜单。双数字格取第一个数为指标、第二个进 note。` +
+        `未映射的标签记在 model-aliases.json 的 droppedBenchmarks 里,免得下一代发布时重新推导一遍。`) +
     (release.extraNote ? ` ${release.extraNote}` : ""),
   retrievedDate: new Date().toISOString().slice(0, 10),
 };

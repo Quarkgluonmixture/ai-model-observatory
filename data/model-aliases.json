@@ -2002,6 +2002,62 @@
       "file": "batch-32-glm52-release",
       "modelId": null,
       "reason": "Batch 32 is Z.AI's own release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17 entries above. GLM-5.2's own column is the only one aliased."
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Pro-0813",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "Batch 35 is DeepSeek's own GA release table and NOTHING in it is adopted -- unlike batches 17 and 32, not even the maker's own headline column. This is that column, and it is refused because the catalog has no record for the GA: `deepseek-v4-pro` holds the April preview, every one of its 58 published cells was measured before the GA shipped on 2026-08-12, and GOTCHAS 24 says the record's identity is settled first with the scores and the price following it. Measured 2026-08-17 with the project's own evidence counter, third-party GA readings stand at 36 catalog cells against a dilution floor of 49, so the flip the owner gated on 2026-08-14 is not available yet. These rows are the evidence banked for the day it is; adopting them now is precisely the accident the window and this batch exist to prevent."
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Pro (Preview)",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "This column IS the model the catalog record currently holds, and it is still refused, for two reasons that were both measured rather than assumed. First, an alias would be inert: `modelWindows` gives `deepseek-v4-pro` a validUntil of 2026-08-12 and these rows carry evaluation_date 2026-08-13, so the window would refuse the row and report it unmapped anyway. Second, this table restates the preview's own numbers differently from DeepSeek's April model card -- Toolathlon 55.9 here against the catalog's model-card row of 51.8 (the official board reads 55.86), and Terminal 72.1 here against the archive's AA readings of 64.79 / 64.04 and Vals' 50.187. A maker revising its own preview figures inside a later release post belongs in the archive with a date on it; it does not get to overwrite a published cell."
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Flash-0731",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "⚠ This string carries a GLOBAL wildcard alias to `deepseek-v4-flash`, so this file-scoped refusal is load-bearing: without it a vendor release table writes straight into a live catalog record. Checked before deciding, per GOTCHAS 33: four of the five carried columns already hold this maker's own earlier release material at byte-identical values -- terminal 82.7, deepswe 54.4, toolathlon 70.3, ale 25.2, every one of them sourced 'DeepSeek V4 Flash 0731 model card' -- so adopting this column would re-file numbers the record already has from the same publisher. The one real gap is hle-tools (51.5, the second number of the HLE row). Filling it would change a published record, which this batch deliberately does not do; it is left here as a one-cell decision for whoever wants it, and a board that states a harness can still take the slot."
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Flash (Preview)",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "No catalog record to take it. The preview was superseded by the 0731 GA, and the rule settled 2026-08-14 is one record per version in service, with the preview's rows archived and not ingested -- the Flash solution. Refused here for the same reason its rows are refused everywhere else."
+    },
+    {
+      "modelRaw": "GLM-5.2",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "⚠ GLOBAL wildcard alias to `glm-5.2`, so this refusal is load-bearing rather than decorative: without it a competitor column in DeepSeek's release post would write into Z.AI's catalog record. Same decision as the batch-17 and batch-32 competitor entries -- a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does."
+    },
+    {
+      "modelRaw": "Kimi K3",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "⚠ GLOBAL wildcard alias to `kimi-k3`, same load-bearing refusal as the GLM-5.2 entry above and for the same reason. A rival's column in DeepSeek's post is evidence that DeepSeek published a number, not a measurement of Kimi K3 that states how it was run."
+    },
+    {
+      "modelRaw": "Opus-4.8",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "Competitor column. No alias resolves this spelling today, so this entry changes nothing now and is written anyway: batch 17 wrote the same explicit refusal for `Opus4.8` and batch 32 for `Claude Opus 4.8`, and the point of writing it is that a future global alias for one more spelling cannot silently adopt a rival's release-post numbers."
+    },
+    {
+      "modelRaw": "Fable-5 (w/ fallback)",
+      "effort": "*",
+      "file": "batch-35-deepseek-v4-pro-ga-release",
+      "modelId": null,
+      "reason": "Competitor column, refused for the same reason as the others, plus one of its own: `(w/ fallback)` names a serving arrangement rather than an operating point, and this catalog has no dimension for it. Even if the competitor rule were relaxed, this string could not be filed against a configuration."
     }
   ],
   "benchmarkSplits": [
