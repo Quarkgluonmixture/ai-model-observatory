@@ -503,3 +503,7 @@ compile / 筛选 / 小型直接 probe / JSON 导出；完整可恢复实验与�
 **尚未外发**:EdgeOne 控制台没有可用浏览器会话，本机也没有已关联的 EdgeOne CLI；生产环境变量
 必须在控制台配置。Git push 按操作合同必须先拿 owner 明确许可；两步留在 `TODO.md`，没有把本地通过
 写成「线上已可用」。
+
+**同日后续**:owner 明确回复「push」，因此代码与文档分两笔 commit 推到远端 feature branch；
+这一步不是 merge，也不会触发监看 `main` 的生产发布。生产环境变量、PR、CI 后合并与线上真调用仍按
+`TODO.md` 完成，不能把「远端有分支」写成「网站已经上线」。

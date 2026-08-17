@@ -12,7 +12,7 @@
 - [ ] EdgeOne Preview / Production 环境配置 `QWEN_API_KEY`、workspace `QWEN_BASE_URL`、
       `QWEN_MODEL=qwen3.7-flash`、`PERSONA_ACCESS_TOKEN=大狗`，再触发一次新部署；环境变量变更
       不追溯旧 deployment。
-- [ ] owner 明确允许 push 后，把 `/persona` PR 推到 GitHub；CI 全绿后再合并，并实测
+- [ ] 为 `/persona` 开 PR；CI 全绿并取得合并许可后再合并，然后实测
       `https://quarkspace.top/persona` 的 status → compile → 单探针 run。EdgeOne 跟 main 独立发布，
       不能拿 GitHub CI 当部署闸门。
 
