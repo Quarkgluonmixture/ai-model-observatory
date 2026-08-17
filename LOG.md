@@ -507,3 +507,18 @@ compile / 筛选 / 小型直接 probe / JSON 导出；完整可恢复实验与�
 **同日后续**:owner 明确回复「push」，因此代码与文档分两笔 commit 推到远端 feature branch；
 这一步不是 merge，也不会触发监看 `main` 的生产发布。生产环境变量、PR、CI 后合并与线上真调用仍按
 `TODO.md` 完成，不能把「远端有分支」写成「网站已经上线」。
+
+## [2026-08-17] `/persona` 生产发布：页面已切流，环境变量等待真实提交重建 `#ship` `#incident`
+
+owner 随后明确要求直接推 `main` 并快速部署。`main` 首次真实变更已触发 EdgeOne production，
+`/persona` 与三个 API 路由均返回 200；但该轮构建发生在生产变量写入之前，所以状态接口仍显示
+`configured=false` / `protected=false`，业务接口按 fail-closed 设计拒绝工作，不能算部署完成。
+
+排障确认 `edgeone@1.6.22 makers env` 的四个 handler 没有向命令框架返回异步 Promise：命令 exit 0，
+但请求尚未完成进程就退出。为遵守新依赖 7 天冷却期，没有升级到刚发布版本；只在忽略的本地 CLI
+缓存里把 handler 改成返回 Promise。随后四个生产变量均收到服务端成功回执，并用只输出变量名计数、
+不输出变量值的查询确认全部存在。
+
+EdgeOne 会忽略空提交：第二个 `--allow-empty` 发布提交没有生成部署记录。因此本条 append-only 运维
+记录本身作为可审计的真实 Git 变更触发下一轮 production；验收条件是状态接口同时返回
+`configured=true` 与 `protected=true`，之后才做一次最小线上调用验证。
