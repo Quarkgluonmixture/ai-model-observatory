@@ -6,6 +6,7 @@ import {
   type CompileResult,
   type PersonaCandidate,
   type PersonaFact,
+  normalizeCompilerOutput,
   validateCompilerOutput,
 } from "@/app/persona/protocol";
 
@@ -18,16 +19,18 @@ You compile a natural-language persona specification into candidate Encode Perso
 
 SOURCE FIDELITY
 - Treat the supplied prompt as the only source of truth.
-- Extract a fact ledger before encoding. Mark each fact explicit or inferred and include a short source quote. Prompt language alone does not create a LANG policy.
+- Extract a fact ledger before encoding. Mark each fact explicit or inferred and include a short source quote of at most 32 characters. Prompt language alone does not create a LANG policy.
 - Preserve exact distinctions: preferred versus maximum, default versus exception, trigger versus state, permission versus requirement, and soft style versus hard policy.
 - Never silently strengthen, weaken, merge, translate, or discard an explicit constraint.
 
 ENCODE PERSONA OUTPUT CONTRACT
 - Every candidate is the SAME language: first line exactly 【PERSONA_LOAD】, followed only by uppercase underscore-delimited semantic tags, one tag per line.
+- Every alphabetic character inside a tag must be uppercase, including transliterated names and proper nouns.
 - No key/value syntax, colons, equals signs, JSON, YAML, bullets, prose sentences, definitions, mappings, comments, or Markdown may occur inside encoding.
 - Candidates vary only granularity: candidate_001 canonical medium, candidate_002 compact gestalt, candidate_003 atomized fine. Additional candidates remain in this grammar.
 - Every candidate covers every explicit fact. Compression may compose atoms but not omit meaning.
 - Do not claim that any candidate is optimal.
+- Keep each rationale to one short sentence. Return compact JSON without Markdown or extra prose.
 
 Return one JSON object only:
 {
@@ -169,9 +172,13 @@ export async function compilePersona(
   candidateCount: number,
 ): Promise<CompileResult> {
   const messages = buildCompilerMessages(description, candidateCount);
-  const call = await callQwen(messages, { max_tokens: 8192, enable_thinking: true });
+  // Compilation needs structured output, not a long observable reasoning trace. Disabling
+  // thinking keeps the request inside EdgeOne's production function window; target-model
+  // experiments remain in thinking mode so activation metrics still have a trace to inspect.
+  const call = await callQwen(messages, { max_tokens: 4096, enable_thinking: false });
   const parsed = parseJsonObject(call.content);
-  const validation = validateCompilerOutput(parsed, candidateCount);
+  const normalized = normalizeCompilerOutput(parsed);
+  const validation = validateCompilerOutput(normalized.value, candidateCount);
   if (!validation.valid) {
     throw new PersonaUpstreamError(
       "Qwen 返回了候选，但没有通过 Encode Persona 结构校验。",
@@ -179,7 +186,7 @@ export async function compilePersona(
       { validation, content: call.content, reasoning_content: call.reasoningContent },
     );
   }
-  const object = parsed as {
+  const object = normalized.value as {
     extraction: { facts: PersonaFact[] };
     candidates: PersonaCandidate[];
   };
@@ -196,6 +203,7 @@ export async function compilePersona(
       latency_ms: call.latencyMs,
       usage: call.response.usage ?? {},
       reasoning_content: call.reasoningContent,
+      normalizations: normalized.normalizations,
     },
     request: {
       model: qwenModel(),

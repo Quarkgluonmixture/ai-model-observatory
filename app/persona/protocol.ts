@@ -1,5 +1,5 @@
 export const PERSONA_WRAPPER = "【PERSONA_LOAD】";
-export const COMPILER_VERSION = "compiler-v2.1-web";
+export const COMPILER_VERSION = "compiler-v2.2-web";
 export const DEFAULT_QWEN_MODEL = "qwen3.7-flash";
 
 export type PersonaFact = {
@@ -43,6 +43,7 @@ export type CompileResult = {
     latency_ms: number;
     usage: Record<string, unknown>;
     reasoning_content: string;
+    normalizations?: string[];
   };
   request: {
     model: string;
@@ -102,6 +103,46 @@ const PROFILE_BY_ID: Record<string, string> = {
   candidate_002: "compact_gestalt",
   candidate_003: "atomized_fine",
 };
+
+export function normalizeCompilerOutput(value: Record<string, unknown>): {
+  value: Record<string, unknown>;
+  normalizations: string[];
+} {
+  const normalized = JSON.parse(JSON.stringify(value)) as Record<string, unknown>;
+  let uppercasedTags = 0;
+  const extraction = asRecord(normalized.extraction);
+  const facts = Array.isArray(extraction?.facts) ? extraction.facts : [];
+  for (const rawFact of facts) {
+    const fact = asRecord(rawFact);
+    if (!fact || !Array.isArray(fact.atoms)) continue;
+    fact.atoms = fact.atoms.map((atom) => {
+      if (typeof atom !== "string") return atom;
+      const upper = atom.toUpperCase();
+      if (upper !== atom) uppercasedTags += 1;
+      return upper;
+    });
+  }
+
+  const candidates = Array.isArray(normalized.candidates) ? normalized.candidates : [];
+  for (const rawCandidate of candidates) {
+    const candidate = asRecord(rawCandidate);
+    if (!candidate || typeof candidate.encoding !== "string") continue;
+    const lines = candidate.encoding.replace(/\r\n/g, "\n").split("\n");
+    candidate.encoding = lines.map((line, index) => {
+      if (index === 0 || !line) return line;
+      const upper = line.toUpperCase();
+      if (upper !== line) uppercasedTags += 1;
+      return upper;
+    }).join("\n");
+  }
+
+  return {
+    value: normalized,
+    normalizations: uppercasedTags
+      ? [`uppercased ${uppercasedTags} semantic tag value(s)`]
+      : [],
+  };
+}
 
 export function validateCompilerOutput(
   value: unknown,

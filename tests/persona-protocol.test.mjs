@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   activationMetrics,
+  normalizeCompilerOutput,
   validateCompilerOutput,
 } from "../app/persona/protocol.ts";
 
@@ -52,6 +53,19 @@ test("rejects a candidate that drops the wrapper", () => {
   const result = validateCompilerOutput(output, 2);
   assert.equal(result.valid, false);
   assert.match(result.candidates[0].errors.join("\n"), /首行必须是/);
+});
+
+test("normalizes mixed-case semantic tags without changing the raw object", () => {
+  const output = compilerOutput();
+  output.extraction.facts[0].atoms[0] = "IDENTITY_NAME_Butch";
+  output.candidates[0].encoding = "【PERSONA_LOAD】\nIDENTITY_NAME_Butch\nPERSONALITY_SMART_GENTLE";
+  const normalized = normalizeCompilerOutput(output);
+
+  assert.equal(output.extraction.facts[0].atoms[0], "IDENTITY_NAME_Butch");
+  assert.equal(normalized.value.extraction.facts[0].atoms[0], "IDENTITY_NAME_BUTCH");
+  assert.match(normalized.value.candidates[0].encoding, /IDENTITY_NAME_BUTCH/);
+  assert.deepEqual(normalized.normalizations, ["uppercased 2 semantic tag value(s)"]);
+  assert.equal(validateCompilerOutput(normalized.value, 2).valid, true);
 });
 
 test("activation metrics keep meta and in-character spans separate", () => {

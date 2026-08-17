@@ -32,6 +32,7 @@ const DEFAULT_PROBES = "在吗\n你是谁\n今天在干嘛";
 export default function PersonaLab() {
   const [service, setService] = useState<ServiceStatus | null>(null);
   const [accessToken, setAccessToken] = useState("");
+  const [showAccessToken, setShowAccessToken] = useState(false);
   const [description, setDescription] = useState("");
   const [candidateCount, setCandidateCount] = useState(3);
   const [compileResult, setCompileResult] = useState<CompileResult | null>(null);
@@ -167,13 +168,26 @@ export default function PersonaLab() {
           </div>
           <label className={styles.field}>
             <span>访问口令</span>
-            <input
-              type="password"
-              autoComplete="current-password"
-              value={accessToken}
-              onChange={(event) => setAccessToken(event.target.value)}
-              placeholder="只保存在当前浏览器会话"
-            />
+            <div className={styles.secretField}>
+              <input
+                type="text"
+                autoComplete="off"
+                autoCapitalize="none"
+                spellCheck={false}
+                className={showAccessToken ? "" : styles.secretMasked}
+                value={accessToken}
+                onChange={(event) => setAccessToken(event.target.value)}
+                placeholder="支持中文；只保存在当前浏览器会话"
+              />
+              <button
+                type="button"
+                aria-label={showAccessToken ? "隐藏访问口令" : "显示访问口令"}
+                aria-pressed={showAccessToken}
+                onClick={() => setShowAccessToken((visible) => !visible)}
+              >
+                {showAccessToken ? "隐藏" : "显示"}
+              </button>
+            </div>
           </label>
           <label className={styles.field}>
             <span>角色 prompt</span>
@@ -218,6 +232,7 @@ export default function PersonaLab() {
                 <div><dt>耗时</dt><dd>{compileResult.provenance.latency_ms.toLocaleString()} ms</dd></div>
                 <div><dt>编译器</dt><dd>{compileResult.provenance.compiler_version}</dd></div>
                 <div><dt>结构校验</dt><dd>{compileResult.validation.valid ? "通过" : "失败"}</dd></div>
+                <div><dt>派生归一化</dt><dd>{compileResult.provenance.normalizations?.join("；") || "无"}</dd></div>
               </dl>
               <details className={styles.details}>
                 <summary>事实账本 · {compileResult.extraction.facts.length} 条</summary>
@@ -442,8 +457,20 @@ async function postJson<T>(path: string, body: unknown, accessToken: string): Pr
     },
     body: JSON.stringify(body),
   });
-  const payload = (await response.json()) as { error?: string } & T;
-  if (!response.ok) throw new Error(payload.error || `请求失败：HTTP ${response.status}`);
+  const raw = await response.text();
+  let payload: ({ error?: string } & T) | null = null;
+  try {
+    payload = JSON.parse(raw) as { error?: string } & T;
+  } catch {
+    // EdgeOne can replace a timed-out function response with an HTML gateway page.
+  }
+  if (!response.ok) {
+    const fallback = response.status === 504
+      ? "Qwen 生成超时，请重试或减少候选数量。"
+      : `请求失败：HTTP ${response.status}`;
+    throw new Error(payload?.error || fallback);
+  }
+  if (!payload) throw new Error("服务器返回了无法解析的响应。");
   return payload;
 }
 
