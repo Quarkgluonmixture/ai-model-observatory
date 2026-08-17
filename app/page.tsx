@@ -193,6 +193,7 @@ export default function Home() {
           <span className={s.me}>{profile.name}</span>
           <nav className={s.nav}>
             {profile.nav.map((n) => <a key={n.href} href={n.href}>{n.label}</a>)}
+            <Link className={s.sub} href="/persona">Persona Lab ↗</Link>
             <Link className={s.sub} href="/models">观测台 ↗</Link>
           </nav>
           <a className={s.cv} href="#">简历 PDF</a>
