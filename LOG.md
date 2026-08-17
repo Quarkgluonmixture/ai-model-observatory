@@ -522,3 +522,25 @@ owner 随后明确要求直接推 `main` 并快速部署。`main` 首次真实�
 EdgeOne 会忽略空提交：第二个 `--allow-empty` 发布提交没有生成部署记录。因此本条 append-only 运维
 记录本身作为可审计的真实 Git 变更触发下一轮 production；验收条件是状态接口同时返回
 `configured=true` 与 `protected=true`，之后才做一次最小线上调用验证。
+
+## [2026-08-17] `/persona` production 验收完成：中文口令、快速编译、直接实验全链可用 `#ship` `#measure` `#incident`
+
+production 最终状态接口返回 `configured=true` / `protected=true` / `qwen3.7-flash` / 
+`compiler-v2.2-web`，`/persona` 200 且带 ICP 备案。错误口令实测 401；中文口令「大狗」经浏览器
+URL 编码后通过鉴权并进入输入校验，证明不是伪通过。
+
+首次线上真编译暴露两个生产形状：原生 `type=password` 在 Chrome/macOS 会关闭中文输入法；而
+thinking compile 本地已接近 30 秒，EdgeOne 上以 31.67 秒返回 504。修复把口令框改为
+`type=text` + CSS 默认遮罩 + 显示/隐藏按钮，因此中文 IME 可用但默认不明文展示；编译关闭 thinking、
+限 4096 output tokens，**直接实验仍保留 thinking**，所以 PAL/MRR/ICRR/DPE 的 observable reasoning
+trace 没被牺牲。EdgeOne 返回 HTML 504 时，前端也不再把 JSON parse exception 暴露给用户。
+
+快速编译 production 实测 HTTP 200 / 5.71 秒，2 个候选、结构校验 true；prompt 825 / completion 579 /
+total 1,404 tokens，reasoning trace 长度 0（预期，因为 compiler thinking=false）。Qwen 偶尔把转写名字
+写成混合大小写；派生候选现在只做可审计的大写归一化，`raw_response` 保持原样，新增单测证明不会改
+输入对象。随后用选中候选跑「你是谁」：HTTP 200 / 18.66 秒，`reasoning_content` 与 content 都非空，
+指标 PAL 167 / MRR 0 / ICRR 0.160 / DPE false，persona leakage false。
+
+发布侧另有一条运维事实：EdgeOne Git webhook 没接到最后一次真实 `main` 更新，等待后仍无新部署记录；
+按官方 `CreatePagesDeployment` 以 `ReDeploy + Github + 最新 main` 手动创建 production，最终成功切流。
+收尾验证：`test:persona` 4/4、lint、生产 build、`check:beian` 全通过。

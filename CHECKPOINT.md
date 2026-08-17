@@ -48,7 +48,7 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | 归档 | **31 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；所以编号到 32），其中 16 个可脚本重读 ⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**，全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 |
 | 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台 · **`/deepseek` 静态游戏**（8-15 起，不走 `app/layout.tsx` ⇒ **没有备案页脚**，owner 明确选的，坑 **35**），同一个仓库，EdgeOne Pages |
-| Persona Lab | `/persona` 的 Qwen compiler + 直接探针看板已在 2026-08-17 本地生产构建和真调用验证；生产环境变量与发布仍在 `TODO.md`，**未发布前不要写成线上已可用** |
+| Persona Lab | **`https://quarkspace.top/persona` 已上线**（2026-08-17 实测）：`qwen3.7-flash` 快速候选编译 + 候选筛选后直接探针；服务端凭据已配置且访问口令受保护。线上保存浏览器本地历史，完整 SQLite/JSONL 研究实验仍走本地 Encode Persona harness。 |
 
 ⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。
 
