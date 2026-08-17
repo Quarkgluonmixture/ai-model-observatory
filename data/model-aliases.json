@@ -2611,6 +2611,48 @@
       "field": "cost_per_task_usd",
       "supersededBy": "batch-14-aa-parameters",
       "reason": "NOT the usual reason. Every other entry here supersedes a hand transcription with a scripted read of the SAME measurement; this one supersedes an OLDER measurement with a newer one. Batch 07 read 1.28 off AA's leaderboard; AA has since re-measured the same model at 0.5413, and batch 14 carries that. Both readings are real and both stay archived. || Why it needs an entry at all: check-model-provenance fills each field from whichever archive row it reads FIRST, and batch-07 sorts before batch-14, so the catalog could publish 1.28 forever and the audit would keep calling it backed. That is not specific to this model -- measured 2026-08-12, 45 catalog fields across ten models sit in exactly this position, batches 06/07/08 holding the slot against a batch-14 value more than 5% away. This entry moves ONE of them, because the 2.4x cost gap on a flagship was the one that got ruled on. The other 44 are a single open decision in TODO, deliberately not taken here: moving them piecemeal would leave the catalog half on 2026-07 readings and half on current ones, which is worse than either. || Scoped to modelRaw + field so nothing else in batch 07 is affected, the same way the two Inkling context_k entries are scoped."
+    },
+    {
+      "file": "batch-06-operating",
+      "modelRaw": "GPT-5.6 Luna",
+      "field": "price_input_per_m",
+      "supersededBy": "batch-34-openai-repricing",
+      "reason": "Batch 06's official-page read froze $1/M input on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $0.20/M input. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-06-operating",
+      "modelRaw": "GPT-5.6 Luna",
+      "field": "price_output_per_m",
+      "supersededBy": "batch-34-openai-repricing",
+      "reason": "Batch 06's official-page read froze $6/M output on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $1.20/M output. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-06-operating",
+      "modelRaw": "GPT-5.6 Luna",
+      "field": "price_cache_per_m",
+      "supersededBy": "batch-34-openai-repricing",
+      "reason": "Batch 06's official-page read froze $0.10/M cache read on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $0.02/M cache read. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-06-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "price_input_per_m",
+      "supersededBy": "batch-34-openai-repricing",
+      "reason": "Batch 06's official-page read froze $2.5/M input on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $2/M input. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-06-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "price_output_per_m",
+      "supersededBy": "batch-34-openai-repricing",
+      "reason": "Batch 06's official-page read froze $15/M output on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $12/M output. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-06-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "price_cache_per_m",
+      "supersededBy": "batch-34-openai-repricing",
+      "reason": "Batch 06's official-page read froze $0.25/M cache read on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $0.20/M cache read. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
     }
   ],
   "withdrawnRows": [
