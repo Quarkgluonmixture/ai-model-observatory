@@ -48,7 +48,7 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | 观测 | **2170 rows · 1401 / 2088 cells（67.1% cell coverage）** —— 8-17 复测未变,复算 = `npm run check:data` 末行 |
 | 源分类 | benchmark 920 / independent 1050 / vendor 200 |
 | 溯源 | **322 / 324**（99%；2 格有值无据 = `deepseek-v4-flash`，`TODO.md` 里是编辑判断）⚠ 分母是**解析得到的行** |
-| 归档 | **33 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**，34 在 #93 那条未合的分支上），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-17 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`；8-10 记的 16 已过时）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
+| 归档 | **33 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-17 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`；8-10 记的 16 已过时）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ batch 35 之后**至少 +76**（那一批八列全不采纳）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法 |
 | 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台 · **`/deepseek` 静态游戏**（8-15 起，不走 `app/layout.tsx` ⇒ **没有备案页脚**，owner 明确选的，坑 **35**），同一个仓库，EdgeOne Pages |
 | Persona Lab | **`https://quarkspace.top/persona` 已上线**（2026-08-17 实测）：`qwen3.7-flash` 快速候选编译 + 候选筛选后直接探针；服务端凭据已配置且访问口令受保护。线上保存浏览器本地历史，完整 SQLite/JSONL 研究实验仍走本地 Encode Persona harness。 |
@@ -116,7 +116,8 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 **微信推送 7 条**（复算 = `grep -rn notify-pushplus .github/workflows scripts`；⚠ §10 的表还停在
 8-06 的四条），策略是「只在异常时说话」；逐条落在哪个 workflow、砍掉的六条为什么砍
 → `docs/ARCHITECTURE.md` §10。⭐ **`main 变红` 那条 8-17 起按「红的集合变化」推**，同一个红每天
-最多提醒一次，读不出来一律推 —— **沉默 = 没变，不是绿了**（坑 **38**）。
+最多提醒一次，读不出来一律推 —— **沉默 = 没变，不是绿了**（坑 **38**）。⚠ 它的 stdout **就是消息**，
+诊断只能走 stderr，守它的自测挂了 `if: always()`（坑 **39**）。
 **沉默可诊断**：两个调度器互相看守，阈值理由在
 `scripts/check-heartbeat.mjs` 头部。⚠ 这个互相看守是**不对称**的（§10 末尾）。
 
@@ -146,7 +147,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**38** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
+| `GOTCHAS.md` | **动手之前扫一遍**：**39** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。

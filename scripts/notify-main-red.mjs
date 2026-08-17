@@ -26,6 +26,14 @@
 // No state is stored anywhere. The comparison is derived from the run history every time, so
 // there is no cache to go stale and no file to commit — which also means a re-run of an old
 // commit cannot poison a stored "last seen".
+//
+// ⚠ STDOUT IS THE MESSAGE AND NOTHING ELSE. The caller redirects it to a file and pushes the file
+// if it is non-empty, so one `console.log` of a diagnostic makes the silent path push that
+// diagnostic as the alert. That is not hypothetical: the first version shipped with the verdict
+// line on stdout, and the very next red on `main` pushed "main-red notification: silent — …" to
+// the owner's phone — an alarm announcing its own silence. Every diagnostic goes to stderr, where
+// the Actions log still shows it, and `messageFor` is a pure function so the
+// silent-means-empty property can be asserted rather than reviewed.
 
 const args = process.argv.slice(2);
 
@@ -57,6 +65,33 @@ export const decide = (current, previous) => {
     return { push: true, why: `same failure as the previous run, but that was on ${previous.day} — daily reminder` };
   }
   return { push: false, why: `identical to the previous run on ${previous.day}, already reported today` };
+};
+
+/**
+ * The message, or the empty string when there is nothing to say. Pure, and separate from the
+ * decision, so "silent produces nothing on stdout" is an assertion rather than a thing a reader
+ * has to notice — the caller pushes whatever lands on stdout, so an empty string is the whole
+ * safety property.
+ */
+export const messageFor = (verdict, { failing = [], sha = "", serverUrl = "", repo = "", runId = "" } = {}) => {
+  if (!verdict.push) return "";
+  const lines = [
+    "**main 上的检查是红的**,而 EdgeOne 合并即发布、不看 CI——所以站已经是这个状态了。",
+    "",
+    failing.length > 0
+      ? `红的是:${failing.map((name) => `「${name}」`).join("、")}`
+      : "红的是哪一项去 run 里看(这次没读出来)。",
+    "",
+    `原因:${verdict.why}`,
+    "",
+    `提交:\`${sha}\``,
+    "",
+    `${serverUrl}/${repo}/actions/runs/${runId}`,
+    "",
+    "回滚是一个 revert 的事。⚠ 这条只在**红的集合发生变化**时推,同一个红每天最多提醒一次 ——",
+    "**没有消息不等于绿了**。",
+  ];
+  return `${lines.join("\n")}\n`;
 };
 
 // ---------------------------------------------------------------- GitHub reads
@@ -136,6 +171,15 @@ if (args.includes("--self-test")) {
   ).length;
   cases.push(["the 2026-08-17 timeline pushes twice, not nine times", { push: pushes === 2 }, true]);
 
+  // The stdout contract, which is what actually broke on the first deploy: the caller pushes the
+  // file it redirects stdout into, so a silent verdict must produce an empty string. Asserted on
+  // the real function rather than reviewed by eye.
+  const silent = decide({ failed: ["x"], day: today }, { failed: ["x"], day: today });
+  const loud = decide({ failed: ["x"], day: today }, { failed: [], day: today });
+  cases.push(["a silent verdict writes nothing to stdout", { push: messageFor(silent, { failing: ["x"] }) === "" }, true]);
+  cases.push(["a pushing verdict writes a body naming the step", { push: messageFor(loud, { failing: ["x"] }).includes("「x」") }, true]);
+  cases.push(["no diagnostic text leaks into the body", { push: !messageFor(loud, { failing: ["x"] }).includes("main-red notification") }, true]);
+
   let failures = 0;
   for (const [name, result, expected] of cases) {
     const ok = result.push === expected;
@@ -163,31 +207,14 @@ let observed = { current: null, previous: null };
 try {
   observed = await readRuns(repo, workflowFile, runId);
 } catch (error) {
-  console.log(`::warning::could not read run history (${error.message}); pushing rather than assuming a quiet day`);
+  console.error(`::warning::could not read run history (${error.message}); pushing rather than assuming a quiet day`);
 }
 
 const verdict = decide(observed.current, observed.previous);
-console.log(`main-red notification: ${verdict.push ? "PUSH" : "silent"} — ${verdict.why}`);
+console.error(`main-red notification: ${verdict.push ? "PUSH" : "silent"} — ${verdict.why}`);
 
 if (!verdict.push) {
-  console.log("Silence here means UNCHANGED, not green. The red itself is still on the run page.");
-  process.exit(0);
+  console.error("Silence here means UNCHANGED, not green. The red itself is still on the run page.");
 }
 
-const failing = observed.current?.failed ?? [];
-const lines = [
-  "**main 上的检查是红的**,而 EdgeOne 合并即发布、不看 CI——所以站已经是这个状态了。",
-  "",
-  failing.length > 0 ? `红的是:${failing.map((name) => `「${name}」`).join("、")}` : "红的是哪一项去 run 里看(这次没读出来)。",
-  "",
-  `原因:${verdict.why}`,
-  "",
-  `提交:\`${sha}\``,
-  "",
-  `${serverUrl}/${repo}/actions/runs/${runId}`,
-  "",
-  "回滚是一个 revert 的事。⚠ 这条只在**红的集合发生变化**时推,同一个红每天最多提醒一次 ——",
-  "**没有消息不等于绿了**。",
-];
-
-process.stdout.write(`${lines.join("\n")}\n`);
+process.stdout.write(messageFor(verdict, { failing: observed.current?.failed ?? [], sha, serverUrl, repo, runId }));
