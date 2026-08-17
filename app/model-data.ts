@@ -207,9 +207,11 @@ export const MODELS: ModelRecord[] = [
   m("kimi-k3", "Kimi K3", "Moonshot", "#6d62cf", true, 1050, ["webdev", "long context"], [
     cfg("max", 59.7, 0.8375, 35.4, 3.94, 3, 15, true, 0.3),
   ]),
+  // Repriced 2026-08-17 (batch-34): $2.5/$15 → $2/$12, cache $0.25 → $0.20. Same vendor-page move
+  // as Luna below; Sol was checked the same day and did NOT move ($5/$30, archived as the control).
   m("gpt-5.6-terra", "GPT-5.6 Terra", "OpenAI", "#ecbb55", false, 1000, ["fast", "reasoning", "multimodal"], [
-    cfg("max", 56.6, 0.508, 131.8, 198.08, 2.5, 15, false, 0.25),
-    cfg("xhigh", 52.8, 0.305, 111.1, 29.72, 2.5, 15, false, 0.25),
+    cfg("max", 56.6, 0.508, 131.8, 198.08, 2, 12, false, 0.2),
+    cfg("xhigh", 52.8, 0.305, 111.1, 29.72, 2, 12, false, 0.2),
   ]),
   m("grok-4.5", "Grok 4.5", "xAI", "#42576b", false, 500, ["coding", "reasoning", "realtime"], [
     cfg("high", 55.8, 0.3601, 57.9, 8.62, 2, 6, false, 0.5),
@@ -307,13 +309,17 @@ export const MODELS: ModelRecord[] = [
   // costTask comes from batch-07 (the AA leaderboard main table). Where that table has no
   // row for a configuration the field stays null and the model is absent from the value
   // lens, rather than being given a made-up cost.
+  // Repriced 2026-08-17 (batch-34): $1/$6 → $0.20/$1.20, cache $0.10 → $0.02. OpenAI's docs pages
+  // moved to exactly what AA had been reading since at least 07-31 — the old figures rested on the
+  // single official-page read from the day the pages were stale. No promotion language; list price.
+  // The "value" tag survives honestly: at a fifth of the old token price it is more true, not less.
   m("gpt-5.6-luna", "GPT-5.6 Luna", "OpenAI", "#f0cf82", false, 1050, ["fast", "reasoning", "value"], [
-    cfg("max", 52.3, 0.0471, 184.4, 116.5, 1, 6, false, 0.1),
-    cfg("xhigh", 50.1, 0.0316, 181.6, 37.91, 1, 6, false, 0.1),
-    cfg("high", 47, 0.0216, 163.3, 8.89, 1, 6, false, 0.1),
-    cfg("medium", 38.9, 0.0113, 163.5, 2.38, 1, 6, false, 0.1),
-    cfg("low", 33.9, 0.01, 174.3, 1.53, 1, 6, false, 0.1),
-    cfg("non-reasoning", 26.8, 0.0117, 168.1, 0.77, 1, 6, false, 0.1),
+    cfg("max", 52.3, 0.0471, 184.4, 116.5, 0.2, 1.2, false, 0.02),
+    cfg("xhigh", 50.1, 0.0316, 181.6, 37.91, 0.2, 1.2, false, 0.02),
+    cfg("high", 47, 0.0216, 163.3, 8.89, 0.2, 1.2, false, 0.02),
+    cfg("medium", 38.9, 0.0113, 163.5, 2.38, 0.2, 1.2, false, 0.02),
+    cfg("low", 33.9, 0.01, 174.3, 1.53, 0.2, 1.2, false, 0.02),
+    cfg("non-reasoning", 26.8, 0.0117, 168.1, 0.77, 0.2, 1.2, false, 0.02),
   ]),
   m("kimi-k2.6", "Kimi K2.6", "Moonshot", "#8b7fe0", true, 256, ["value", "reasoning"], [
     cfg("reasoning", 45.1, null, 57.9, 2.76, 0.95, 4, false, 0.16),

@@ -1,0 +1,13 @@
+{
+  "batch": "34 · OpenAI repricing in force, read 2026-08-17",
+  "retrievedDate": "2026-08-17",
+  "collectedWith": "curl of the three model docs pages (server-rendered HTML, no CDP needed); prices parsed from each page's 'Text tokens / Per 1M tokens' block and cross-checked against the page's own Quick comparison table",
+  "schema": "Model operating parameters, NOT benchmark scores. Price evidence only: three rows, one per GPT-5.6 model, quoting the per-1M token prices the vendor page prints today. No benchmark observation in this file.",
+  "sources": [
+    "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+    "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+    "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+  ],
+  "note": "OpenAI's docs pages moved Luna to $0.20/$1.20 ($0.02 cache) and Terra to $2.00/$12.00 ($0.20 cache) between batch-06's 2026-07-31 read and today; Sol is unchanged at $5/$30/$0.50 and is archived here as the control that pins the scope of the cut. The adjudication that set the catalog to the old figures was 'the official page wins over AA' (batch-06 fieldSourcePolicy) — and the official page now prints exactly what AA has read all along: every AA row ever archived for these two models (batch-06 07-31, batch-08, batch-14) says $0.2/$1.2 and $2/$12, so the only $1/$6 and $2.5/$15 readings on file are batch-06's single official-page read from the day the pages were stale. Six supersededRows entries retire those three price fields per model, routed here; batch-06's rows stay untouched. No promotion language anywhere on the three pages — no end date, no 'introductory', no discount wording — so these are list prices and check:prices has nothing to gate. Two conditional tiers are deliberately NOT rows: prompts over 272K input tokens bill at 2x input / 1.5x output for the whole request, and cache writes bill at 1.25x the uncached input rate; the archived price_cache_per_m is the cache READ price the page prints in its pricing block.",
+  "priceTerms": []
+}
