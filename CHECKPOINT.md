@@ -26,8 +26,9 @@ PR #92 + 把满足了的 term 移进 `retiredTerms` —— 只改价不退休 te
 GA 的官方发布表 8-17 已入档(**batch 35**,八列全不采纳、0 格变化),翻转那天不用再找源。
 Qwen / Gemini 那两条 Preview 查过:上游精确同名且族里无 GA 取代 ⇒ 按坑 25 **不动**。
 
-⇒ **要你定的三件**都在 `TODO.md` 顶部:通知侧两件(吞成绿色 / integrity vs availability 分类)·
-ProgramBench 这一列量的是什么(同列上官方 0 / Vals 0.5 / 厂商 63.7 并存)。
+⇒ **要你定的四件**都在 `TODO.md`:通知侧两件(吞成绿色 / integrity vs availability 分类)·
+ProgramBench 这一列量的是什么(同列上官方 0 / Vals 0.5 / 厂商 63.7 并存)·
+⭐ 新增 **红着时 CI 只跑前 9 步要不要重排**(第一个红之后全 skip;守报警那条已挂 `if: always()`)。
 
 **收录地板:已定「不放开」**(复算 = `npm run propose:model` 头几行),会**自我强化地塌**,
 四档实测在 `LOG-archive` 2026-08-12 条,**别重新论证**。
