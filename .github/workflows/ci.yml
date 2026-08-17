@@ -7,6 +7,11 @@ on:
 
 permissions:
   contents: read
+  # The red-on-change notifier reads this workflow's own run history to answer "is this the same
+  # red as last time". Without it that read 403s, and the notifier is written to push when it
+  # cannot tell — so a missing permission would show up as the old every-run behaviour, not as
+  # silence. Noted because that is the safe direction and it is easy to misread as "it ignored me".
+  actions: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -118,6 +123,13 @@ jobs:
       # five assertions go red. No network, no key, nothing sent.
       - name: Replay the integrity notifier against the log shape that silenced it
         run: bash scripts/publish-integrity-issue.sh --self-test
+
+      # The other notification-side assertion. This one replays 2026-08-17's actual shape — one
+      # unchanged failing step across eight pushes in a day — and asserts it produces two pushes
+      # rather than nine, alongside the cases that must still push: a new failure joining the set,
+      # one leaving it, and either run being unreadable.
+      - name: Replay the red-on-change rule against the day that produced it
+        run: node scripts/notify-main-red.mjs --self-test
 
       # The price drift probe reports into the gaps issue and never fails a job, so nothing else in
       # this repository would notice it going quiet — and going quiet is its most likely failure:
@@ -241,17 +253,22 @@ jobs:
       # `if: failure()` runs when an earlier step in this job failed, which is exactly the set of
       # events worth naming: lint, the archive-drift guard, any of the three data checks, the
       # attribution backtest, or the build.
-      - name: Tell WeChat when main goes red
+      #
+      # But a red RUN is the wrong unit to push on, and 2026-08-17 measured the cost: `main` ran
+      # CI eight times that day and went red eight times, every one of them the same single
+      # failure — a price term the owner had deliberately left red while a second session pushed
+      # commits through. Eight identical pushes for one known fact is how a channel stops being
+      # read. `notify-main-red.mjs` compares this run's failing steps against the previous
+      # completed push on main and pushes on a CHANGE, with one reminder per day while a red
+      # persists — and pushes whenever it cannot tell, because this project's alarms have failed
+      # green twice already (GOTCHAS 29, 34) and both times the shape was a check that could not
+      # reach its subject and said nothing.
+      - name: Tell WeChat when main goes red in a new way
         if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          {
-            echo "**main 上的检查是红的**,而 EdgeOne 合并即发布、不看 CI——所以站已经是这个状态了。"
-            echo
-            echo "提交:\`${{ github.sha }}\`"
-            echo
-            echo "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-            echo
-            echo "红的是哪一项去 run 里看。回滚是一个 revert 的事。"
-          } | node scripts/notify-pushplus.mjs "⚠ 观测台 · main 检查变红"
+          node scripts/notify-main-red.mjs > main-red.md
+          [ -s main-red.md ] || exit 0
+          node scripts/notify-pushplus.mjs "⚠ 观测台 · main 检查变红" < main-red.md
