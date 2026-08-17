@@ -618,3 +618,39 @@ minimal mode + `max` effort),而模板原本每行都硬写「未标注 harness�
 按纪律没有动那棵树 —— 改动全部在 `git worktree` 出来的独立工作区里做(`node_modules` 用
 `cp -Rl` 硬链过去,748M 只花 14 秒;⚠ 软链会让 Turbopack 报
 `Symlink … points out of the filesystem root` 直接 build 失败)。
+
+## [2026-08-17] main 变红的推送改成按「红的集合变化」触发,并把 #93 / #94 合了 `#ops` `#notify`
+
+**owner 的话是「pushplus 一直说 main 检查是红的」。** 先量:今天 `main` 上跑了 **8 次 CI、8 次红**,
+红的**都是同一条**(pro 那个价格 term,owner 自己裁决保留的红),8 次里大多数来自另一个 session
+在快速推 persona 的 commit。⇒ 推送频率跟着**「有人在推代码」**走,而不是跟着**「出了什么事」**走。
+
+这与 8-06 那次十砍四是同一个病从另一头来:那次砍的是「唯一可能的回应是『嗯我看到了』」的通知,
+这次是**同一个回应重复八遍**。机制上,`if: failure()` 的粒度是一次 job 失败,而一个持续存在的
+已知红,它承载的信息量在第二次就是零了。
+
+**改法**:`scripts/notify-main-red.mjs` 比对**失败步骤的集合** —— 与 main 上一次已完成的 push run
+不同才推,相同则每个 UTC 日最多提醒一次;顺带把红的步骤名**写进消息**(旧的只说「去 run 里看」)。
+今天那 8 次按新规则是 **2 次**。**不存任何状态**:每次从 run history 现推,没有缓存会 stale,
+重跑一个旧 commit 也污染不了「上次看到的」。
+
+⭐ **承重的是「读不出来怎么办」**:当前 run 读不到、没有上一次、上一次读不到 —— 三种未知**全部推**。
+29 与 34 两次失灵的形态都是「检查够不到它的对象,于是什么都没说」,所以未知这一支故意吵。
+同理 job 声明了 `actions: read`:少了它 run-history 读 403,退化成**每次都推** = 旧行为,
+是安全的那个方向失败。⚠ 沉默从此表示**没变**,不表示绿了,这句话写进了消息正文。
+
+**self-test 有解释力,不是摆设**:9 条决策断言 + 一条重放今天真实时间线(8 次推 → 断言只出 2 次)。
+把「未知当成安静」这条退化塞回去,对应那条当场转红。已进 CI(`Replay the red-on-change rule
+against the day that produced it`)。
+
+**同一轮把两个 PR 合了**,合之前都在本地把结果验过而不是只看 CI:
+- **#93**(OpenAI 降价,batch 34):本地 test-merge 干净,合并后 `check:price-drift` 从「terra +25% /
+  luna +400% 未解释」变成「28 条全部落在 10% 以内」—— 这正是它要修的。
+- **#94**(batch 35 + 退休 flash term):在 #93 之上重新 rebase 并复跑全套,`describe-change` 仍是
+  0 models 0 moved。
+两次都核对了 PR head SHA 与本地 HEAD 一致再合。⚠ GitHub 当时在 major outage,`gh pr create` 走
+GraphQL 连吃两个 503;改走 REST(`gh api … /pulls -X POST`)建的 #94,建之前先查了一次开着的 PR
+列表确认没有建重。
+
+**`main` 仍然是红的,而且仍然是故意的** —— pro 那条要等身份翻转(36/49)。这次改的是**报警的单位**,
+不是那个红。

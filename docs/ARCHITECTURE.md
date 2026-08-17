@@ -926,6 +926,35 @@ attribution gate, from the scheduled agent, or from a hand-merged pull request �
 in a push to `main`. `describe-change` marks the event with a `<!-- new-models: … -->` line so the
 detection is a diff of the catalog rather than a guess about which workflow ran.
 
+⚠ The table above is the 2026-08-06 cut of four. Three more were added on 2026-08-07 and are not
+listed here; `CHECKPOINT.md` counts seven. Recompute rather than quote either number —
+`grep -rn notify-pushplus .github/workflows scripts` names every push point.
+
+**One of them changed its unit on 2026-08-17: `⚠ 观测台 · main 检查变红` now fires on a change of
+the failing set, not on a red run.** The measurement that forced it: `main` ran CI eight times that
+day and went red eight times, every one of them the same single failing step — a price term the
+owner had deliberately left red while a second session pushed commits through. Eight identical
+alarms for one known fact is the same disease the ten-to-four cut treated, arriving from the other
+direction: not a notification with no possible response, but the same response eight times.
+
+`scripts/notify-main-red.mjs` compares this run's failing steps against the previous completed push
+run on `main` and pushes when the set differs, plus one reminder per UTC day while an unchanged red
+persists. It also names the failing steps in the message, which the old one did not — it said "go
+look at the run". Nothing is stored: the comparison is derived from the run history each time, so
+there is no cache to go stale and re-running an old commit cannot poison a "last seen".
+
+The load-bearing rule is what it does when it cannot tell. An unreadable current run, no previous
+run, or an unreadable previous run all **push**. This project's alarms have failed green twice
+(`GOTCHAS.md` 29 and 34) and both times the shape was a check that could not reach its subject and
+therefore said nothing, so the unknown branch is deliberately noisy. The same reasoning is why the
+job declares `actions: read`: without it the run-history read 403s and every red pushes again —
+the old behaviour, which is the safe direction to fail in. `--self-test` replays the 2026-08-17
+timeline and asserts it produces two pushes rather than nine, alongside the cases that must still
+push, and it runs in CI.
+
+⚠ Silence from this channel means **unchanged**, not green. The message says so, because a reader
+who reads it as "fixed" is worse off than one who never got it.
+
 The Monday heartbeat went with the rest, and that is a real trade the owner made explicitly:
 silence is no longer diagnosable from the phone. A stalled pipeline now shows up as an empty
 Actions history rather than as a missing message. `PUSHPLUS_TOKEN` is a repository secret and, like
