@@ -72,9 +72,18 @@ export default function PersonaLab() {
     [probesText],
   );
   const plannedCalls = probes.length * repetitions;
+  const descriptionLength = description.trim().length;
 
   async function compile() {
     setCompileError("");
+    if (!accessToken) {
+      setCompileError("请先输入访问口令。");
+      return;
+    }
+    if (descriptionLength < 20) {
+      setCompileError(`角色 prompt 至少需要 20 个字符；当前 ${descriptionLength} 个。`);
+      return;
+    }
     setCompileState("running");
     setRuns([]);
     try {
@@ -190,7 +199,7 @@ export default function PersonaLab() {
             </div>
           </label>
           <label className={styles.field}>
-            <span>角色 prompt</span>
+            <span>角色 prompt · 当前 {descriptionLength} 个字符，至少 20 个</span>
             <textarea
               className={styles.promptInput}
               value={description}
@@ -212,7 +221,7 @@ export default function PersonaLab() {
               className={styles.primaryButton}
               type="button"
               onClick={compile}
-              disabled={compileState === "running" || description.trim().length < 20 || !accessToken}
+              disabled={compileState === "running"}
             >
               {compileState === "running" ? "Qwen 正在生成…" : "生成 Encode Persona 候选"}
             </button>
