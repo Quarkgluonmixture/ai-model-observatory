@@ -127,8 +127,17 @@ jobs:
       # The other notification-side assertion. This one replays 2026-08-17's actual shape — one
       # unchanged failing step across eight pushes in a day — and asserts it produces two pushes
       # rather than nine, alongside the cases that must still push: a new failure joining the set,
-      # one leaving it, and either run being unreadable.
+      # one leaving it, and either run being unreadable. It also asserts the stdout contract, which
+      # is what broke on this notifier's first deploy: the caller pushes whatever stdout produces,
+      # so a silent verdict must write nothing at all.
+      #
+      # `always()` because this guards the alarm that fires **when the job is failing**. Every step
+      # after the first red is skipped, so without it this assertion runs only in the one situation
+      # the notifier is never used in. Right now that is not hypothetical: `check:prices` is red by
+      # the owner's standing decision, so everything below it — this included — has been skipped on
+      # every commit since 2026-08-16.
       - name: Replay the red-on-change rule against the day that produced it
+        if: always()
         run: node scripts/notify-main-red.mjs --self-test
 
       # The price drift probe reports into the gaps issue and never fails a job, so nothing else in
