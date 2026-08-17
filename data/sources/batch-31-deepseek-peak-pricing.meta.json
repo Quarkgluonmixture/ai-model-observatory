@@ -19,13 +19,18 @@
       "listPrice": { "input": 0.435, "output": 0.87 },
       "scheduled": { "input": 1.32, "output": 3.96, "effectiveFrom": "2026-08-16" },
       "source": "https://api-docs.deepseek.com/quick_start/pricing/"
-    },
+    }
+  ],
+  "retiredTermsNote": "A scheduled term is a guard with a job, and `check-price-terms.mjs` states the ending itself: 'Re-archive from …, update the record, then retire this term.' The flash term below did all three: batch 33 re-archived the peak row on the effective day and the catalog moved to $0.44/$1.32 when that batch merged (PR #92, 2026-08-17). It is moved here rather than deleted because the announcement is a real published fact, and rather than left in `priceTerms` because a satisfied term does not stay quiet — it starts asserting the opposite. Measured on 2026-08-17 with it still in place: `check-scheduled-prices.test.mjs` failed all three of its assertions on main, because a term whose scheduled price the catalog now quotes reads, to the day-before replay, as a catalog quoting a price before it takes effect. The pro term stays live above: its record has not moved and must not until the identity question in modelIdentityWarning is answered.",
+  "retiredTerms": [
     {
       "modelId": "deepseek-v4-flash",
       "retrievedOn": "2026-08-13",
       "listPrice": { "input": 0.14, "output": 0.28 },
       "scheduled": { "input": 0.44, "output": 1.32, "effectiveFrom": "2026-08-16" },
-      "source": "https://api-docs.deepseek.com/quick_start/pricing/"
+      "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "retiredOn": "2026-08-17",
+      "retiredBecause": "Satisfied. The catalog quotes the scheduled $0.44/$1.32 as of PR #92, evidenced by batch-33-deepseek-peak-pricing read on the effective day."
     }
   ]
 }

@@ -544,3 +544,77 @@ total 1,404 tokens，reasoning trace 长度 0（预期，因为 compiler thinkin
 发布侧另有一条运维事实：EdgeOne Git webhook 没接到最后一次真实 `main` 更新，等待后仍无新部署记录；
 按官方 `CreatePagesDeployment` 以 `ReDeploy + Github + 最新 main` 手动创建 production，最终成功切流。
 收尾验证：`test:persona` 4/4、lint、生产 build、`check:beian` 全通过。
+
+## [2026-08-17] 峰谷计价 flash 那半落地、pro 那半按裁决继续红着，GA 发布表入档 batch 35 `#price` `#archive`
+
+**起点是一条告警**:`main` 的检查红了,而 EdgeOne 合并即发布、不看 CI。查下来红的只有
+`check:prices` 一项,且**不是那两笔 docs commit 造成的** —— 触发它的是一个日期:DeepSeek 的
+峰谷计价 2026-08-16 生效,batch 31 那两条 `scheduled` term 到期自己红,正是 8-13 设计成
+「那天自己红」的行为。补跑了 CI 没跑到的步骤(build / `check:beian` / `check:mobile` 全 exit 0),
+确认**站本身没坏**:`check:prices` 是数据契约闸,不产出页面,它红之后后面的步骤只是没机会跑。
+
+⚠ **真正的代价不在那条红上,在它挡住了什么**:每天 06:20 的 `upstream.yml` 跑同一套契约,
+卡在 `Run the contract` 这一步 ⇒ 既不能自合 tier-A 刷新、也不能开新 PR。8-16、8-17 两天的
+自动刷新事实上停摆,而 8-16 那次它仍然把分支推了出去(#92) —— 硬规则 8 在起作用。
+
+**flash 那半:合了 #92。** 目录价 $0.14/$0.28 → 峰时 $0.44/$1.32,证据是 batch 33 在生效日读的
+定价页。合并后 CI 复核,`check:prices` 只剩 pro 一条。
+
+**然后当场量出一个新坑(→ `GOTCHAS.md` 37)**:改了目录价却没退休那条 term,
+`check-scheduled-prices.test.mjs` 在 `main` 上**三条断言全红** —— 一条被满足的 scheduled term
+不会安静下来,它会对「前一天」的重放断言「目录在生效前就报了新价」。契约自己的报错早写着结局:
+「update the record, **then retire this term**」,**两半是同一件事**。把 flash 那条移进 batch 31 meta 的
+`retiredTerms`(带 `retiredOn` / `retiredBecause`,不是删掉:公告是真实发生过的已发布事实,
+而三个读 `priceTerms` 的脚本只该看见还在生效的),测试从 3 红变成 2 过 1 红,剩下那条红的是
+pro 真的逾期 —— 与 `check:prices` 同一个信号,不是第二个问题。
+⚠ 这个坑此前没被发现,是因为 `check:prices` 在 CI 里排在那个测试**前面**:**一个红把另一个红挡住了**。
+
+**pro 那半:owner 裁决「等」,不翻转。** 先把「还差多少」量成数字而不是感觉 ——
+用仓库自己的 `buildEvidenceIndex` 查 `deepseek-v4-pro-0813` 与 `deepseek/deepseek-v4-pro-0813`
+两种串,GA 证据 **36 格**(LiveBench 23 + Vals 13),稀释地板 **49**,还差 13。
+8-14 记的「今天只有 1 格」已作废:三天涨了 35 格。若此刻硬翻,记录会从 58 格掉到约 36 格,
+按实测格数推算整体覆盖率 67.1% → 约 66.0%。
+**今天能让契约变绿的只有两条路,都是本仓库明令禁止的**:把 GA 的价填进 preview 记录
+(58 格 preview 测量当场挂到 GA 名下,坑 24 要防的正是这个),或删掉 batch 31 那条 term
+(拆守卫,29/34 那一族)。所以它继续红着,这是选择不是遗漏。
+
+**GA 发布表入档:batch 35,0 格变化。** TODO 里那条「要你定:厂商 GA 表怎么入档」卡的只有 URL,
+今天 changelog 的 0813 条目上线了 ⇒ 选项 (a) 解锁。但**它把表发成了 PNG**
+(`/img/v4_260813_benchmark_table_en.png`,整页 0 个 `<table>`)—— 而同一张表在 HF model card 上是
+markdown、被 HF 服务端渲染成页面唯一一个 `<table>`,所以 `capture-release-tables.mjs` 一行不改就能
+正规抓。**「厂商把表发成图」是关于那一个页面的事实,不是关于这张表的**(→ `GOTCHAS.md` 36;
+本仓库的「没有路」判决被推翻次数来到 10)。
+
+逐位核过它就是 owner 8-12 给的那张官方发布图:Flash-0731 那一列九项与官方 changelog 07-31 条目
+完全相同,Pro-Preview 的 HLE 37.7 与目录既有值相同。76 行 / 8 列 / 10 个标签。
+
+**八列一个都不采纳**,全部 file-scoped `modelId: null` —— 这批与 17、32 不同,连厂商自己的
+头牌列都不收,因为 GA 在目录里还没有记录。三个决定值得记下**为什么**:
+- `DeepSeek-V4-Flash-0731`:⚠ 有**全局通配 alias**,不显式挡住厂商表会直接写进 live 记录。
+  按坑 33 先查了格子——terminal 82.7 / deepswe 54.4 / toolathlon 70.3 / ale 25.2 **早就在**,
+  而且来源就是这家自己更早的 model card,**逐位相同**。唯一真空位是 hle-tools(51.5),
+  填它会改动已发布记录,这批刻意不做,留成一格的独立决定。
+- `DeepSeek-V4-Pro (Preview)`:这**就是**目录记录现在装的那个模型,仍然不收。两个理由都是量出来的:
+  `modelWindows` 的 validUntil 是 2026-08-12 而这些行带 08-13,alias 写了也是 inert;
+  且这张表**改写了它自己 preview 的数** —— Toolathlon 55.9(目录 model-card 行是 51.8,
+  官方板 55.86)、Terminal 72.1(归档里 AA 64.79/64.04、Vals 50.187)。厂商在后一篇发布里
+  修订自己早先的数字,该带着日期躺在归档里,不该覆盖已发布格。
+- `GLM-5.2` / `Kimi K3`:同样有全局通配 alias,这两条 null 是**承重的**,不是装饰。
+
+**脚本改动只有两个可选字段**(`adoption` / `rowNote`),让 meta 与行的模板不必对自己的批次
+说假话——这批的表不是客户端渲染的、厂商也**罕见地给了 harness 与 effort**(Note 1:DeepSeek Harness
+minimal mode + `max` effort),而模板原本每行都硬写「未标注 harness、reasoning effort」。
+按脚本自己的保证做了回归:重跑 qwen3.8 与 glm52,jsonl **逐字节相同**,两个 meta 除 `retrievedDate`
+外 note 一字未变(retrievedDate 已还原)。
+
+**契约**:ingest(生成文件零变化)· lint · check:data(29 models / 2170 obs / **1401-2088 · 67.1%**,
+与改前一致)· check:models(322/324 backed)· build · check:beian(4 routes)· 归属回测
+(331 条人工判断,0 contradicted;trap set 21 条 0 误映)· 三个 self-test(evidence / aa / archive)·
+两个通知侧 self-test 全绿。`check:prices` 红 = pro 那一条,与 `main` 上完全相同。
+`describe-change` 报 **0 models / 0 moved**。
+未在本机跑 `check:mobile`:这次没有动任何 UI 或生成数据,CI 会替它跑两条路由。
+
+**并发**:本轮全程另一个 session 在同一棵工作树上做 `/persona` 的生产发布并往 `main` 推 commit。
+按纪律没有动那棵树 —— 改动全部在 `git worktree` 出来的独立工作区里做(`node_modules` 用
+`cp -Rl` 硬链过去,748M 只花 14 秒;⚠ 软链会让 Turbopack 报
+`Symlink … points out of the filesystem root` 直接 build 失败)。
