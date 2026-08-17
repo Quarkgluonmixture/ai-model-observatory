@@ -1,0 +1,14 @@
+{
+  "batch": "33 · DeepSeek peak prices in force, read 2026-08-16",
+  "retrievedDate": "2026-08-16",
+  "collectedWith": "curl of the vendor pricing page (server-rendered, no CDP needed), table parsed from the HTML; the same page batch 31 announced from",
+  "schema": "Model operating parameters, NOT benchmark scores. Price evidence only: two rows, one per model, quoting the PEAK row of the peak/off-peak table. No benchmark observation in this file.",
+  "sources": ["https://api-docs.deepseek.com/quick_start/pricing/"],
+  "note": "The rate card batch 31 declared as scheduled took effect at 16:00 UTC on 2026-08-16; this read is from 09:44 UTC the same day, so the page still renders the old flat table above the new one, joined by the page's own footnote, verbatim: 'DeepSeek API pricing will be updated to peak / off-peak billing, with off-peak rates at half the peak rates. Peak hours are 01:00 - 04:00 and 06:00 - 10:00 UTC (all other hours are off-peak). The new prices take effect at 16:00 UTC on August 16, 2026, as follows:'. The quoted rows come from the new table. Identity is pinned by the page itself: the MODEL VERSION row reads 'DeepSeek-V4-Flash-0731 | DeepSeek-V4-Pro-0813', so both bare column names mean the GA releases in service — GOTCHAS 24 criterion 2 confirmed in the source's own words. The catalog quotes peak as list per batch 31's quotingRule: peak is the undiscounted rate, off-peak is a conditional tier.",
+  "tiersNotArchived": {
+    "deepseek-v4-flash": "Off-peak (all hours outside 01:00-04:00 and 06:00-10:00 UTC): $0.007 input cache-hit, $0.22 input cache-miss, $0.66 output per 1M tokens — unchanged from batch 31's declaration, re-read today.",
+    "deepseek-v4-pro": "Off-peak, same windows: $0.022 input cache-hit, $0.66 input cache-miss, $1.98 output per 1M tokens — unchanged from batch 31's declaration, re-read today."
+  },
+  "identityDisposition": "deepseek-v4-flash: aliased (file-scoped) and quoted — the record IS the 0731 GA the page names, so its price follows the rate card. deepseek-v4-pro: archived but deliberately UNMAPPED — the record holds the April preview and the page prices the 0813 GA; modelWindows refuses the dated row, which is the designed outcome. The pro entry of batch 31's priceTerms is left in force and failing on purpose, per the owner's standing instruction (TODO 2026-08-13: identity first, price follows identity; when they disagree the check stays red, it does not get a GA price typed onto a preview record).",
+  "priceTerms": []
+}
