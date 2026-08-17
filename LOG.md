@@ -525,7 +525,7 @@ EdgeOne 会忽略空提交：第二个 `--allow-empty` 发布提交没有生成�
 
 ## [2026-08-17] `/persona` production 验收完成：中文口令、快速编译、直接实验全链可用 `#ship` `#measure` `#incident`
 
-production 最终状态接口返回 `configured=true` / `protected=true` / `qwen3.7-flash` / 
+production 最终状态接口返回 `configured=true` / `protected=true` / `qwen3.7-flash` /
 `compiler-v2.2-web`，`/persona` 200 且带 ICP 备案。错误口令实测 401；中文口令「大狗」经浏览器
 URL 编码后通过鉴权并进入输入校验，证明不是伪通过。
 
