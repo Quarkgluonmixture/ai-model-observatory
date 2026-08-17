@@ -466,3 +466,40 @@ Next 只按**精确路径**服务 `public/`。本地生产构建实测:`/deepsee
 - `lint` / `check:data` / `check:models` / `check:prices` / `check:beian` 全 exit 0。
   `public/deepseek/**` 进了 eslint 的 globalIgnores:那是别的项目的 esbuild 产物,
   在这里报出来的是别人的风格,而且这边没有任何能动它的手。
+
+## [2026-08-17] `/persona`:Qwen 默认候选生成 + 受保护的直接实验看板 `#ship` `#decision` `#measure`
+
+**需求**:原来的本地 Encode Persona Dashboard 把 Codex/人工导入放在默认路径；owner 现在明确要
+**Qwen 默认生成**，并把同一条候选筛选→模型实验链挂到 `quarkspace.top/persona` 随时使用。
+
+**实现**:
+- `/persona` 是新的 Next 路由，CSS 全在自己的 module；首页导航多一个入口，根 layout 自动带 ICP。
+- `/api/persona/compile` 用 workspace 专属 OpenAI-compatible endpoint 调 `qwen3.7-flash`，先出
+  source-quoted fact ledger，再出 2–5 个同语言不同粒度候选。候选必须过 wrapper/tag/profile/
+  explicit-fact coverage 与粒度顺序校验才会回到浏览器。
+- `/api/persona/run` 只发送 `system=选中候选` + `user=当前探针`，不暗加「立即入戏」类指令；
+  单请求最多 6 calls、并发 2，保存精确 messages / raw response / usage / `reasoning_content` / content，
+  并用与研究 harness 同版词法逻辑算 PAL/MRR/ICRR/DPE。浏览器 history 是 localStorage，
+  **不是** SQLite/JSONL 的替代品。
+- Qwen key 只在服务端环境变量；API fail-closed，另收 `PERSONA_ACCESS_TOKEN`。owner 指定生产口令
+  「大狗」；它可猜，所以消费上限仍是承重保护，后续换口令不需改代码。
+- 本地 Python Dashboard 同步把 Qwen 自动编译抬到默认面，Codex/人工导入移进「高级」折叠，
+  DeepSeek/Qwen 的候选实验路径不变。
+
+**为什么不是把 Python Dashboard 原样部署**:`quarkspace.top` 是 EdgeOne 的 Next 全栈部署，
+本地 harness 的 SQLite + JSONL 文件系统语义不能假装在 serverless 上持久存在。线上版因此只承担
+compile / 筛选 / 小型直接 probe / JSON 导出；完整可恢复实验与重算指标仍以 Python harness 为真源。
+
+**实测** `#measure`:
+- 真实 Qwen compile:HTTP 200、结构校验 true、29,826ms；输入很小的布奇样例仍用
+  prompt 786 / total 5,038 / completion 4,252 tokens（其中 reasoning 3,617），生成 canonical 11 行、
+  compact 6 行。这证明调用链和校验真的走到了模型，也说明 thinking compile 不是零成本。
+- 选 canonical 跑「你是谁」:HTTP 200、5,051ms，同时拿到非空 `reasoning_content` 与 content；
+  初始词法指标按保守规则给 PAL 668 / MRR 0 / ICRR 0 / DPE false，**未把没识别出的角色内 span
+  猜成高分**。
+- `test:persona` 3/3；全量 Python harness 24 pass + 2 integration skip；`lint`、生产 `next build`、
+  `check:beian` 全 exit 0。手机生产构建在 320/390/430px 均 document=viewport、零字号/触控告警。
+
+**尚未外发**:EdgeOne 控制台没有可用浏览器会话，本机也没有已关联的 EdgeOne CLI；生产环境变量
+必须在控制台配置。Git push 按操作合同必须先拿 owner 明确许可；两步留在 `TODO.md`，没有把本地通过
+写成「线上已可用」。

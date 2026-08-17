@@ -12,7 +12,7 @@ Read `docs/ARCHITECTURE.md` before making structural or data changes.
 what may be done unsupervised, what must be handed back for approval, and the five mistakes that
 have already been made here — all of which passed every automated check.
 
-## Two sites share this repo
+## Three product surfaces share this repo
 
 - **`/` is the owner's personal site** (job-hunting portfolio). Its files are `app/page.tsx`,
   `app/home-content.ts`, `app/home.module.css`, `public/shots/`. Copy lives in
@@ -21,6 +21,11 @@ have already been made here — all of which passed every automated check.
 - **`/models` is the observatory** — `app/models/page.tsx` (+ `app/models/layout.tsx` for its
   title, since the page is a client component). Everything else in this file is about the
   observatory.
+- **`/persona` is Persona Lab** — `app/persona/` owns its client UI, protocol types, validation,
+  activation heuristics, and scoped CSS module; `app/api/persona/` owns the protected Qwen
+  compiler and probe routes. It reads no observatory data and must not put styles in
+  `app/globals.css`. Its server-side Qwen key and access token come only from environment
+  variables; neither may reach browser storage, API responses, or Git.
 - The personal site touches **no** data file: not `data/sources/`, not
   `observations.generated.ts`, not `model-data.ts`. Changing it does not require
   `check:data` / `check:models` / `check:prices` — only `lint` and `build`.
@@ -39,8 +44,8 @@ have already been made here — all of which passed every automated check.
   reaches `main`, and no PR is opened either. Failing closed is right, but know the direction:
   the portfolio can stop the pipeline. Send personal-site changes through a pull request and read
   CI before merging; EdgeOne publishes on merge regardless of what CI said.
-- `scripts/check-mobile.mjs` defaults to `/models` for this reason — pointed at `/` it would pass
-  on the personal site while a phone regression sat one route over. Pass a URL to probe `/`.
+- `scripts/check-mobile.mjs` defaults to `/models` for this reason — pointed at another route it
+  would pass while a phone regression sat one route over. Pass a URL to probe `/` or `/persona`.
 
 **And one thing belongs to neither site.** `app/site-beian.tsx` (+ its CSS module) renders the ICP
 filing number, and `app/layout.tsx` renders it after `{children}` so it lands on **every** route.
@@ -51,8 +56,8 @@ Three rules on it, all of them the kind that fail silently:
 - **Do not delete or reword the number**, and do not swap the service number (`…号-1`) for the bare
   entity number. If a filing changes, `docs/ARCHITECTURE.md` §6 says which is which.
 - **Its colours are literal, deliberately.** It renders above both palettes, and inside `.home` the
-  globals.css variables are still in scope, so reading either set paints it wrong on one of the two
-  sites. Its bottom clearance for the phone rail rides on `:global(.shell) ~ .strip`.
+  globals.css variables are still in scope, so reading a route palette can paint it wrong on
+  another surface. Its bottom clearance for the phone rail rides on `:global(.shell) ~ .strip`.
 
 ## Mission
 
@@ -368,6 +373,7 @@ official pages for precision, not because LMArena is wrong.
 | `app/models/page.tsx` | Rankings, coverage semantics, radar, bilingual UI |
 | `app/upstream-variants.ts` | What upstream serves that is not a model (`:variant`, `(batch)`, `(Fast)`) — one home, imported by the live route and by two scripts. Import it with the `.ts` extension from `route.ts` |
 | `app/page.tsx`, `app/home-content.ts`, `app/home.module.css` | The personal site at `/` — no data files, see above |
+| `app/persona/`, `app/api/persona/` | Persona Lab at `/persona`: Qwen candidate compiler, protected direct probes, browser-local history, and activation metrics |
 | `app/site-beian.tsx`, `app/site-beian.module.css` | The ICP filing footer, rendered from the root layout onto every route — see above and `docs/ARCHITECTURE.md` §6 |
 | `data/deployment.json` | Where production is, so `check:deployment` can verify it serves what `main` says |
 | `app/globals.css` | Visual system, type scale, breakpoints, phone layout |

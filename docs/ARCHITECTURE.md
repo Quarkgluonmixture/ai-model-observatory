@@ -18,11 +18,14 @@ flowchart TD
     H[OpenRouter models API] --> I[Live price route]
     I --> F
     J[Bundled price snapshot] --> F
+    P[Natural-language persona] --> Q[Protected Qwen compiler]
+    Q --> C[Validated Encode Persona candidates]
+    C --> X[Direct probe runner and activation inspector]
     K[GitHub main] --> L[GitHub Actions CI]
     L --> M[EdgeOne Pages deploy]
 ```
 
-The application has two data paths:
+The application has three independent data paths:
 
 1. Versioned benchmark evidence, generated from the `data/sources/` archive into
    `app/observations.generated.ts` and combined with the seed rows in `app/model-data.ts`.
@@ -30,6 +33,11 @@ The application has two data paths:
    the catalog. The card shows the archived list price, and the provider's current figure
    appears beside it only where the two disagree — a disagreement is a collection signal, not
    a number to display. See §6.
+3. A protected Persona Lab path through `app/api/persona/`: Qwen produces multiple candidate
+   encodings, deterministic grammar validation gates experiments, and a selected encoding is
+   sent unchanged with each probe. The server returns exact prompt provenance, observable
+   `reasoning_content`, final content, usage, and heuristic PAL/MRR/ICRR/DPE. Browser-local history
+   is convenience storage, not the observatory archive or the full SQLite/JSONL research harness.
 
 Current scale: **29 model families, 72 benchmarks, 1773 observations across 1090 of 2088 cells**,
 sourced benchmark-native 880 / independent 703 / vendor 190. **318 of 321 catalog numbers are
@@ -43,7 +51,9 @@ run rather than hidden.
 | `app/model-data.ts` | Model metadata, benchmark taxonomy, observations, derived scores, source cards |
 | `app/models/page.tsx` | The observatory itself: client state, rankings, coverage, radar, line charts, tables, language switching |
 | `app/models/layout.tsx` | Its title — the page is a client component and cannot export metadata |
-| `app/page.tsx` + `app/home-content.ts` + `app/home.module.css` | The owner's personal site at `/`. Reads no data file; see AGENTS.md "Two sites share this repo" |
+| `app/page.tsx` + `app/home-content.ts` + `app/home.module.css` | The owner's personal site at `/`. Reads no data file; see AGENTS.md "Three product surfaces share this repo" |
+| `app/persona/` | Persona Lab at `/persona`: client workbench, protocol types, candidate validation, activation segmentation, and scoped styles |
+| `app/api/persona/` | Fail-closed Qwen compile/run/status routes. Server-side `QWEN_API_KEY`; separate `PERSONA_ACCESS_TOKEN`; no persistent server storage |
 | `app/layout.tsx` | Root layout: the one mono webfont, the viewport contract, and the ICP strip on every route |
 | `app/site-beian.tsx` + `app/site-beian.module.css` | The ICP filing footer. Belongs to neither site — see §6, and do not move it into a page |
 | `app/api/live-models/route.ts` | OpenRouter price/context lookup, short-lived cache, and the folded "new upstream" note |
@@ -434,7 +444,7 @@ ai-model-observatory-lhi0hg2y.edgeone.cool   EdgeOne's own default domain, same 
 ```
 
 Measured once both were bound: all three hosts answer `200` with a clean TLS verify, and the ICP
-number renders in the **server-side** HTML of both `/` and `/models` on both custom hosts — a 2×2
+number renders in the **server-side** HTML of `/`, `/models`, and `/persona` on both custom hosts
 matrix, not one spot check. Server-side matters: whoever checks the filing may not run JavaScript.
 The apex and `www` each serve independently; neither redirects to the other.
 
