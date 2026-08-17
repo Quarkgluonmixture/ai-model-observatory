@@ -46,3 +46,7 @@ docs/cross-ai-audits/
 
 # `tsc --noEmit` with incremental:true leaves this behind. Build cache, not source.
 tsconfig.tsbuildinfo
+
+# Tencent Cloud EdgeOne CLI state and build output.
+.edgeone/
+.tef_dist/
