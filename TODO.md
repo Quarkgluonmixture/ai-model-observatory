@@ -99,6 +99,10 @@ preview,名字是对的。
 - [ ] **等 GA 读数够到地板再翻转 `deepseek-v4-pro`。** 2026-08-17 实测 **36 格**(LiveBench 23 +
       Vals 13,复算 = 用 `buildEvidenceIndex` 查 `deepseek-v4-pro-0813` 与 `deepseek/deepseek-v4-pro-0813`
       两种串),地板 **49**,还差 13 —— 8-14 记的「只有 1 格」已作废,三天涨了 35 格。
+      ⚠ **2026-08-18 实测:仍是 36,24h 零增长,且是被自己停的** —— 36 格的供给方
+      (LiveBench 23 + Vals 13)正是被 pro term 卡停的每日刷新;`upstream.yml` 每早照抓、
+      契约步丢弃。**「等数据」与「要它红」互锁**:除非 DeepSeek 给裸名改版(Flash 先例)、
+      刷新链之外的新源发 GA 分、或提前翻转/改门,这个数不会再动。
       ⚠ 别指望厂商发布表帮着够地板:证据计数器**按设计把 release-capture 批次整批排除**
       (`upstream-evidence.mjs` 的 `releaseCapture`),所以 batch 35 一格都不算。
       ⚠ Vals 那 20 行里有 7 行落在目录**没开的列**上,开那些列会同时把分母抬上去,不是捷径。
@@ -184,6 +188,12 @@ preview,名字是对的。
       （`openai-gpt-5-5-2026-04-23-high`、`google-gemini-3-1-pro-preview`）现在按两个带日期的快照
       处理、不映射。**如果 ARC 之后把旧快照撤下、只剩一条**，那就该映射了 —— 值得偶尔回头看一眼，
       代价是 ARC-AGI-3 的两格（0.43 / 0.42）。判据和证据写在 `data/model-aliases.json` 的 `_doc`。
+- [ ] 结构性、记着别当新发现:**`report:gaps`「Worth collecting」的 mrcr / charxiv / imo-answer /
+      hle-tools 四条,2026-08-18 逐源审计对各自点名的模型已穷尽**。供给源全是冻结物且未过滤
+      (batch 17 整表 465 行、batch 32 整表 123 行,均 `filtered: false`;imo-answer 的另一源
+      IMO-Bench 论文 Table 4 是 2025 年的 13 个旧模型)—— 等待的 2026 模型不在任何一张表里,
+      scripted 源里也没有 mrcr / charxiv 的活板。那些格子只能等**新源发布**,不是「重读」能补的;
+      issue 里那句 "re-reading it may add models" 对这四条不成立,别照着它再去翻一遍冻结帖。
 
 ## 自动化
 

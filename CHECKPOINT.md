@@ -128,8 +128,12 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 1. ⏰ **`check:prices` 红着,而且要它红着** —— 见接手点。⚠ 它同时**卡住每天的 `upstream.yml`**,
    所以「让它红着」是有持续代价的选择,不是零成本的等待。
-2. **`deepseek-v4-pro` 的 GA 读数往上爬**(8-17 实测 **36 格 / 地板 49**,三天从 1 格涨上来)。
-   够到地板才翻转,动作四步写在 `TODO.md`;⚠ 照 `GOTCHAS.md` 24 的顺序,**先 alias 再目录**。
+2. **`deepseek-v4-pro` 的 GA 读数停涨了,而且是结构性的停**(8-17/8-18 均实测 **36 格 / 地板 49**;
+   1→36 的爬升全部发生在 8-16 前最后几次绿刷新里)。⚠ 36 格的供给方(LiveBench 23 + Vals 13,
+   全是 scripted live 源)正是被 pro term 停掉的每日刷新 —— `upstream.yml` 每早照抓、契约步丢弃
+   ⇒ **「等数据」与「要它红」互锁,读数不会再自己涨**。出路只有三条:DeepSeek 给裸名改版
+   (Flash 先例)/ 刷新链之外的新源发 GA 分 / 提前翻转或改门。够到地板才翻转,动作四步写在
+   `TODO.md`;⚠ 照 `GOTCHAS.md` 24 的顺序,**先 alias 再目录**。
    ⚠ 厂商发布表(batch 35)**不算进这 36**——证据计数器按设计整批排除 release-capture。
 3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——
    挂了应当是**大声 throw**(六条断言),不该是"看板变小了"。见 `docs/ARCHITECTURE.md` §9。
