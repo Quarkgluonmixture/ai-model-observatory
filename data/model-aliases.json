@@ -2058,6 +2058,62 @@
       "file": "batch-35-deepseek-v4-pro-ga-release",
       "modelId": null,
       "reason": "Competitor column, refused for the same reason as the others, plus one of its own: `(w/ fallback)` names a serving arrangement rather than an operating point, and this catalog has no dimension for it. Even if the competitor rule were relaxed, this string could not be filed against a configuration."
+    },
+    {
+      "modelRaw": "GLM-5.3",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Z.AI's own column, and still refused: the catalog holds no glm-5.3 record, and the evidence counter excludes release-capture batches by design, so this table can never by itself clear the cell floor. Banked evidence for the day an independent board measures GLM-5.3 -- same stance as batch 35 for the DeepSeek GA strings. The file-scoped null also beats any future global alias: adopting this batch is a decision someone must make on purpose, not a side effect of the record being created."
+    },
+    {
+      "modelRaw": "GLM-5.2",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Batch 36 is Z.AI's GLM-5.3 release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17/32/35 entries. ⚠ GLOBAL wildcard alias exists, so this refusal is load-bearing rather than decorative: without it a competitor column in Z.AI's post would write straight into an existing catalog record."
+    },
+    {
+      "modelRaw": "Kimi K3",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Batch 36 is Z.AI's GLM-5.3 release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17/32/35 entries. ⚠ GLOBAL wildcard alias exists, so this refusal is load-bearing rather than decorative: without it a competitor column in Z.AI's post would write straight into an existing catalog record."
+    },
+    {
+      "modelRaw": "Qwen3.8-Max",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Batch 36 is Z.AI's GLM-5.3 release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17/32/35 entries. ⚠ GLOBAL wildcard alias exists, so this refusal is load-bearing rather than decorative: without it a competitor column in Z.AI's post would write straight into an existing catalog record."
+    },
+    {
+      "modelRaw": "Opus 4.8",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Batch 36 is Z.AI's GLM-5.3 release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17/32/35 entries. ⚠ GLOBAL wildcard alias exists, so this refusal is load-bearing rather than decorative: without it a competitor column in Z.AI's post would write straight into an existing catalog record."
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Batch 36 is Z.AI's GLM-5.3 release table and it prints a column per competitor. Those numbers are archived as evidence and refused here: a maker publishing a rival's score states no harness, no reasoning effort and no run date, so it ranks below any board that does. Same decision as the batch-17/32/35 entries. ⚠ GLOBAL wildcard alias exists, so this refusal is load-bearing rather than decorative: without it a competitor column in Z.AI's post would write straight into an existing catalog record."
+    },
+    {
+      "modelRaw": "DeepSeek-V4 Pro-0813",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Competitor column. No alias resolves this spelling today (the space before 0813 is new), so this entry changes nothing now and is written anyway: batch 35 refused the same maker's GA strings explicitly so that the record-identity flip (GOTCHAS 24) would have to lift a written refusal rather than inherit the rows silently. Same here."
+    },
+    {
+      "modelRaw": "Fable 5 (w/ fallback)",
+      "effort": "*",
+      "file": "batch-36-glm53-release",
+      "modelId": null,
+      "reason": "Competitor column, refused for the same reason as the others, plus one of its own: (w/ fallback) names a serving arrangement rather than an operating point, and this catalog has no dimension for it. Same decision as batch 35's identically-qualified string."
     }
   ],
   "benchmarkSplits": [
@@ -2338,6 +2394,10 @@
       ],
       "file": "batch-32-glm52-release",
       "reason": "Z.AI 的发布表里未进目录的九个标签,理由分四类,写在这里免得下一代发布时重新推导一遍。(1) 目录没有这一列:AIME 2026 / HMMT 两行 / NL2Repo。(2) 混指标:ProgramBench 63.7 —— 这一列上目录同时holds 官方榜的 0 与 Vals 的 0.5,相差六十多分,再加一个厂商表读数不解决任何问题,该列的口径是 TODO 里未决的判断题。(3) 不是可比的列:Terminal Bench 2.1 Best Reported Harness 82.7 每一格的 harness 都不同。(4) 不同版本或不同 split:FrontierSWE Dominance as of 26/6/16 是六月快照而目录那列是 2026-07 榜;MCP-Atlas Public Set 76.8 与目录 mcp-atlas 的官方 77.8 不是同一个 split;Tool-Decathlon 48.2 与目录 toolathlon Verified 的 59.88/59.9 差 20%,同样不是一个 split。"
+    },
+    {
+      "benchmark": "Agents' Last Exam ALE-CLI",
+      "reason": "The CLI track of Agents' Last Exam, not the full ALE the ale column holds. On Z.AI's GLM-5.3 release table (batch 36) Qwen3.8-Max 27.0 matches the official board's 26.97, but GPT-5.6 Sol 28.6 vs official 30.59 and GLM-5.2 23.8 vs official 20.39 do not -- same name, different split, the OSWorld-Verified shape. A single corroborating cell is not adoption evidence when two others contradict. If ALE ever publishes a separate CLI leaderboard worth a column, lift this entry first."
     }
   ],
   "versionFallbacks": [
