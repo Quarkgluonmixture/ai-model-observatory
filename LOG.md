@@ -731,3 +731,18 @@ abandon the archive refresh*)—— `check:prices` 在 refresh job 里是这条�
 (`ci.yml` 上仍然硬红)。
 
 **本班没动数据、没动 CI。** 改的只有四件套里的记录:上面三条纠正 + `GOTCHAS.md` 40 / 41。
+
+**同日后续 —— owner 裁决下来,上面那句「本班没动 CI」作废。** 两件都定了:
+① **记录身份 = 原地翻转成 GA**(Flash 形状,29 个模型,66.0%);
+② **refresh 的 contract 把 `check:prices` 降成只报**,`ci.yml` 仍然硬红。
+
+②**已改**(`upstream.yml` 的 `Run the contract`:`|| echo "::warning::…"`)。选择不对称的理由写进
+步骤注释:这个检查的两个输入都是手写的、**零个写者**,而 tier-A refresh 的 footprint 只有
+`data/sources/` 的行加生成产物 ⇒ 它**不可能**改变判定,那么拿它拦入档就是**为一件档案没造成的事
+惩罚档案**。硬红留在 `ci.yml`,因为那才是「站上正在报什么价」该喊的地方。
+⚠ 量过之后没有一刀切:`check:prices` 一共三个闸门调用点,**只降了 refresh 这一个**。
+`attribute-and-merge.sh` 同样是假依赖(只写别名),但它挡的是自动写别名、风险面更大,立成待决;
+`add-model-and-merge.sh` **该留着硬闸** —— 它写 `app/model-data.ts`,那正是 `check:prices`
+的输入之一,新记录的 id 撞上一条 term 的 `modelId` 就会开始被比较,**它真的能改变判定**。
+⇒ 一般化:**「这是假依赖」是逐个调用点的结论,不是关于这个检查的结论** —— 同一个 `npm run` 在
+不同 footprint 底下,有的够不到、有的够得到(同族:坑 21 那句「grep 哪条检查真的够得到它」)。

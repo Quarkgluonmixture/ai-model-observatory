@@ -119,24 +119,17 @@ preview,名字是对的。
 - [ ] **或者等 DeepSeek 自己把裸名条目改名**(它给 Flash 就是这么做的:裸名后来变成 `0423`)。
       改了就照抄,零发明。
 
-## ⭐ 要你定:refresh 的 contract 要不要把 `check:prices` 降成只报(2026-08-19)
+## 价格 term 红着还挡住谁(2026-08-19 只解了一半)
 
-**这是让「保留一个红」不再等于「全目录停止采集」的那一改。** 实测与理由在 `LOG.md` 2026-08-19 条 ④。
+refresh job 那一半**已定并已改**(降成只报,`ci.yml` 仍硬红,理由与实测在 `LOG.md` 2026-08-19)。
+剩下的是**另外两个仍然硬闸**的调用点,值得单独定,别顺手改:
 
-- 机制:`upstream.yml` 的 refresh job 里 `Run the contract` 跑 `check:prices`,红 ⇒
-  `Commit a tier-A refresh straight to main` 被 skip ⇒ 每早抓完的活板数据全部丢掉。
-- **这是一条假依赖**:`check-price-terms.mjs` 只读 meta 里**手写**的 `priceTerms` 和
-  `app/model-data.ts` 里**手写**的 `MODELS[].price`,`grep -rn 'priceTerms' scripts/ .github/`
-  只有三个读者、**零个写者** ⇒ 一次 tier-A refresh 不可能改变它的判定。
-- 而 `upstream.yml` 自己对 `check:price-drift` 与 `check:deployment` 已经用了相反的原则
-  (只报不失败,原文 *a price the vendor moved is a fact somebody needs, not a reason to abandon
-  the archive refresh*)—— `check:prices` 是这条原则唯一的例外。
-- 代价现在是可量的(2026-08-19 实测,复算 = `FETCH_TIMEOUT_MS=60000 npm run check:upstream`):
-  **152 格**待入档(LiveBench 46 · Epoch 34 · GDPval-AA 36 · Vals 27 · FrontierMath 6 ·
-  LMArena 2 · ALE 1),外加本文件里等着观察的两件(归属闸门接 `deepseek-v4-flash-0731` ——
-  它的 ARC 三行今天就在待入档里 —— 和 `--any-open` 第一次生效)。
-- 折中写法:refresh 的 contract 里 `check:prices` 改成打印 + `|| true`,`ci.yml` 上**仍然硬红**
-  (那才是「站上的价格不对」该喊的地方)。⚠ 改 CI 语义是独立的活,和下面那条重排一起定。
+- [ ] `scripts/attribute-and-merge.sh:48` —— 归属闸门只写 `data/model-aliases.json`,
+      **改不了 `check:prices` 的判定**(同样是零写者),所以它也是一条假依赖。
+      ⭐ 但它挡住的是**自动写别名**,风险面比 refresh 大,单独定。
+- [ ] `scripts/add-model-and-merge.sh:68` —— **这一条该留着硬闸**:它写 `app/model-data.ts`,
+      而那正是 `check:prices` 的输入之一(新记录的 id 撞上一条 term 的 `modelId` 就会开始被比较)
+      ⇒ 它**真的**能改变判定。记在这里是为了别把三个调用点当成同一件事一刀切。
 
 ## ⭐ 要你定:红着的时候 CI 只跑前 9 步,要不要重排(2026-08-17)
 
