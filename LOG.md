@@ -746,3 +746,67 @@ abandon the archive refresh*)—— `check:prices` 在 refresh job 里是这条�
 的输入之一,新记录的 id 撞上一条 term 的 `modelId` 就会开始被比较,**它真的能改变判定**。
 ⇒ 一般化:**「这是假依赖」是逐个调用点的结论,不是关于这个检查的结论** —— 同一个 `npm run` 在
 不同 footprint 底下,有的够不到、有的够得到(同族:坑 21 那句「grep 哪条检查真的够得到它」)。
+
+## [2026-08-19 第二轮] 裁决落地:`deepseek-v4-pro` 原地翻转成 GA,守卫从日期换成串 `#decision` `#ship` `#measure` `#incident`
+
+裁决 = **原地翻转**(Flash 形状,29 个模型)。上面第一轮的三条实测就是它的依据,这里只记**做的时候
+才知道的事** —— 有四件,其中两件是差点做错的。
+
+**① 差点把窗口反过来写,那会静默删掉 GA 自己的 23 格** `#incident`
+`TODO` 原本写「撤 `modelWindows`」,而更"稳"的做法看起来是把 `validUntil: 2026-08-12` 反过来写成
+`validFrom: 2026-08-12`(拒收 GA 之前的行)。⚠ **实测这会删掉 23 格**:LiveBench 把两个 release
+**印在同一个冻结发布日下面** —— 裸串 23 行 + `-0813` 23 行,`evaluation_date` **全是 2026-06-25**,
+早于 GA 上线三个月。窗口按 `modelId` 键、按日期比,**分不出这两拨**。
+⇒ 守卫**换种类**:十个裸串写成**全局** `modelId: null`(带理由),`-0813` 串写显式 alias。
+两个**不分列**的源走 file-scoped,判据写进 reason:DeepSWE 那行 62.8(厂商 GA 表 62.7 / preview 12.8,
+判据 1)· 定价页自己的 MODEL VERSION 行印着 `DeepSeek-V4-Pro-0813`(判据 2)。
+`archive.mjs --self-test` 从 5 条变成 **20 条**,第一条就是这个陷阱。⇒ 坑 **42**。
+⚠ 窗口机制**留着**(`modelWindows` 现在是空数组):下一个源不分列的家族只剩日期这一个把手。
+它靠一个**合成 config** 继续被跑到。
+
+**② 「全局拒收」是这个仓库的新形状,顺出两个够不到的地方** `#incident`
+以前 `modelId: null` **只有 file-scoped** 用过(厂商发布表里的竞品列)。全局拒收一上,两处露馅:
+- `isRefused()` 第一行就是 `if (!file) return false` ⇒ 132 行 preview 会永久出现在 gaps issue 的
+  「Archived rows waiting on a catalog model」里 —— 正是那个 file-scoped 分支写下来要防的
+  「永久的、没法动手的一行」,从另一个门进来。已扩成两个 scope。
+- **证据计数器把 11 格 preview 的格子记在 GA 记录名下**(frontierswe / critpt / ale / hle-no-tools /
+  scicode / aa-lcr / tau3-banking / ifbench / frontiermath ×2 / toolathlon),self-test 当场红。
+  ⚠ 备选是**给它挂 11 格 pin**,我没这么做:那等于**在这条记录三分之一的面积上把 over-count 闸门
+  关掉**,去藏一个两个文件之外就有机器可读答案的事实。改成让计数器认**全局**拒收(file-scoped 的
+  不认 —— 那只是说「不从这个源」,而这个计数器没有源这一维)。mean recovery 70% → **68%**(地板 60)。
+  ⚠ 副作用记着:这条记录自己的 recovery 变成 **0%**,因为 self-test 拿 `[model.id, model.name]`
+  当 needle,而它俩现在都是被拒的串。**这是真的**,不是 bug:这条记录的证据发在另一个串上。
+
+**③ `PROVIDER_LOOKUPS` 那一行是承重的,契约全绿也发现不了** `#incident`
+翻完九项全绿,`report:gaps` 却把 **`deepseek/deepseek-v4-pro-0813` 报成「目录没有的上游模型」**,
+还列了 23 格「它能填」—— 那 23 格已经在看板上,headline 13 变 14。
+机制:gaps 的「已有」过滤器 = `PROVIDER_LOOKUPS` 的值 + 各记录 `id`,用 `sameFamily` 比,而
+`sameFamily` **不把日期后缀当 operating point**(对的,后缀常是另一个模型)。改法一行:
+lookup 指向 `-0813`(**Flash 早就是这个形状,就在上面一行**)。同一行还喂着实时价格对比 ⇒
+指着 preview 就是拿 GA 的 $1.32/$3.96 去对四月的价。⇒ 坑 **43**。
+⇒⇒ 动一条记录的身份,要把**「谁按 id 认这条记录」全找出来**:lookup、alias、计数器的 needle。
+
+**④ 两条 price term 同一次全退休 ⇒ 那个「拒绝空过」的测试红了,这是它在工作** `#incident`
+`check-scheduled-prices.test.mjs` 断言至少有一条 live scheduled term,「否则这个测试是空过的」。
+⇒ **没改成 skip、也没放宽**(那正好把「看起来在跑其实没跑」请回来):给 `check-price-terms.mjs`
+加了 `--source-dir`,测试造一个**临时 fixture 目录**放一条合成 term,真实 term 有就一起断言,
+没有就打一行 note 说明这次只跑了合成的。⚠ 合成 term 的 `listPrice` **从目录当前价读**,不手打 ——
+所以「改价前一天是绿的」是因为目录**真的**在报 list price。这是同族第三个实例(窗口机制、
+白名单空过),所以立成坑 **44**。
+
+**实测后果**(复算写在 CHECKPOINT 现状表与各命令里) `#measure`
+- **58 格 → 38 格,看板 1401 → 1381,67.1% → 66.1%**;vendor 源 200 → 189(四月 model card 那 11 格
+  seed 删掉了,是**删除不是改标签** —— 它们是 preview 的卡)。`deepseek()` helper 一起删,防回填。
+- **逐行核过没有第二个模型动过一格**:71 行 preview 出、35 行 GA 进(1992 → 1956 ingested)。
+  ⚠ `git diff app/observations.generated.ts` 看着**满屏每个模型都在动** —— 那是 300 行分块重编号
+  (坑 14 的邻居)。按 `(modelId, benchmarkId, version, score, sourceId, effort, harness)` 建集合相减
+  才是真答案:非 V4 Pro 的变化 **0 行**。⇒ **看 diff 的形状会得出相反结论,要按内容比。**
+- **四个操作参数全成 null**:AA 还没发 GA(34 行里 33 行写着它自己的发布日 2026-04-24)。
+  编造是唯一的备选,没做。价格例外,因为厂商自己的页面点名了 release。
+- 记录现在**一行 vendor 的数都没有**:38 格全来自 LiveBench / Vals / DeepSWE / GDPval-AA。
+- `check:prices` **转绿**,batch-31 的 pro term 进 `retiredTerms`。
+
+**没做的**:batch 35(DeepSeek 自己的 GA 表)**仍然一列不采**。旧理由(目录没有 GA 记录)已不成立,
+新理由是**要先裁跨源分歧**:`terminal` 厂商 87.9 vs Vals 的 GA 54.7,**差 61%**,跨源闸门按设计会红,
+裁它是「厂商 vs 独立源在系统类基准上的脚手架差异」这种编辑判断(规则 6)。裁了之后真正新增 **3 格**。
+立成 `TODO.md` 一条待决,**没顺手塞进身份改动里**。
