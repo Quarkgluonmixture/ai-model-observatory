@@ -96,21 +96,47 @@ preview,名字是对的。
 
 剩下的两件都**只等数据**,不等决定:
 
-- [ ] **等 GA 读数够到地板再翻转 `deepseek-v4-pro`。** 2026-08-17 实测 **36 格**(LiveBench 23 +
-      Vals 13,复算 = 用 `buildEvidenceIndex` 查 `deepseek-v4-pro-0813` 与 `deepseek/deepseek-v4-pro-0813`
-      两种串),地板 **49**,还差 13 —— 8-14 记的「只有 1 格」已作废,三天涨了 35 格。
-      ⚠ **2026-08-18 实测:仍是 36,24h 零增长,且是被自己停的** —— 36 格的供给方
-      (LiveBench 23 + Vals 13)正是被 pro term 卡停的每日刷新;`upstream.yml` 每早照抓、
-      契约步丢弃。**「等数据」与「要它红」互锁**:除非 DeepSeek 给裸名改版(Flash 先例)、
-      刷新链之外的新源发 GA 分、或提前翻转/改门,这个数不会再动。
-      ⚠ 别指望厂商发布表帮着够地板:证据计数器**按设计把 release-capture 批次整批排除**
-      (`upstream-evidence.mjs` 的 `releaseCapture`),所以 batch 35 一格都不算。
+- [ ] ⭐ **要你定:`deepseek-v4-pro` 这条记录是不是那个在服役的模型。** 这是**身份题,不是等数据**
+      —— 2026-08-19 重测推翻了此前两班的「还差 13 格」框架,三条实测与理由在 `LOG.md` 2026-08-19
+      条 + `GOTCHAS.md` **40 / 41**,**别在这里复述,也别重新论证**。要你定的就一句:
+      - **原地翻转成 GA**(Flash 形状,29 个模型):preview 的 58 格退出、GA 的 36 格进来 ⇒
+        **66.0%**,掉 1.1pp。**地板不参与**(地板是给新增记录用的,见坑 40)。
+      - **另立一条 GA 记录**(Qwen3.6 Max Preview 形状,30 个模型):**66.5%**,掉 0.6pp,
+        但**这条才是地板 49 管的**,而 GA 36 < 49 ⇒ 按已定的「地板不放开」它进不来。
+      - **继续维持现状**:站上那条记录写着 "DeepSeek V4 Pro Preview",读者看到的是四月的分,
+        而 DeepSeek 卖的是 GA;`check:prices` 继续红(代价见下面价格链那条)。
+      ⚠ **GA 的 36 格不会自己涨到 49**(坑 41 实测:今天上游没有一格 V4 Pro 的新行待入档),
+      所以「再等等」不是在等一个会到的数。
+      ⚠ 别指望厂商发布表够地板:证据计数器**按设计把 release-capture 批次整批排除**
+      (`upstream-evidence.mjs` 的 `releaseCapture`),batch 35 一格都不算。
       ⚠ Vals 那 20 行里有 7 行落在目录**没开的列**上,开那些列会同时把分母抬上去,不是捷径。
-      翻转动作:名字去掉 Preview → 撤 `modelWindows` → preview 的旧行
-      改成不映射(Flash 那样留档不入库) → 删掉 `upstream-evidence.mjs` 里那条 pin(self-test
-      会自己打 note 提醒)。⚠ 那天覆盖率会掉一截,因为 58 格里大部分要退出。
+      定「原地翻转」之后的动作(四步,机械件):名字去掉 Preview → 撤 `modelWindows` →
+      preview 的旧行改成不映射(Flash 那样留档不入库) → 删掉 `upstream-evidence.mjs` 里那条 pin
+      (self-test 会自己打 note 提醒)。翻完价格才跟着落($1.32/$3.96)、term 才能退休。
+      ⛔ **无论定哪条,都不要拿 AA 那 34 行去喂 GA 记录**:33 行是 preview(28 行 note 里写着
+      模型发布 2026-04-24,数值也对得上厂商 Preview 列而非 GA 列),唯一那行 GA 被坑 18 的逗号
+      挡在计数器外。PR #98 body 里「约 46 行 AA 数据在等 GA 记录」这句**是错的**。
 - [ ] **或者等 DeepSeek 自己把裸名条目改名**(它给 Flash 就是这么做的:裸名后来变成 `0423`)。
       改了就照抄,零发明。
+
+## ⭐ 要你定:refresh 的 contract 要不要把 `check:prices` 降成只报(2026-08-19)
+
+**这是让「保留一个红」不再等于「全目录停止采集」的那一改。** 实测与理由在 `LOG.md` 2026-08-19 条 ④。
+
+- 机制:`upstream.yml` 的 refresh job 里 `Run the contract` 跑 `check:prices`,红 ⇒
+  `Commit a tier-A refresh straight to main` 被 skip ⇒ 每早抓完的活板数据全部丢掉。
+- **这是一条假依赖**:`check-price-terms.mjs` 只读 meta 里**手写**的 `priceTerms` 和
+  `app/model-data.ts` 里**手写**的 `MODELS[].price`,`grep -rn 'priceTerms' scripts/ .github/`
+  只有三个读者、**零个写者** ⇒ 一次 tier-A refresh 不可能改变它的判定。
+- 而 `upstream.yml` 自己对 `check:price-drift` 与 `check:deployment` 已经用了相反的原则
+  (只报不失败,原文 *a price the vendor moved is a fact somebody needs, not a reason to abandon
+  the archive refresh*)—— `check:prices` 是这条原则唯一的例外。
+- 代价现在是可量的(2026-08-19 实测,复算 = `FETCH_TIMEOUT_MS=60000 npm run check:upstream`):
+  **152 格**待入档(LiveBench 46 · Epoch 34 · GDPval-AA 36 · Vals 27 · FrontierMath 6 ·
+  LMArena 2 · ALE 1),外加本文件里等着观察的两件(归属闸门接 `deepseek-v4-flash-0731` ——
+  它的 ARC 三行今天就在待入档里 —— 和 `--any-open` 第一次生效)。
+- 折中写法:refresh 的 contract 里 `check:prices` 改成打印 + `|| true`,`ci.yml` 上**仍然硬红**
+  (那才是「站上的价格不对」该喊的地方)。⚠ 改 CI 语义是独立的活,和下面那条重排一起定。
 
 ## ⭐ 要你定:红着的时候 CI 只跑前 9 步,要不要重排(2026-08-17)
 
@@ -131,15 +157,18 @@ preview,名字是对的。
       按 `GOTCHAS.md` 24 判据 2),目录那条是 preview。**先定记录身份,价格跟着身份走** ——
       把 GA 的价填进 preview 记录是错的,删掉这条 term 也是错的(那是拆守卫)。
       ⇒ 它**跟着上面那条「翻转」一起解决**,不单独解决。
-      ⚠ 代价记着:契约红着的时候**每天的 `upstream.yml` 也过不去**(它跑同一套契约),
-      自动刷新与自动开 PR 一并停摆 —— 8-16、8-17 两天都是这样挂的。
+      ⚠ 代价记着:契约红着的时候 refresh job 的**入档**过不去(它跑同一套契约),
+      自动刷新与自动开 PR 一并停摆 —— 8-16 起每天如此,今天量到 **152 格**待入档。
+      ⚠ 但**别把这条代价算进「等 GA 数据」**:被卡的是入档,不是看见 —— `drift` job 照常读上游,
+      而今天上游一格 V4 Pro 的新行都没有(坑 **41**)。这条代价该走上面那条
+      「refresh 的 contract 要不要降 `check:prices`」,和身份题**分开定**。
 - [ ] **价格仍然进不了 ingest。** `ingest.mjs` 参数循环只收 Elo,价格全靠手打进
       `model-data.ts`、再由 `check-model-provenance` 事后审。要不要让价格也走 ingest 派生,
       是个独立决定(会动 51 条 stale slot 的处理方式,见 `GOTCHAS.md` 22)。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
 
-## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建、数据在路上：2026-08-17 实测 36/49）
+## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建；GA 证据 **36 格**且 2026-08-19 实测不会自己再涨）
 
 背景与判据全在 `GOTCHAS.md` 24，**别在这里复述**。这里只放要动手的：
 
