@@ -76,11 +76,15 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] **明早看归属闸门接 DeepSeek V4 Flash 0731**。ARC 2026-08-07 验证了它（AGI-1/-2 各 3 档），
       行已在归档、alias 故意没写——闸门 tier 1 认得出。这是「fetcher 收行 → 闸门归属 → 自合」
       端到端跑通的第一个活例子，值得看一眼它到底自合了还是留了 PR。
-- [ ] ~~**`qwen3.6-max` 只有 1 格（只有 gpqa）**~~ —— **2026-08-12 起是 5 格**(补上 HLE·no tools
-      30.8 · SciCode 46.9 · AA-LCR 72 · IFBench 76.6),同一个 Max 档解析 bug 卡住的。
-      它仍在地板 38 以下、仍带 `preview` 标签,**要不要留还是编辑判断,交给你** —— 变的只是
-      「空行」这个理由已经不成立了。
-      ⚠ 2026-08-13 补:这条现在挂在下面那节 preview 规矩上,别单独定。
+- [ ] ⭐ **要你定:`qwen3.6-max` 这条 5 格的记录留不留。** 2026-08-19 实测 **5 格**
+      (aa-lcr · gpqa · hle-no-tools · ifbench · scicode),显示名 "Qwen3.6 Max Preview",
+      tag `["preview","multilingual"]`。**「空行」这个理由早就不成立了**(它曾经只有 1 格,
+      是同一个 Max 档解析 bug 卡的,2026-08-12 修完补到 5 格)。
+      ⚠ **别拿稀释地板量它**:地板(今天 48)是给**新增一条记录**用的尺子,对已在目录里的记录不适用
+      —— 见 `GOTCHAS.md` **40**,这个仓库刚为同一个误用卡了三天。要定的是纯编辑判断:
+      5 格的记录值不值得占看板一行。
+      ⚠ 名字**不用动**:上游精确同名、族里没有取代它的 GA ⇒ 按坑 25 它不是待转正的 preview
+      (与上面 preview 那节同一个判据)。
 
 ## preview 记录的规矩:2026-08-14 已定,`deepseek-v4-pro` 2026-08-19 已翻转
 
@@ -184,15 +188,11 @@ refresh job 那一半**已定并已改**(降成只报,`ci.yml` 仍硬红,理由�
 
 ## 自动化
 
-- [ ] （原 8-08 的三件,2026-08-10 实测后只剩两件；③ 已确认:`auto/attribution` 8-08 开了 #58,
-      判据没反）~~① `auto/refresh-aa` 到底有没有**自己**开出过 PR~~ —— **2026-08-11 观测证实**:
-      `auto/refresh-aa` 自己开出了 **#74**,`gh: Argument list too long` 确实修好了。这条可删。
-      ~~② 「Is the queue being worked?」那一节根本没建~~ —— **2026-08-11 证伪:建了,只是不在
-      `report-gaps.mjs` 里**,而是 `upstream.yml:118-123` 直接 `node scripts/check-heartbeat.mjs
-      --agent` 拼进 `gaps.md`(所以按 npm script 名 `check:heartbeat` 去 grep 会漏掉它)。这条可删。
-      ⚠ 真正留下的那半个问题不在这:`--agent` **分不清 agent 和 owner**(两者都以人的身份提交),
-      所以它答的是「队列有没有人在做」,不是「hermes 活着吗」——你自己开一次 session 就把三天时钟
-      清零。见 `docs/ARCHITECTURE.md` §10 末尾「两个调度器互相看守是不对称的」那条。
+- [ ] **`check-heartbeat.mjs --agent` 分不清 agent 和 owner**(两者都以人的身份提交),所以它答的是
+      「队列有没有人在做」,不是「hermes 活着吗」—— **你自己开一次 session 就把三天时钟清零**。
+      见 `docs/ARCHITECTURE.md` §10 末尾「两个调度器互相看守是不对称的」那条。
+      ⚠ 它不在 `report-gaps.mjs` 里,是 `upstream.yml` 直接拼进 `gaps.md` 的,所以按 npm script 名
+      `check:heartbeat` 去 grep 会漏掉它。
       ⚠ 判据是 branch-scoped：`pr-hands-off.sh` 查 `gh pr list --head auto/attribution`，
       **只看那一个分支**，别的分支上有没有 open PR 它一概不管。
 - [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦在 `auto/attribution` 上的 PR）。
