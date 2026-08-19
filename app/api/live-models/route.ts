@@ -37,10 +37,20 @@ export const PROVIDER_LOOKUPS: Record<string, string> = {
   "kimi-k3": "moonshotai/kimi-k3",
   "kimi-k2.6": "moonshotai/kimi-k2.6",
   "kimi-k2.7-code": "moonshotai/kimi-k2.7-code",
-  // The catalog tracks the dated snapshot, which upstream also serves undated. They are
+  // Both DeepSeek records track the DATED snapshot, which upstream also serves undated. They are
   // different rows with different prices; the dated one is the one that was measured.
+  //
+  // Pro joined that shape on 2026-08-19, when its record became the GA release, and the line is
+  // load-bearing twice over. `report-gaps.mjs` builds its "upstream models the catalog does not
+  // carry" filter from these values plus the catalog ids, and `sameFamily` does not treat a date
+  // suffix as an operating point (correctly — a suffix can be a different model) — so while this
+  // said `deepseek/deepseek-v4-pro`, the report listed `deepseek/deepseek-v4-pro-0813` as a model
+  // needing a record, with 23 cells "it would fill" that are already on the board, inside a section
+  // that is the scheduled agent's work queue and is truncated to the top few. Second, the live price
+  // route compares the catalog's price against this slug: pointed at the preview it would have
+  // compared the GA record's $1.32/$3.96 to whatever the April preview still costs.
   "deepseek-v4-flash": "deepseek/deepseek-v4-flash-0731",
-  "deepseek-v4-pro": "deepseek/deepseek-v4-pro",
+  "deepseek-v4-pro": "deepseek/deepseek-v4-pro-0813",
   "qwen3.8-max": "qwen/qwen3.8-max",
   "qwen3.7-plus": "qwen/qwen3.7-plus",
   "qwen3.7-max": "qwen/qwen3.7-max",

@@ -321,7 +321,24 @@ jobs:
               echo "$models_out"
               exit 1
             fi
-            npm run --silent check:prices
+            # Reported, not gating, and the asymmetry with ci.yml is the point. This check reads
+            # exactly two things, both hand-written: `priceTerms` in a batch meta, and
+            # `MODELS[].price` in app/model-data.ts. Nothing in this repository writes either --
+            # grep says three readers and no writers -- so a tier-A refresh, whose whole footprint
+            # is data/sources rows plus the generated store, cannot change its verdict. Gating on
+            # it therefore blocks the archive for a fact the archive did not cause: measured on
+            # 2026-08-19, a price term red since 08-16 by the owner's standing decision had held
+            # back 152 upstream cells across seven sources, and the daily fetch was re-reading and
+            # discarding them every morning. It also stalled two things waiting to be observed --
+            # the attribution gate taking `deepseek-v4-flash-0731`, and `--any-open` firing for the
+            # first time.
+            #
+            # This is the same principle the drift job above already applies to `check:price-drift`
+            # and `check:deployment`: a price the vendor moved is a fact somebody needs, not a
+            # reason to abandon the archive refresh. `ci.yml` keeps it as a hard failure, because
+            # that is the check that speaks about what the site is quoting, and the site is what
+            # the price is wrong on. See GOTCHAS 41 and LOG 2026-08-19.
+            npm run --silent check:prices || echo "::warning::check:prices is red -- reported here, not gating this refresh; ci.yml still fails on it"
             npm run --silent build > /dev/null && echo "build ok"
           } 2>&1 | tee checks.txt
 

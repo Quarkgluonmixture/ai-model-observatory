@@ -3,7 +3,9 @@
   "retrievedDate": "2026-08-13",
   "collectedWith": "read directly from the vendor's published pricing page; no fetcher watches vendor pricing pages yet, which is why this batch exists at all",
   "schema": "Price terms only. This batch carries NO .jsonl, deliberately — see rowsNotArchived.",
-  "sources": ["https://api-docs.deepseek.com/quick_start/pricing/"],
+  "sources": [
+    "https://api-docs.deepseek.com/quick_start/pricing/"
+  ],
   "rowsNotArchived": "The page's CURRENT prices were re-read and are unchanged from batch 08 (v4-pro $0.435/$0.87, v4-flash $0.14/$0.28), so archiving them again would add rows that duplicate a slot batch 08 already holds. The prices taking effect on 2026-08-16 must not be archived as observation rows either: they are not in force, and a row carrying them would be a published-looking number for a date that has not arrived. Both facts live in priceTerms below, which is exactly what that mechanism is for.",
   "note": "DeepSeek is replacing flat per-token pricing with peak/off-peak billing at 16:00 UTC on 2026-08-16. Peak is 01:00-04:00 and 06:00-10:00 UTC (7 hours); every other hour is off-peak at half the peak rate. This is a rate-card change, not a promotion: off-peak has no end date, so it is a conditional tier in the sense of batch 08's tiersNotArchived (Google Batch/Flex, Alibaba regional list prices), not a discount with an expiry.",
   "quotingRule": "The catalog quotes list price — check-price-terms.mjs states the rule and batch 08 applies it to Google Standard, Alibaba Singapore and Thinking Machines Serverless. Peak is the undiscounted rate a caller pays without scheduling around the clock, so peak is what the catalog should quote from 2026-08-16. Off-peak is recorded here and deliberately not quoted.",
@@ -11,26 +13,41 @@
     "deepseek-v4-pro": "Off-peak (all hours outside 01:00-04:00 and 06:00-10:00 UTC): $0.66 input cache-miss, $0.022 input cache-hit, $1.98 output per 1M tokens.",
     "deepseek-v4-flash": "Off-peak, same windows: $0.22 input cache-miss, $0.007 input cache-hit, $0.66 output per 1M tokens."
   },
-  "modelIdentityWarning": "⚠ This page lists exactly two DeepSeek models, `deepseek-v4-flash` and `deepseek-v4-pro`. It does NOT print `-0813`. By GOTCHAS 24's second criterion — whether the source itself splits the release out — an unsplit source's bare string means the model in service, which since 2026-08-12 is the GA release. The catalog's `deepseek-v4-pro` record holds the April PREVIEW. So these prices belong to a model this catalog does not yet have a record for, and typing them onto the existing record would attach GA terms to preview measurements. The measurement window on that record (modelWindows in data/model-aliases.json) refuses dated rows from 2026-08-12 onward for exactly this reason. Resolve the record identity first; the price follows it, not the other way round.",
-  "priceTerms": [
-    {
-      "modelId": "deepseek-v4-pro",
-      "retrievedOn": "2026-08-13",
-      "listPrice": { "input": 0.435, "output": 0.87 },
-      "scheduled": { "input": 1.32, "output": 3.96, "effectiveFrom": "2026-08-16" },
-      "source": "https://api-docs.deepseek.com/quick_start/pricing/"
-    }
-  ],
-  "retiredTermsNote": "A scheduled term is a guard with a job, and `check-price-terms.mjs` states the ending itself: 'Re-archive from …, update the record, then retire this term.' The flash term below did all three: batch 33 re-archived the peak row on the effective day and the catalog moved to $0.44/$1.32 when that batch merged (PR #92, 2026-08-17). It is moved here rather than deleted because the announcement is a real published fact, and rather than left in `priceTerms` because a satisfied term does not stay quiet — it starts asserting the opposite. Measured on 2026-08-17 with it still in place: `check-scheduled-prices.test.mjs` failed all three of its assertions on main, because a term whose scheduled price the catalog now quotes reads, to the day-before replay, as a catalog quoting a price before it takes effect. The pro term stays live above: its record has not moved and must not until the identity question in modelIdentityWarning is answered.",
+  "modelIdentityWarning": "⚠ RESOLVED 2026-08-19, and kept because it is the reasoning, not a status line. This page lists exactly two DeepSeek models, `deepseek-v4-flash` and `deepseek-v4-pro`, and does NOT print `-0813`. By GOTCHAS 24's second criterion an unsplit source's bare string means the model in service, which since 2026-08-12 is the GA release — and batch 33 found the page saying so in its own words, in a MODEL VERSION row reading 'DeepSeek-V4-Flash-0731 | DeepSeek-V4-Pro-0813'. So these prices belonged to a model this catalog did not have a record for, and typing them onto the existing record would have attached GA terms to preview measurements. The record identity was resolved first, as this warning asked: `deepseek-v4-pro` is now the GA release, the preview's rows are archived and not ingested, and the price followed. The measurement window that refused dated rows from 2026-08-12 onward is gone, replaced by a refusal on the STRING — inverting the window would have deleted the GA's own LiveBench cells, which are published under a frozen release date that predates it.",
+  "priceTerms": [],
+  "retiredTermsNote": "A scheduled term is a guard with a job, and `check-price-terms.mjs` states the ending itself: 'Re-archive from …, update the record, then retire this term.' Both terms in this batch have now done all three and both are below. Flash on 2026-08-17 (batch 33 re-archived the peak row on the effective day, the catalog moved to $0.44/$1.32, PR #92). Pro on 2026-08-19, and it is the more instructive of the two: its blocker was never the price but the record's identity, the guard held the wrong price off the site for three days, and the thing that finally moved was a decision, not a number. Both are moved here rather than deleted because the announcement is a real published fact, and rather than left in `priceTerms` because a satisfied term starts asserting the opposite — measured 2026-08-17 with the flash term still in place: `check-scheduled-prices.test.mjs` failed all three of its assertions on main.",
   "retiredTerms": [
     {
       "modelId": "deepseek-v4-flash",
       "retrievedOn": "2026-08-13",
-      "listPrice": { "input": 0.14, "output": 0.28 },
-      "scheduled": { "input": 0.44, "output": 1.32, "effectiveFrom": "2026-08-16" },
+      "listPrice": {
+        "input": 0.14,
+        "output": 0.28
+      },
+      "scheduled": {
+        "input": 0.44,
+        "output": 1.32,
+        "effectiveFrom": "2026-08-16"
+      },
       "source": "https://api-docs.deepseek.com/quick_start/pricing/",
       "retiredOn": "2026-08-17",
       "retiredBecause": "Satisfied. The catalog quotes the scheduled $0.44/$1.32 as of PR #92, evidenced by batch-33-deepseek-peak-pricing read on the effective day."
+    },
+    {
+      "modelId": "deepseek-v4-pro",
+      "retrievedOn": "2026-08-13",
+      "listPrice": {
+        "input": 0.435,
+        "output": 0.87
+      },
+      "scheduled": {
+        "input": 1.32,
+        "output": 3.96,
+        "effectiveFrom": "2026-08-16"
+      },
+      "source": "https://api-docs.deepseek.com/quick_start/pricing/",
+      "retiredOn": "2026-08-19",
+      "retiredBecause": "Satisfied, and it took the identity decision it was written to force. The catalog quotes the scheduled $1.32/$3.96 (cache-hit $0.044) as of 2026-08-19, evidenced by batch-33-deepseek-peak-pricing read on the effective day and now resolved through a file-scoped alias — the pricing page pins its own column headers to `DeepSeek-V4-Pro-0813` in its MODEL VERSION row. The term did exactly what modelIdentityWarning below said it would: it stayed red for three days rather than letting a GA price be typed onto a preview record, and it retired when the record became the GA. Moved here rather than deleted, per GOTCHAS 37: a satisfied term does not go quiet, it starts asserting the opposite (check-scheduled-prices.test.mjs replays it against the day before the effective date, where a catalog already quoting the new price reads as quoting it early)."
     }
   ]
 }

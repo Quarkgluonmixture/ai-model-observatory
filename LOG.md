@@ -673,3 +673,140 @@ GraphQL 连吃两个 503;改走 REST(`gh api … /pulls -X POST`)建的 #94,建�
 复算命令;「没有路被推翻九次」同理改成指向 `GOTCHAS.md` 36(今天是第十次)。
 另把「红着时 CI 只跑前 9 步要不要重排」立成一条待决 —— 今天只处理了守报警那一条(`if: always()`),
 其余步骤怎么办是改 CI 语义的独立活,不顺手做。
+
+## [2026-08-19] 把「GA 停涨」重测了一遍:互锁的因果说反了、AA 那 34 行是 preview、地板不是翻转的闸门 `#measure` `#incident` `#decision`
+
+接的是 8-18 与 8-19 两班的结论。**三条都不成立或不精确,而且三条都会让下一班做错事** ——
+所以本条以实测为主,决定留给 owner。
+
+**① 「36 格的供给被 pro term 卡停,所以读数不会再自己涨」——因果说反了** `#measure`
+互锁的**机制**是真的(refresh job 的 `Run the contract` 跑 `check:prices`,红 ⇒
+`Commit a tier-A refresh straight to main` 被 skip;`fetch-source.mjs --live` 每早照抓、
+随后 `git checkout -- .` 丢掉)。但**结论**错:每天的 `drift` job 是**独立 job**,它照常读上游,
+所以「上游有没有 V4 Pro 的新行」这个问题今天就能回答。
+2026-08-19 实测(复算 = `FETCH_TIMEOUT_MS=60000 npm run check:upstream`,exit 0,`ARCHIVE_STALE=1`):
+**待入档 152 格**,分布 LiveBench 46 · Epoch 34 · GDPval-AA 36 · Vals 27 · FrontierMath 6 ·
+LMArena 2 · ALE 1;**其中 V4 Pro 一格都没有**(`grep -Ein 'v4.{0,2}pro'` 全日志零命中,
+而同一份日志里 `deepseek-v4-flash-0731` 的 ARC 三行是命中的 ⇒ 不是 pattern 假阴性)。
+⇒ **今天就把 refresh 放开,GA 也是 36,一格不动。** 36 是「`-0813` 在活板上目前只发了这么多」,
+不是「刷新被扣着」。⚠ 这条只对**今天这一次读**成立,措辞不要冻成永久结论。
+
+**② 「约 46 行 AA 数据跨 4 种拼写躺在 archive 等 GA 记录」——是 preview,拿它建 GA 记录正是坑 24 那场事故** `#incident`
+实测 AA 相关行 **34** 行(不是 46),4 种拼写。其中 **33 行是 preview**:
+- 28 行的 note 里写着 AA 自己的**模型发布日 2026-04-24**(batch-26 的 25 行 + batch-14 的 3 行),
+  那正是 preview 的 `created`;
+- 数值也对得上厂商 Preview 列而不是 GA 列:AA `reasoning max` 的 `hle-no-tools` **37.5**,
+  厂商 Preview **37.7**、GA **42.7**;`terminal` 2.1 AA **64.04**,Preview **72.1**、GA **87.9**。
+  按坑 24 判据 1(数字差 2–5×)这是 preview,没有二义。
+- 唯一一行 GA 是 GDPval-AA 板上的 `DeepSeek V4 Pro 0813 (Reasoning, Max Effort)`,
+  而**它一格都不算** —— 坑 18 那个逗号:余项 `reasoning,maxeffort` 挡住 effort 剥离 ⇒
+  证据计数器看不见它。(顺带:GDPval-AA **同时**印 0813 与裸串两种行 ⇒ 它是坑 24 判据 2 里
+  「会分列的源」,所以它的裸串**就是** preview。)
+⇒ 把这 34 行挂到一条 GA 记录上,等于把 preview 的分发布成 GA 的分 —— batch-31 的
+`modelIdentityWarning` 早把这句写下来了。**下一班别照 PR #98 body 里那句去建记录。**
+
+**③ 地板 49 是给「新增一条记录」用的,不能拿来卡「同一条记录换身份」** `#measure`
+`dilutionFloor` 的 docstring 自己说的:*the number of filled cells a NEW model must bring* ——
+推导前提是 `models + 1`,分母涨一整列。**原地翻转不涨模型数**,那套算术根本不适用。
+⇒ 所以 TODO 那句「等 GA 读数够到地板再翻转」是拿**新记录的尺子**量**再识别**,
+它永远满足不了(GA 36 < 49,而 ① 说 36 不会自己涨),这才是这件事卡住三天的真原因。
+两条路都实测过代价(复算 = `.scratch/board.mjs` 那种数法:`OBSERVATIONS_BY_CELL` 逐记录数格):
+- **原地翻转成 GA**(Flash 形状,29 个模型):preview 的 **58** 格退出、GA 的 36 格进来 ⇒
+  **1379 / 2088 = 66.0%**,比今天的 67.1% 掉 **1.1pp**。地板不参与。
+- **另立一条 GA 记录**(Qwen3.6 Max Preview 形状,30 个模型):**1437 / 2160 = 66.5%**,掉 **0.6pp**。
+  ⚠ 覆盖率掉得反而**少**,但**这一条才是地板管的**,而地板说不行(36 < 49)。
+⇒ 真正要 owner 定的是身份题,不是等一个数:**这条记录是不是那个在服役的模型**。
+
+**④ 价格 term 不可能被一次 tier-A refresh 改变,所以它挡住 refresh 是一条假依赖** `#measure`
+`check-price-terms.mjs` 只读两样东西:meta 里手写的 `priceTerms`,和 `app/model-data.ts` 里手写的
+`MODELS[].price`。`grep -rn 'priceTerms' scripts/ .github/` 只有**三个读者**(price-drift、
+model-provenance、它自己的 test),**没有任何写者** ⇒ 抓一遍活板不可能改动它的判定。
+而 `upstream.yml` 自己在两处写着相反的原则(`check:price-drift` 与 `check:deployment` 都是
+**只报不失败**,理由原文:*a price the vendor moved is a fact somebody needs, not a reason to
+abandon the archive refresh*)—— `check:prices` 在 refresh job 里是这条原则的例外,而且是
+唯一让「保留一个红」的代价变成**全目录停止采集**的那个例外。
+⚠ 代价不只是 152 格:TODO 里等着看的两件(归属闸门接 `deepseek-v4-flash-0731`、
+`--any-open` 第一次生效)也一并停摆,而 `deepseek-v4-flash-0731` 的 ARC 三行今天就在待入档里。
+⇒ 立成待决(不顺手改 CI 语义):**refresh 的 contract 要不要把 `check:prices` 降成只报**
+(`ci.yml` 上仍然硬红)。
+
+**本班没动数据、没动 CI。** 改的只有四件套里的记录:上面三条纠正 + `GOTCHAS.md` 40 / 41。
+
+**同日后续 —— owner 裁决下来,上面那句「本班没动 CI」作废。** 两件都定了:
+① **记录身份 = 原地翻转成 GA**(Flash 形状,29 个模型,66.0%);
+② **refresh 的 contract 把 `check:prices` 降成只报**,`ci.yml` 仍然硬红。
+
+②**已改**(`upstream.yml` 的 `Run the contract`:`|| echo "::warning::…"`)。选择不对称的理由写进
+步骤注释:这个检查的两个输入都是手写的、**零个写者**,而 tier-A refresh 的 footprint 只有
+`data/sources/` 的行加生成产物 ⇒ 它**不可能**改变判定,那么拿它拦入档就是**为一件档案没造成的事
+惩罚档案**。硬红留在 `ci.yml`,因为那才是「站上正在报什么价」该喊的地方。
+⚠ 量过之后没有一刀切:`check:prices` 一共三个闸门调用点,**只降了 refresh 这一个**。
+`attribute-and-merge.sh` 同样是假依赖(只写别名),但它挡的是自动写别名、风险面更大,立成待决;
+`add-model-and-merge.sh` **该留着硬闸** —— 它写 `app/model-data.ts`,那正是 `check:prices`
+的输入之一,新记录的 id 撞上一条 term 的 `modelId` 就会开始被比较,**它真的能改变判定**。
+⇒ 一般化:**「这是假依赖」是逐个调用点的结论,不是关于这个检查的结论** —— 同一个 `npm run` 在
+不同 footprint 底下,有的够不到、有的够得到(同族:坑 21 那句「grep 哪条检查真的够得到它」)。
+
+## [2026-08-19 第二轮] 裁决落地:`deepseek-v4-pro` 原地翻转成 GA,守卫从日期换成串 `#decision` `#ship` `#measure` `#incident`
+
+裁决 = **原地翻转**(Flash 形状,29 个模型)。上面第一轮的三条实测就是它的依据,这里只记**做的时候
+才知道的事** —— 有四件,其中两件是差点做错的。
+
+**① 差点把窗口反过来写,那会静默删掉 GA 自己的 23 格** `#incident`
+`TODO` 原本写「撤 `modelWindows`」,而更"稳"的做法看起来是把 `validUntil: 2026-08-12` 反过来写成
+`validFrom: 2026-08-12`(拒收 GA 之前的行)。⚠ **实测这会删掉 23 格**:LiveBench 把两个 release
+**印在同一个冻结发布日下面** —— 裸串 23 行 + `-0813` 23 行,`evaluation_date` **全是 2026-06-25**,
+早于 GA 上线三个月。窗口按 `modelId` 键、按日期比,**分不出这两拨**。
+⇒ 守卫**换种类**:十个裸串写成**全局** `modelId: null`(带理由),`-0813` 串写显式 alias。
+两个**不分列**的源走 file-scoped,判据写进 reason:DeepSWE 那行 62.8(厂商 GA 表 62.7 / preview 12.8,
+判据 1)· 定价页自己的 MODEL VERSION 行印着 `DeepSeek-V4-Pro-0813`(判据 2)。
+`archive.mjs --self-test` 从 5 条变成 **20 条**,第一条就是这个陷阱。⇒ 坑 **42**。
+⚠ 窗口机制**留着**(`modelWindows` 现在是空数组):下一个源不分列的家族只剩日期这一个把手。
+它靠一个**合成 config** 继续被跑到。
+
+**② 「全局拒收」是这个仓库的新形状,顺出两个够不到的地方** `#incident`
+以前 `modelId: null` **只有 file-scoped** 用过(厂商发布表里的竞品列)。全局拒收一上,两处露馅:
+- `isRefused()` 第一行就是 `if (!file) return false` ⇒ 132 行 preview 会永久出现在 gaps issue 的
+  「Archived rows waiting on a catalog model」里 —— 正是那个 file-scoped 分支写下来要防的
+  「永久的、没法动手的一行」,从另一个门进来。已扩成两个 scope。
+- **证据计数器把 11 格 preview 的格子记在 GA 记录名下**(frontierswe / critpt / ale / hle-no-tools /
+  scicode / aa-lcr / tau3-banking / ifbench / frontiermath ×2 / toolathlon),self-test 当场红。
+  ⚠ 备选是**给它挂 11 格 pin**,我没这么做:那等于**在这条记录三分之一的面积上把 over-count 闸门
+  关掉**,去藏一个两个文件之外就有机器可读答案的事实。改成让计数器认**全局**拒收(file-scoped 的
+  不认 —— 那只是说「不从这个源」,而这个计数器没有源这一维)。mean recovery 70% → **68%**(地板 60)。
+  ⚠ 副作用记着:这条记录自己的 recovery 变成 **0%**,因为 self-test 拿 `[model.id, model.name]`
+  当 needle,而它俩现在都是被拒的串。**这是真的**,不是 bug:这条记录的证据发在另一个串上。
+
+**③ `PROVIDER_LOOKUPS` 那一行是承重的,契约全绿也发现不了** `#incident`
+翻完九项全绿,`report:gaps` 却把 **`deepseek/deepseek-v4-pro-0813` 报成「目录没有的上游模型」**,
+还列了 23 格「它能填」—— 那 23 格已经在看板上,headline 13 变 14。
+机制:gaps 的「已有」过滤器 = `PROVIDER_LOOKUPS` 的值 + 各记录 `id`,用 `sameFamily` 比,而
+`sameFamily` **不把日期后缀当 operating point**(对的,后缀常是另一个模型)。改法一行:
+lookup 指向 `-0813`(**Flash 早就是这个形状,就在上面一行**)。同一行还喂着实时价格对比 ⇒
+指着 preview 就是拿 GA 的 $1.32/$3.96 去对四月的价。⇒ 坑 **43**。
+⇒⇒ 动一条记录的身份,要把**「谁按 id 认这条记录」全找出来**:lookup、alias、计数器的 needle。
+
+**④ 两条 price term 同一次全退休 ⇒ 那个「拒绝空过」的测试红了,这是它在工作** `#incident`
+`check-scheduled-prices.test.mjs` 断言至少有一条 live scheduled term,「否则这个测试是空过的」。
+⇒ **没改成 skip、也没放宽**(那正好把「看起来在跑其实没跑」请回来):给 `check-price-terms.mjs`
+加了 `--source-dir`,测试造一个**临时 fixture 目录**放一条合成 term,真实 term 有就一起断言,
+没有就打一行 note 说明这次只跑了合成的。⚠ 合成 term 的 `listPrice` **从目录当前价读**,不手打 ——
+所以「改价前一天是绿的」是因为目录**真的**在报 list price。这是同族第三个实例(窗口机制、
+白名单空过),所以立成坑 **44**。
+
+**实测后果**(复算写在 CHECKPOINT 现状表与各命令里) `#measure`
+- **58 格 → 38 格,看板 1401 → 1381,67.1% → 66.1%**;vendor 源 200 → 189(四月 model card 那 11 格
+  seed 删掉了,是**删除不是改标签** —— 它们是 preview 的卡)。`deepseek()` helper 一起删,防回填。
+- **逐行核过没有第二个模型动过一格**:71 行 preview 出、35 行 GA 进(1992 → 1956 ingested)。
+  ⚠ `git diff app/observations.generated.ts` 看着**满屏每个模型都在动** —— 那是 300 行分块重编号
+  (坑 14 的邻居)。按 `(modelId, benchmarkId, version, score, sourceId, effort, harness)` 建集合相减
+  才是真答案:非 V4 Pro 的变化 **0 行**。⇒ **看 diff 的形状会得出相反结论,要按内容比。**
+- **四个操作参数全成 null**:AA 还没发 GA(34 行里 33 行写着它自己的发布日 2026-04-24)。
+  编造是唯一的备选,没做。价格例外,因为厂商自己的页面点名了 release。
+- 记录现在**一行 vendor 的数都没有**:38 格全来自 LiveBench / Vals / DeepSWE / GDPval-AA。
+- `check:prices` **转绿**,batch-31 的 pro term 进 `retiredTerms`。
+
+**没做的**:batch 35(DeepSeek 自己的 GA 表)**仍然一列不采**。旧理由(目录没有 GA 记录)已不成立,
+新理由是**要先裁跨源分歧**:`terminal` 厂商 87.9 vs Vals 的 GA 54.7,**差 61%**,跨源闸门按设计会红,
+裁它是「厂商 vs 独立源在系统类基准上的脚手架差异」这种编辑判断(规则 6)。裁了之后真正新增 **3 格**。
+立成 `TODO.md` 一条待决,**没顺手塞进身份改动里**。

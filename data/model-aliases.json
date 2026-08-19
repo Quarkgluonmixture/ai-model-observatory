@@ -42,9 +42,11 @@
     "                                    carries no effort token and does not collide, so it stays.",
     "  Muse Spark (no version)         - a different model from Muse Spark 1.1",
     "  GPT-5.5 Pro / 5.2 Pro / 5.4 Pro - Pro is a different model from the base",
-    "  DeepSeek v4 (max)               - a superseded duplicate, not an ambiguity: this catalog maps",
-    "                                    DeepSeek V4 to deepseek-v4-pro, and the row is batch 01's",
-    "                                    eye-read 89.6 of batch 12's 89.65. See supersededRows.",
+    "  DeepSeek v4 (max) / DeepSeek V4  - bare V4 Pro family strings. Unmapped since 2026-08-19, when",
+    "                                    deepseek-v4-pro became the GA release: every source that",
+    "                                    splits the two prints the bare string for the April preview.",
+    "                                    `(max)` was also a superseded duplicate on its own terms:",
+    "                                    batch 01's eye-read 89.6 of batch 12's 89.65 -- see supersededRows.",
     "  GPT 5.6 Sol (Max + Pro)         - a two-model system, not a model configuration",
     "  Fable 5 (1M) on PostTrainBench  - the page says failed cells fell back to Opus 4.8",
     "  Multiple / Best per task       - leaderboard aggregate rows, not a model at all",
@@ -431,17 +433,20 @@
     {
       "modelRaw": "DeepSeek V4 Pro",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "DeepSeek V4 Pro (max)",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "deepseek-v4-pro",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "Gemini 3.5 Flash (Minimal)",
@@ -591,7 +596,8 @@
     {
       "modelRaw": "DeepSeek V4",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "GPT-5.6 Luna",
@@ -806,7 +812,8 @@
     {
       "modelRaw": "DeepSeek V4 Pro (high)",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "Inkling Small",
@@ -986,7 +993,8 @@
     {
       "modelRaw": "deepseek-v4-pro-thinking",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "deepseek-v4-flash",
@@ -1054,7 +1062,8 @@
     {
       "modelRaw": "DeepSeek-V4-Pro",
       "effort": "*",
-      "modelId": "deepseek-v4-pro"
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "Inkling-Small",
@@ -1373,14 +1382,14 @@
     {
       "modelRaw": "DeepSeek V4 Pro (Reasoning, Max Effort)",
       "effort": "*",
-      "modelId": "deepseek-v4-pro",
-      "reason": "AA spells the effort out where the DeepSWE board abbreviates it."
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "DeepSeek V4 Pro (Reasoning, High Effort)",
       "effort": "*",
-      "modelId": "deepseek-v4-pro",
-      "reason": "AA spells the effort out where the DeepSWE board abbreviates it."
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "DeepSeek V4 Flash 0731 (Reasoning, Max Effort)",
@@ -1849,8 +1858,8 @@
     {
       "modelRaw": "deepseek/deepseek-v4-pro",
       "effort": "*",
-      "modelId": "deepseek-v4-pro",
-      "reason": "Vals publishes `provider/model`. Dropping the provider prefix leaves this string byte-identical to the catalog id, which is the attribution gate's tier-1 rule applied by hand because no cell overlaps yet for it to corroborate against. No other Vals string strips to this id."
+      "modelId": null,
+      "reason": "REFUSED as of 2026-08-19: this record is now the GA release `DeepSeek-V4-Pro-0813`, and this is a bare V4 Pro string, which every source that splits the two releases prints for the APRIL PREVIEW. The preview's rows stay in the archive and out of the store -- the Flash resolution, one record per version in service. Refused by STRING rather than by date, because the date cannot do this job: LiveBench publishes both spellings under the frozen release date 2026-06-25, so the measurement window that used to guard this record (validUntil 2026-08-12) would have refused the GA's own 23 cells if it had simply been inverted. GOTCHAS 24 criterion 2 is the one that holds here, and the numbers agree with it everywhere the two spellings share a column: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, GDPval 1306 -> 1590. A source that later renames this string to the GA -- as DeepSeek did for Flash -- gets a file-scoped entry with the evidence written down, not a lifted global one."
     },
     {
       "modelRaw": "google/gemini-3.1-pro-preview",
@@ -2008,14 +2017,14 @@
       "effort": "*",
       "file": "batch-35-deepseek-v4-pro-ga-release",
       "modelId": null,
-      "reason": "Batch 35 is DeepSeek's own GA release table and NOTHING in it is adopted -- unlike batches 17 and 32, not even the maker's own headline column. This is that column, and it is refused because the catalog has no record for the GA: `deepseek-v4-pro` holds the April preview, every one of its 58 published cells was measured before the GA shipped on 2026-08-12, and GOTCHAS 24 says the record's identity is settled first with the scores and the price following it. Measured 2026-08-17 with the project's own evidence counter, third-party GA readings stand at 36 catalog cells against a dilution floor of 49, so the flip the owner gated on 2026-08-14 is not available yet. These rows are the evidence banked for the day it is; adopting them now is precisely the accident the window and this batch exist to prevent."
+      "reason": "STILL REFUSED after the 2026-08-19 flip, and the reason changed rather than expiring. Until then it was 'the catalog has no record for the GA'; now it has one, and this column is refused because it is a maker's release post and four of its five catalog-mapped columns would land on cells an independent board already fills. Measured before deciding: `terminal` here is 87.9 against Vals' GA reading of 54.7 -- a 61% spread that check:data's cross-source gate fails by design, and resolving it means ruling on vendor-vs-independent scaffolding on a system benchmark (rule 6), which is an editorial call and not an alias one. `deepswe` 62.7 duplicates DeepSWE's own 62.8, already on the board. Genuinely new cells if adopted: hle-no-tools 42.7, toolathlon 74.1, ale 25.7, plus hle-tools 51.5 which is not even a row yet (the 'HLE (wo / w tools)' row carries two catalog columns and the with-tools number survives only in its note). That is a reviewed adoption with a disagreement ruling attached -- it is in TODO -- not something to fold into an identity change."
     },
     {
       "modelRaw": "DeepSeek-V4-Pro (Preview)",
       "effort": "*",
       "file": "batch-35-deepseek-v4-pro-ga-release",
       "modelId": null,
-      "reason": "This column IS the model the catalog record currently holds, and it is still refused, for two reasons that were both measured rather than assumed. First, an alias would be inert: `modelWindows` gives `deepseek-v4-pro` a validUntil of 2026-08-12 and these rows carry evaluation_date 2026-08-13, so the window would refuse the row and report it unmapped anyway. Second, this table restates the preview's own numbers differently from DeepSeek's April model card -- Toolathlon 55.9 here against the catalog's model-card row of 51.8 (the official board reads 55.86), and Terminal 72.1 here against the archive's AA readings of 64.79 / 64.04 and Vals' 50.187. A maker revising its own preview figures inside a later release post belongs in the archive with a date on it; it does not get to overwrite a published cell."
+      "reason": "REFUSED, and after 2026-08-19 the reason is simply that no catalog record holds the preview any more: `deepseek-v4-pro` is the GA release, and the preview's rows are archived and not ingested (the Flash resolution). The earlier reasons still hold on their own terms and are worth keeping, because they are what a re-reader will re-derive: this table restates the preview's own figures differently from DeepSeek's April model card -- Toolathlon 55.9 here against the model card's 51.8 (the official board reads 55.86), Terminal 72.1 here against Artificial Analysis' 64.79 / 64.04 and Vals' 50.187 -- so a maker revising its own preview numbers inside a later release post belongs in the archive with a date on it, and does not overwrite anything."
     },
     {
       "modelRaw": "DeepSeek-V4-Flash-0731",
@@ -2058,6 +2067,50 @@
       "file": "batch-35-deepseek-v4-pro-ga-release",
       "modelId": null,
       "reason": "Competitor column, refused for the same reason as the others, plus one of its own: `(w/ fallback)` names a serving arrangement rather than an operating point, and this catalog has no dimension for it. Even if the competitor rule were relaxed, this string could not be filed against a configuration."
+    },
+    {
+      "modelRaw": "deepseek-v4-pro-0813",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "LiveBench prints both releases side by side under one frozen release: 23 rows spelled `deepseek-v4-pro` and 23 spelled `deepseek-v4-pro-0813`, all dated 2026-06-25. That makes this the cleanest possible attribution -- the source itself split them (GOTCHAS 24 criterion 2) -- and the numbers corroborate: TypeScript 23.3 -> 46.7, Consecutive-Events 75.4 -> 90.2, Paraphrase 56.2 -> 68.6."
+    },
+    {
+      "modelRaw": "deepseek/deepseek-v4-pro-0813",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "Vals publishes `provider/model` and carries both releases as separate entries. Same criterion as the LiveBench pair, and the spread is the largest in the archive for this family: SWE-bench Verified 77.4 -> 96.4, Vibe-Code-Bench 49.9 -> 82.3, ProofBench 16 -> 50, Legal Research 23.1 -> 40.9. Dropping the provider prefix leaves the GA's own published name, and no other Vals string strips to it."
+    },
+    {
+      "modelRaw": "DeepSeek V4 Pro 0813 (Reasoning, Max Effort)",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "The GDPval-AA board is the one Artificial Analysis surface that DOES split the two releases: it prints this row (1590) alongside the bare `DeepSeek V4 Pro (Reasoning, Max Effort)` (1306) and `(Reasoning, High Effort)` (1291). Worth writing down because it settles what AA's bare string means elsewhere -- AA is the source GOTCHAS 24 names as the one that kept its slug across the Flash re-train, and here it is publishing the split by hand. Note this string is invisible to scripts/lib/upstream-evidence.mjs: `norm` does not strip commas (GOTCHAS 18), so `reasoning,maxeffort` blocks the effort strip and the counter never credited this cell. The alias is what puts it on the board; the counter's blindness to it is deliberate and stays."
+    },
+    {
+      "modelRaw": "deepseek-v4-pro-max-20260813",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "LMArena dates the GA in its slug and keeps the undated bare string for the preview, so this is a split source again. Supplies the record's text Elo (1465, against the preview's 1457). An Elo is accumulated votes with no evaluation date, which is why identity here has to come from the string."
+    },
+    {
+      "modelRaw": "deepseek-v4-pro-high-20260813",
+      "effort": "*",
+      "modelId": "deepseek-v4-pro",
+      "reason": "Same board, the other operating point; supplies the code Elo (1584, against the preview's 1447). Kept as a separate entry rather than folded into a pattern because the two arena slugs carry different metrics and only one each."
+    },
+    {
+      "modelRaw": "deepseek-v4-pro",
+      "effort": "*",
+      "file": "batch-11-deepswe",
+      "modelId": "deepseek-v4-pro",
+      "reason": "DeepSWE does NOT split the two releases: one row, bare string, and it is the GA. Three independent confirmations, none of them the string: the row is dated 2026-08-13 (the GA shipped 08-12), its value is 62.8, and DeepSeek's own GA release table (batch 35) publishes 62.7 for the GA against 12.8 for the preview. GOTCHAS 24 criterion 1 -- the number -- is doing the work here, which is the criterion that file scope exists to encode. Scoped rather than global because the same bare string means the preview on LiveBench, Epoch, Vals, LMArena and Artificial Analysis, all of which do split."
+    },
+    {
+      "modelRaw": "deepseek-v4-pro",
+      "effort": "*",
+      "file": "batch-33-deepseek-peak-pricing",
+      "modelId": "deepseek-v4-pro",
+      "reason": "The pricing page pins its own column headers: the MODEL VERSION row reads `DeepSeek-V4-Flash-0731 | DeepSeek-V4-Pro-0813`, so the bare column name in this batch means the GA in the source's own words (batch 33's meta records the sentence verbatim). This is the row that backs the record's peak list price of $1.32/$3.96 with cache-hit $0.044, archived on the effective day 2026-08-16 and deliberately left unmapped until the record's identity was settled. Settled 2026-08-19; this entry is what the batch-31 price term meant by 'update the record, then retire this term'."
     }
   ],
   "benchmarkSplits": [
@@ -2719,13 +2772,7 @@
       "reason": "LiveBench re-ran this model under a different published string and withdrew the old one: 23 rows of `grok-4.6-xhigh` (effort in the string) were replaced by 23 rows of `grok-4.6` (no effort stated) under the same frozen 2026-06-25 release, and 20 of the 23 scores differ — e.g. summarize 71.7 -> 68.083, theory-of-mind 90.385 -> 86.538, python 50 -> 55. So this is a re-measurement, not a correction and not a rename, and the drift check could not say so: it keys on the model string, and the string changed at the same time as the values, so every pair read as one vanish plus one appearance and the summary line said `0 value(s) changed`. Kept rather than deleted because the archive is the only record that the xhigh run was ever published; nothing in the catalog is affected either way, since grok-4.6 has no record and these rows resolve to nothing (measured 2026-08-15: 0 rows in app/observations.generated.ts). Retire this entry if LiveBench republishes an effort-labelled grok-4.6 row — the check reports an acknowledgement that stops matching."
     }
   ],
-  "modelWindows": [
-    {
-      "modelId": "deepseek-v4-pro",
-      "validUntil": "2026-08-12",
-      "reason": "This record is the PREVIEW. DeepSeek shipped V4 Pro twice under one family name: the 2026-04-24 preview, whose 2026-04-26 model card is where eleven of these cells come from, and the GA release `deepseek-v4-pro-0813`, live on OpenRouter 2026-08-12T15:42:44Z with the description 'This is the GA release of DeepSeek V4 Pro'. Ten aliases resolve bare V4 Pro strings here with effort '*', and the vendor's own GA table moves DeepSWE 12.8 -> 62.7, Terminal 2.1 72.1 -> 87.9, AutomationBench 12.8 -> 31.8 and Cybergym 52.7 -> 83.3. A GA reading arriving under an unchanged slug would therefore not merely be wrong, it would be invisible: four of those ten columns hold no preview value at all, and the cross-source disagreement gate only fires where a cell already has a second reading. Artificial Analysis is the source that makes this concrete -- it never renamed its slug across the V4 Flash re-train, which is how a preview's 49.25 was published as the release's 100. So the record stops accepting readings dated on or after the GA date, and any such row is reported unmapped instead. Undated rows still resolve; 38 of the 73 rows under these strings carry no evaluation_date, and failing closed on them would drop half the existing evidence to guard against rows that do not exist yet. Lifting this window is not a code change: it is the editorial decision recorded in GOTCHAS 24 and TODO -- whether this record becomes the GA model (Flash's resolution, one record for the model in service) or the preview keeps a record of its own (the Qwen3.6 Max Preview shape). Neither can be taken until a board publishes GA scores, because the first source to do so decides how the string is spelled."
-    }
-  ],
+  "modelWindows": [],
   "acknowledgedDisagreements": [
     {
       "modelId": "qwen3.8-max",

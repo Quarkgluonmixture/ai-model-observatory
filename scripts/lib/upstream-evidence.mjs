@@ -101,7 +101,7 @@ export const sameFamily = (published, family) => {
  */
 export const buildEvidenceIndex = (benchmarkIds) => {
   const config = loadAliasConfig();
-  const { isDropped, supersededBy } = buildResolvers(config);
+  const { isDropped, supersededBy, isRefused } = buildResolvers(config);
   const aliases = new Map((config.benchmarkAliases ?? []).map((e) => [e.benchmark, e.benchmarkId]));
   const splits = new Map((config.benchmarkSplits ?? []).map((e) => [`${e.benchmark}|${e.benchmarkVersion}`, e.benchmarkId]));
   const fallbacks = new Map((config.versionFallbacks ?? []).flatMap((e) => e.benchmarks.map((name) => [name, e.version])));
@@ -138,11 +138,29 @@ export const buildEvidenceIndex = (benchmarkIds) => {
     batches.filter(({ meta }) => String(meta.collectedWith ?? "").includes("capture-release-tables")).map((b) => b.file),
   );
 
+  // A fifth reason, and the only one that reads the alias file: a string the catalog has refused
+  // GLOBALLY, in writing, is not evidence for the model it looks like. This does not weaken the
+  // "count unaliased strings" design above — absence of an alias still counts, which is the whole
+  // point. A refusal is a third state, and it is a decision rather than a gap.
+  //
+  // Added 2026-08-19, when `deepseek-v4-pro` became the GA release and ten bare V4 Pro spellings
+  // were refused globally. Without this the counter credited that record with eleven cells belonging
+  // to the retired April preview — the correct answer before the flip, and afterwards the exact
+  // failure the over-count assertion exists to catch. Pinning eleven cells was the alternative and it
+  // was the wrong one: it would have switched the guard off across a third of the record for good,
+  // to hide a fact that is written down in machine-readable form two files away.
+  //
+  // Only GLOBAL refusals, deliberately. A file-scoped refusal says "not from this source", which
+  // leaves the string meaning that model somewhere else, and this counter has no source dimension to
+  // express that in. Maker release captures are already excluded wholesale just above.
+  const refused = (raw) => isRefused(raw.model_raw, raw.reasoning_effort ?? raw.effort ?? null, undefined);
+
   const observations = new Map();   // norm(model_raw) -> [column id]
   const parameters = new Set();     // norm(model_raw) that has an operating-parameter row
   for (const { file, rows } of batches) {
     if (releaseCapture.has(file)) continue;
     for (const { raw } of rows) {
+      if (refused(raw)) continue;
       const column = columnFor(file, raw);
       if (!column) continue;
       const key = norm(raw.model_raw);
@@ -150,7 +168,7 @@ export const buildEvidenceIndex = (benchmarkIds) => {
       observations.get(key).push(column);
     }
   }
-  for (const { rows } of parameterBatches) for (const { raw } of rows) parameters.add(norm(raw.model_raw));
+  for (const { rows } of parameterBatches) for (const { raw } of rows) if (!refused(raw)) parameters.add(norm(raw.model_raw));
 
   /**
    * `needles` are the published spellings to look for — a provider slug's tail, a display name, a
@@ -242,26 +260,6 @@ const KNOWN_OVERCOUNTS = [
     // Nothing to repair — do not "fix" it by teaching the matcher about effort, which is what makes
     // it work for models that have no alias yet.
     reason: "one AA slug = 0731 release + April preview, separated only by effort, which this counter strips by design",
-  },
-  {
-    model: "deepseek-v4-pro",
-    cells: ["deepswe"],
-    // Unlike the exemption above, this one is TEMPORARY and it marks an open decision rather than
-    // an inherent limit.
-    //
-    // DeepSWE published 62.8 for this family on 2026-08-13 and the daily job archived it on
-    // 2026-08-14 — the first board to score the GA release. The catalog record is the *preview*,
-    // and `modelWindows` in `data/model-aliases.json` holds `validUntil: 2026-08-12` precisely so a
-    // GA score cannot land silently in it. So the row is in the archive and the cell is not on the
-    // board, which is exactly what this counter reads as an over-count: it matches published
-    // STRINGS with effort stripped, and knows nothing about measurement windows — the same design
-    // that lets it work for a model with no alias yet.
-    //
-    // Nothing to repair in the counter. What retires this pin is the editorial decision in
-    // `TODO.md` (does the preview keep its own record, or does this become the GA record?) — and
-    // the self-test reports an exemption that stops occurring, so it will say so on its own the day
-    // the window lifts. Do NOT teach the matcher about windows to make it go away.
-    reason: "the GA release's first board score is archived while the record is still the preview, held out by modelWindows — retires when the preview/GA decision is taken",
   },
 ];
 
