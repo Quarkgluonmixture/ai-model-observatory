@@ -810,3 +810,58 @@ lookup 指向 `-0813`(**Flash 早就是这个形状,就在上面一行**)。同�
 新理由是**要先裁跨源分歧**:`terminal` 厂商 87.9 vs Vals 的 GA 54.7,**差 61%**,跨源闸门按设计会红,
 裁它是「厂商 vs 独立源在系统类基准上的脚手架差异」这种编辑判断(规则 6)。裁了之后真正新增 **3 格**。
 立成 `TODO.md` 一条待决,**没顺手塞进身份改动里**。
+
+## [2026-08-19 第三轮] 采纳 batch 35 的 GA 列:四格新增、零个已发布数字被改,顺出闸门的两个真相 `#decision` `#ship` `#measure` `#incident`
+
+裁决 = **采**。做之前先把「采纳的代价」量清楚,量出来的结论**比我上一轮写的更轻**:
+上一轮我把这件事描述成「要先裁一条会让 `check:data` 变红的跨源分歧」——**红不了**,原因见 ②。
+
+**① 采纳不改任何已发布数字,因为 `SOURCE_RANK` 把 vendor 排在最后** `#measure`
+`app/model-data.ts` 的 `SOURCE_RANK = { benchmark: 0, independent: 1, vendor: 2 }`,格子内按它排序、
+第一行当 primary。所以采纳后:`terminal` 仍显示 Vals 的 **54.682**(厂商 87.9 当第二读数)、
+`deepswe` 仍显示 DeepSWE 自己的 **62.8**(厂商 62.7 当第二读数);真正**新增**的是目录本来空着的四格
+—— hle-no-tools 42.7 · hle-tools 60.0 · toolathlon 74.1 · ale 25.7。
+`describe-change` 原话:「没有任何已有模型的数字被改动」。**38 → 42 格,1381 → 1385,66.1% → 66.3%**。
+⇒ 教训:**「采一列厂商数」的风险大小取决于那些格子空不空**,不取决于厂商数偏高多少。
+先查 primary 规则再估代价,别凭「厂商数会覆盖」这种直觉。
+
+**② 那条 61% 的分歧闸门**根本**不会响** —— 而这是设计,不是漏洞 `#incident` `#measure`
+`check-model-data.mjs` 把格子里的行按 `${harness}|${reasoningEffort}` **分桶**,只在桶内比 >20%。
+厂商行按约定 harness / effort 都留空(`-|-`),Vals 的 GA 行写着 `-|max` ⇒ **两个桶,永不相遇**。
+⚠ 我一开始想「那就把 Note 1 的 harness/effort 补到行上,让它们进同一个桶」——**没做**,两个理由:
+一是厂商 Note 1 说的是「code-agent 任务」而没说哪几行,摊到行上是判断不是抄录(批次 meta 早写了);
+二是**补了 harness 反而更不会响**(桶变成 `DeepSeek Harness|max` vs `-|max`,还是两个桶)。
+⇒ 于是量了一下分桶到底对不对:全目录 **113** 个格子存在 >20% 的跨行差而闸门刻意不比
+(绝大多数是 effort 阶梯,同一模型 low 档 7.2 / max 档 39.5,比了纯噪音),闸门真会响的只有 **1** 个。
+**放宽分桶 = 113 条假警报,通道当天就废。** ⇒ 分桶是对的,结论是:
+**采厂商列之前必须自己逐格比一遍**,分歧写进 `acknowledgedDisagreements` —— 那条文字
+**就是唯一的记录**,闸门永远不会触发它。⛔ 别把沉默读成一致。⇒ 坑 **45**。
+
+**③ 裁决本身:两个读数都留,独立源当 primary,但「厂商偏高」解释不了这个量级** `#decision`
+写进 `acknowledgedDisagreements` 的四条实测(全文在那条 reason 里,**这里不复述**):
+- 规则 6 + 脚手架**不对称有据**:厂商在表下 Note 1 里点名了自己的 scaffold(DeepSeek Harness
+  minimal mode、max effort、temp 1.0 / top_p 0.95),Vals 这一行**没写 harness**(它在别的行会写
+  Claude Code / Codex / Cursor CLI)。
+- **量级不合分布**:同一列上「同模型 厂商−Vals」实测 n=12,Δ 从 **+2.04**(gemini-3.5-flash)
+  到 **+19.18**(qwen3.8-max),均值 +8.5;这一条是 **+33.22**,比历史最大值还高 14 分。
+  §9 记的方向是 Terminal-Bench 上厂商最多高 +8 —— 这是四倍。**所以「厂商偏高」只解释了一部分,尾巴没解释。**
+- **Vals 自己那一读也怪**(这半是读者不会想到去查的):同一块 Vals 板上,同一个 GA 条目
+  SWE-bench Verified **96.4**、LiveCodeBench **87.5**(全目录 Vals 给出的最强 coding 数),
+  而它的 Terminal-Bench **54.682** 比 Vals 自己给 inkling-small(55.056)和 qwen3.6-plus(53.184)
+  的还低。一个模型不会既领跑 SWE-bench Verified 又在 Terminal-Bench 上落后小模型。
+- **两边都没有第三方佐证**:这一格**没有 benchmark-native 读数** —— Terminal-Bench 自己的板没发 GA,
+  AA 也没发(它 34 行里 33 行还写着 2026-04-24)。**分歧发生在两个最弱的源类之间,最强的那类缺席。**
+⇒ 退休条件写进条目:等第三个读数,它站哪边就是答案。
+
+**④ HLE 那一行的拆分做进了脚本,不是手工补行** `#ship` `#incident`
+TODO 原话是「采纳那天要把 with-tools 那个数拆成第二行」。⚠ 照字面手工往 `.jsonl` 补 8 行会被
+**下一次 `capture:release` 抹掉** —— `capture-release-tables.mjs` 对 `.jsonl` 和 `.meta.json` 都是
+`writeFileSync` 覆盖写,而且**没有任何检查会发现归档与脚本脱钩**(契约只查「生成产物 vs 归档一致」)。
+⇒ 改成给 `carried` 加一个 `dualColumn` 字段(一行published → 两个目录列),然后**重跑 capture**。
+重跑结果就是可复现性的证明:原有 76 行**分数零变化、非 note 字段零变化、零删除**,只多 8 行。
+⚠ 拆出来的数**交叉验证过两处**,没信「脚本跑出来就对」:`DeepSeek-V4-Pro (Preview)` 的 hle-tools
+出来 **48.2**,与四月 model card 在目录里挂了三个月的那格逐位相同;`DeepSeek-V4-Flash-0731` 出来
+**51.5**,与 alias 里早就写下的数逐位相同。⇒ 坑 **46**。
+⚠ 顺带:Flash 那一列现在**真的有 hle-tools 行了**(以前只是 note 里的散文),所以 batch 35 里
+Flash 的 file-scoped 拒收比以前更承重 —— 它挡的不再是「一个数字的说法」,而是一行能直接进库的行。
+alias 的 reason 已按此改写。

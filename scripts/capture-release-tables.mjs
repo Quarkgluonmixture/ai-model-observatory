@@ -130,9 +130,13 @@ const RELEASES = {
     adoption:
       "这一批的表**不是客户端渲染的**:官方 changelog 那篇把表发成了 PNG,而 Hugging Face 把 model card 的 " +
       "markdown 表格服务端渲染成页面上唯一一个 `<table>`,脚本读的就是它 —— 仍然可复跑,只是不靠等应用画完。" +
-      "本批次**一个模型列都不采纳**,八列全部在 model-aliases.json 里写了 file-scoped `modelId: null`。" +
-      "GA 串 `DeepSeek-V4-Pro-0813` 在目录里还没有记录 —— `deepseek-v4-pro` 装的是四月 preview,记录身份未翻转" +
-      "(判据与动手顺序见 GOTCHAS 24),所以这批是**为翻转那天备好的证据**,不是今天要发布的数。" +
+      "**2026-08-19 起采纳 GA 那一列**(`DeepSeek-V4-Pro-0813`):记录当天原地翻转成 GA,这批从「为翻转备好的证据」" +
+      "变成它的厂商读数。另外七列**仍然全部 file-scoped `modelId: null`** —— 五个竞品列、Flash 的两列。" +
+      "⚠ 采纳的是**六格**:hle-no-tools 42.7 · hle-tools 60.0(同一行的第二个数,由 dualColumn 拆行)· " +
+      "terminal 87.9 · deepswe 62.7 · toolathlon 74.1 · ale 25.7。其中 terminal 与 Vals 的 GA 读数 54.682 " +
+      "相差 61%,裁定写在 model-aliases.json 的 acknowledgedDisagreements 里(是**那一条**,不是这里)。" +
+      "⚠ 采纳不改任何已发布数字:`SOURCE_RANK` 把 vendor 排在最后,所以 terminal 仍显示 Vals 的 54.682、" +
+      "deepswe 仍显示 DeepSWE 自己的 62.8,厂商读数是同格的第二读数。" +
       "⚠ 其中 `GLM-5.2`、`Kimi K3`、`DeepSeek-V4-Flash-0731` 三个串**有全局通配 alias**,不显式挡住," +
       "厂商发布表的数会直接写进这三条目录记录。" +
       "evaluation_date 记的是发布日;双数字格取第一个数为指标、第二个进 note;" +
@@ -143,13 +147,17 @@ const RELEASES = {
       "(Terminal 82.7 · NL2Repo 54.2 · Cybergym 76.7 · DeepSWE 54.4 · Toolathlon 70.3 · ALE 25.2 · " +
       "AutomationBench 25.1 · DSBench-FullStack 68.7 · DSBench-Hard 59.6)与官方 changelog 2026-07-31 " +
       "条目逐位相同,Pro-Preview 的 HLE 37.7 与目录既有值也逐位相同。" +
-      "⚠ 「HLE (wo / w tools)」一行里装着**目录的两列**:第一个数进 hle-no-tools,第二个数是 hle-tools 的口径," +
-      "本脚本每行只出一格,所以工具档的数**只以原文留在行的 note 里**,采纳那天要把它拆成第二行。" +
+      "⚠ 「HLE (wo / w tools)」一行里装着**目录的两列**:第一个数进 hle-no-tools,第二个数进 hle-tools。" +
+      "2026-08-19 之前本脚本每行只出一格,工具档那个数只以原文留在 note 里;现在由 `dualColumn` **拆成第二行**," +
+      "所以重跑 capture 会复现这个拆分 —— 手工拆会被下一次重跑抹掉(本脚本覆盖写两个文件)。" +
       "⚠ 表下 Note 1 是这张表罕见地给了脚手架与 effort:「For the code-agent tasks among the public " +
       "benchmarks above, DeepSeek-V4-Pro-0813 is evaluated with the minimal mode of DeepSeek Harness as " +
       "the agent framework, using the `max` reasoning effort level with `temperature = 1.0, top_p = 0.95`.」" +
       "—— 但它没说**哪几行**算 code-agent 任务,把它摊到具体行是判断不是抄录,所以行上仍记 harness / " +
-      "reasoning_effort 为 null,原文留在这里。" +
+      "reasoning_effort 为 null,原文留在这里。⚠ 这一条有**度量后果**,不只是洁癖:跨源分歧闸门按 " +
+      "`harness|effort` 分桶比较,所以 harness/effort 留空的厂商行与 Vals 的 `-|max` 行**不在同一个桶**," +
+      "闸门不会去比 87.9 和 54.682。那是闸门的设计(effort 阶梯本来就不该互比,实测 113 个格子同理)," +
+      "不是漏洞 —— 但因此**这条分歧只有 acknowledgedDisagreements 里那段文字在记录它**,别把闸门的沉默读成两个数一致。" +
       "拒收四个标签,理由分两种:「NL2Repo」「Cybergym」「AutomationBench (Public)」目录没有这三列;" +
       "「DSBench-FullStack †」「DSBench-Hard †」带的 † 是厂商自己的脚注,原文写明两者都是 internal test set" +
       "(internal full-stack development test set / internal test set of difficult coding-agent problems)," +
@@ -159,7 +167,8 @@ const RELEASES = {
         id: "hle-no-tools",
         version: "Full",
         tools: false,
-        dual: "同格第二个数是 HLE with tools(目录 hle-tools 列的口径,本行未采)",
+        // One published row, two catalog columns. See `dualColumn` in the parser below.
+        dualColumn: { id: "hle-tools", version: "Full", tools: true },
       },
       "Terminal Bench 2.1": { id: "terminal", version: "2.1", tools: true },
       DeepSWE: { id: "deepswe", version: "v1.1", tools: true },
@@ -236,31 +245,50 @@ for (const table of tables) {
       const score = Number(primary);
       if (!Number.isFinite(score)) continue;
 
-      const notes = [`${release.noteName} 发布页「${section ?? "performance"}」分区,原样抄录 ${label} 一行`];
-      if (secondary && carried?.dual) notes.push(`${carried.dual} ${secondary}`);
-      else if (secondary) notes.push(`页面同格第二个数 ${secondary},语义未标注,未采用`);
+      const baseNote = `${release.noteName} 发布页「${section ?? "performance"}」分区,原样抄录 ${label} 一行`;
       // Every release so far states no harness and no effort, so the row says so. A release that
       // states them says something else — the row is the evidence, and a sentence that is false on
       // every row is worse than the same sentence being false once in the meta.
-      notes.push(release.rowNote ?? "厂商发布材料:未标注 harness、reasoning effort 或运行日期");
-
-      rows.push({
+      const tailNote = release.rowNote ?? "厂商发布材料:未标注 harness、reasoning effort 或运行日期";
+      const emit = (value, column, notes) => rows.push({
         model_raw: model,
-        benchmark: carried?.id ?? label,
-        benchmark_version: carried?.version ?? null,
-        score,
+        benchmark: column?.id ?? label,
+        benchmark_version: column?.version ?? null,
+        score: value,
         // Some cells are Elo-like rather than percentages (Qwen's QwenReactBench prints 1694).
-        unit: score > 200 ? "Elo" : "%",
+        unit: value > 200 ? "Elo" : "%",
         harness: null,
         reasoning_effort: null,
-        tools_enabled: carried ? carried.tools : null,
-        context_length: carried?.contextLength ?? null,
+        tools_enabled: column ? column.tools : null,
+        context_length: column?.contextLength ?? null,
         evaluation_date: release.published,
         source_label: release.label,
         source_url: release.url,
         source_kind: "vendor",
-        note: notes.join(";"),
+        note: [baseNote, ...notes, tailNote].join(";"),
       });
+
+      // `dualColumn` is for the shape where ONE published row carries TWO catalog columns —
+      // DeepSeek prints "HLE (wo / w tools)" as a single row with two numbers, where Qwen and Z.AI
+      // print two rows. Without it the second number survives only as prose in a note, which is
+      // archived-but-uncountable: batch 35's own meta had to promise "采纳那天要把它拆成第二行",
+      // and a hand-split would have been erased by the next `capture:release` run, because this
+      // script overwrites both files. Emitting it here keeps the split reproducible.
+      // ⚠ Only for a second number whose COLUMN is known. Where the second figure is a different
+      // metric of the same column (Qwen's partial-credit scores, OSWorld's partial score) it stays
+      // a note — `dual` — because the catalog has nowhere to put it.
+      const secondScore = secondary === undefined ? NaN : Number(secondary);
+      if (carried?.dualColumn && Number.isFinite(secondScore)) {
+        emit(score, carried, [`同格第二个数 ${secondary} 已按 ${carried.dualColumn.id} 单独出行`]);
+        emit(secondScore, carried.dualColumn, [
+          `${label} 一行的第二个数(第一个数 ${primary} 在 ${carried.id});` +
+          `同一行装着目录两列,拆行由 capture 脚本的 dualColumn 完成,不是手工补的`,
+        ]);
+        continue;
+      }
+      if (secondary && carried?.dual) emit(score, carried, [`${carried.dual} ${secondary}`]);
+      else if (secondary) emit(score, carried, [`页面同格第二个数 ${secondary},语义未标注,未采用`]);
+      else emit(score, carried, []);
     }
   }
 }

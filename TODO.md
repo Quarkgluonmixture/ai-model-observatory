@@ -95,15 +95,8 @@ Flash 的解法。preview 的行留在归档里不入库,不是删掉。名字�
 上游都是**精确同名**,且各自族里**没有取代它们的 GA** ⇒ 按 `GOTCHAS.md` 25 的判据它们不是待转正的
 preview,名字是对的。
 
-翻转留下的三件(都不急,都是编辑判断):
+翻转留下的两件(都不急,都是编辑判断):
 
-- [ ] ⭐ **要你定:采不采 batch 35(DeepSeek 自己的 GA 发布表)。** 记录已经是 GA 了,所以旧理由
-      (「目录没有 GA 记录」)不成立;新理由是**跨源分歧要先裁**:`terminal` 那一列厂商写 87.9、
-      Vals 的 GA 读数 54.7,**差 61%**,跨源闸门按设计会红,要一条 `acknowledgedDisagreements`
-      写明这是脚手架差异(规则 6、§9 记的厂商偏高方向)。裁了之后真正新增 **3 格**
-      (hle-no-tools 42.7 · toolathlon 74.1 · ale 25.7),`deepswe` 62.7 只是给已有的 62.8 加个佐证。
-      ⚠ 还有第 4 格 `hle-tools` 51.5 **连行都还没有** —— 「HLE (wo / w tools)」一行装着目录两列,
-      采纳那天要拆成第二行。
 - [ ] **`deepseek-v4-pro` 的 `open` 现在无据**(`check:models` 那节唯一的第三条,报告不失败)。
       原来的据是 batch-06/08 里 preview 的 `open_weights: true`,已随裸串一起拒收。GA 有自己的
       HF 仓库(`deepseek-ai/DeepSeek-V4-Pro-0813`,batch-35 的 `sources` 记着),但归档里**没有一行

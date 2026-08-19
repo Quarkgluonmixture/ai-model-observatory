@@ -33,8 +33,10 @@ owner 裁决「原地翻转」⇒ 记录变成 GA ⇒ 价格跟着身份走($1.3
 
 ⭐ **preview 规矩已定并已用过一次**:一条记录 = 一个在服役的版本,preview 的行**留档不入库**
 (Flash 的解法)。`deepseek-v4-pro` 显示名现在是 **"DeepSeek V4 Pro"**(`preview` 标签由名字派生,
-所以自动掉了)。GA 的官方发布表在档(**batch 35**)但**仍然一列都没采纳** —— 新理由是要先裁一条
-跨源分歧,见 `TODO.md`。
+所以自动掉了)。**batch 35 的 GA 那一列同日采纳**(六格,38 → 42 格):裁定写在
+`acknowledgedDisagreements` 的 `deepseek-v4-pro/terminal` 那条 —— **那是唯一记录它的地方**,
+因为闸门按 `harness|effort` 分桶、这两行不同桶(坑 **45**)。⚠ 采纳**没改任何已发布数字**:
+`SOURCE_RANK` 把 vendor 排最后。另外七列仍全部拒收。
 Qwen / Gemini 那两条 Preview 查过:上游精确同名且族里无 GA 取代 ⇒ 按坑 25 **不动**。
 
 ⇒ **要你定的都在 `TODO.md`**,标 ⭐ 的就是(**这里不维护第二份清单**,复算 =
@@ -58,8 +60,8 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2123 rows · 1381 / 2088 cells（66.1% cell coverage）** —— 8-19 实测,V4 Pro 翻转后(前值 2170 / 1401 / 67.1%),复算 = `npm run check:data` 末行 |
-| 源分类 | benchmark 916 / independent 1018 / vendor 189（8-19 实测；vendor 掉 11 = 四月 model card 那 11 格 seed 删掉了）|
+| 观测 | **2129 rows · 1385 / 2088 cells（66.3% cell coverage）** —— 8-19 实测,V4 Pro 翻转 + 采纳 batch 35 之后(翻转前 2170 / 1401 / 67.1%),复算 = `npm run check:data` 末行 |
+| 源分类 | benchmark 916 / independent 1018 / vendor 195（8-19 实测；先掉 11 = 四月 model card 那 11 格 seed 删掉了,再加 6 = batch 35 的 GA 列采纳了）|
 | 溯源 | **317 / 320**（99%；3 格有值无据 = `deepseek-v4-flash` 两格 + `deepseek-v4-pro` 的 `open`，都在 `TODO.md`）⚠ 分母是**解析得到的行** |
 | 归档 | **33 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-17 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`；8-10 记的 16 已过时）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ 只增不减地长过两次：batch 35 之后**至少 +76**（那一批八列全不采纳），2026-08-19 又加进 V4 Pro **preview 的全部 132 行**（记录翻转成 GA，裸串全局拒收）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法或加法 |
@@ -143,8 +145,8 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
    GDPval-AA 36 · Vals 27 · FrontierMath 6 · LMArena 2 · ALE 1,复算 =
    `FETCH_TIMEOUT_MS=60000 npm run check:upstream`)。⚠ 顺便看两件等着看的:归属闸门接
    `deepseek-v4-flash-0731`(它的 ARC 三行就在待入档里)· `--any-open` 第一次生效。
-2. **`deepseek-v4-pro` 翻转后的三件小尾巴**(都在 `TODO.md`,都不急):batch 35 采不采(要先裁
-   `terminal` 87.9 vs Vals 54.7 那条跨源分歧)· `open` 现在无据 · `value` 这个 chip 还算不算数。
+2. **`deepseek-v4-pro` 翻转后的两件小尾巴**(都在 `TODO.md`,都不急):`open` 现在无据 ·
+   `value` 这个 chip 还算不算数。batch 35 已采(见接手点)。
 3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——
    挂了应当是**大声 throw**(六条断言),不该是"看板变小了"。见 `docs/ARCHITECTURE.md` §9。
 
@@ -162,7 +164,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**41** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
+| `GOTCHAS.md` | **动手之前扫一遍**：**46** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
