@@ -281,26 +281,40 @@ export const MODELS: ModelRecord[] = [
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
     cfg(null, 39.4, 0.2424, 56.59, 2.09, 0.4, 1.6, false, 0.04),
   ]),
-  // "Preview", and the word is load-bearing. Every cell on this record was measured on the April
-  // release: 37 of 58 carry only pre-GA dates, 21 carry none, and zero carry a date on or after the
-  // 2026-08-13 GA. Eleven come straight off the 2026-04-26 model card. Meanwhile DeepSeek's own GA
-  // table moves DeepSWE 12.8 → 62.7, Terminal 2.1 72.1 → 87.9 and Cybergym 52.7 → 83.3, so these
-  // numbers describe a different model from the one `deepseek-v4-pro-0813` serves. `modelWindows`
-  // stops GA readings landing here; the name is what stops the readings already here being read as
-  // GA. `_doc` records this exact failure happening once before — a preview's scores published under
-  // the name of the model that replaced it, for a week.
+  // This record is the GA release `DeepSeek-V4-Pro-0813`, since 2026-08-19. It held the April preview
+  // for three months and the changeover is the one thing to understand before touching anything here.
   //
-  // Not a date suffix, which is what `deepseek-v4-flash` carries: "0731" is copied from what DeepSeek
-  // published (the HF repo is `DeepSeek-V4-Flash-0731`, the upstream name says 0731). Pro has no such
-  // date anywhere — HF is `DeepSeek-V4-Pro`, upstream is `DeepSeek: DeepSeek V4 Pro`, and the only
-  // dates available are third-party (an OpenRouter listing date, a model-card evaluation date). Flash
-  // shows why they cannot be substituted: it was listed 04-24 and named 0423. "Pro-Preview" is a
-  // column in DeepSeek's own GA table, so this name is copied rather than derived. When DeepSeek
-  // renames the bare entry — as it did for Flash — copy that instead.
+  // DeepSeek shipped V4 Pro twice under one family name: a preview on 2026-04-24 and the GA on
+  // 2026-08-12. Its own release table moves DeepSWE 12.8 → 62.7, Terminal 2.1 72.1 → 87.9 and
+  // Cybergym 52.7 → 83.3, so the two are not one model with a new build number, and `_doc` in
+  // data/model-aliases.json records this exact accident happening once before — a preview's scores
+  // published under the name of the model that replaced it, for a week.
   //
-  // The `preview` tag comes from this name via DERIVED_TAGS, so there is nothing else to edit.
-  m("deepseek-v4-pro", "DeepSeek V4 Pro Preview", "DeepSeek", "#8467d6", true, 1000, ["value", "reasoning"], [
-    cfg("max", 45.3, 0.05, 64.4, 1.68, 0.435, 0.87, false, 0.004),
+  // What identifies the model is now the STRING, not a date: `-0813` spellings resolve here and bare
+  // ones are refused globally with a written reason, and two sources that do not split the releases
+  // (DeepSWE, the pricing page) are carried by file-scoped entries whose evidence is a number or a
+  // sentence the source prints. The reason it is not a date is in the archive self-test: LiveBench
+  // publishes both spellings under its frozen release date 2026-06-25, so the obvious inversion of the
+  // old measurement window would have deleted the GA's own 23 LiveBench cells with every check green.
+  //
+  // The preview's rows stay in the archive and out of the store — the Flash resolution, one record per
+  // version in service. That is why this record's cells dropped when it flipped: they are now the GA's
+  // own, not a superset. Nothing here was carried over, and in particular the 2026-04-26 model card's
+  // eleven seed cells were removed rather than re-labelled.
+  //
+  // The four operating parameters are null on purpose and this is the honest state, not a gap to fill:
+  // Artificial Analysis has not published the GA yet. It keeps one slug across a re-train — that is how
+  // the Flash accident happened — so when its numbers move, the bare string is what will carry them,
+  // and it must be attributed by file with the evidence written down rather than by lifting a global
+  // refusal. Price is the exception because the vendor's own page names the release: peak list price
+  // from batch 33, read on the day the rate card took effect.
+  //
+  // The name is copied, not derived. "DeepSeek-V4-Pro-0813" is what DeepSeek publishes; the catalog
+  // shows the family name because the record IS that release, the same shape as every other record
+  // here. Do not add a date suffix — Flash proved third-party listing dates disagree with the maker's
+  // own (listed 04-24, named 0423).
+  m("deepseek-v4-pro", "DeepSeek V4 Pro", "DeepSeek", "#8467d6", true, 1000, ["value", "reasoning"], [
+    cfg("max", null, null, null, null, 1.32, 3.96, false, 0.044),
   ]),
   // --- Added from data/sources/batch-06-operating.jsonl -------------------------------
   // Field sources: intelligence / speed / latency = Artificial Analysis model pages.
@@ -497,8 +511,10 @@ const google35 = (score: number, version: string, harness: string | null = null,
   observation(score, "gemini-3.5-card", "Gemini 3.5 Flash model card", GOOGLE_35_URL, "vendor", version, "2026-05-19", harness, "published setting", toolsEnabled, contextLength);
 const google36 = (score: number, version: string, harness: string | null = null, toolsEnabled: boolean | null = null, contextLength?: string) =>
   observation(score, "gemini-3.6-release", "Gemini 3.6 Flash release", GOOGLE_36_URL, "vendor", version, "2026-07-31", harness, "published setting", toolsEnabled, contextLength);
-const deepseek = (score: number, version: string, harness: string | null = null, toolsEnabled: boolean | null = null, contextLength?: string) =>
-  observation(score, "deepseek-v4-card", "DeepSeek V4 model card", DEEPSEEK_URL, "vendor", version, "2026-04-26", harness, "Max", toolsEnabled, contextLength);
+// The `deepseek()` seed helper was deleted on 2026-08-19 with the eleven cells it built. It stamped
+// every row "DeepSeek V4 model card", 2026-04-26, effort Max — the APRIL PREVIEW's card. Leaving it in
+// place would have been an invitation to refill this record from it. DEEPSEEK_URL stays: the source
+// registry below still names the V4 model cards, and Flash's four seed cells come from its own card.
 
 // Each value is an observation with its own source, version and execution setup.
 // Vendor comparison tables are retained as evidence, but no vendor is the global backbone.
@@ -518,7 +534,15 @@ const SEED_OBSERVATIONS: Record<string, BenchmarkObservations> = {
   "gemini-3.1-pro": { "hle-no-tools":google35(44.4,"Full",null,false), "arc-agi-2":google35(77.1,"v2",null,false), "swe-pro":google36(54.2,"Public",null,true), deepswe:google36(12,"v1.1",null,true), terminal:google36(73.8,"2.1","Terminus-2",true), gdpval:google36(965,"v2",null,true), charxiv:google36(83.3,"RQ",null,false), mmmu:google35(80.5,"Pro",null,false), mrcr:google36(84.9,"v2 · 8 needle",null,false,"128K average") },
   "claude-sonnet-5": { "swe-pro":google36(63.2,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(80.4,"2.1","Terminus-2",true), gdpval:google36(1607,"v2",null,true), charxiv:google36(77,"RQ",null,false), mrcr:google36(71.6,"v2 · 8 needle",null,false,"128K average") },
   "grok-4.5": { "swe-pro":google36(64.7,"Public",null,true), deepswe:google36(54,"v1.1",null,true), terminal:google36(83.3,"2.1","Terminus-2",true), gdpval:google36(1535,"v2",null,true), charxiv:google36(81.6,"RQ",null,false), mrcr:google36(81.4,"v2 · 8 needle",null,false,"128K average") },
-  "deepseek-v4-pro": { gpqa:deepseek(90.1,"Diamond",null,false), "hle-no-tools":deepseek(37.7,"Full",null,false), "imo-answer":deepseek(89.8,"2026",null,false), "hle-tools":deepseek(48.2,"Full",null,true), "swe-pro":deepseek(55.4,"2026",null,true), browsecomp:deepseek(83.4,"2026",null,true), "mcp-atlas":deepseek(73.6,"Public",null,true), toolathlon:deepseek(51.8,"Verified",null,true), gdpval:deepseek(1554,"v2",null,true), apex:deepseek(38.3,"2026",null,true), mrcr:deepseek(83.5,"v2 · 8 needle",null,false,"1M") },
+  // deepseek-v4-pro's eleven seed cells were REMOVED on 2026-08-19, when this record became the GA
+  // release. Every one of them came off the 2026-04-26 V4 model card, which is the preview's card:
+  // gpqa 90.1, hle-no-tools 37.7 (the vendor's own GA table says 42.7), imo-answer 89.8, hle-tools
+  // 48.2, swe-pro 55.4, browsecomp 83.4, mcp-atlas 73.6, toolathlon 51.8 (GA 74.1), gdpval 1554 (the
+  // GDPval-AA board's own GA row says 1590), apex 38.3, mrcr 83.5. Re-labelling them would have been
+  // the accident this catalog has already shipped once. They are not lost: the card's numbers are the
+  // preview's published record, DeepSeek restates most of them in batch 35's Preview column, and the
+  // rows there are archived. Do not re-add them from memory — a maker's later post revises its own
+  // preview figures (Toolathlon 55.9 there against 51.8 here).
   "deepseek-v4-flash": { terminal:observation(82.7,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","2.1","2026-07-31",null,"published setting",true), deepswe:observation(54.4,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","v1.1","2026-07-31",null,"published setting",true), toolathlon:observation(70.3,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","Verified","2026-07-31",null,"published setting",true), ale:observation(25.2,"deepseek-v4-flash-card","DeepSeek V4 Flash 0731 model card",DEEPSEEK_FLASH_URL,"vendor","2026","2026-07-31",null,"published setting",true) },
   "claude-opus-5": { gdpval:observation(1860,"gdpval-aa-v2","GDPval-AA v2 leaderboard",GDPVAL_URL,"independent","v2","2026-07-31",null,"max",true) },
   "qwen3.7-max": { "mcp-atlas":observation(76.4,"qwen3.7-release","Qwen3.7 release",QWEN_URL,"vendor","Public","2026-05-19",null,"published setting",true) },

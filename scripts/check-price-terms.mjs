@@ -11,7 +11,15 @@
 import { readdirSync, readFileSync } from "node:fs";
 import { MODELS } from "../app/model-data.ts";
 
-const SOURCE_DIR = "data/sources";
+// `--source-dir` exists for the test at scripts/check-scheduled-prices.test.mjs and nothing else.
+// That test refuses to pass vacuously, and on 2026-08-19 both of this repo's scheduled terms retired
+// at once, leaving it asserting nothing and failing on purpose. A retired term cannot be replayed
+// through here — it is retired precisely so it stops asserting — so the test points this at a fixture
+// holding one synthetic term instead. The mechanism stays exercised on a day when no real price
+// change is pending, which is most days.
+const SOURCE_DIR = process.argv.includes("--source-dir")
+  ? process.argv[process.argv.indexOf("--source-dir") + 1]
+  : "data/sources";
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 // `--as-of YYYY-MM-DD` exists for the self-test at the bottom and nothing else. A scheduled term
