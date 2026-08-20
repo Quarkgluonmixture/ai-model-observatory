@@ -73,44 +73,54 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] **观察新模型闸门第一次真正触发是什么时候**（`auto/new-model` 分支）。今天它什么都不做——
       Muse Spark 1.2 七格、地板 38——那是稳态。第一次触发时**逐条看它写的 alias**：它的匹配规则
       是承重的，建的时候就错过两次（前缀吃变体、漏 60 天窗口），两次都是跑出来才发现的。
-- [ ] **明早看归属闸门接 DeepSeek V4 Flash 0731**。ARC 2026-08-07 验证了它（AGI-1/-2 各 3 档），
-      行已在归档、alias 故意没写——闸门 tier 1 认得出。这是「fetcher 收行 → 闸门归属 → 自合」
-      端到端跑通的第一个活例子，值得看一眼它到底自合了还是留了 PR。
-- [ ] ~~**`qwen3.6-max` 只有 1 格（只有 gpqa）**~~ —— **2026-08-12 起是 5 格**(补上 HLE·no tools
-      30.8 · SciCode 46.9 · AA-LCR 72 · IFBench 76.6),同一个 Max 档解析 bug 卡住的。
-      它仍在地板 38 以下、仍带 `preview` 标签,**要不要留还是编辑判断,交给你** —— 变的只是
-      「空行」这个理由已经不成立了。
-      ⚠ 2026-08-13 补:这条现在挂在下面那节 preview 规矩上,别单独定。
+- [ ] **「fetcher 收行 → 闸门归属 → 自合」端到端仍然没看到过一次。**
+      ⚠ 2026-08-20 更新:`deepseek-v4-flash` 的三格 ARC-AGI-2 确实上板了(arcprize 8-14 benchmark 行
+      + Epoch 8-20 independent 行,两源各一行),但它们走的是 `model-aliases.json` 里**已有的**
+      `-0731` 裸串条目 —— **归属闸门那天没有提出任何新 alias**。所以这个观察点是**没有发生**,
+      不是发生了并通过;别把「行上板了」读成「闸门跑通了」。下一个真活例还得等。
+- [ ] ⭐ **要你定:`qwen3.6-max` 这条 5 格的记录留不留。** 2026-08-19 实测 **5 格**
+      (aa-lcr · gpqa · hle-no-tools · ifbench · scicode),显示名 "Qwen3.6 Max Preview",
+      tag `["preview","multilingual"]`。**「空行」这个理由早就不成立了**(它曾经只有 1 格,
+      是同一个 Max 档解析 bug 卡的,2026-08-12 修完补到 5 格)。
+      ⚠ **别拿稀释地板量它**:地板(今天 48)是给**新增一条记录**用的尺子,对已在目录里的记录不适用
+      —— 见 `GOTCHAS.md` **40**,这个仓库刚为同一个误用卡了三天。要定的是纯编辑判断:
+      5 格的记录值不值得占看板一行。
+      ⚠ 名字**不用动**:上游精确同名、族里没有取代它的 GA ⇒ 按坑 25 它不是待转正的 preview
+      (与上面 preview 那节同一个判据)。
 
-## preview 记录的规矩:2026-08-14 已定,剩下的等数据
+## preview 记录的规矩:2026-08-14 已定,`deepseek-v4-pro` 2026-08-19 已翻转
 
 **规则已定**(理由与实测在 `LOG.md` 2026-08-14 条,**别重新论证**):**一条记录 = 一个在服役的版本**,
 Flash 的解法。preview 的行留在归档里不入库,不是删掉。名字优先抄厂商发布过的那个。
 
-已做:`deepseek-v4-pro` 显示名 → **"DeepSeek V4 Pro Preview"**(`preview` 标签自动派生)。
-`#deadend` 日期后缀 "0424" 已否 —— 厂商没印过这个数字,而 Flash 证明第三方日期会差一天(坑见 LOG)。
+**`deepseek-v4-pro` 已按这条规则翻转成 GA(2026-08-19)**,四步动作与代价都做完了:38 格 / 66.1%,
+价格 $1.32/$3.96,batch-31 的 term 已退休。做法与踩到的坑在 `LOG.md` 2026-08-19 与
+`GOTCHAS.md` **42/43/44** —— **别在这里复述**。
 
 **Qwen 与 Gemini 两条查过、不动**:`Qwen3.6 Max Preview`(5 格)和 `Gemini 3.1 Pro Preview`(59 格)
 上游都是**精确同名**,且各自族里**没有取代它们的 GA** ⇒ 按 `GOTCHAS.md` 25 的判据它们不是待转正的
 preview,名字是对的。
 
-剩下的两件都**只等数据**,不等决定:
+翻转留下的两件(都不急,都是编辑判断):
 
-- [ ] **等 GA 读数够到地板再翻转 `deepseek-v4-pro`。** 2026-08-17 实测 **36 格**(LiveBench 23 +
-      Vals 13,复算 = 用 `buildEvidenceIndex` 查 `deepseek-v4-pro-0813` 与 `deepseek/deepseek-v4-pro-0813`
-      两种串),地板 **49**,还差 13 —— 8-14 记的「只有 1 格」已作废,三天涨了 35 格。
-      ⚠ **2026-08-18 实测:仍是 36,24h 零增长,且是被自己停的** —— 36 格的供给方
-      (LiveBench 23 + Vals 13)正是被 pro term 卡停的每日刷新;`upstream.yml` 每早照抓、
-      契约步丢弃。**「等数据」与「要它红」互锁**:除非 DeepSeek 给裸名改版(Flash 先例)、
-      刷新链之外的新源发 GA 分、或提前翻转/改门,这个数不会再动。
-      ⚠ 别指望厂商发布表帮着够地板:证据计数器**按设计把 release-capture 批次整批排除**
-      (`upstream-evidence.mjs` 的 `releaseCapture`),所以 batch 35 一格都不算。
-      ⚠ Vals 那 20 行里有 7 行落在目录**没开的列**上,开那些列会同时把分母抬上去,不是捷径。
-      翻转动作:名字去掉 Preview → 撤 `modelWindows` → preview 的旧行
-      改成不映射(Flash 那样留档不入库) → 删掉 `upstream-evidence.mjs` 里那条 pin(self-test
-      会自己打 note 提醒)。⚠ 那天覆盖率会掉一截,因为 58 格里大部分要退出。
-- [ ] **或者等 DeepSeek 自己把裸名条目改名**(它给 Flash 就是这么做的:裸名后来变成 `0423`)。
-      改了就照抄,零发明。
+- [ ] **`deepseek-v4-pro` 的 `open` 现在无据**(`check:models` 那节唯一的第三条,报告不失败)。
+      原来的据是 batch-06/08 里 preview 的 `open_weights: true`,已随裸串一起拒收。GA 有自己的
+      HF 仓库(`deepseek-ai/DeepSeek-V4-Pro-0813`,batch-35 的 `sources` 记着),但归档里**没有一行
+      断言它的许可**。补法 = 采一行,不是手打一个 tag(这个仓库为手打 tag 付过一次代价)。
+- [ ] **`value` 这个 tag 还算不算数**:价格从 $0.435/$0.87 涨到 $1.32/$3.96(3 倍),
+      而 `costTask` 现在是 null ⇒ 它已经**不在 value lens 里**,但 chip 还挂着。留还是摘是编辑判断。
+
+## 价格 term 红着还挡住谁(2026-08-19 只解了一半)
+
+refresh job 那一半**已定并已改**(降成只报,`ci.yml` 仍硬红,理由与实测在 `LOG.md` 2026-08-19)。
+剩下的是**另外两个仍然硬闸**的调用点,值得单独定,别顺手改:
+
+- [ ] `scripts/attribute-and-merge.sh:48` —— 归属闸门只写 `data/model-aliases.json`,
+      **改不了 `check:prices` 的判定**(同样是零写者),所以它也是一条假依赖。
+      ⭐ 但它挡住的是**自动写别名**,风险面比 refresh 大,单独定。
+- [ ] `scripts/add-model-and-merge.sh:68` —— **这一条该留着硬闸**:它写 `app/model-data.ts`,
+      而那正是 `check:prices` 的输入之一(新记录的 id 撞上一条 term 的 `modelId` 就会开始被比较)
+      ⇒ 它**真的**能改变判定。记在这里是为了别把三个调用点当成同一件事一刀切。
 
 ## ⭐ 要你定:红着的时候 CI 只跑前 9 步,要不要重排(2026-08-17)
 
@@ -123,30 +133,13 @@ preview,名字是对的。
   `check:prices` 前面,或者也挂 `always()`,或者维持现状(红了就整条停,也是一种一致的语义)。
   ⚠ 改步骤顺序会改变 CI 的语义,是一件独立的活,别顺手做。
 
-## ⭐ 价格链(2026-08-13 起,有硬期限)
+## 价格链(峰谷计价两半都已落地,剩下的是结构性的)
 
-- [ ] ⏰ **峰谷计价:flash 那半 2026-08-17 做完(batch 33 + PR #92 + 退休 term),`deepseek-v4-pro`
-      那半仍然红着,而且是 owner 明确要它红着。** 契约报「published price changed to $1.32/$3.96 …
-      catalog still shows $0.435/$0.87」,但那个新价属于 **GA**(定价页只印裸串、不印 `-0813`,
-      按 `GOTCHAS.md` 24 判据 2),目录那条是 preview。**先定记录身份,价格跟着身份走** ——
-      把 GA 的价填进 preview 记录是错的,删掉这条 term 也是错的(那是拆守卫)。
-      ⇒ 它**跟着上面那条「翻转」一起解决**,不单独解决。
-      ⚠ 代价记着:契约红着的时候**每天的 `upstream.yml` 也过不去**(它跑同一套契约),
-      自动刷新与自动开 PR 一并停摆 —— 8-16、8-17 两天都是这样挂的。
 - [ ] **价格仍然进不了 ingest。** `ingest.mjs` 参数循环只收 Elo,价格全靠手打进
       `model-data.ts`、再由 `check-model-provenance` 事后审。要不要让价格也走 ingest 派生,
       是个独立决定(会动 51 条 stale slot 的处理方式,见 `GOTCHAS.md` 22)。
 - [ ] 结构性、记着别当新发现：**`ArenaElo` 没有 harness 维度**，而 Sol 在 WebDev 板上唯一的行是
       `(codex-harness)`，所以站上那个 code Elo 是脚手架下的分。加维度会移动已发布数字。
-
-## DeepSeek V4 Pro 转正（GA 2026-08-12，防线已建、数据在路上：2026-08-17 实测 36/49）
-
-背景与判据全在 `GOTCHAS.md` 24，**别在这里复述**。这里只放要动手的：
-
-- [ ] **翻转那天记得 batch 35 里已经有 GA 的官方数字了**,不用再去找源:八列全部
-      file-scoped `modelId: null`,把 `DeepSeek-V4-Pro-0813` 那条改成指向记录即可。
-      ⚠ 「HLE (wo / w tools)」一行装着目录**两列**,采纳时要把 with-tools 那个数拆成第二行
-      (现在只以原文留在行的 note 里)。
 
 ## 收录门槛：2026-08-12 已定「不放开」，剩下的是别的事
 
@@ -197,17 +190,18 @@ preview,名字是对的。
 
 ## 自动化
 
-- [ ] （原 8-08 的三件,2026-08-10 实测后只剩两件；③ 已确认:`auto/attribution` 8-08 开了 #58,
-      判据没反）~~① `auto/refresh-aa` 到底有没有**自己**开出过 PR~~ —— **2026-08-11 观测证实**:
-      `auto/refresh-aa` 自己开出了 **#74**,`gh: Argument list too long` 确实修好了。这条可删。
-      ~~② 「Is the queue being worked?」那一节根本没建~~ —— **2026-08-11 证伪:建了,只是不在
-      `report-gaps.mjs` 里**,而是 `upstream.yml:118-123` 直接 `node scripts/check-heartbeat.mjs
-      --agent` 拼进 `gaps.md`(所以按 npm script 名 `check:heartbeat` 去 grep 会漏掉它)。这条可删。
-      ⚠ 真正留下的那半个问题不在这:`--agent` **分不清 agent 和 owner**(两者都以人的身份提交),
-      所以它答的是「队列有没有人在做」,不是「hermes 活着吗」——你自己开一次 session 就把三天时钟
-      清零。见 `docs/ARCHITECTURE.md` §10 末尾「两个调度器互相看守是不对称的」那条。
+- [ ] **`check-heartbeat.mjs --agent` 分不清 agent 和 owner**(两者都以人的身份提交),所以它答的是
+      「队列有没有人在做」,不是「hermes 活着吗」—— **你自己开一次 session 就把三天时钟清零**。
+      见 `docs/ARCHITECTURE.md` §10 末尾「两个调度器互相看守是不对称的」那条。
+      ⚠ 它不在 `report-gaps.mjs` 里,是 `upstream.yml` 直接拼进 `gaps.md` 的,所以按 npm script 名
+      `check:heartbeat` 去 grep 会漏掉它。
       ⚠ 判据是 branch-scoped：`pr-hands-off.sh` 查 `gh pr list --head auto/attribution`，
       **只看那一个分支**，别的分支上有没有 open PR 它一概不管。
+- [ ] **重复发布的折叠现在只在 Epoch 一个 fetcher 里**(2026-08-20,坑 **47**)。
+      要定的是**要不要提到共用层**:任何一个源哪天开始把同一条测量发两遍,症状还是同一个 ——
+      duplicate-configuration 断言红 ⇒ **整批**(不只是那个源)扣住入档,而看板看着完全正常。
+      ⚠ 不建议顺手做:折叠放共用层等于给所有 fetcher 默认开一个"悄悄扔行"的行为,
+      而这个仓库的默认是**留证据**。折中方向 = 共用层只**检测并大声报**,折叠仍留给各 fetcher 自己声明。
 - [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦在 `auto/attribution` 上的 PR）。
       那天起**新 alias 提议会开始积压**，确认 warning 确实写进了 step summary、不是静默的。
 

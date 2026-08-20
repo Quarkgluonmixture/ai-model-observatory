@@ -223,10 +223,36 @@ export const epoch = {
       counts.push(`${spec.benchmark} ${kept} (external)`);
     }
 
+    // The export publishes some measurements twice. Measured 2026-08-20: the ARC Prize
+    // CSV carries the same Airtable record under display names that differ only in
+    // case, and apex_agents carries the same run both as a plain slug and with the
+    // effort token moved into the display name, which splitEffort folds back onto the
+    // same operating point. Both parse to byte-identical observations, and writing
+    // both fails check:data's duplicate-configuration gate — which held the entire
+    // daily refresh (152 cells across seven sources) for a day while the workflow
+    // re-read and discarded the batch every morning.
+    //
+    // Rows that parse to the identical observation are one measurement published
+    // twice: keep one. Rows that share a configuration but differ in ANY field stay
+    // untouched — Epoch re-publishing a score at different precision (77.08 vs 77.1)
+    // or a genuinely different reading is the board moving, and silently picking one
+    // is the failure this project exists to prevent. Those land as distinct rows,
+    // exactly as they already do for unresolved model strings.
+    const uniqueRows = [];
+    const seenParsed = new Set();
+    let duplicated = 0;
+    for (const row of rows) {
+      const key = JSON.stringify(row);
+      if (seenParsed.has(key)) { duplicated += 1; continue; }
+      seenParsed.add(key);
+      uniqueRows.push(row);
+    }
+    if (duplicated) counts.push(`${duplicated} duplicate publication(s) collapsed`);
+
     return {
-      rows,
+      rows: uniqueRows,
       version: "benchmark_data.zip",
-      summary: `${rows.length} rows — ${counts.join(", ")}`,
+      summary: `${uniqueRows.length} rows — ${counts.join(", ")}`,
       meta: {
         batch: "12 · Epoch AI benchmark export",
         collectedWith: "scripts/fetchers/epoch.mjs",

@@ -60,28 +60,31 @@ export const buildResolvers = (config) => {
     else aliasIndex.set(scope + aliasKey(alias.modelRaw, alias.effort), alias.modelId);
   }
 
-  // A measurement window on the RECORD, not on the alias. File scope answers "which board is
-  // this?"; this answers "when was it measured?", and they are different questions because a
-  // maker can change what a slug serves without any board renaming anything. DeepSeek shipped V4
-  // Pro as a preview in April and as `deepseek-v4-pro-0813` on 2026-08-12, and ten strings resolve
-  // to the preview's record with `effort: "*"`. Nothing in file scope separates a June reading of
-  // one of those slugs from a September one — board, string and effort are identical on both sides
-  // and only the date differs. Unguarded, the GA numbers land on the preview's record and, per
-  // GOTCHAS 24, land in cells the preview never filled, where no disagreement gate can see them.
-  // That is the Flash accident with a delay fuse.
+  // A measurement window on the RECORD, not on the alias: file scope answers "which board is this?",
+  // this answers "when was it measured?", and a maker can change what a slug serves without any board
+  // renaming anything.
   //
-  // Keyed by modelId rather than by alias because the cutover is ONE fact. Written per alias it
-  // would be ten copies of a date, and — worse — the eleventh alias, the one the attribution gate
-  // writes unattended next week, would be born unguarded. A record that stops accepting readings
-  // after a date says so once, and every route into it inherits that.
+  // ⚠ `modelWindows` is EMPTY as of 2026-08-19 and the mechanism is kept, not retired. It was built for
+  // `deepseek-v4-pro`, where ten strings resolved to the April preview with `effort: "*"` and DeepSeek
+  // shipped `deepseek-v4-pro-0813` under the same family name — the Flash accident with a delay fuse.
+  // It did its job: no GA reading ever landed on the preview's record. When the record was flipped to
+  // the GA, the guard was replaced by a STRING guard rather than inverted, and the reason is worth
+  // keeping because it is the trap the obvious move walks into: LiveBench publishes BOTH spellings under
+  // its frozen release date 2026-06-25, so `validFrom: "2026-08-12"` would have refused the GA's own 23
+  // LiveBench cells. Dates cannot separate two models a board scored in the same release; the strings
+  // it prints can, and every route into that record now carries `-0813` or is scoped to one batch file
+  // with the number that identifies it written down.
+  //
+  // So the next record that needs this will be one where the sources do NOT split, which is where a date
+  // is the only handle left. Two properties to inherit when that happens:
   //
   // `validUntil` is EXCLUSIVE and compared as an ISO date string, which sorts correctly.
   //
-  // An undated row counts as in-window, and that is a deliberate hole rather than an oversight:
-  // 38 of the 73 rows published under a bare V4 Pro string carry no `evaluation_date` at all, so
-  // failing closed on null would drop half the existing evidence today to guard against rows that
-  // do not exist yet. The guard covers every source that dates its rows and misses every source
-  // that does not. Narrowing it means getting dates onto those rows, not tightening this test.
+  // An undated row counts as in-window, and that was a deliberate hole rather than an oversight: 38 of
+  // the 73 rows published under a bare V4 Pro string carried no `evaluation_date` at all, so failing
+  // closed on null would have dropped half that record's evidence to guard against rows that did not
+  // exist yet. A window covers every source that dates its rows and misses every source that does not.
+  // Narrowing it means getting dates onto those rows, not tightening the comparison.
   const windows = new Map((config.modelWindows ?? []).map((entry) => [entry.modelId, entry]));
   const inWindow = (modelId, evaluationDate) => {
     const window = windows.get(modelId);
@@ -142,16 +145,31 @@ export const buildResolvers = (config) => {
       return resolved;
     },
     /**
-     * True when this file deliberately refuses the string, rather than the catalog simply not
-     * holding the model. The gap report must not list a refusal as "waiting on a catalog model":
-     * the model is in the catalog, the decision was to not take these rows.
+     * True when the catalog deliberately refuses the string, rather than simply not holding the
+     * model. The gap report must not list a refusal as "waiting on a catalog model": the model is
+     * in the catalog, the decision was to not take these rows.
+     *
+     * Two scopes, and the global one was added on 2026-08-19 when a refusal first needed to apply
+     * everywhere. Ten bare `DeepSeek V4 Pro` spellings became `"modelId": null` with no `file` the
+     * day that record became the GA release: the preview's rows stay archived and unignested, which
+     * is a decision, and without this branch all 132 of them would have joined the gaps issue's
+     * "waiting on a catalog model" list forever — the exact permanent, un-actionable line the
+     * file-scoped branch below was written to prevent, arriving through the other door. A refusal is
+     * a refusal whatever its scope; only its blast radius differs.
+     *
+     * `has` rather than `??` in both branches, because the whole point of such an entry is that its
+     * value is empty, and absence of an entry is a different answer from an entry saying no.
      */
     isRefused: (modelRaw, effort, file) => {
-      if (!file) return false;
-      const scope = `${String(file).replace(/\.jsonl$/, "")}|`;
-      const exact = scope + aliasKey(modelRaw, effort);
-      if (aliasIndex.has(exact)) return aliasIndex.get(exact) == null;
-      if (wildcardIndex.has(scope + modelRaw)) return wildcardIndex.get(scope + modelRaw) == null;
+      if (file) {
+        const scope = `${String(file).replace(/\.jsonl$/, "")}|`;
+        const exact = scope + aliasKey(modelRaw, effort);
+        if (aliasIndex.has(exact)) return aliasIndex.get(exact) == null;
+        if (wildcardIndex.has(scope + modelRaw)) return wildcardIndex.get(scope + modelRaw) == null;
+      }
+      const global = aliasKey(modelRaw, effort);
+      if (aliasIndex.has(global)) return aliasIndex.get(global) == null;
+      if (wildcardIndex.has(modelRaw)) return wildcardIndex.get(modelRaw) == null;
       return false;
     },
     isDropped: (benchmark) =>
@@ -174,57 +192,105 @@ export const buildResolvers = (config) => {
 //
 //   node scripts/lib/archive.mjs --self-test
 //
-// A measurement window is a guard whose whole value is in a future it is supposed to prevent, so
-// on today's archive it is indistinguishable from having done nothing: `npm run ingest` writes a
-// byte-identical file with it in place, which is the point and also the problem. Three directions
-// are asserted instead, against the real alias config rather than a fixture, because the thing
-// most likely to break this is somebody editing that config.
+// What the DeepSeek V4 Pro guard asserts, and why it changed shape on 2026-08-19.
 //
-// The third assertion pins the hole deliberately. An undated row still resolves, and a future
-// reader who tightens that will drop half of this record's evidence — so it fails here as a
-// changed decision rather than passing quietly as a stricter rule.
+// Until then this record was the April PREVIEW and the guard was a measurement window
+// (`validUntil: 2026-08-12`), because ten bare strings resolved here with `effort: "*"` and a GA
+// reading arriving under an unchanged slug would have landed in cells the preview never filled,
+// where no disagreement gate can see it. The record is now the GA release, and the guard is the
+// STRING: bare spellings are refused globally with a written reason, `-0813` spellings resolve.
+//
+// The first case below is the one that makes this worth a test rather than a comment. Inverting the
+// window to `validFrom: "2026-08-12"` is the obvious move and it is wrong: LiveBench publishes BOTH
+// spellings under its frozen release date 2026-06-25, so a from-date would have refused the GA's own
+// 23 LiveBench cells — the flip would have shipped a record with a third of its evidence deleted and
+// every contract green. A date cannot separate two models one board scored in the same release.
 if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/^.*[/\\]/, "")) && process.argv.includes("--self-test")) {
   const config = loadAliasConfig();
-  const { resolveModelId } = buildResolvers(config);
-  const window = (config.modelWindows ?? []).find((entry) => entry.modelId === "deepseek-v4-pro");
+  const { resolveModelId, isRefused } = buildResolvers(config);
   const failures = [];
-  if (!window?.validUntil) failures.push("no measurement window on deepseek-v4-pro — the GA guard is not configured");
+  const resolve = (raw, effort, file, date) => resolveModelId(raw, effort, file, date) ?? undefined;
 
-  const cases = window?.validUntil
-    ? [
-        ["a reading from before the GA date resolves", "DeepSeek V4 Pro", "2026-08-06", "deepseek-v4-pro"],
-        ["a reading dated ON the GA date is refused", "DeepSeek V4 Pro", window.validUntil, undefined],
-        ["a reading from after the GA date is refused", "deepseek-v4-pro", "2026-09-01", undefined],
-        ["an UNDATED reading still resolves (the documented hole)", "deepseek-v4-pro", null, "deepseek-v4-pro"],
-        ["an unwindowed record is untouched by any date", "Claude Opus 5", "2026-09-01", "claude-opus-5"],
-      ]
-    : [];
-  for (const [label, raw, date, expected] of cases) {
-    const got = resolveModelId(raw, "*", null, date);
+  const cases = [
+    // The trap. Both of these carry LiveBench's frozen release date, which predates the GA.
+    ["the GA string resolves even dated BEFORE the GA (LiveBench's frozen release)", "deepseek-v4-pro-0813", "*", null, "2026-06-25", "deepseek-v4-pro"],
+    ["the bare string is refused on that same date", "deepseek-v4-pro", "*", null, "2026-06-25", undefined],
+    // Refusal is by string, so it does not depend on a date being present — the old window's
+    // documented hole (an undated row resolved) is closed for this record.
+    ["an UNDATED bare reading is refused too", "deepseek-v4-pro", "*", null, null, undefined],
+    ["a bare reading from after the GA is refused", "DeepSeek V4 Pro", "*", null, "2026-09-01", undefined],
+    ["Vals' provider-prefixed GA string resolves", "deepseek/deepseek-v4-pro-0813", "*", null, null, "deepseek-v4-pro"],
+    ["Vals' provider-prefixed bare string is refused", "deepseek/deepseek-v4-pro", "*", null, null, undefined],
+    // File scope is what carries the two sources that do NOT split the releases. Each one is a
+    // number or a sentence in the source, written into the alias reason.
+    ["DeepSWE's bare row resolves inside its own batch (62.8 = the GA's 62.7)", "deepseek-v4-pro", "*", "batch-11-deepswe", "2026-08-13", "deepseek-v4-pro"],
+    ["the pricing page's bare column resolves inside its own batch", "deepseek-v4-pro", "*", "batch-33-deepseek-peak-pricing", "2026-08-16", "deepseek-v4-pro"],
+    ["the same bare string in a THIRD batch stays refused", "deepseek-v4-pro", "*", "batch-26-aa-evaluations", null, undefined],
+    ["an unrelated record is untouched", "Claude Opus 5", "*", null, "2026-09-01", "claude-opus-5"],
+  ];
+  for (const [label, raw, effort, file, date, expected] of cases) {
+    const got = resolve(raw, effort, file, date);
     console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
     if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
   }
 
-  // The parameter path, which is where prices travel and where the window was blind until
-  // 2026-08-13. A parameter row has no `evaluation_date`, so everything here turns on whether the
-  // batch declared that its retrieval dates its rows.
+  // A global refusal must read as a DECISION, not as an uncollected model, or all 132 archived
+  // preview rows join the gaps issue's "waiting on a catalog model" list every release.
+  const refusalCases = [
+    ["a globally refused string reports as refused", "deepseek-v4-pro", "*", "batch-26-aa-evaluations", true],
+    ["a refusal is a refusal with no file in hand", "DeepSeek V4 Pro (Reasoning, Max Effort)", "*", undefined, true],
+    ["a string nobody has ruled on is NOT a refusal", "some-model-nobody-mapped", "*", undefined, false],
+    ["a mapped string is not a refusal", "deepseek-v4-pro-0813", "*", undefined, false],
+  ];
+  for (const [label, raw, effort, file, expected] of refusalCases) {
+    const got = isRefused(raw, effort, file);
+    console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got}`);
+    if (got !== expected) failures.push(`${label}: expected ${expected}, got ${got}`);
+  }
+
+  // The window mechanism itself is now unused by every record (`modelWindows` is empty), and it is
+  // kept rather than deleted: the next family whose sources do NOT split will have nothing but a
+  // date to go on. Unused code rots silently, so it is exercised against a synthetic config here.
+  // If a record ever takes a window again, assert it above against the real config as well.
+  if ((config.modelWindows ?? []).length) {
+    console.log(`  note  modelWindows is no longer empty (${config.modelWindows.map((w) => w.modelId).join(", ")}) — add real-config window cases above`);
+  }
+  const synthetic = buildResolvers({
+    ...config,
+    aliases: [{ modelRaw: "synthetic-window-probe", effort: "*", modelId: "claude-opus-5" }, ...config.aliases],
+    modelWindows: [{ modelId: "claude-opus-5", validUntil: "2026-08-12", reason: "self-test only" }],
+  });
+  const windowCases = [
+    ["mechanism: a reading before validUntil resolves", "2026-08-11", "claude-opus-5"],
+    ["mechanism: a reading ON validUntil is refused (exclusive)", "2026-08-12", undefined],
+    ["mechanism: an undated reading still resolves (the documented hole)", null, "claude-opus-5"],
+  ];
+  for (const [label, date, expected] of windowCases) {
+    const got = synthetic.resolveModelId("synthetic-window-probe", "*", null, date) ?? undefined;
+    console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
+    if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
+  }
+
+  // The parameter path, which is where prices travel. A parameter row has no `evaluation_date`, so
+  // everything here turns on whether the batch declared that its retrieval dates its rows — and
+  // with the guard now on the string, the answer must be the same either way for this record.
   const paramCases = [
-    ["a declaring batch fetched before the GA date still resolves", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-11" }, "deepseek-v4-pro"],
-    ["a declaring batch refetched after it is refused", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-20" }, undefined],
-    ["a NON-declaring batch is untouched, however late", { retrievedDate: "2026-08-20" }, "deepseek-v4-pro"],
+    ["a declaring batch's bare parameter row is still refused", { retrievedDateIsMeasurement: true, retrievedDate: "2026-08-11" }, undefined],
+    ["a NON-declaring batch's bare parameter row is refused too", { retrievedDate: "2026-08-20" }, undefined],
   ];
   for (const [label, meta, expected] of paramCases) {
-    const got = resolveModelId("deepseek-v4-pro", "*", null, measurementDateOf({}, meta));
+    const got = resolve("deepseek-v4-pro", "*", null, measurementDateOf({}, meta));
     console.log(`  ${got === expected ? "ok  " : "FAIL"} ${label} → ${got ?? "unmapped"}`);
     if (got !== expected) failures.push(`${label}: expected ${expected ?? "unmapped"}, got ${got ?? "unmapped"}`);
   }
 
-  // Arena must be the batch that does NOT declare: it is stamped 2026-08-12, the day the GA went
-  // live hours later, and it supplies deepseek-v4-pro's published Elo. Declaring it would delete
-  // two real numbers to guard against a mixup that had not happened.
+  // Arena must be the batch that does NOT declare its retrieval dates its rows. The original reason
+  // was that declaring it would have dropped this record's published Elo through the window; the
+  // window is gone and the reason underneath it is not — an Elo is accumulated votes, so its
+  // retrieval date is not a measurement date, and this batch is where that is easiest to get wrong.
   const arena = JSON.parse(readFileSync(join(SOURCE_DIR, "batch-22-arena.meta.json"), "utf8"));
   if (arena.retrievedDateIsMeasurement) {
-    failures.push("batch-22-arena declares its retrieval dates its rows — an Elo is accumulated votes, and this drops published numbers");
+    failures.push("batch-22-arena declares its retrieval dates its rows — an Elo is accumulated votes, and a retrieval date is not a measurement date");
   } else {
     console.log("  ok   batch-22-arena does not claim its retrieval dates its rows");
   }
