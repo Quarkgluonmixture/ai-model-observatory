@@ -73,9 +73,11 @@ ARC Prize 三个 split（batch 23/24/25）已全部脚本化并接上目录，�
 - [ ] **观察新模型闸门第一次真正触发是什么时候**（`auto/new-model` 分支）。今天它什么都不做——
       Muse Spark 1.2 七格、地板 38——那是稳态。第一次触发时**逐条看它写的 alias**：它的匹配规则
       是承重的，建的时候就错过两次（前缀吃变体、漏 60 天窗口），两次都是跑出来才发现的。
-- [ ] **明早看归属闸门接 DeepSeek V4 Flash 0731**。ARC 2026-08-07 验证了它（AGI-1/-2 各 3 档），
-      行已在归档、alias 故意没写——闸门 tier 1 认得出。这是「fetcher 收行 → 闸门归属 → 自合」
-      端到端跑通的第一个活例子，值得看一眼它到底自合了还是留了 PR。
+- [ ] **「fetcher 收行 → 闸门归属 → 自合」端到端仍然没看到过一次。**
+      ⚠ 2026-08-20 更新:`deepseek-v4-flash` 的三格 ARC-AGI-2 确实上板了(arcprize 8-14 benchmark 行
+      + Epoch 8-20 independent 行,两源各一行),但它们走的是 `model-aliases.json` 里**已有的**
+      `-0731` 裸串条目 —— **归属闸门那天没有提出任何新 alias**。所以这个观察点是**没有发生**,
+      不是发生了并通过;别把「行上板了」读成「闸门跑通了」。下一个真活例还得等。
 - [ ] ⭐ **要你定:`qwen3.6-max` 这条 5 格的记录留不留。** 2026-08-19 实测 **5 格**
       (aa-lcr · gpqa · hle-no-tools · ifbench · scicode),显示名 "Qwen3.6 Max Preview",
       tag `["preview","multilingual"]`。**「空行」这个理由早就不成立了**(它曾经只有 1 格,
@@ -195,6 +197,11 @@ refresh job 那一半**已定并已改**(降成只报,`ci.yml` 仍硬红,理由�
       `check:heartbeat` 去 grep 会漏掉它。
       ⚠ 判据是 branch-scoped：`pr-hands-off.sh` 查 `gh pr list --head auto/attribution`，
       **只看那一个分支**，别的分支上有没有 open PR 它一概不管。
+- [ ] **重复发布的折叠现在只在 Epoch 一个 fetcher 里**(2026-08-20,坑 **47**)。
+      要定的是**要不要提到共用层**:任何一个源哪天开始把同一条测量发两遍,症状还是同一个 ——
+      duplicate-configuration 断言红 ⇒ **整批**(不只是那个源)扣住入档,而看板看着完全正常。
+      ⚠ 不建议顺手做:折叠放共用层等于给所有 fetcher 默认开一个"悄悄扔行"的行为,
+      而这个仓库的默认是**留证据**。折中方向 = 共用层只**检测并大声报**,折叠仍留给各 fetcher 自己声明。
 - [ ] 观察 `--any-open` 第一次真正生效是什么时候（下一个被三条件拦在 `auto/attribution` 上的 PR）。
       那天起**新 alias 提议会开始积压**，确认 warning 确实写进了 step summary、不是静默的。
 

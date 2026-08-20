@@ -119,7 +119,7 @@ const RELEASES = {
     url: "https://huggingface.co/deepseek-ai/DeepSeek-V4-Pro-0813",
     batch: "batch-35-deepseek-v4-pro-ga-release",
     batchLabel: "35 · DeepSeek-V4-Pro-0813 GA release table",
-    // 34 is taken by the OpenAI repricing batch on an open branch; numbers are never reused.
+    // 34 is the OpenAI repricing batch (PR #93); batch numbers are never reused.
     published: "2026-08-13",
     noteName: "DeepSeek-V4-Pro-0813",
     keep: "DeepSeek-V4-Pro-0813",
@@ -174,6 +174,59 @@ const RELEASES = {
       DeepSWE: { id: "deepswe", version: "v1.1", tools: true },
       "Toolathlon-Verified": { id: "toolathlon", version: "Verified", tools: true },
       "Agents' Last Exam": { id: "ale", version: "ALE-V1", tools: true },
+    },
+  },
+  glm53: {
+    label: "GLM-5.3 release",
+    maker: "Z.AI",
+    // The blog post (2026-08-14, "Frontier Coding with Emergent Cyber Capabilities") carries the
+    // benchmark table. The docs page docs.bigmodel.cn/cn/guide/models/text/glm-5.3 that the release
+    // probe flagged is the model card — same shape as GLM-5.2 (measured 2026-08-15): the card talks
+    // prose, the table lives on the blog, and the blog is a client-rendered shell.
+    url: "https://z.ai/blog/glm-5.3",
+    batch: "batch-36-glm53-release",
+    batchLabel: "36 · GLM-5.3 release table",
+    published: "2026-08-14",
+    noteName: "GLM-5.3",
+    keep: "GLM-5.3",
+    rowNote:
+      "厂商发布材料:行上不写 harness / 运行日期 —— 页面另有一张参数表声明 API 默认 " +
+      "reasoning_effort=max(thinking 恒开,disabled 不再支持),但那是服务默认不是评测设定," +
+      "摊到具体行上是判断不是抄录,所以行上仍记 null,原文在批次 meta 里;evaluation_date 记的是发布日",
+    adoption:
+      "页面客户端渲染,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。" +
+      "⚠ 本批次**一个模型列都不采纳,包括 GLM-5.3 自己**:目录还没有 glm-5.3 记录," +
+      "而证据计数器按设计整批排除 release-capture,一张厂商表永远不可能自己把新模型抬过收录地板 —— " +
+      "这批是为独立榜测到 GLM-5.3 那天备好的证据(同 batch 35 的立场)。" +
+      "GLM-5.2 / Kimi K3 / Qwen3.8-Max / Opus 4.8 / GPT-5.6 Sol 五个串**有全局 alias**," +
+      "这里的 file-scoped 拒收是承重的:不写,竞品分数会直接写进这五条目录记录。" +
+      "DeepSeek-V4 Pro-0813 与 Fable 5 (w/ fallback) 无全局 alias,仍写显式拒收," +
+      "让未来任何全局 alias 都必须先抬起这条才会生效。evaluation_date 记的是发布日;" +
+      "双数字格取第一个数为指标、第二个进 note。",
+    extraNote:
+      "交叉验证(坑 33,采表前逐格对过目录现值):HLE w/ Tools 的 GLM-5.2 列 54.7 与 batch 32 逐位相同;" +
+      "DeepSWE 46.2、Toolathlon Verified 59.9 逐位相同;FrontierSWE 两格印证" +
+      "(GLM-5.2 67.5 vs 目录 67.3、Opus 4.8 66.5 vs 66.7)说明读的就是目录 frontierswe 列那块 2026-07 的板 —— " +
+      "batch 32 拒收的那次是六月快照(GLM-5.2 打到 74.4),这次不是,所以这次采纳;" +
+      "GDPval-AA 1508 vs 目录 1510 是 AA 活 Elo 的正常漂移。⚠ 「Agents' Last Exam ALE-CLI」**拒绝映射**:" +
+      "Qwen3.8-Max 27.0 与官方 26.97 吻合,但 GPT-5.6 Sol 28.6 vs 官方 30.59、GLM-5.2 23.8 vs 官方 20.39 都对不上 —— " +
+      "ALE-CLI 是 ALE 的 CLI 子赛道,不是 ale 列的口径(坑 3 同形:同名不同 split)," +
+      "已在 droppedBenchmarks 立条。「Terminal Bench 3.0」目录 terminal 列只装 2.1,3.0 是另一个版本" +
+      "(GLM-5.2 在 3.0 上 4.6、在 2.1 上 81.0,版本即全部差异),留档不映射。" +
+      "「ProgramBench Almost Solved」是 program 列混指标坑(TODO 未决)上的第三种计分:" +
+      "GLM-5.2 这里 9.5,batch 32 拒收的 dominance 口径是 63.7 —— 维持拒收。" +
+      "NL2Repo 已在 droppedBenchmarks;CyberGym / ExploitGym 2h/6h / ExploitBench / AutomationBench v1.0.6 目录无列,留档。" +
+      "另外页面明说 GLM-5.3 与 GLM-5.2 **同一基座、全部增益来自 post-training**," +
+      "且权重「上线两周后开源」—— 将来立记录时的身份与 open 判断以此为准。",
+    carried: {
+      "Terminal Bench 2.1": { id: "terminal", version: "2.1", tools: true },
+      "DeepSWE v1.1": { id: "deepswe", version: "v1.1", tools: true },
+      FrontierSWE: { id: "frontierswe", version: "2026-07", tools: true },
+      "SWE-Marathon v1.1": { id: "marathon", version: "v1.1", tools: true },
+      PostTrainBench: { id: "posttrain", version: "v1.1", tools: true },
+      "Toolathlon Verified": { id: "toolathlon", version: "Verified", tools: true },
+      "HLE w/ Tools": { id: "hle-tools", version: "Full", tools: true },
+      "GDPval-AA v2": { id: "gdpval", version: "v2", tools: true },
     },
   },
 };
