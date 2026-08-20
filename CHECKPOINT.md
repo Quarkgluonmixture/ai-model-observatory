@@ -1,51 +1,28 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-19:**卡了三天的不是数据,是一个身份决定 —— 卡住它的那把尺子量错了对象。
-定了、做了、上线了。**
+**接手点** — 2026-08-20:**连红两天的 refresh 已修好并放行,152 格待入档一次性入库。
+根因不是上游漂移,是上游把同一条测量发了两遍 —— 而闸门丢的是整批。**
 
-`deepseek-v4-pro` **已原地翻转成 GA**(owner 裁决),`check:prices` 由此转绿,refresh 的 contract
-也不再被价格 term 卡住。三句可推广的:
-**一个永远满足不了的门槛,先怀疑它量错了对象**(坑 **40**)·
-**一条被停掉的写路径旁边往往有个还活着的读路径能直接回答你在猜的事**(坑 **41**)·
-**一个守卫从「拦住 X」变成「拦住非 X」时,先问它用的那个维度还分不分得开**(坑 **42**)。
+Epoch 的 zip 里同一条测量出现两次(ARC CSV 同一 Airtable 记录以仅大小写不同的显示名;`apex_agents`
+同一个 run 一次纯 slug、一次把 effort 放进显示名),解析成**字节级相同**的行 ⇒ duplicate-configuration
+断言红 ⇒ **整个批次不入库**,而看板看着完全正常。修法只折叠字节级相同的行(PR #102,tier-B 自合),
+**故意不碰**同配置不同分数的 8 格 —— 那是板在动,静默挑一个正是这个项目要防的失败。
+全文在 `LOG.md` 2026-08-20,机制进坑 **47**,⛔ 别重新论证。
 
-⭐ 8-15 那三件(报警链路第一次有断言并当天被真事故验证 · `withdrawnRows` 第三个逃生口 ·
-tier-B 第三个条件此前无法触发)已入档 → `LOG.md` 2026-08-15 三条。**这个仓库过去所有断言都是
-关于数据的,而失灵的样子是绿色**(`GOTCHAS.md` 29/32/34 同族)—— 这句仍然要记着。
+⚠ **一个观察点被记成了「通过」而其实是「没发生」**:`deepseek-v4-flash` 三格 ARC-AGI-2 上板了,
+但走的是**已有 alias**,归属闸门那天没提任何新 alias ⇒「fetcher 收行 → 闸门归属 → 自合」端到端
+**仍然一次都没看到过**(已改写进 `TODO.md`)。
 
-⏰ **峰谷计价两半都落地了**。flash 8-17(batch 33 + PR #92 + 退休 term)。**pro 8-19**:
-owner 裁决「原地翻转」⇒ 记录变成 GA ⇒ 价格跟着身份走($1.32/$3.96,cache $0.044,据是 batch-33
-那行**8-16 就归档好、一直等身份**的官方价)⇒ batch-31 的 term 退休。红了三天不是拖延,
-是那条 term 拒绝让 GA 的价被打进 preview 记录 —— 它等的是**决定**不是数(⇒ 只改价不退休 term
-会开始**断言反面**,坑 **37**)。
+⭐ 8-19 那一整轮(`deepseek-v4-pro` 原地翻转成 GA、守卫从日期换成串、batch 35 的 GA 列采纳)
+已全部落地并入档 → `LOG.md` 2026-08-19 三条 + 坑 **40/41/42/43/44/45**。**⛔ 别重新论证**,
+翻转留下的两件小尾巴(`open` 无据 · `value` chip 还算不算数)在 `TODO.md`,都不急。
 
-⭐⭐ **翻转的实测后果**(全文与复算在 `LOG.md` 2026-08-19,机制进坑 **40/41/42/43/44**,
-**别重新论证**):
-- **58 格 → 38 格,看板 1401 → 1381(67.1% → 66.1%)**。逐行核过**没有第二个模型动过一格**
-  (71 行 preview 出、35 行 GA 进;git diff 看着满屏是 300 行分块重编号)。
-- **守卫从日期换成了串**:十个裸串全局 `modelId: null`(带理由),`-0813` 串写 alias,
-  两个不分列的源(DeepSWE、定价页)走 file-scoped。⚠ **别把窗口反过来写成 `validFrom`** ——
-  LiveBench 把两个 release 印在同一个冻结发布日下,那会**静默删掉 GA 自己的 23 格**(坑 42)。
-- **四个操作参数现在是 null**,这是诚实状态不是缺口:AA 还没发 GA(它 34 行里 33 行写着自己的
-  发布日 2026-04-24)。**AA 哪天换串,是裸串带着 GA 的数过来** ⇒ 那天要 file-scoped 归属 + 写下证据,
-  **不是**把全局拒绝解开。
-- **四月 model card 那 11 格 seed 已删除**(不是改标签),`deepseek()` helper 一起删掉防回填。
-
-⭐ **preview 规矩已定并已用过一次**:一条记录 = 一个在服役的版本,preview 的行**留档不入库**
-(Flash 的解法)。`deepseek-v4-pro` 显示名现在是 **"DeepSeek V4 Pro"**(`preview` 标签由名字派生,
-所以自动掉了)。**batch 35 的 GA 那一列同日采纳**(六格,38 → 42 格):裁定写在
-`acknowledgedDisagreements` 的 `deepseek-v4-pro/terminal` 那条 —— **那是唯一记录它的地方**,
-因为闸门按 `harness|effort` 分桶、这两行不同桶(坑 **45**)。⚠ 采纳**没改任何已发布数字**:
-`SOURCE_RANK` 把 vendor 排最后。另外七列仍全部拒收。
-Qwen / Gemini 那两条 Preview 查过:上游精确同名且族里无 GA 取代 ⇒ 按坑 25 **不动**。
+⛔ **已定、别重新论证的两条**:**preview 规矩** —— 一条记录 = 一个在服役的版本,preview 的行留档不入库
+(Qwen / Gemini 那两条上游精确同名且族里无 GA 取代 ⇒ 按坑 **25** 不动);**收录地板不放开** ——
+会自我强化地塌,四档实测在 `LOG-archive` 2026-08-12 条(复算 = `npm run propose:model` 头几行)。
 
 ⇒ **要你定的都在 `TODO.md`**,标 ⭐ 的就是(**这里不维护第二份清单**,复算 =
-`grep -n '⭐ \*\*要你定\|⭐ 要你定' TODO.md`)。今天新加两条:**batch 35 采不采**(要先裁
-`terminal` 87.9 vs Vals 54.7)· **`attribute-and-merge.sh` 里的 `check:prices` 要不要也降**
-(同样是假依赖,但它闸的是自动写别名,风险面更大)。
-
-**收录地板:已定「不放开」**(复算 = `npm run propose:model` 头几行),会**自我强化地塌**,
-四档实测在 `LOG-archive` 2026-08-12 条,**别重新论证**。
+`grep -n '⭐ \*\*要你定\|⭐ 要你定' TODO.md`)。
 
 ⚠⚠ **「契约全绿」只覆盖检查够得到的东西**:判一个数有没有被守住,**grep 哪条检查真的够得到它**。
 ⚠ `npm run test:sites` 本机要 GNU `timeout`(macOS 没有,exit 69)—— 别把 exit 69 当通过。
@@ -55,17 +32,17 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 
 ---
 
-## 现状（2026-08-19 实测）
+## 现状（2026-08-20 实测）
 
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2129 rows · 1385 / 2088 cells（66.3% cell coverage）** —— 8-19 实测,V4 Pro 翻转 + 采纳 batch 35 之后(翻转前 2170 / 1401 / 67.1%),复算 = `npm run check:data` 末行 |
-| 源分类 | benchmark 916 / independent 1018 / vendor 195（8-19 实测；先掉 11 = 四月 model card 那 11 格 seed 删掉了,再加 6 = batch 35 的 GA 列采纳了）|
-| 溯源 | **317 / 320**（99%；3 格有值无据 = `deepseek-v4-flash` 两格 + `deepseek-v4-pro` 的 `open`，都在 `TODO.md`）⚠ 分母是**解析得到的行** |
-| 归档 | **33 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-17 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`；8-10 记的 16 已过时）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
-| 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ 只增不减地长过两次：batch 35 之后**至少 +76**（那一批八列全不采纳），2026-08-19 又加进 V4 Pro **preview 的全部 132 行**（记录翻转成 GA，裸串全局拒收）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法或加法 |
-| 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台 · **`/deepseek` 静态游戏**（8-15 起，不走 `app/layout.tsx` ⇒ **没有备案页脚**，owner 明确选的，坑 **35**），同一个仓库，EdgeOne Pages |
+| 观测 | **2155 rows · 1390 / 2088 cells（66.6% cell coverage）** —— 8-20 refresh 之后（8-19 是 2129 / 1385 / 66.3%），复算 = `npm run check:data` 末行 |
+| 源分类 | benchmark 921 / independent 1039 / vendor 195（8-20 实测；较 8-19 +5 / +21 / +0，全部来自那次放行的入档）|
+| 溯源 | **319 / 322**（99%；3 格有值无据 = `deepseek-v4-flash` 两格 + `deepseek-v4-pro` 的 `open`，都在 `TODO.md`）⚠ 分母是**解析得到的行** |
+| 归档 | **34 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-20 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
+| 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ 只增不减地长过两次（batch 35 之后至少 +76；8-19 又加进 V4 Pro preview 的全部 132 行）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法或加法 |
+| 站点 | **`https://quarkspace.top`**（+ `www`，两个都 200）· `/` 个人站 · `/models` 观测台 · **`/deepseek` 静态游戏**（不走 `app/layout.tsx` ⇒ **没有备案页脚**，owner 明确选的，坑 **35**），同一个仓库，EdgeOne Pages |
 | Persona Lab | **`https://quarkspace.top/persona` 已上线**（2026-08-17 实测）：`qwen3.7-flash` 快速候选编译 + 候选筛选后直接探针；服务端凭据已配置且访问口令受保护。线上保存浏览器本地历史，完整 SQLite/JSONL 研究实验仍走本地 Encode Persona harness。 |
 
 ⚠ **三个数字一起读，别只读百分比**——加一个基准会同时放大分母。
@@ -87,7 +64,7 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | ~08:10（cron 写 06:00，GitHub 实际延迟约两小时） | GitHub Actions `upstream.yml` | **14** 个每日源漂移检查（16 个 fetcher 中 `live`/`append-only` 那些；复算 = `npm run report:column-automation`） → 重抓 live 板 → 发布页探针 → 写 gaps issue → AA 新模型侦测 | 只碰 `data/sources/` + 生成文件 → **直推 main** |
 | 同上，末步 | GitHub Actions | 归属闸门 `attribute-and-merge.sh`：提议 alias → 跑契约 → 三条件满足才自合 | 有条件自合，否则留 PR |
 | 09:30 | hermes（Windows 定时任务） | 读 gaps issue → 挑一件完整做完 → 开 PR / tier-B 三条件自合 | 有条件自合 |
-| 任意 push 到 main | GitHub Actions `ci.yml` | 契约全套 + 归属闸门回测 + **两个分类器自测(8-10 起)** + 手机探针(两条路由) + 站上新增模型才推微信 | — |
+| 任意 push 到 main | GitHub Actions `ci.yml` | 契约全套 + 归属闸门回测 + 两个分类器自测 + 手机探针（两条路由）+ 站上新增模型才推微信 | — |
 
 **三条件**（tier B 自合的唯一门槛，写在 `docs/AGENT-OPERATIONS.md`）：契约全绿（含跨源分歧闸门与
 一源两串闸门）· `describe-change` 报告**没有已有数字被改动** · 没有写 `acknowledgedDisagreements`
@@ -129,29 +106,21 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 `PUSHPLUS_TOKEN`，两个都是可选的——缺了对应步骤跳过自己，不会让任何检查变红。
 
 **微信推送 7 条**（复算 = `grep -rn notify-pushplus .github/workflows scripts`；⚠ §10 的表还停在
-8-06 的四条），策略是「只在异常时说话」；逐条落在哪个 workflow、砍掉的六条为什么砍
-→ `docs/ARCHITECTURE.md` §10。⭐ **`main 变红` 那条 8-17 起按「红的集合变化」推**，同一个红每天
-最多提醒一次，读不出来一律推 —— **沉默 = 没变，不是绿了**（坑 **38**）。⚠ 它的 stdout **就是消息**，
-诊断只能走 stderr，守它的自测挂了 `if: always()`（坑 **39**）。
-**沉默可诊断**：两个调度器互相看守，阈值理由在
-`scripts/check-heartbeat.mjs` 头部。⚠ 这个互相看守是**不对称**的（§10 末尾）。
+8-06 的四条），策略是「只在异常时说话」；细节 → `docs/ARCHITECTURE.md` §10 + 坑 **38/39**
+（`main 变红` 按「红的集合变化」推，**沉默 = 没变，不是绿了**；它的 stdout 就是消息）。
+**沉默可诊断**：两个调度器互相看守（`scripts/check-heartbeat.mjs` 头部），⚠ 但这个看守是**不对称**的。
 
 ---
 
 ## 现在要盯的三件事
 
-1. ⭐ **明早第一次 refresh**:`check:prices` 转绿 + refresh 的 contract 不再被它卡住,所以
-   8-16 起停摆的入档会一次性放出来 —— 2026-08-19 实测**152 格**待入档(LiveBench 46 · Epoch 34 ·
-   GDPval-AA 36 · Vals 27 · FrontierMath 6 · LMArena 2 · ALE 1,复算 =
-   `FETCH_TIMEOUT_MS=60000 npm run check:upstream`)。⚠ 顺便看两件等着看的:归属闸门接
-   `deepseek-v4-flash-0731`(它的 ARC 三行就在待入档里)· `--any-open` 第一次生效。
+1. **明早的 refresh 是修完之后第一次自己跑**（8-20 那次是手动 dispatch 的）。要看的是
+   **积压清空之后的稳态**：入档量应当回到日常的个位数量级，不再是 152 格那种一次性放行。
+   ⚠ 顺便看 `--any-open` 第一次生效、以及归属闸门有没有第一次真提出 alias（都在 `TODO.md`）。
 2. **`deepseek-v4-pro` 翻转后的两件小尾巴**(都在 `TODO.md`,都不急):`open` 现在无据 ·
-   `value` 这个 chip 还算不算数。batch 35 已采(见接手点)。
+   `value` 这个 chip 还算不算数。
 3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——
    挂了应当是**大声 throw**(六条断言),不该是"看板变小了"。见 `docs/ARCHITECTURE.md` §9。
-
-⭐ 三个新机制都已实战验证过(8-15):报警链路真红时 issue 与微信都发出来了 · 价格探针在跑 ·
-`withdrawnRows` 逃生口让日常 job 从每天红回到绿。
 
 ---
 
@@ -164,7 +133,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 | `docs/AGENT-OPERATIONS.md` | 排程 agent 的章程：三个风险层级、硬规则、alias 归属规则 |
 | `docs/UI.md` | 改任何界面之前：字号地板、断点、手机契约 |
 | `docs/INGEST-PROMPT.md` | 要让一个浏览模型抄一批数据时的转录合同 |
-| `GOTCHAS.md` | **动手之前扫一遍**：**46** 条仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
+| `GOTCHAS.md` | **动手之前扫一遍**：仍会咬人的坑，编号稳定可引用（复算 = `grep -c '^### ' GOTCHAS.md`）。**它自己顶部有一张「你要动 X 就先读 N」的表**，别在这里维护第二份。 |
 | `TODO.md` / `LOG.md` | 接下来做什么 / 以前为什么这么做。⚠ LOG 轮转过多次（现存档见 `ls LOG-archive/`）——检索一律 `grep LOG.md LOG-archive/*.md` 两边一起搜 |
 
 Git 状态一律现查（`git log --oneline -5`、`git status`），这里不记 HEAD、不记分支进度。
