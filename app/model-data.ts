@@ -226,7 +226,7 @@ export const MODELS: ModelRecord[] = [
     cfg("max", 57.3, 2.0318, 61.3, 10.06, 5, 25, false, 0.5),
   ]),
   m("glm-5.2", "GLM-5.2", "Z.ai", "#177f72", true, 1000, ["coding", "low latency"], [
-    cfg("max", 52.6, 0.3083, 118.3, 1.43, 1.4, 4.4, false, 0.26),
+    cfg("max", 52.6, 0.4445, 118.3, 1.43, 1.4, 4.4, false, 0.26),
   ]),
   m("muse-spark-1.1", "Muse Spark 1.1", "Meta", "#2d71b9", false, 1050, ["fast", "creative", "webdev"], [
     cfg("xhigh", 53.2, 0.29, 130, 2.64, 1.25, 4.25, true),
@@ -238,7 +238,7 @@ export const MODELS: ModelRecord[] = [
     cfg("high", 52, 0.69, 171.5, 23.83, 1.5, 9, false, 0.15),
   ]),
   m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, ["very fast", "vision", "arena"], [
-    cfg("high", 51.6, 0.56, 217.2, 15.11, 1.5, 7.5, true, 0.15),
+    cfg("high", 51.6, 0.3442, 217.2, 15.11, 1.5, 7.5, true, 0.15),
   ]),
   // textElo is null, not 1436: that Arena score was measured 2026-07-27, four days before this
   // model existed, and belongs to the V4 Flash preview. LMArena has not published the 0731
@@ -263,8 +263,12 @@ export const MODELS: ModelRecord[] = [
   // Price, cache price and context still come from the QwenCloud marketplace card (batch 21) —
   // Alibaba's Model Studio table and QwenCloud's list-price table both still carry only the 3.7
   // family. The other four now come from batch 14, like every other model here.
+  // Speed halved on AA's 2026-08-20 re-read: 81.57 -> 44.5 tokens/s, and it is not a tier
+  // mix-up. Intelligence (58.1), cost per task (1.132) and both prices are unchanged in the same
+  // row; what moved with it is AA's own end-to-end median, 33.46s -> 58.82s. Two fields moving
+  // together in the same direction is a re-measure, so the catalog follows the source.
   m("qwen3.8-max", "Qwen3.8 Max", "Alibaba", "#1c5f6e", false, 1000, ["coding", "agents", "vision"], [
-    cfg(null, 58.1, 1.132, 81.57, 2.81, 2, 6, false, 0.17),
+    cfg(null, 58.1, 1.132, 44.5, 2.63, 2, 6, false, 0.17),
   ]),
   // costTask was 1.28 until 2026-08-12, transcribed from AA's leaderboard into batch 07. AA has
   // since re-measured it at 0.5413 and batch 14 carries that, but the audit takes whichever
@@ -279,7 +283,7 @@ export const MODELS: ModelRecord[] = [
     cfg(null, 46.7, 0.5413, 199.6, 2.45, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
-    cfg(null, 39.4, 0.2424, 56.59, 2.09, 0.4, 1.6, false, 0.04),
+    cfg(null, 39.4, 0.2424, 56.58, 2.23, 0.4, 1.6, false, 0.04),
   ]),
   // This record is the GA release `DeepSeek-V4-Pro-0813`, since 2026-08-19. It held the April preview
   // for three months and the changeover is the one thing to understand before touching anything here.
