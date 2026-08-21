@@ -237,8 +237,15 @@ export const MODELS: ModelRecord[] = [
   m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, ["fast", "vision", "long context"], [
     cfg("high", 52, 0.69, 171.5, 23.83, 1.5, 9, false, 0.15),
   ]),
+  // Google cut the Standard tier to $0.75/$3.75 (cache read $0.075), in force "through December
+  // 31, 2026" — batch-37 re-read the vendor page after batch-06/08 froze at the pre-cut $1.5/$7.5
+  // and, being official rows, outranked the AA readings that did move (the failure mode
+  // check-price-terms.mjs was written for, caught here by report:gaps' price-staleness section).
+  // Everything doubles on 2027-01-01: that is a scheduled term in batch-37's meta, and the day it
+  // lands check:prices will demand a re-read and the term's retirement. Batch/Flex (50%) and
+  // Priority (1.8×) are conditional tiers, not quoted — batch-08 precedent.
   m("gemini-3.6-flash", "Gemini 3.6 Flash", "Google", "#4e96ed", false, 1000, ["very fast", "vision", "arena"], [
-    cfg("high", 51.6, 0.3442, 217.2, 15.11, 1.5, 7.5, true, 0.15),
+    cfg("high", 51.6, 0.3442, 217.2, 15.11, 0.75, 3.75, true, 0.075),
   ]),
   // textElo is null, not 1436: that Arena score was measured 2026-07-27, four days before this
   // model existed, and belongs to the V4 Flash preview. LMArena has not published the 0731

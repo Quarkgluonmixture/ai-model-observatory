@@ -1,0 +1,30 @@
+{
+  "batch": "37 · Gemini 3.6 Flash price cut in force, read 2026-08-21",
+  "retrievedDate": "2026-08-21",
+  "collectedWith": "curl of the vendor pricing page (server-rendered, no CDP needed), table parsed from the HTML; the same page batch 06/08 quoted before the cut",
+  "schema": "Model operating parameters, price only. One row, quoting the Standard tier of gemini-3.6-flash. No benchmark observation in this file. (Schema prefix must stay 'Model operating parameters' — check-model-provenance.mjs only reads batches whose meta says so, and a 'Price evidence' label makes the row invisible to the price audit; batch-33 is the precedent.)",
+  "sources": [
+    "https://ai.google.dev/gemini-api/docs/pricing"
+  ],
+  "note": "Google 把 gemini-3.6-flash 的 Standard 档价格从 $1.50/$7.50 降到 $0.75/$3.75(缓存读价 $0.15→$0.075),新价标注 \"through December 31, 2026\",2027-01-01 起回到 $1.50/$7.50/$0.15。这是降价后重读,不是促销公告:当前 $0.75/$3.75 就是无条件生效的 Standard 标价,没有 intro/promo 字样,与 Anthropic 那种 \"introductory pricing\" 不同形;回升才是带生效日的 scheduled change,记在 priceTerms,2027-01-01 当天 check:prices 会要求重读、改目录、退役该 term(batch 31/33 的 DeepSeek 先例,方向相反)。同页对 gemini-3.7-flash 标了同一套日期价($0.75/$3.75→2027-01-01 翻倍),该模型尚不在目录、未建行,此句留给未来收录它的人。gap 报告 2026-08-21 的 \"gemini-3.6-flash catalog $1.5/$7.5, AA $0.75/$3.75 (±100%)\" 即此事:AA 跟随了厂商,目录的官方行冻结在降价前。LLM 竞品分区里 Gemini 3.5 Flash 仍是 $1.50/$9.00/$0.15,与目录一致,未动。",
+  "quotingRule": "目录引用 Standard 档当前标价 $0.75/$3.75/$0.075。Batch/Flex 档(Standard 的 50%)与 Priority 档(1.8×)是条件档位,记入 tiersNotArchived,不引用——batch-08 tiersNotArchived 对 Google Batch/Flex 的既有立场。2027-01-01 起的回升价同样不建行:尚未生效,住在 priceTerms 里。",
+  "tiersNotArchived": {
+    "gemini-3.6-flash": "Batch 与 Flex 档(同价):input $0.375 / output $1.875 / 缓存读 $0.0375(2026-12-31 前,之后翻倍),存储同 Standard。Priority 档:input $1.35 / output $6.75 / 缓存读 $0.135(之后 $2.70/$13.50/$0.27)。均为条件档位,不引用。"
+  },
+  "priceTerms": [
+    {
+      "modelId": "gemini-3.6-flash",
+      "retrievedOn": "2026-08-21",
+      "listPrice": {
+        "input": 0.75,
+        "output": 3.75
+      },
+      "scheduled": {
+        "input": 1.5,
+        "output": 7.5,
+        "effectiveFrom": "2027-01-01"
+      },
+      "source": "https://ai.google.dev/gemini-api/docs/pricing"
+    }
+  ]
+}
