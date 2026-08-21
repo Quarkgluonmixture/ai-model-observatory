@@ -2,7 +2,7 @@
   "batch": "37 · Gemini 3.6 Flash price cut in force, read 2026-08-21",
   "retrievedDate": "2026-08-21",
   "collectedWith": "curl of the vendor pricing page (server-rendered, no CDP needed), table parsed from the HTML; the same page batch 06/08 quoted before the cut",
-  "schema": "Price evidence only. One row, quoting the Standard tier of gemini-3.6-flash. No benchmark observation in this file.",
+  "schema": "Model operating parameters, price only. One row, quoting the Standard tier of gemini-3.6-flash. No benchmark observation in this file. (Schema prefix must stay 'Model operating parameters' — check-model-provenance.mjs only reads batches whose meta says so, and a 'Price evidence' label makes the row invisible to the price audit; batch-33 is the precedent.)",
   "sources": [
     "https://ai.google.dev/gemini-api/docs/pricing"
   ],
