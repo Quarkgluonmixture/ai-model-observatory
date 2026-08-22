@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-21",
+  "checkedAt": "2026-08-22",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -1102,7 +1102,6 @@
       "https://deepmind.google/blog/decoupled-diloco/",
       "https://deepmind.google/blog/deepening-our-partnership-with-the-uk-ai-security-institute/",
       "https://deepmind.google/blog/diffusiongemma-4x-faster-text-generation/",
-      "https://deepmind.google/blog/discovering-new-solutions-to-century-old-problems-in-fluid-dynamics/",
       "https://deepmind.google/blog/empowering-indias-next-generation-of-innovators-with-atl-saathi/",
       "https://deepmind.google/blog/engineering-more-resilient-crops-for-a-warming-climate/",
       "https://deepmind.google/blog/exploring-the-context-of-online-images-with-backstory/",
@@ -1110,6 +1109,7 @@
       "https://deepmind.google/blog/fast-tracking-genetic-leads-to-reverse-cellular-aging/",
       "https://deepmind.google/blog/finding-the-molecular-switches-behind-new-infectious-diseases/",
       "https://deepmind.google/blog/fluid-natural-voice-translation-with-gemini-35-live-translate/",
+      "https://deepmind.google/blog/from-atari-to-eve-online-building-on-15-years-of-ai-research-in-games/",
       "https://deepmind.google/blog/gemini-25-flash-lite-is-now-ready-for-scaled-production-use/",
       "https://deepmind.google/blog/gemini-3-1-flash-lite-built-for-intelligence-at-scale/",
       "https://deepmind.google/blog/gemini-3-1-flash-live-making-audio-ai-more-natural-and-reliable/",
@@ -1197,7 +1197,8 @@
       "/news/news250929",
       "/news/news251201",
       "/news/news260424",
-      "/news/news260813"
+      "/news/news260813",
+      "/news/news260821"
     ],
     "x-ai": [
       "/news/grok-4-1-fast",
