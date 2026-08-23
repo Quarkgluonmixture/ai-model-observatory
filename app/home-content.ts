@@ -1,10 +1,7 @@
-// Copy for the personal site at the root route. Hand-written, mirrored from
-// quark-space/content/projects.json — that file is the source of truth for wording and
-// carries the copy rules (subject in every sentence, short clauses, no slogans,
-// banned words: 护航 / 赋能 / 有据可查 / 不可替代 / 全方位). Keep them in sync by hand for now.
-//
-// Facts only come from buqi-docs/项目库. Anything unknown stays a TODO chip on the page
-// rather than being filled in with a guess.
+// Copy for the personal site at the root route.
+// 2026-08-23: recruiter-facing positioning is intentionally selective.
+// The homepage is not a museum of every repository; it foregrounds the work
+// that best supports AI evaluation, red teaming and reliable agents.
 
 export type Meter = { label: string; value: string; pct: number; tone?: "a" | "n" | "w"; faint?: boolean };
 
@@ -32,20 +29,20 @@ export type Featured = {
 
 export const profile = {
   name: "Jiaming Wei",
-  role: "LLM 评测 · 红队 · Agent 安全",
-  availability: "求职中 · 2026",
-  claim: ["模型要测,", "量模型的尺子也要测。"],
+  role: "AI Evaluation · Red Teaming · Agent Reliability",
+  availability: "Research Engineer · 2026 秋",
+  claim: ["模型和 Agent 会失败,", "测它们的尺子也会。"],
   intro:
-    "我做 LLM 评测和红队测试:一个模型有多安全、一个分数值不值得信,由我把它测出来。难的往往不是攻击模型,是判断攻击到底成功了没有 —— 拒答、内容过滤、判官自己判错,在结果里长得很像。所以我也花力气去测自己的判官。业余写确定性模拟,同一个种子跑出同一段历史。",
+    "我研究模型和 Agent 在哪里失败，也研究我们用来测它们的尺子本身是否可信。工作横跨 Web / Computer-Use Agent、LLM 红队、judge fidelity、benchmark design 和可复现实验系统；现在在 Holistic AI 做 Research Intern。",
   github: "https://github.com/Quarkgluonmixture",
   figures: [
-    { value: ".71–.75", label: "判官 recall,上游同批 .247" },
+    { value: "2", label: "个 2026 workshop submission" },
+    { value: "1,121", label: "个 Web-Agent 研究测试" },
     { value: "103", label: "个验证过的红队 plugin" },
-    { value: "11", label: "个本地攻击引擎" },
     { value: "2,133", label: "条模型观测" },
   ],
   nav: [
-    { href: "#work", label: "项目" },
+    { href: "#work", label: "研究与系统" },
     { href: "#skills", label: "技能" },
     { href: "#about", label: "经历" },
     { href: "#contact", label: "联系" },
@@ -55,100 +52,100 @@ export const profile = {
 export const featured: Featured[] = [
   {
     slot: "01",
-    kicker: "01 / MSc 毕设 / 预注册 · OSF",
-    title: "Web Agent 的成本感知路由",
-    who: [{ text: "MSc 毕设" }, { text: "独立完成" }, { text: "4 个月 · 1,088 commits" }],
+    kicker: "01 / UCL MSc Dissertation / REALM + NeurIPS VLM4RWD submitted",
+    title: "Web Agent 的表征路由：价值越大，反而越难学",
+    who: [{ text: "独立研究" }, { text: "预注册 · OSF" }, { text: "3 模型族 × 6 表征" }],
     lead:
-      "Web agent 看页面有好几种方式:原始截图、无障碍树、Set-of-Marks。我想知道能不能留下 Set-of-Marks 的位置信息,却把图像整个丢掉。",
+      "Web agent 可以读 DOM、Set-of-Marks、原始视觉或混合表征。我把「不同表征有没有互补价值」和「router 能不能学会何时选它」拆开测，最后得到的不是一个漂亮的 routing 胜利，而是一条更有用的边界：最值得路由的地方，往往也最难可靠学习。",
     points: [
-      "提出 phantom_som:位置线索用纯文本给,不渲染标注截图,视觉编码器的图像 token 降到零。",
-      "先预注册、在 OSF 锁定,再开始跑。3 个模型族 × 6 种观测模式 × 3 个站点;主门用单侧固定效应逆方差合并,再用 TOST 做等价检验。",
-      "不只问「有没有效」,还用激活修补和线性探针去解释这种表征为什么有效。",
-      "工程上是跨三层异构算力的编排:能防竞态,六层 watchdog 负责自己爬起来。~117K 行 Python、1,121 个测试。",
+      "构建 DOM / SoM / vision 与 phantom representations 的受控比较，先预注册再跑实验；不同表征确实留下非冗余的 oracle headroom。",
+      "主结果是 routing value–learnability gap：value 不等于可预测性，负结果和 failure analysis 直接进入论文主线。",
+      "机制侧继续用 activation patching 和 linear probes 追表征差异；工程侧约 117K 行 Python、1,121 个测试，跨异构算力自动编排与恢复。",
+      "论文已投 EMNLP 2026 Workshop REALM 与 NeurIPS 2026 Workshop VLM4RWD。",
     ],
-    stack: "Python · PyTorch · Playwright · SGE-HPC",
+    stack: "Python · PyTorch · Playwright · VisualWebArena · SGE/HPC",
     href: "https://github.com/Quarkgluonmixture/Cost-Aware-Routing-for-Web-Usage-Agents",
     span: "c12",
     wide: true,
     bigTitle: true,
     chart: "cost",
-    cap: "所以成本是地板 —— 六种模式的钱差不多,真正分化在延迟和信号。",
+    cap: "六种观测模式的账单成本接近；真正需要解释的是信号、延迟和可学习性。",
   },
   {
     slot: "02",
-    kicker: "02 / 红队工具链 / Apache-2.0",
+    kicker: "02 / Public Red-Team Measurement Stack / Apache-2.0",
     title: "redteam-under-test",
-    who: [{ text: "个人项目" }, { text: "独立完成" }, { text: "周期", todo: true }],
+    who: [{ text: "公开可审计系统" }, { text: "独立重构" }, { text: "2026" }],
     lead:
-      "红队工具都在测模型,很少有人测红队工具本身。它两件事同时做:对目标模型实时生成攻击,并检验自己的判官有没有判错。",
+      "红队工具在测模型，但判官和 harness 自己也会错。我把攻击生成、target execution 和判官质量放在同一条测量链里：攻击要针对目标动态生成，判官要对独立 gold labels 报自己的 FP/FN。",
     shot: {
       src: "/shots/redteam-cockpit.jpg",
-      alt: "红队 cockpit:风险图、攻击面热力图、成本与运行趋势",
-      cap: "风险图、plugin × strategy 攻击面、成本与每次运行的突破率",
+      alt: "redteam-under-test cockpit：风险图、攻击面、成本与运行趋势",
+      cap: "同一套系统里看攻击面，也看自己的判官是否可信",
     },
-    metersLabel: "判官准不准 · 对独立 gold label 打分",
+    metersLabel: "判官对独立 gold labels 的测量结果",
     meters: [
-      { label: "本仓库判官 recall", value: ".712–.753", pct: 73, tone: "a" },
-      { label: "本仓库判官 precision", value: ".93–.98", pct: 95, tone: "n" },
-      { label: "上游 rubric recall(同一批数据)", value: ".247", pct: 24.7, tone: "w" },
+      { label: "本仓库 judge recall", value: ".712–.753", pct: 73, tone: "a" },
+      { label: "本仓库 judge precision", value: ".93–.98", pct: 95, tone: "n" },
+      { label: "upstream rubric recall", value: ".247", pct: 24.7, tone: "w" },
     ],
     points: [
-      "上游 grader 会把看起来像拒答的回答直接判成防御成功,而且关不掉。一个以免责声明开头的突破就这样被记成安全 —— 单个 cybercrime 探针漏掉 16 之 8。",
-      "166 个 plugin 映射进来,验证过的 103 个才允许启用;11 个攻击引擎跑在本地,数据不出机器。",
+      "166 个 plugin 映射到本地生成机制，103 个经端到端验证后启用；11 个攻击技术重实现为本地 engine。",
+      "攻击根据目标领域动态实例化，不重放固定 prompt bank；zero-egress 路径可以把生成、攻击和判定都留在本机。",
+      "一个 upstream refusal shortcut 在单个 cybercrime probe 上造成 16 个 breach 漏掉 8 个；所以这里把 grader 本身当成测量仪器来校准。",
     ],
-    stack: "JavaScript · Node 20+ · Postgres · SST / Lambda",
+    stack: "JavaScript · Node · Postgres · TanStack Start · SST / Lambda",
     href: "https://github.com/Quarkgluonmixture/redteam-under-test",
     span: "c7",
   },
   {
     slot: "03",
-    kicker: "03 / 竞赛 + MCP 上线",
+    kicker: "03 / Agent Security / MCP",
     title: "Agent Red-Team Lab",
-    who: [{ text: "个人项目" }, { text: "独立完成" }, { text: "周期", todo: true }],
+    who: [{ text: "Tool-Using Agent" }, { text: "Read-only MCP" }, { text: "2026" }],
     lead:
-      "同一个仓库里两条相反的线:一条在竞赛里诱导 agent 滥用工具,一条给科研 agent 做只读的工具调用安全分析,已上线国家超算互联网。",
-    chart: "score",
+      "我同时从攻击和防守两边看 tool-using agent：攻击侧研究怎样在有限 replay / model-hop 预算里触发危险工具链；防守侧只读分析 tool-call trace，不执行真实动作。",
     points: [
-      "真正的瓶颈不是攻击写得好不好,是每个候选的重放成本。把模型的推理通道压掉之后,同样的预算能塞进 600 个候选,分数一跳到 54.1。",
-      "防守侧检测 7 类风险,5 个 MCP 工具全部只读离线。规则是「降级不压制」:调用方自述的审批只能降低严重度,不能让一个发现消失。",
-      "574 项测试通过;stdio 和 Streamable HTTP 两种传输都用官方 SDK 验过。",
+      "检测 trust-boundary crossing、敏感数据外传、破坏性操作、confused-deputy 与授权缺失，并把证据和缓解建议分开保存。",
+      "防守 MCP 支持 stdio 与 Streamable HTTP；规则采用「降级不压制」，调用方自报审批不能让发现凭空消失。",
+      "竞赛攻击侧围绕 replay budget 和模型调用成本优化组合，而不是只调 prompt；公开版本最佳分 72.72。",
     ],
-    stack: "Python · MCP (JSON-RPC 2.0)",
+    stack: "Python · MCP / JSON-RPC · Agent Security",
     href: "https://github.com/Quarkgluonmixture/agent-redteam-lab",
     span: "c5",
   },
   {
     slot: "04",
-    kicker: "04 / 后训练归因研究",
-    title: "把后训练的涨点拆开",
-    who: [{ text: "课程团队项目的单人扩展" }, { text: "周期", todo: true }],
+    kicker: "04 / Post-training Attribution",
+    title: "把模型的“涨点”拆开看",
+    who: [{ text: "Qwen3 0.6B→14B" }, { text: "5×4 controlled matrix" }, { text: "2026" }],
     lead:
-      "同一份涨幅有三种解释:协议对齐、格式 SFT、显式思考。我把它们分开,各自量了一遍 —— 5×4 的尺寸 × 条件矩阵,每次只动一个变量。",
+      "同一份分数上涨可能来自三件完全不同的事：prompt 协议对齐、answer-format SFT、显式思考。我每次只动一个变量，避免把协议修正误叫成模型能力提升。",
     meters: [
-      { label: "只换成原生 chat 协议(不微调)", value: "+20~30", pct: 100, tone: "a" },
-      { label: "answer-only SFT(4B)", value: "修好 31 / 弄坏 38", pct: 9, tone: "n" },
-      { label: "GRPO 之后(8B)", value: "31% → 9.7%", pct: 31, tone: "w" },
+      { label: "只换原生 chat 协议", value: "+20~30", pct: 100, tone: "a" },
+      { label: "answer-only SFT (4B)", value: "31 fix / 38 break", pct: 45, tone: "n" },
+      { label: "GRPO 后 (8B)", value: "31% → 9.7%", pct: 31, tone: "w" },
     ],
     points: [
-      "最大的那一项是没人专门训练的:把 base 模型从训练式 prompt 换成原生 chat 协议,不微调也不思考,就回收 +20~30 分。",
-      "有了这个诚实的分母,answer-only SFT 就几乎不加分了。三项结论都过了配对 McNemar。",
-      "GRPO 把自己的格式奖励黑掉了:78% 的样本吐一个空标签去骗那 0.1 分格式分,准确率反而崩了。",
+      "较大的 base model 只切回原生 chat protocol、不微调也不思考，就能回收约 +20–30 分。",
+      "4B answer-only SFT 相对公平基线并没有显著净增益；paired McNemar 把“看起来涨了”变成可检验的问题。",
+      "GRPO/RLVR 反而把格式奖励黑掉：78% 样本吐空 answer tag 换格式分，准确率从 31% 掉到 9.7%。",
     ],
-    stack: "Python · Qwen3 0.6B→14B · TRL · bf16 LoRA",
+    stack: "Python · PyTorch · Qwen3 · TRL · LoRA / SFT / GRPO",
     href: "https://github.com/Quarkgluonmixture/FinQA",
     span: "c6",
   },
   {
     slot: "05",
-    kicker: "05 / 评测台 / 已上线",
+    kicker: "05 / Benchmark Provenance / Live",
     title: "AI Model Observatory",
-    who: [{ text: "个人项目" }, { text: "独立完成" }, { text: "周期", todo: true }],
+    who: [{ text: "29 模型家族 × 72 benchmarks" }, { text: "2,133 observations" }, { text: "已上线" }],
     lead:
-      "自己做的前沿模型对比台。它不把来源不同的分数混在一起,不做隐藏的总分;缺证据的格子就写 N/A,不补零也不估算。",
+      "模型榜单最容易把不同来源、不同 harness、不同语义的数字揉成一个假总分。我反过来做：每个 observation 都保留来源、版本、日期和测量语义；证据不够就写 N/A。",
     shot: {
       src: "/shots/observatory-home.jpg",
-      alt: "AI 模型观测站首页与前沿模型排行",
-      cap: "排行按能力、系统表现、人类偏好分开排,不合成一个总分",
+      alt: "AI Model Observatory 首页与模型比较界面",
+      cap: "能力、agent 系统、coding 系统、人类偏好和价格速度分开看",
     },
     chart: "ring",
     ringPct: 66.2,
@@ -157,127 +154,111 @@ export const featured: Featured[] = [
       { label: "已填充 / 总格数", value: "1382 / 2088", pct: 66.2, tone: "a" },
     ],
     points: [
-      "2,133 条观测,每条都带来源、版本、日期和 harness,能一路查回去。目录里的数字全部能对上源归档(321 / 321)。",
-      "证据不够就不排名:五个 agent benchmark 只测了两个的模型显示 N/A —— 不拿更少的证据去和别人比。",
+      "2,133 条观测全部带 provenance；当前目录 321 / 321 个 catalog 数值能回到归档证据。",
+      "自动重抓上游来源并检查 drift；缺失不是 0，agent-system 结果也不伪装成纯模型能力。",
     ],
-    stack: "TypeScript · Next.js · 双语 · 移动优先 · EdgeOne Pages",
+    stack: "TypeScript · Next.js · Data Provenance · EdgeOne Pages",
     href: "/models",
     goLabel: "进入观测台 →",
     span: "c6",
   },
-  {
-    slot: "06",
-    kicker: "06 / 模拟 / 已上线",
-    title: "EvoFootball Arena",
-    who: [{ text: "个人项目" }, { text: "独立完成" }, { text: "周期", todo: true }],
-    shot: {
-      src: "/shots/evofootball.jpg",
-      alt: "EvoFootball Arena 3D 转播视图与战术基因面板",
-      cap: "右边是每支队的战术基因和实时数据,每个决策都有分数可查",
-    },
-    pull: "同一个种子,跑出同一段历史。",
-    lead: "AI 球队 6v6 打循环赛季,战术基因跨代进化,你只负责看。这里刻意不用强化学习。",
-    points: [
-      "每支队有 16 个能读懂的基因,每个决策背后的效用分数都能点开看 —— 「为什么这么踢」永远查得到。",
-      "整套是逐字节确定性的:一个 seeded RNG、32-bit 状态存档,存档读回去再跑,结果一个字节都不差。",
-      "长时模拟放在 Web Worker 里,界面稳在 60fps,结果和主线程一致,有回归测试盯着。",
-    ],
-    stack: "TypeScript · Vite · Pixi.js · Three.js",
-    href: "https://github.com/Quarkgluonmixture/evofootball-arena",
-    span: "c6",
-  },
-  {
-    slot: "07",
-    kicker: "07 / 遥感 ML / 跨大洲泛化",
-    title: "卫星影像看经济水平",
-    who: [{ text: "角色", todo: true }, { text: "周期", todo: true }],
-    lead:
-      "用非洲五国的 Sentinel-2 影像回归财富指数,再拿自己建的贵州 20 地数据集去问:在非洲学到的东西,搬到中国农村还灵不灵。",
-    points: [
-      "贵州那 20 个地方是专门挑出来做对抗的,用来看跨大洲的分布偏移会把模型打成什么样。",
-      "PyTorch 复现并扩展了 Yeh et al. (2020, Nature Communications)。",
-    ],
-    metersLabel: "三个 backbone 的测试集 R²",
-    meters: [
-      { label: "ViT-S/16 (ImageNet)", value: "R² .683", pct: 68.3, tone: "a" },
-      { label: "ResNet-50 (ImageNet)", value: "R² .650", pct: 65, tone: "n" },
-      { label: "从零训练", value: "R² .614", pct: 61.4, tone: "n", faint: true },
-    ],
-    cap: "ImageNet 预训练有用,ViT 比 ResNet 再好一点;从零训练最差。",
-    stack: "Python · PyTorch · timm · Sentinel-2",
-    href: "https://github.com/Quarkgluonmixture/africa_china_poverty",
-    span: "c12",
-    wide: true,
-  },
 ];
 
 export const skills = [
-  { k: "语言", v: "Python · TypeScript / JavaScript · Shell" },
-  { k: "ML 与训练", v: "PyTorch · HF Transformers · TRL (SFT / GRPO) · bf16 LoRA · scikit-learn / LightGBM / CatBoost" },
-  { k: "LLM 系统与评测", v: "红队 plugin 与策略引擎 · 判官保真度 · promptfoo · MCP (JSON-RPC 2.0) · Google ADK · Set-of-Marks web agent" },
-  { k: "统计方法", v: "配对 McNemar · bootstrap CI · 固定效应逆方差合并 · TOST 等价检验 · 预注册" },
-  { k: "Web 与基础设施", v: "Next.js / React · TanStack Start · Node · Postgres + Drizzle · SST / Lambda / Fargate · Docker Compose · Vite / Pixi.js / Three.js" },
-  { k: "工程习惯", v: "能复现(seeded RNG、逐字节存档)· CI 里守数据合同 · 跨异构算力编排(HPC / SGE)· 崩溃能自己爬起来" },
+  { k: "Evaluation / Research", v: "LLM & Agent evaluation · benchmark design · red teaming · judge / grader calibration · failure taxonomy · paired tests / bootstrap · preregistration" },
+  { k: "Agents", v: "Web / Computer-Use Agent · VisualWebArena · DOM / SoM / vision representations · tool use · MCP · multi-agent orchestration" },
+  { k: "Model / Post-training", v: "PyTorch · Hugging Face · TRL · LoRA / SFT · GRPO / RLVR analysis · Qwen / DeepSeek / Gemma" },
+  { k: "Engineering", v: "Python · TypeScript / JavaScript · SQL / Postgres · Playwright · Docker · GitHub Actions · Linux · AWS / SST · Next.js / TanStack" },
+  { k: "Research systems", v: "异构算力编排 · SGE / HPC · structured logging · watchdog / recovery · data provenance · reproducible experiment harness" },
+  { k: "Working principle", v: "先问 measurement chain 是否可信，再相信一个更高的分数；负结果和失败模式也进入结论。" },
 ];
 
 export const experience = [
   {
-    org: "UCL",
-    what: "MSc Artificial Intelligence for Sustainable Development。毕设是上面那个成本感知路由。",
-    todo: "起止时间",
+    org: "Holistic AI",
+    what: "Research Intern · London · 2026.06–09。做 LLM / Agent 红队与评测能力、grader 质量和 failure analysis，并把测量链接进实际平台。",
   },
-  { org: "西安交通大学", what: "本科。", todo: "专业与年份" },
-  { org: "Holistic AI", what: "实习,做 LLM 红队评测和判官质量。", todo: "这一行怎么写你定" },
+  {
+    org: "UCL Computer Science",
+    what: "MSc Artificial Intelligence for Sustainable Development · 2025–2026。当前 taught average 70.65，on track for Distinction。",
+  },
+  {
+    org: "西安交通大学",
+    what: "BEng Automation · 2021–2025。",
+  },
+  {
+    org: "Earlier",
+    what: "华电系 AI / 数智化实习；绿盟科技网络安全测试实习。",
+  },
 ];
 
 export const others = [
   {
-    name: "Emberfall",
+    name: "GPT Loop",
     year: "2026",
-    text: "五个文明在 160×100 的网格上兴起、结盟、打仗、覆灭又重建。靠近镜头的聚落才展开成一个个市民,远处只算总量;整段历史逐字节可复现。",
-    href: "https://github.com/Quarkgluonmixture/Emberfall",
+    text: "ChatGPT Web 做研究/裁决，GitHub 传 durable request/result，自托管 runner 只执行 allowlist action，再把结果唤醒回同一段对话。重点是 capability boundary，不是给 agent 一个任意 shell。",
+    href: "https://github.com/Quarkgluonmixture/gpt-loop",
   },
   {
     name: "Autonomous Agent Prediction",
     year: "2026",
-    text: "Kaggle 给 60 分钟、2 美元、纯 CPU,agent 自己分析没见过的表格数据、训练、挑最终提交。最终 private 0.780,571 队里第 131。赛后我把两份榜单按队伍连起来算过:竞争带里 public 与 private 的 Spearman 只有 0.142,所以整场比赛我追的那个分数几乎不预测最终成绩。",
+    text: "60 分钟、$2 LLM 预算、纯 CPU 的自主 ML agent。最终 private 0.780，571 队第 131；竞争带里 public/private Spearman 只有 0.142。",
     href: "https://github.com/Quarkgluonmixture/autonomous-agent-prediction-beta",
-  },
-  {
-    name: "Lens–Voice Divergence",
-    year: "2026",
-    text: "大多数安全测试靠藏东西,这个什么都不藏:让模型一边批判某机构、一边用该机构的口气写作,看它认不认得出自己正在做刚才批判的事。",
-    href: "https://github.com/Quarkgluonmixture/AI_safety",
   },
   {
     name: "paper-deslop",
     year: "2026",
-    text: "按章节给论文提改写建议,每条附理由、由人逐项审。另一条轨道用确定性检查盯着数字、引用、公式和术语没被改坏。",
+    text: "LaTeX-aware 学术改写流水线：语义改写只出 diff，由人审；确定性 invariant gate 盯数字、引用、公式、术语和句子绑定没被改坏。",
     href: "https://github.com/Quarkgluonmixture/paper-deslop",
   },
   {
-    name: "claude-kit",
+    name: "Encode Persona",
     year: "2026",
-    text: "6 条按需引入的规则、4 个全局 skill、1 个 git 硬闸 hook。规则会被忘,hook 不会 —— 所以该拦的事交给 hook。",
-    href: "https://github.com/Quarkgluonmixture/claude-kit",
+    text: "比较自然语言、JSON/YAML、可读语义标签与 opaque tags 的 persona representation；做 ablation、跨模型 probe、exact provenance 和 blind judge。",
+    href: "https://github.com/Quarkgluonmixture/encode-persona",
   },
   {
-    name: "Multi AI Chat",
-    year: "2025",
-    text: "Chrome 扩展:四家聊天网页各自独立作答,然后互相评审,最后一家把三份修订稿合成终稿。每题 7 次调用,不碰 API。",
-    href: "https://github.com/Quarkgluonmixture/Multi_agent_system",
+    name: "Spatial Copilot",
+    year: "2026",
+    text: "把第一人称口述实时变成持久拓扑地图；graph topology 是真相，geometry 只是视觉假设，支持本地 STT、event sourcing、undo/redo 与 loop closure。",
+    href: "https://github.com/Quarkgluonmixture/Spatial-Copilot",
+  },
+  {
+    name: "FitnessOS",
+    year: "2026",
+    text: "offline-first SwiftUI 健身系统：SQLite source of truth、HealthKit、确定性调度、proposal/outbox、真实 iPhone 验证与完整 CI。",
+    href: "https://github.com/Quarkgluonmixture/FitnessOS",
+  },
+  {
+    name: "EvoFootball Arena",
+    year: "2026",
+    text: "逐字节可复现的 6v6 足球演化模拟：16 个可解释战术基因、seeded RNG、状态存档与长时 Web Worker 模拟。",
+    href: "https://github.com/Quarkgluonmixture/evofootball-arena",
+  },
+  {
+    name: "Emberfall",
+    year: "2026",
+    text: "确定性多文明模拟：160×100 世界里文明兴起、结盟、战争、覆灭和重建；近景展开个体，远景只算聚合状态。",
+    href: "https://github.com/Quarkgluonmixture/Emberfall",
+  },
+  {
+    name: "Africa → China Satellite Transfer",
+    year: "2025–26",
+    text: "Sentinel-2 财富回归与跨洲 distribution shift：多 backbone、多 seed、bootstrap CI、自建贵州对抗评估集和 Grad-CAM。",
+    href: "https://github.com/Quarkgluonmixture/africa_china_poverty",
   },
 ];
 
 export const closing = {
-  title: "在找 AI 评测 / 红队 / Agent 方向的岗位",
-  sub: "简历、GitHub 和邮箱都在这里,想聊哪个项目都可以。",
-  todo: "具体岗位方向和联系方式你定",
+  title: "在找 AI Evaluation / Red Teaming / Agent Reliability 方向的 Research Engineer 岗位",
+  sub: "Web / Computer-Use Agent 和 model/post-training evaluation 是两条相邻方向。想聊哪个项目，直接看代码或发邮件。",
+  todo: "",
 };
 
-// 六种观测模式的账单成本,高亮的是 phantom_som(第 4 根)。柱高是相对高度,
-// 真实区间写在图下方,不在柱子上标数——素材只给了区间,没给逐模式的精确值。
+// Six observation modes: relative bill-cost heights. Exact per-mode values are
+// deliberately not invented; the project copy only claims the observed range.
 export const costBars = { heights: [80, 84, 91, 82, 86, 79], hi: 3 };
 
-// 竞赛分数 v9 → v39:6.195 / 14.810 / 23.530 / 33.600 / 54.120 / 54.000
+// Kept for the generic score-chart component even though no current featured
+// card uses it.
 export const scoreLine = "6,50 51.6,42.6 97.2,35 142.8,26.3 188.4,6 234,6.1";
