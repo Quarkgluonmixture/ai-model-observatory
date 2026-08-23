@@ -8,7 +8,6 @@ import {
   featured,
   others,
   profile,
-  scoreLine,
   skills,
   type Featured,
   type Meter,
@@ -67,29 +66,6 @@ function CostChart({ cap }: { cap?: string }) {
   );
 }
 
-function ScoreChart() {
-  return (
-    <>
-      <p className={s.lbl} style={{ margin: "18px 0 6px" }}>
-        竞赛分数 · v9 → v39
-      </p>
-      <svg width="100%" viewBox="0 0 240 62" preserveAspectRatio="none" role="img"
-        aria-label="竞赛分数从 6.195 升到 54.120">
-        <line x1="0" y1="56" x2="240" y2="56" stroke="#d7d3c8" />
-        <line x1="0" y1="31" x2="240" y2="31" stroke="#e8e5db" />
-        <line x1="0" y1="6" x2="240" y2="6" stroke="#e8e5db" />
-        <polyline points={scoreLine} fill="none" stroke="#7a6318" strokeWidth="2.2"
-          vectorEffect="non-scaling-stroke" />
-        <circle cx="188.4" cy="6" r="3.2" fill="#15161a" />
-      </svg>
-      <div className={s.scoreEnds}>
-        <span>6.195</span>
-        <b>54.120 · 约 820 / 1943</b>
-      </div>
-    </>
-  );
-}
-
 function Ring({ pct, meters }: { pct: number; meters?: Meter[] }) {
   const r = 29;
   const c = 2 * Math.PI * r;
@@ -129,7 +105,6 @@ function Body({ p }: { p: Featured }) {
       )}
       {p.pull && <p className={s.pull}>{p.pull}</p>}
       <p className={s.lead} style={{ marginTop: p.shot || p.pull ? 14 : 0 }}>{p.lead}</p>
-      {p.chart === "score" && <ScoreChart />}
       {p.chart === "ring" && <Ring pct={p.ringPct ?? 0} meters={p.meters} />}
       {p.metersLabel && !p.wide && (
         <p className={s.lbl} style={{ margin: "20px 0 4px" }}>{p.metersLabel}</p>
@@ -186,6 +161,71 @@ function Section({ no, title, count, id }: { no: string; title: string; count: s
   );
 }
 
+function MeasurementChain() {
+  const steps = [
+    {
+      no: "01",
+      title: "Target / Agent",
+      body: "模型真正做了什么？任务成功、拒答，还是越过了边界？",
+      foot: "behavior · task success",
+    },
+    {
+      no: "02",
+      title: "Execution / Harness",
+      body: "结果来自模型，还是 observation、tool、provider filter 或 scaffold？",
+      foot: "trajectory · environment",
+    },
+    {
+      no: "03",
+      title: "Judge / Grader",
+      body: "判官有没有系统性误判？rubric、阈值和 shortcut 会不会改写结论？",
+      foot: "FP / FN · calibration",
+    },
+    {
+      no: "04",
+      title: "Gold / Evidence",
+      body: "最终结论能不能回到独立标签、统计检验、来源和可重放证据？",
+      foot: "labels · provenance",
+    },
+  ];
+
+  return (
+    <div className={`${s.t} ${s.c12}`} aria-label="Evaluation measurement chain">
+      <span className={s.lbl}>同一条方法论 / measurement chain</span>
+      <div style={{ display: "flex", alignItems: "baseline", gap: 16, flexWrap: "wrap", marginTop: 14 }}>
+        <h2 className={s.h2} style={{ margin: 0 }}>一个分数出来之前，我先检查这四层</h2>
+        <span className={s.stack} style={{ margin: 0 }}>model → system → judge → evidence</span>
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 20 }}>
+        {steps.map((step, i) => (
+          <div
+            key={step.no}
+            style={{
+              flex: "1 1 190px",
+              minWidth: 0,
+              border: "1px solid #e6e2d6",
+              borderRadius: 7,
+              padding: "16px 16px 14px",
+              background: i === steps.length - 1 ? "#fbf4e0" : "#fdfcf8",
+            }}
+          >
+            <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline" }}>
+              <span style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 11, fontWeight: 700, color: "#7a6318" }}>{step.no}</span>
+              {i < steps.length - 1 && <span aria-hidden="true" style={{ color: "#c9a63a", fontSize: 18 }}>→</span>}
+            </div>
+            <h3 style={{ margin: "12px 0 7px", fontSize: 16, lineHeight: 1.2, letterSpacing: "-0.02em", color: "#15161a" }}>{step.title}</h3>
+            <p style={{ margin: 0, fontSize: 13.5, lineHeight: 1.58 }}>{step.body}</p>
+            <p style={{ margin: "12px 0 0", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 10, letterSpacing: "0.07em", textTransform: "uppercase", color: "#8a887f" }}>{step.foot}</p>
+          </div>
+        ))}
+      </div>
+      <p className={s.cap} style={{ marginTop: 14 }}>
+        P79、Holistic、redteam-under-test、FinReason 和 Model Observatory 看起来是不同项目，但它们都在问同一件事：这个结果到底意味着什么，以及产生它的测量链能不能信。
+      </p>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <div className={s.home}>
@@ -227,6 +267,8 @@ export default function Home() {
               ))}
             </div>
           </div>
+
+          <MeasurementChain />
 
           <Section no="01" title="研究与系统" count={`${featured.length} 项`} id="work" />
           {featured.map((p) => <Card key={p.slot} p={p} />)}
