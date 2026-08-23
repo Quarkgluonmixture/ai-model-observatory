@@ -249,10 +249,7 @@ export default function Home() {
               {experience.map((e) => (
                 <div className={s.exp} key={e.org}>
                   <div className={s.org}>{e.org}</div>
-                  <div className={s.what}>
-                    {e.what}
-                    {e.todo && <span className={s.todoInline}>{e.todo}</span>}
-                  </div>
+                  <div className={s.what}>{e.what}</div>
                 </div>
               ))}
             </div>
