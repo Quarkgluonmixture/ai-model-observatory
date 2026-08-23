@@ -22,6 +22,7 @@ import {
 
 const SHOT_W = 1700;
 const SHOT_H = 1099;
+const EMAIL = "mailto:jimmyenglish@126.com";
 
 function MeterRow({ m }: { m: Meter }) {
   const fill = m.tone === "w" ? s.fW : m.tone === "n" ? s.fN : s.fA;
@@ -196,13 +197,12 @@ export default function Home() {
             <Link className={s.sub} href="/persona">Persona Lab ↗</Link>
             <Link className={s.sub} href="/models">观测台 ↗</Link>
           </nav>
-          <a className={s.cv} href="#">简历 PDF</a>
+          <a className={s.cv} href={EMAIL}>邮件联系</a>
         </div>
       </div>
 
       <div className={s.wrap}>
         <div className={s.g}>
-          {/* 首屏 */}
           <div className={`${s.t} ${s.c8}`}>
             <span className={s.avail}><i />{profile.availability}</span>
             <h1 className={s.h1}>{profile.name}</h1>
@@ -210,9 +210,9 @@ export default function Home() {
             <p className={s.say}>{profile.claim[0]}<br />{profile.claim[1]}</p>
             <p className={s.lead}>{profile.intro}</p>
             <div className={s.cta}>
-              <a className={`${s.btn} ${s.pri}`} href="#">下载简历 PDF</a>
+              <a className={`${s.btn} ${s.pri}`} href="#work">看研究与系统</a>
               <a className={s.btn} href={profile.github}>GitHub</a>
-              <a className={s.btn} href="#">邮箱</a>
+              <a className={s.btn} href={EMAIL}>邮箱</a>
             </div>
           </div>
 
@@ -228,7 +228,7 @@ export default function Home() {
             </div>
           </div>
 
-          <Section no="01" title="精选项目" count="07 项" id="work" />
+          <Section no="01" title="研究与系统" count={`${featured.length} 项`} id="work" />
           {featured.map((p) => <Card key={p.slot} p={p} />)}
 
           <Section no="02" title="技能栈" count="每项都有项目对得上" id="skills" />
@@ -276,11 +276,11 @@ export default function Home() {
               <h2 className={s.h2} style={{ margin: "0 0 6px" }}>{closing.title}</h2>
               <p className={s.closingSub}>
                 {closing.sub}
-                <span className={s.dash}>{closing.todo}</span>
+                {closing.todo && <span className={s.dash}>{closing.todo}</span>}
               </p>
             </div>
             <div className={s.cta} style={{ margin: 0 }}>
-              <a className={`${s.btn} ${s.pri}`} href="#">下载简历 PDF</a>
+              <a className={`${s.btn} ${s.pri}`} href={EMAIL}>邮件联系</a>
               <a className={s.btn} href={profile.github}>GitHub ↗</a>
             </div>
           </div>
