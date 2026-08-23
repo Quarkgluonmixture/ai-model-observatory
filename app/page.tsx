@@ -22,6 +22,8 @@ import {
 const SHOT_W = 1700;
 const SHOT_H = 1099;
 const EMAIL = "mailto:jimmyenglish@126.com";
+const RESUME_CN = "/resume/Jiaming_Wei_CV_EVAL_CN_v1.0.pdf";
+const RESUME_EN = "/resume/Jiaming_Wei_CV_EVAL_EN_v1.0.pdf";
 
 function MeterRow({ m }: { m: Meter }) {
   const fill = m.tone === "w" ? s.fW : m.tone === "n" ? s.fN : s.fA;
@@ -237,7 +239,7 @@ export default function Home() {
             <Link className={s.sub} href="/persona">Persona Lab ↗</Link>
             <Link className={s.sub} href="/models">观测台 ↗</Link>
           </nav>
-          <a className={s.cv} href={EMAIL}>邮件联系</a>
+          <a className={s.cv} href={RESUME_CN}>简历 PDF</a>
         </div>
       </div>
 
@@ -250,7 +252,9 @@ export default function Home() {
             <p className={s.say}>{profile.claim[0]}<br />{profile.claim[1]}</p>
             <p className={s.lead}>{profile.intro}</p>
             <div className={s.cta}>
-              <a className={`${s.btn} ${s.pri}`} href="#work">看研究与系统</a>
+              <a className={`${s.btn} ${s.pri}`} href={RESUME_CN}>中文简历 PDF</a>
+              <a className={s.btn} href={RESUME_EN}>English CV</a>
+              <a className={s.btn} href="#work">看研究与系统</a>
               <a className={s.btn} href={profile.github}>GitHub</a>
               <a className={s.btn} href={EMAIL}>邮箱</a>
             </div>
@@ -319,7 +323,9 @@ export default function Home() {
               </p>
             </div>
             <div className={s.cta} style={{ margin: 0 }}>
-              <a className={`${s.btn} ${s.pri}`} href={EMAIL}>邮件联系</a>
+              <a className={`${s.btn} ${s.pri}`} href={RESUME_CN}>简历 PDF</a>
+              <a className={s.btn} href={RESUME_EN}>English CV</a>
+              <a className={s.btn} href={EMAIL}>邮件联系</a>
               <a className={s.btn} href={profile.github}>GitHub ↗</a>
             </div>
           </div>
