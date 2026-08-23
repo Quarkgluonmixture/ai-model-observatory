@@ -698,7 +698,14 @@ Known-dead or known-empty, with the workaround already applied:
 - `github.com/SWE-EVO/SWE-EVO` — publishes no numeric leaderboard at all.
 - `github.com/GAIR-NLP/IMOAnswerBench` — 404. Scores came from the IMO-Bench paper instead.
 - `github.com/facebookresearch/programbench` — no table; `programbench.com` has it.
-- `huggingface.co/datasets/openai/mrcr` — dataset card publishes no scores.
+- `huggingface.co/datasets/openai/mrcr` — dataset card publishes no scores, and no benchmark-native
+  MRCR board exists anywhere else either. The only publishers are maker release tables, in pointwise
+  context variants (Qwen's is 256K 8-needle, DeepSeek's 1M) that do not merge with the catalog's
+  128K-average version — batch 17 archives those rows as note-only nulls for exactly that reason.
+- `charxiv.github.io` — the leaderboard *is* machine-readable (`CsvToHtmlTable` renders
+  `data/val_result.csv`, 96 rows, zero-shot validation set), but the board is frozen at 2025-03
+  (newest entries: Claude 3.7 Sonnet, o3 (high)). Zero catalog models, so catalog `charxiv` cells
+  can only come from maker release tables. Re-check the CSV before re-probing the page.
 - MMLU-Pro HF Space and OpenRouter's model table — never rendered.
 
 **Stanford HELM was measured and declined on 2026-08-01.** It is reachable and fully
