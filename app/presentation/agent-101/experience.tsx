@@ -4,86 +4,71 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import s from "./agent-101.module.css";
 
-type SectionId = "intro" | "api" | "agent" | "skill" | "mcp" | "modeling";
-
-type SkillFile = {
-  id: string;
-  label: string;
-  title: string;
-  explain: string;
-  detail: string;
-  code: string;
-};
+type SectionId = "api" | "agent" | "skill" | "github" | "mcp" | "modeling";
 
 const SECTIONS: Array<{ id: SectionId; label: string; cue: string }> = [
-  { id: "intro", label: "先串起来", cue: "先别讲术语。问她：API Key、Agent、Skill 这几个东西，她觉得分别是干嘛的？听完再往下。" },
-  { id: "api", label: "API / Key", cue: "这里最重要。让她自己说一遍：API、API Key、模型、输入，各自在一次请求里负责什么。" },
-  { id: "agent", label: "Agent", cue: "问她：普通聊天模型和 Agent 的差别，是模型变聪明了，还是多了一套执行机制？" },
-  { id: "skill", label: "Skill", cue: "点几个文件给她看。重点是让她知道 Skill 不是一个神秘按钮，而是一组说明、代码和例子。" },
-  { id: "mcp", label: "MCP", cue: "MCP 只需要讲清它和 Skill 不是一回事：一个更像连接协议，一个更像做事方法/能力包。" },
-  { id: "modeling", label: "比赛里怎么用", cue: "最后别再背概念。拿她的比赛问：哪一步最想让 AI 帮忙？然后一起看这一步需要什么能力。" },
+  { id: "api", label: "一次 API 调用", cue: "先让她自己点发送。等动画跑完再问：Key 在哪？API 又在哪？" },
+  { id: "agent", label: "Agent 多了什么", cue: "重点看同一个任务：普通聊天只能告诉你怎么做，Agent 会真的调用工具再继续。" },
+  { id: "skill", label: "Skill 怎么影响行为", cue: "先跑一遍，再勾上“先检查单位”重跑。让她自己说出变化发生在哪里。" },
+  { id: "github", label: "GitHub 下载以后", cue: "这里纠正一个误区：能下载，不等于当前 Agent 一定能直接装。" },
+  { id: "mcp", label: "MCP 放在哪", cue: "一句话就够：Skill 主要说怎么做，MCP 主要解决怎么接外部能力。" },
+  { id: "modeling", label: "比赛里怎么拼", cue: "最后别考术语。让她选一个自己最可能卡住的阶段，再看 Agent 能帮到哪。" },
 ];
 
 const AGENT_STEPS = [
-  { title: "先看看文件", why: "它发现自己还不知道数据长什么样。", action: "read_file(data.csv)", result: "428 行，7 个变量，其中 2 列有缺失值" },
-  { title: "再跑一段代码", why: "有了数据结构，下一步需要真正计算，而不是继续猜。", action: "run_python(analysis.py)", result: "得到分布、相关性、两组候选模型的验证结果" },
-  { title: "根据结果继续", why: "它读到树模型波动更大，所以继续检查残差和敏感性。", action: "run_python(validation.py)", result: "发现一个边界条件下误差明显放大" },
-  { title: "最后再回答", why: "答案现在来自刚才真实跑出来的结果。", action: "answer()", result: "给出结论，同时指出还需要人确认的假设" },
+  { kind: "think", title: "我得先看文件", detail: "光靠聊天内容，我不知道 CSV 里到底有什么。" },
+  { kind: "tool", title: "read_file(\"data.csv\")", detail: "工具返回：有 7 个变量，其中 2 列有缺失。" },
+  { kind: "think", title: "先把缺失和分布算清楚", detail: "现在有了真实观察，再决定下一步。" },
+  { kind: "tool", title: "run_python(\"inspect.py\")", detail: "工具返回：缺失比例、分布和异常值摘要。" },
+  { kind: "answer", title: "再回答你", detail: "结论引用刚才实际拿到的结果，而不是凭空猜。" },
 ];
 
-const SKILL_FILES: SkillFile[] = [
+const MODELING_STAGES = [
   {
-    id: "skill",
-    label: "SKILL.md",
-    title: "告诉 Agent 什么时候用、怎么做",
-    explain: "这是最像“说明书”的部分。它会写清楚：遇到什么任务时启用这个 Skill，按什么顺序做，以及哪些事情不要做。",
-    detail: "不同 Agent 产品对 Skill 的格式不完全一样，所以 GitHub 上的 Skill 不是下载下来就一定能直接装。先看你正在用的 Agent 支持什么格式。",
-    code: `# When to use\nWhen the user gives tabular data for a modeling task.\n\n# Steps\n1. Check columns and units\n2. Check missing values\n3. Run analysis\n4. Keep evidence for every conclusion`,
+    title: "刚拿到题",
+    ask: "先别急着让 AI 给完整答案。",
+    agent: ["把目标、变量、约束拆出来", "列出题目里没有说清楚的地方", "给 2–3 条可能的建模路线"],
+    human: "你来决定题目到底在问什么，以及哪些假设能接受。",
   },
   {
-    id: "scripts",
-    label: "scripts/",
-    title: "把重复的事情交给代码真的跑",
-    explain: "比如“读取 CSV、算统计量、画图”这种确定性的事情，与其每次让模型临时写，不如放成脚本。Agent 需要时直接调用。",
-    detail: "这也是为什么 Skill 不只是 prompt。一个有用的 Skill 可以同时包含 instruction、scripts、templates、examples。",
-    code: `def inspect_data(path):\n    df = pd.read_csv(path)\n    return {\n        "rows": len(df),\n        "missing": df.isna().sum(),\n        "summary": df.describe(),\n    }`,
+    title: "开始找资料",
+    ask: "让 Agent 帮你搜，但别把“它说过”当成来源。",
+    agent: ["搜索定义、数据和已有方法", "把出处跟结论放在一起", "整理哪些方法适用于你的条件"],
+    human: "你判断来源靠不靠谱、这条资料是否真的适用于题目。",
   },
   {
-    id: "examples",
-    label: "examples/",
-    title: "给它一个“应该怎么做”的例子",
-    explain: "例子能让 Agent 更快知道什么样的输入对应什么样的输出，也能帮你检查以后改了 Skill 之后有没有跑偏。",
-    detail: "专业一点，这既可以是 few-shot example，也可以进一步变成 regression fixture。",
-    code: `input: data.csv\nrequest: 检查数据后给我建模建议\n\nexpected:\n- 先说数据问题\n- 再说候选模型\n- 明确假设\n- 不编造实验结果`,
+    title: "已经有数据",
+    ask: "这时候 Agent 最好用：让工具真的去读、算、画。",
+    agent: ["读文件和检查数据质量", "跑候选模型和敏感性分析", "保存脚本、参数和图表"],
+    human: "你看结果是否合理，决定下一轮实验该改什么。",
   },
   {
-    id: "readme",
-    label: "README.md",
-    title: "这是给人看的安装和风险说明",
-    explain: "你从 GitHub 找到一个 Skill，先看这里和 SKILL.md，再决定要不要让它在自己电脑上执行。",
-    detail: "特别留意它会读哪些文件、会不会联网、会运行什么命令，以及需要哪些密钥或权限。",
-    code: `Requirements: Python 3.11+\nReads: selected local data files\nWrites: ./outputs only\nNetwork: none\n\nNever put an API key directly in source code.`,
+    title: "已经有模型",
+    ask: "不要只让它夸你的方案，让它专门找漏洞。",
+    agent: ["检查单位和边界条件", "找可能的数据泄漏或过拟合", "设计反例和验证实验"],
+    human: "你决定哪些问题真的会影响结论，并最终对模型负责。",
   },
-];
-
-const WORKFLOW = [
-  { title: "刚拿到题", human: "你来决定题目到底在问什么、哪些假设合理。", ai: "让 AI 帮你拆变量、列未知点、找你可能漏掉的条件。", caution: "不要一上来就让它直接给“完整模型”，那样最容易把错误假设一起吞下去。" },
-  { title: "需要找资料", human: "你判断来源能不能信，以及这条资料是否真的适用于题目。", ai: "Agent 可以搜网页/论文，整理来源和已有方法，省掉大量机械搜索。", caution: "重要定义和数据必须保留来源，不能把模型自己记得的内容当引用。" },
-  { title: "开始建模", human: "你选择最终假设、目标函数、约束和评价标准。", ai: "让它同时给 2–3 条候选路线，并解释每条路线的适用条件和代价。", caution: "不是选最复杂的模型，而是选最匹配问题、能验证、能解释的。" },
-  { title: "跑代码和实验", human: "你看结果合不合理，决定下一轮要改什么。", ai: "Agent 调 Python、求解器和画图工具，批量跑参数、敏感性分析和对比实验。", caution: "把脚本、参数和结果留下来，否则最后论文里的数字没法追回去。" },
-  { title: "写之前检查", human: "你对最终结论负责。", ai: "单独让一个检查流程找单位错误、边界条件、数据泄漏、过拟合和结论跳跃。", caution: "让“提出方案”和“挑方案毛病”分开，通常比一直让同一个对话自我肯定靠谱。" },
-  { title: "最后写论文", human: "你决定论文讲什么故事、哪些结果最重要。", ai: "可以帮你整理结构、润色表达、把已经存在的实验结果变成表格和说明。", caution: "写作放在最后。先有真实模型和真实结果，再让 AI 帮你表达。" },
+  {
+    title: "准备写论文",
+    ask: "最后才把表达交给 AI。",
+    agent: ["按已有证据整理结构", "把真实结果转成表格和文字", "检查数字、图、结论能不能互相对应"],
+    human: "你决定最终叙事，以及哪些结果值得放进论文。",
+  },
 ];
 
 export default function Agent101Experience() {
   const [presenter, setPresenter] = useState(false);
-  const [current, setCurrent] = useState<SectionId>("intro");
-  const [apiPrompt, setApiPrompt] = useState("这份数据适合直接做线性回归吗？先告诉我应该检查什么。");
-  const [apiSent, setApiSent] = useState(false);
+  const [current, setCurrent] = useState<SectionId>("api");
+  const [unlocked, setUnlocked] = useState(0);
+  const [apiPrompt, setApiPrompt] = useState("帮我看看这份数据适不适合直接做线性回归。");
+  const [apiPhase, setApiPhase] = useState(0);
   const [agentStep, setAgentStep] = useState(-1);
-  const [selectedFile, setSelectedFile] = useState("skill");
-  const [extraRule, setExtraRule] = useState("每次建模前，先检查变量的单位是否一致");
-  const [workflowStep, setWorkflowStep] = useState(0);
+  const [unitRule, setUnitRule] = useState(false);
+  const [skillRun, setSkillRun] = useState(0);
+  const [downloaded, setDownloaded] = useState(false);
+  const [githubStep, setGithubStep] = useState(0);
+  const [mcpConnected, setMcpConnected] = useState(false);
+  const [modelingStage, setModelingStage] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,227 +78,331 @@ export default function Agent101Experience() {
     const observer = new IntersectionObserver((entries) => {
       const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
       if (visible?.target.id) setCurrent(visible.target.id as SectionId);
-    }, { rootMargin: "-24% 0px -56% 0px", threshold: [0.05, 0.25, 0.55] });
+    }, { rootMargin: "-24% 0px -58% 0px", threshold: [0.05, 0.25, 0.55] });
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-  }, []);
+  }, [unlocked]);
+
+  useEffect(() => {
+    if (apiPhase <= 0 || apiPhase >= 5) return;
+    const timer = window.setTimeout(() => setApiPhase((phase) => phase + 1), 650);
+    return () => window.clearTimeout(timer);
+  }, [apiPhase]);
 
   useEffect(() => {
     if (agentStep < 0 || agentStep >= AGENT_STEPS.length - 1) return;
-    const timer = window.setTimeout(() => setAgentStep((step) => step + 1), 1100);
+    const timer = window.setTimeout(() => setAgentStep((step) => step + 1), 850);
     return () => window.clearTimeout(timer);
   }, [agentStep]);
 
   const currentMeta = SECTIONS.find((item) => item.id === current) ?? SECTIONS[0];
-  const selected = SKILL_FILES.find((file) => file.id === selectedFile) ?? SKILL_FILES[0];
-  const skillPreview = useMemo(() => `# Modeling helper\n\n## Steps\n1. Read the problem carefully\n2. ${extraRule.trim() || "检查变量和单位"}\n3. Run the required analysis\n4. Separate evidence from suggestions`, [extraRule]);
+  const skillSteps = useMemo(() => {
+    const steps = ["读题并整理变量"];
+    if (unitRule) steps.push("检查变量单位是否一致");
+    steps.push("读取数据", "运行分析", "整理证据后回答");
+    return steps;
+  }, [unitRule]);
 
-  function jumpTo(id: SectionId) {
-    rootRef.current?.querySelector(`#${id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function unlock(index: number) {
+    setUnlocked((value) => Math.max(value, index));
+    window.setTimeout(() => rootRef.current?.querySelector(`#${SECTIONS[index].id}`)?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
   }
 
   return (
     <div ref={rootRef} className={s.experience}>
       <header className={s.navbar}>
-        <Link href="/presentation" className={s.brand}>Quark / AI Agent</Link>
-        <nav className={s.progress} aria-label="页面章节">
-          {SECTIONS.map((item) => (
-            <button key={item.id} type="button" onClick={() => jumpTo(item.id)} className={current === item.id ? s.progressActive : undefined}>
-              {item.label}
+        <Link href="/presentation" className={s.brand}>Quark / Agent 101</Link>
+        <div className={s.progress} aria-label="学习进度">
+          {SECTIONS.map((item, index) => (
+            <button
+              key={item.id}
+              type="button"
+              disabled={index > unlocked}
+              className={current === item.id ? s.progressActive : undefined}
+              onClick={() => rootRef.current?.querySelector(`#${item.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            >
+              <span>{index + 1}</span>{item.label}
             </button>
           ))}
-        </nav>
+        </div>
         <button type="button" className={`${s.modeButton} ${presenter ? s.modeOn : ""}`} onClick={() => setPresenter((value) => !value)} aria-pressed={presenter}>
-          {presenter ? "一起看：开" : "一起看"}
+          {presenter ? "一起看 · 开" : "一起看"}
         </button>
       </header>
 
       {presenter && (
         <aside className={s.presenter} aria-live="polite">
-          <b>你可以在这里停一下：</b>
+          <b>这里可以停一下</b>
           <p>{currentMeta.cue}</p>
         </aside>
       )}
 
       <main>
-        <section id="intro" className={`${s.section} ${s.intro}`}>
-          <div className={s.introText}>
-            <p className={s.opening}>你之前问我 API Key、怎么接模型、Skill 是什么、GitHub 上能不能下载 Skill。</p>
-            <h1>其实这些不是四件分开的事。<br />把这一条线看懂就行。</h1>
-            <p className={s.lead}>我不想让你背定义。下面每一段都只回答一个问题：<b>这个东西在整条链路里到底负责什么？</b></p>
-            <div className={s.questionList}>
-              <button type="button" onClick={() => jumpTo("api")}>API Key 到底是干嘛的？</button>
-              <button type="button" onClick={() => jumpTo("agent")}>Agent 比聊天 AI 多了什么？</button>
-              <button type="button" onClick={() => jumpTo("skill")}>Skill 为什么可以从 GitHub 下载？</button>
-              <button type="button" onClick={() => jumpTo("modeling")}>比赛里到底什么时候值得用？</button>
-            </div>
+        <section id="api" className={`${s.section} ${s.firstSection}`}>
+          <div className={s.sectionIntro}>
+            <p>先不背定义。你只看一次请求怎么跑。</p>
+            <h1>假设你做了一个小程序，想让它问 AI 一个问题。</h1>
           </div>
 
-          <div className={s.bigPicture} aria-label="AI 应用、API、模型、工具之间的关系">
-            <FlowNode top="你在用的 App" main="聊天界面 / 代码" sub="你输入问题的地方" />
-            <FlowArrow text="通过 API 发请求" />
-            <FlowNode top="模型服务" main="LLM" sub="真正生成下一步内容" strong />
-            <FlowArrow text="需要时调用工具" />
-            <FlowNode top="外部能力" main="文件 · Python · 网页" sub="让它不只是说，而是真的做" />
+          <div className={s.apiLab}>
+            <div className={s.miniApp}>
+              <div className={s.panelLabel}>你的小程序</div>
+              <textarea value={apiPrompt} onChange={(event) => setApiPrompt(event.target.value)} aria-label="发送给模型的问题" />
+              <button type="button" className={s.primary} disabled={!apiPrompt.trim() || (apiPhase > 0 && apiPhase < 5)} onClick={() => setApiPhase(1)}>
+                {apiPhase > 0 && apiPhase < 5 ? "正在发送…" : apiPhase === 5 ? "再跑一次" : "发送"}
+              </button>
+            </div>
+
+            <div className={s.requestStage} aria-live="polite">
+              <div className={`${s.stageNode} ${apiPhase >= 1 ? s.stageActive : ""}`}>
+                <small>PROGRAM</small><b>你的代码</b><span>准备一个请求</span>
+              </div>
+              <div className={s.stageLink}>
+                <span className={apiPhase === 2 ? s.packet : ""}>REQUEST</span>
+                <i>→</i>
+              </div>
+              <div className={`${s.stageNode} ${apiPhase >= 2 ? s.stageActive : ""}`}>
+                <small>API</small><b>/v1/responses</b><span>规定请求怎么进、结果怎么回</span>
+              </div>
+              <div className={s.stageLink}>
+                <span className={apiPhase === 3 ? s.packet : ""}>REQUEST</span>
+                <i>→</i>
+              </div>
+              <div className={`${s.stageNode} ${apiPhase >= 3 ? s.stageActive : ""}`}>
+                <small>MODEL SERVICE</small><b>模型</b><span>处理输入并生成结果</span>
+              </div>
+            </div>
+
+            <div className={`${s.requestCard} ${apiPhase >= 2 ? s.requestVisible : ""}`}>
+              <div><span>model</span><code>example-model</code></div>
+              <div><span>input</span><code>{apiPrompt || "…"}</code></div>
+              <div className={s.keyRow}><span>Authorization</span><code>Bearer ••••••••</code><b>← API Key 在这里</b></div>
+            </div>
+
+            <div className={`${s.returnPath} ${apiPhase >= 4 ? s.returnVisible : ""}`}>
+              <span>模型返回结果</span><i>←</i><span>API response</span><i>←</i><span>你的程序显示出来</span>
+            </div>
+
+            {apiPhase >= 5 && (
+              <div className={s.meaningGrid}>
+                <article><b>API</b><p>不是模型。它是一套接口规则：程序去哪里请求、按什么格式发、结果怎么回来。</p></article>
+                <article><b>API Key</b><p>不是“让 AI 变聪明”的东西。它主要用来认证这是谁的调用、有什么权限、费用记到哪里。</p></article>
+                <article><b>模型</b><p>真正处理输入、生成下一段内容的那部分。</p></article>
+              </div>
+            )}
           </div>
+
+          {apiPhase >= 5 && <Continue onClick={() => unlock(1)}>好，为什么还需要 Agent？</Continue>}
         </section>
 
-        <section id="api" className={s.section}>
-          <SectionTitle question="先把最容易混的说清楚" title="API、API Key、模型，分别是什么？" />
+        {unlocked >= 1 && (
+          <section id="agent" className={s.section}>
+            <div className={s.sectionIntro}>
+              <p>还是同一个问题，换一个任务。</p>
+              <h2>“帮我看看 data.csv 有没有问题，然后给我结论。”</h2>
+            </div>
 
-          <div className={s.conceptGrid}>
-            <ConceptCard word="API" simple="一套“怎么把请求送进去、怎么把结果拿回来”的规则。" example="像一个服务窗口：程序知道去哪里、按什么格式交材料。" />
-            <ConceptCard word="API Key" simple="证明这次调用属于哪个账号，也决定权限和费用记到谁那里。" example="更像门禁卡，不是模型本身，也不会让模型变聪明。" />
-            <ConceptCard word="Model" simple="你真正想调用的模型，例如某个 GPT、Claude、Qwen。" example="同一个 API 平台里可能同时有很多不同模型。" />
-            <ConceptCard word="Input" simple="你发给模型的内容，包括问题、上下文，有时还有图片或工具结果。" example="模型只会根据它这次真正收到的东西继续生成。" />
-          </div>
+            <div className={s.compareGrid}>
+              <article className={s.chatPanel}>
+                <div className={s.panelLabel}>普通聊天</div>
+                <div className={s.userBubble}>帮我看看 data.csv 有没有问题。</div>
+                <div className={s.aiBubble}>你可以先用 pandas 读取文件，检查缺失值、异常值和分布……</div>
+                <div className={s.stopLine}>到这里就停了</div>
+                <p>它可以告诉你“应该怎么做”，但当前这段对话里没有真的去打开文件。</p>
+              </article>
 
-          <div className={s.apiStory}>
-            <div className={s.apiComposer}>
-              <p className={s.panelTitle}>你现在模拟发一次请求</p>
-              <label htmlFor="apiPrompt">输入</label>
-              <textarea id="apiPrompt" value={apiPrompt} onChange={(event) => { setApiPrompt(event.target.value); setApiSent(false); }} rows={4} />
-              <div className={s.requestFields}>
-                <span><b>模型</b><em>gpt-example</em></span>
-                <span><b>API Key</b><em>sk-••••••</em></span>
-                <span><b>地址</b><em>/v1/responses</em></span>
+              <article className={s.agentPanel}>
+                <div className={s.panelRow}>
+                  <div className={s.panelLabel}>Agent</div>
+                  <button type="button" className={s.primary} onClick={() => setAgentStep(0)}>{agentStep >= 0 ? "重跑" : "让它真的做一次"}</button>
+                </div>
+                <div className={s.agentTimeline}>
+                  {AGENT_STEPS.map((step, index) => (
+                    <div key={step.title} className={`${s.agentEvent} ${index <= agentStep ? s.eventVisible : ""} ${s[`event_${step.kind}`]}`}>
+                      <span>{index + 1}</span>
+                      <div><b>{step.title}</b><p>{step.detail}</p></div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </div>
+
+            {agentStep >= AGENT_STEPS.length - 1 && (
+              <div className={s.takeaway}>
+                <b>Agent 真正多出来的，不是一个“更厉害的大脑”。</b>
+                <p>关键是这一层执行循环：模型决定下一步 → 调工具 → 读工具结果 → 再决定下一步，直到任务结束。这里的 <strong>read_file</strong> 和 <strong>run_python</strong> 才是 Tool。</p>
               </div>
-              <button type="button" className={s.primary} onClick={() => setApiSent(true)} disabled={!apiPrompt.trim()}>发送这次请求</button>
+            )}
+
+            {agentStep >= AGENT_STEPS.length - 1 && <Continue onClick={() => unlock(2)}>那 Skill 又是什么？</Continue>}
+          </section>
+        )}
+
+        {unlocked >= 2 && (
+          <section id="skill" className={s.section}>
+            <div className={s.sectionIntro}>
+              <p>先分清 Tool 和 Skill。</p>
+              <h2>Tool 是“能做什么”；Skill 更像“做这类事时，应该怎么做”。</h2>
             </div>
 
-            <div className={`${s.requestPath} ${apiSent ? s.requestPathActive : ""}`}>
-              <span>你的程序</span><i>→</i><span>API</span><i>→</i><span>模型</span><i>→</i><span>返回结果</span>
-            </div>
-
-            <div className={s.apiMeaning}>
-              <p className={s.panelTitle}>这一刻真正发生的是</p>
-              <ol>
-                <li><b>程序</b>把“模型是谁、你说了什么、你的 Key”打包成请求。</li>
-                <li><b>服务端</b>先用 Key 确认权限和计费，再把输入交给指定模型。</li>
-                <li><b>模型</b>生成输出，API 再把结果按固定格式返回给程序。</li>
-              </ol>
-              <div className={s.keyWarning}>所以 API Key 要放在环境变量或服务端配置里，<b>不要写进 GitHub 仓库。</b></div>
-            </div>
-          </div>
-
-          {apiSent && <div className={s.responseBox}><span>模型返回：</span><p>“可以先检查变量之间是否近似线性、残差是否有结构、异常值是否主导拟合，以及训练/验证划分是否独立。检查完再决定线性回归是不是合理。”</p></div>}
-        </section>
-
-        <section id="agent" className={s.section}>
-          <SectionTitle question="然后就到了 Agent" title="为什么有的 AI 只告诉你怎么做，有的会自己继续做？" />
-          <div className={s.agentDifference}>
-            <div className={s.chatOnly}>
-              <p className={s.panelTitle}>普通聊天</p>
-              <div className={s.chatBubble}>“你可以读取 CSV，然后做相关性分析，再画残差图。”</div>
-              <p>它给了你一个方法，但到这里就结束了。</p>
-            </div>
-            <div className={s.agentLoopVisual}>
-              <p className={s.panelTitle}>Agent 多出来的是这一圈</p>
-              <div className={s.loopCircle}>
-                <span>看现在的信息</span><i>→</i><span>决定下一步</span><i>→</i><span>调用工具</span><i>→</i><span>读工具结果</span>
+            <div className={s.toolVsSkill}>
+              <div className={s.toolShelf}>
+                <div className={s.panelLabel}>TOOLS · 真正可调用的能力</div>
+                <div className={s.toolCards}>
+                  <span><b>read_file</b>读文件</span>
+                  <span><b>run_python</b>运行代码</span>
+                  <span><b>web_search</b>搜索网页</span>
+                </div>
               </div>
-              <p>只要任务还没完成，它就可以根据新结果继续下一轮。</p>
+              <div className={s.skillFolder}>
+                <div className={s.panelLabel}>SKILL · 一套可复用的做事方法</div>
+                <div className={s.folderTree}>
+                  <b>modeling-helper/</b>
+                  <span>├── <strong>SKILL.md</strong>　什么时候用、按什么顺序做</span>
+                  <span>├── <strong>scripts/</strong>　配套的确定性脚本</span>
+                  <span>└── <strong>examples/</strong>　输入输出示例</span>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <div className={s.agentDemo}>
-            <div className={s.demoTop}>
-              <div><b>例如你说：</b><p>“帮我分析 data.csv，比较两个模型，然后告诉我哪个更稳。”</p></div>
-              <button type="button" className={s.primary} onClick={() => setAgentStep(0)}>{agentStep >= 0 && agentStep < AGENT_STEPS.length - 1 ? "正在往下做…" : "看它怎么做"}</button>
+            <div className={s.skillExperiment}>
+              <div className={s.skillEditor}>
+                <div className={s.panelLabel}>现在只改一条规则</div>
+                <label className={s.ruleToggle}>
+                  <input type="checkbox" checked={unitRule} onChange={(event) => setUnitRule(event.target.checked)} />
+                  <span>每次建模前，先检查变量单位是否一致</span>
+                </label>
+                <pre>{`# SKILL.md\n\n1. 读题并整理变量\n${unitRule ? "2. 检查变量单位是否一致\n" : ""}${unitRule ? "3" : "2"}. 读取数据\n${unitRule ? "4" : "3"}. 运行分析\n${unitRule ? "5" : "4"}. 整理证据后回答`}</pre>
+                <button type="button" className={s.primary} onClick={() => setSkillRun((value) => value + 1)}>按这个 Skill 跑一次</button>
+              </div>
+
+              <div className={s.behaviorPreview} key={`${skillRun}-${unitRule}`}>
+                <div className={s.panelLabel}>Agent 这次实际走的步骤</div>
+                <div className={s.behaviorSteps}>
+                  {skillSteps.map((step, index) => <span key={`${step}-${skillRun}`} style={{ animationDelay: `${index * 120}ms` }}>{step}</span>)}
+                </div>
+                {skillRun > 0 && <p>你没有重新训练模型。你改的是：<strong>它做这类任务时遵循的流程。</strong></p>}
+              </div>
             </div>
-            <div className={s.agentSteps}>
-              {AGENT_STEPS.map((step, index) => (
-                <article key={step.title} className={index <= agentStep ? s.stepVisible : undefined}>
-                  <span>{index + 1}</span>
-                  <div><h3>{step.title}</h3><p>{step.why}</p><code>{step.action}</code><small>{step.result}</small></div>
-                </article>
+
+            {skillRun > 0 && <Continue onClick={() => unlock(3)}>那 GitHub 上下载一个 Skill，到底下载了什么？</Continue>}
+          </section>
+        )}
+
+        {unlocked >= 3 && (
+          <section id="github" className={s.section}>
+            <div className={s.sectionIntro}>
+              <p>这一步很容易被说得太神秘。</p>
+              <h2>从 GitHub 下载 Skill，本质上就是把这组文件拿到自己这边。</h2>
+            </div>
+
+            <div className={s.githubFlow}>
+              <div className={s.repoCard}>
+                <div className={s.repoTop}><b>github.com/example/modeling-helper</b><span>public repo</span></div>
+                <div className={s.repoFiles}><span>SKILL.md</span><span>scripts/</span><span>examples/</span><span>README.md</span></div>
+                <button type="button" className={s.primary} onClick={() => { setDownloaded(true); setGithubStep(1); }}>下载到本地</button>
+              </div>
+
+              <div className={`${s.localFolder} ${downloaded ? s.localVisible : ""}`}>
+                <div className={s.panelLabel}>你的电脑</div>
+                <b>~/skills/modeling-helper/</b>
+                <span>文件已经在这里了。</span>
+              </div>
+            </div>
+
+            {downloaded && (
+              <div className={s.compatibility}>
+                <div className={s.compatibilitySteps}>
+                  <button type="button" className={githubStep >= 1 ? s.compatActive : ""} onClick={() => setGithubStep(1)}><span>1</span><b>先读说明</b><small>README / SKILL.md 写了什么？</small></button>
+                  <button type="button" className={githubStep >= 2 ? s.compatActive : ""} onClick={() => setGithubStep(2)}><span>2</span><b>再看安全</b><small>会运行什么脚本、读什么文件、要什么权限？</small></button>
+                  <button type="button" className={githubStep >= 3 ? s.compatActive : ""} onClick={() => setGithubStep(3)}><span>3</span><b>最后看兼容性</b><small>你正在用的 Agent/runtime 认不认识这种 Skill 格式？</small></button>
+                </div>
+                <div className={s.compatAnswer}>
+                  {githubStep === 1 && <p>先看它到底想教 Agent 做什么，不要看到 “Skill” 两个字就直接运行。</p>}
+                  {githubStep === 2 && <p>Skill 可能包含脚本和命令。下载代码本身没问题，<strong>执行之前</strong>才需要认真检查权限和密钥。</p>}
+                  {githubStep >= 3 && <p><strong>最关键：</strong>“能从 GitHub 下载” ≠ “下载下来一定能直接装”。不同 Agent 产品支持的 Skill 结构和加载方式可能不同。</p>}
+                </div>
+              </div>
+            )}
+
+            {githubStep >= 3 && <Continue onClick={() => unlock(4)}>那 MCP 跟这些东西是什么关系？</Continue>}
+          </section>
+        )}
+
+        {unlocked >= 4 && (
+          <section id="mcp" className={s.section}>
+            <div className={s.sectionIntro}>
+              <p>MCP 不需要现在学一堆协议细节。</p>
+              <h2>只要先看懂：它解决的是“外部能力怎么接进来”。</h2>
+            </div>
+
+            <div className={s.mcpLab}>
+              <div className={s.mcpAgent}><small>AGENT</small><b>我现在想读 GitHub issue</b><span>但我需要一个我能调用的接口。</span></div>
+              <div className={`${s.mcpBridge} ${mcpConnected ? s.mcpBridgeOn : ""}`}><span>MCP</span><i>↔</i><small>统一描述可用的 tools / resources</small></div>
+              <div className={`${s.mcpService} ${mcpConnected ? s.mcpServiceOn : ""}`}><small>EXTERNAL SERVICE</small><b>GitHub</b><span>{mcpConnected ? "get_issue · search_repo · read_file" : "还没接进来"}</span></div>
+              <button type="button" className={s.primary} onClick={() => setMcpConnected(true)} disabled={mcpConnected}>{mcpConnected ? "已经接上" : "接入 GitHub"}</button>
+            </div>
+
+            {mcpConnected && (
+              <div className={s.twoSentences}>
+                <p><b>Skill：</b>做这类任务时，建议按什么方法和流程做。</p>
+                <p><b>MCP：</b>Agent 用什么标准方式发现和调用外部工具 / 数据。</p>
+              </div>
+            )}
+
+            {mcpConnected && <Continue onClick={() => unlock(5)}>最后，把这些放进数学建模比赛</Continue>}
+          </section>
+        )}
+
+        {unlocked >= 5 && (
+          <section id="modeling" className={`${s.section} ${s.finalSection}`}>
+            <div className={s.sectionIntro}>
+              <p>现在不用再背 API、Agent、Skill、MCP。</p>
+              <h2>真正比赛时，你只需要问：我现在卡在哪一步？</h2>
+            </div>
+
+            <div className={s.stagePicker}>
+              {MODELING_STAGES.map((stage, index) => (
+                <button type="button" key={stage.title} className={modelingStage === index ? s.stageSelected : ""} onClick={() => setModelingStage(index)}>{stage.title}</button>
               ))}
             </div>
-          </div>
-          <p className={s.coreSentence}><b>所以 Agent 不是另一种神奇模型。</b>它通常还是 LLM，只是外面多了一套“可以看状态、选工具、拿结果、继续”的执行循环。</p>
-        </section>
 
-        <section id="skill" className={s.section}>
-          <SectionTitle question="那 Skill 又是什么？" title="它更像给 Agent 准备好的一套做事方法。" />
-          <p className={s.sectionLead}>比如你不想每次都从头告诉 Agent“先检查数据、再跑统计、最后别乱编结果”。你可以把这套固定方法整理成一个 Skill，让它以后遇到类似任务直接复用。</p>
-
-          <div className={s.skillAnatomy}>
-            <div className={s.skillFiles}>
-              <p>一个 Skill 仓库里可能长这样：</p>
-              {SKILL_FILES.map((file) => <button key={file.id} type="button" className={selectedFile === file.id ? s.fileActive : undefined} onClick={() => setSelectedFile(file.id)}><span>{file.label}</span><i>→</i></button>)}
+            <div className={s.modelingBoard}>
+              <div className={s.modelingQuestion}>
+                <span>你现在在：</span><b>{MODELING_STAGES[modelingStage].title}</b>
+                <p>{MODELING_STAGES[modelingStage].ask}</p>
+              </div>
+              <div className={s.roleBoard}>
+                <article>
+                  <small>AGENT 可以帮你</small>
+                  {MODELING_STAGES[modelingStage].agent.map((item) => <span key={item}>→ {item}</span>)}
+                </article>
+                <article>
+                  <small>你必须自己负责</small>
+                  <p>{MODELING_STAGES[modelingStage].human}</p>
+                </article>
+              </div>
             </div>
-            <div className={s.skillExplain}>
-              <h3>{selected.title}</h3>
-              <p>{selected.explain}</p>
-              <p className={s.skillDetail}>{selected.detail}</p>
-              <pre><code>{selected.code}</code></pre>
+
+            <div className={s.finalMap}>
+              <span><b>模型</b>生成下一步</span><i>→</i>
+              <span><b>API</b>让程序能调用模型</span><i>→</i>
+              <span><b>Agent</b>循环调用 Tool 去做事</span><i>→</i>
+              <span><b>Skill</b>让一类任务有稳定做法</span><i>→</i>
+              <span><b>MCP</b>把外部能力接进来</span>
             </div>
-          </div>
 
-          <div className={s.githubFlow}>
-            <h3>所以，“GitHub 上的 Skill 能不能下载下来用？”</h3>
-            <p><b>可以下载，但“下载”不等于“已经能用”。</b>正确顺序更像这样：</p>
-            <div className={s.githubSteps}><span>找到仓库</span><i>→</i><span>看 SKILL.md / README</span><i>→</i><span>检查脚本和权限</span><i>→</i><span>确认你的 Agent 支持这种格式</span><i>→</i><span>再安装或放进对应目录</span></div>
-          </div>
-
-          <div className={s.editSkill}>
-            <div>
-              <h3>自己改 Skill，其实经常就是改这种规则</h3>
-              <p>比如你希望它以后每次做数学建模之前，都先检查单位。你不需要“训练一个新 AI”，只需要把这条要求放进它会读的 Skill 说明里。</p>
-              <label htmlFor="extraRule">试着改这一条</label>
-              <input id="extraRule" value={extraRule} onChange={(event) => setExtraRule(event.target.value)} />
+            <div className={s.ending}>
+              <b>你不需要把这些东西都“学会了”才开始比赛。</b>
+              <p>只要能看懂它们分别在哪一层、什么时候有用，就已经足够开始搭自己的工作流。后面遇到一个真实需求，再补那一块。</p>
             </div>
-            <pre><code>{skillPreview}</code></pre>
-          </div>
-        </section>
-
-        <section id="mcp" className={s.section}>
-          <SectionTitle question="MCP 放在哪里？" title="它和 Skill 解决的不是同一个问题。" />
-          <div className={s.mcpCompare}>
-            <article><span>Skill</span><h3>告诉 Agent “这件事怎么做”</h3><p>更偏方法、说明、脚本、模板和例子。它把一项能力整理成可以复用的形式。</p></article>
-            <article><span>MCP</span><h3>告诉 AI 应用 “外面的能力怎么接进来”</h3><p>Model Context Protocol 是一种标准接口。一个 AI 应用可以通过它发现并调用文件、GitHub、数据库等外部能力。</p></article>
-          </div>
-          <div className={s.mcpLine}><span>Agent</span><i>需要读 GitHub</i><span>MCP</span><i>按统一接口连接</i><span>GitHub 工具</span></div>
-          <p className={s.coreSentence}>第一轮只要记住这点就够了：<b>Skill 更像“会怎么做”，MCP 更像“怎么连到能做这件事的外部能力”。</b></p>
-        </section>
-
-        <section id="modeling" className={`${s.section} ${s.modeling}`}>
-          <SectionTitle question="最后回到你真正要用的地方" title="数学建模比赛里，不是“让 AI 替你做题”，而是把它放在合适的步骤。" />
-          <div className={s.workflowTabs}>
-            {WORKFLOW.map((step, index) => <button key={step.title} type="button" onClick={() => setWorkflowStep(index)} className={workflowStep === index ? s.workflowActive : undefined}><span>{index + 1}</span>{step.title}</button>)}
-          </div>
-          <div className={s.workflowDetail}>
-            <h3>{WORKFLOW[workflowStep].title}</h3>
-            <div className={s.roles}>
-              <article><span>你来做</span><p>{WORKFLOW[workflowStep].human}</p></article>
-              <article><span>AI 可以帮</span><p>{WORKFLOW[workflowStep].ai}</p></article>
-            </div>
-            <div className={s.caution}><b>这里最容易踩的坑：</b>{WORKFLOW[workflowStep].caution}</div>
-          </div>
-
-          <div className={s.finalMap}>
-            <p>现在再看这些词，它们其实已经连起来了：</p>
-            <div><span>你有一个任务</span><i>→</i><span>程序通过 API 调模型</span><i>→</i><span>Agent 决定下一步</span><i>→</i><span>用 Tool / MCP 接外部能力</span><i>→</i><span>Skill 告诉它这类任务怎么做</span></div>
-          </div>
-          <div className={s.endNote}><p>如果你看完以后能自己解释一句：</p><strong>“API Key 是身份凭证；Agent 是会根据工具结果继续行动的模型执行循环；Skill 是可复用的做事方法。”</strong><p>那其实就已经够你开始用了。</p></div>
-        </section>
+          </section>
+        )}
       </main>
     </div>
   );
 }
 
-function SectionTitle({ question, title }: { question: string; title: string }) {
-  return <header className={s.sectionTitle}><p>{question}</p><h2>{title}</h2></header>;
-}
-
-function ConceptCard({ word, simple, example }: { word: string; simple: string; example: string }) {
-  return <article className={s.conceptCard}><h3>{word}</h3><p>{simple}</p><span>{example}</span></article>;
-}
-
-function FlowNode({ top, main, sub, strong = false }: { top: string; main: string; sub: string; strong?: boolean }) {
-  return <div className={`${s.flowNode} ${strong ? s.flowNodeStrong : ""}`}><small>{top}</small><b>{main}</b><span>{sub}</span></div>;
-}
-
-function FlowArrow({ text }: { text: string }) {
-  return <div className={s.flowArrow}><span>{text}</span><i>→</i></div>;
+function Continue({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  return <button type="button" className={s.continueButton} onClick={onClick}>{children}<span>↓</span></button>;
 }
