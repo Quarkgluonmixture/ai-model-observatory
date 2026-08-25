@@ -698,6 +698,20 @@ Known-dead or known-empty, with the workaround already applied:
 - `github.com/SWE-EVO/SWE-EVO` — publishes no numeric leaderboard at all.
 - `github.com/GAIR-NLP/IMOAnswerBench` — 404. Scores came from the IMO-Bench paper instead.
 - `github.com/facebookresearch/programbench` — no table; `programbench.com` has it.
+- `browsebench.com` — no such domain (NXDOMAIN from the `.com` authoritative servers themselves,
+  via Google and Cloudflare DoH, measured 2026-08-25 — not a blocked resolver). BrowseComp has no
+  benchmark-native board at all: the "official leaderboard" is the OpenAI launch post, frozen at
+  Apr 2025 and a generation behind (GPT-4o, o3, deep research — zero catalog models). The boards
+  that do carry current models (llm-stats, benchlm.ai, leaderboard.steel.dev, Kaggle) are
+  aggregators of vendor self-reports under heterogeneous scaffolds — steel.dev's own row notes say
+  "Self-reported in the Opus 4.8 system card", and benchlm's Kimi K3 91.2% is digit-identical to
+  the Kimi-table seed this catalog already holds, i.e. the same vendor number re-served. Collecting
+  them would merge incompatible operating points into one column
+  and promote self-report to a benchmark reading. No independent evaluator runs it either — Vals
+  (39-board index read 2026-08-25), AA's 17 evaluation keys and Epoch's benchmark hub all lack it.
+  Even the maker tables decline to measure competitors: Kimi K3's README cites Anthropic and OpenAI
+  for its own BrowseComp competitor cells. The four one-cell-short models are blocked on upstream,
+  not on collection effort.
 - `huggingface.co/datasets/openai/mrcr` — dataset card publishes no scores.
 - MMLU-Pro HF Space and OpenRouter's model table — never rendered.
 
