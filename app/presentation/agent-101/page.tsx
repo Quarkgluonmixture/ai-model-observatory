@@ -3,7 +3,7 @@ import Agent101Experience from "./experience";
 
 export const metadata: Metadata = {
   title: "AI Agent × 数学建模 — Quark Space",
-  description: "从模型、API、Tool Calling 到 Agent、Skill、MCP，再把它们拼成数学建模比赛工作流。",
+  description: "用可视化把 API Key、Agent、Skill、MCP 和数学建模里的实际用法真正讲明白。",
 };
 
 export default function Agent101Page() {
