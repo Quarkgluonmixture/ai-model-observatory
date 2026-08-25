@@ -2167,6 +2167,60 @@
       "file": "batch-33-deepseek-peak-pricing",
       "modelId": "deepseek-v4-pro",
       "reason": "The pricing page pins its own column headers: the MODEL VERSION row reads `DeepSeek-V4-Flash-0731 | DeepSeek-V4-Pro-0813`, so the bare column name in this batch means the GA in the source's own words (batch 33's meta records the sentence verbatim). This is the row that backs the record's peak list price of $1.32/$3.96 with cache-hit $0.044, archived on the effective day 2026-08-16 and deliberately left unmapped until the record's identity was settled. Settled 2026-08-19; this entry is what the batch-31 price term meant by 'update the record, then retire this term'."
+    },
+    {
+      "modelRaw": "claude-fable-5-high",
+      "effort": "*",
+      "modelId": "claude-fable-5",
+      "reason": "CAIS AI Dashboard (batch 38), the HLE operator's own board. Proposed by scripts/propose-attribution.mjs, tier 1: \"claude-fable-5\" is exactly claude-fable-5 after stripping the effort."
+    },
+    {
+      "modelRaw": "gpt-5.6-luna-high",
+      "effort": "*",
+      "modelId": "gpt-5.6-luna",
+      "reason": "CAIS AI Dashboard (batch 38), the HLE operator's own board. Proposed by scripts/propose-attribution.mjs, tier 1: \"gpt-5.6-luna\" is exactly gpt-5.6-luna after stripping the effort."
+    },
+    {
+      "modelRaw": "gpt-5.6-terra-high",
+      "effort": "*",
+      "modelId": "gpt-5.6-terra",
+      "reason": "CAIS AI Dashboard (batch 38), the HLE operator's own board. Proposed by scripts/propose-attribution.mjs, tier 1: \"gpt-5.6-terra\" is exactly gpt-5.6-terra after stripping the effort. The effort suffix is CAIS's spelling; AA publishes no -high variant of this family, so no sibling conflict exists."
+    },
+    {
+      "modelRaw": "muse-spark-1.1-high",
+      "effort": "*",
+      "modelId": "muse-spark-1.1",
+      "reason": "CAIS AI Dashboard (batch 38), the HLE operator's own board. Proposed by scripts/propose-attribution.mjs, tier 1: \"muse-spark-1.1\" is exactly muse-spark-1.1 after stripping the effort."
+    },
+    {
+      "modelRaw": "gpt-5.6-sol-high",
+      "effort": "*",
+      "modelId": "gpt-5.6-sol",
+      "reason": "CAIS AI Dashboard (batch 38). The gate escalated this one only because the base gpt-5.6-sol carries file-scoped nulls from batch-17/batch-32 release tables -- those refuse Qwen's and GLM's COMPETITOR columns (no harness, effort or date stated), not the identity of the family. This row is the benchmark operator's own reading with the effort stated in the id. Confirmed on the number, not the string: CAIS 45.52 at high against AA's 46.0 at high on the same no-tools setting (1%), same shape as the tier-1 siblings terra/luna/fable/muse on the same board."
+    },
+    {
+      "modelRaw": "kimi-k3-high",
+      "effort": "*",
+      "modelId": "kimi-k3",
+      "reason": "CAIS AI Dashboard (batch 38). Escalated only via the file-scoped base kimik3 (batch-35/36 release-table competitor columns, refused for stating no harness/effort/date). The board's own row metadata settles identity: name Kimi K3, provider moonshot, model card platform.kimi.ai/docs/guide/kimi-k3-quickstart. No like-for-like cell exists (AA publishes kimi-k3 hle-no-tools only at max 46.9 and low 25); CAIS 41.08 at high sits monotonically between them, 10-20 points below every vendor with-tools self-report."
+    },
+    {
+      "modelRaw": "opus-4-8-high",
+      "effort": "*",
+      "modelId": "claude-opus-4.8",
+      "reason": "CAIS AI Dashboard (batch 38) drops the maker prefix for Anthropic families (opus-/sonnet-/haiku-), where ARC's convention prefixes it (anthropic-opus-4-8-high, already mapped). The board's own row metadata settles identity: name Opus 4.8, provider anthropic, model card anthropic.com/news/claude-opus-4-8. No like-for-like cell (AA publishes opus-4.8 hle-no-tools only at max 48.7); CAIS 42.2 at high is monotone-consistent below it, and 10-20 below the vendor with-tools self-reports."
+    },
+    {
+      "modelRaw": "kimi-k2.6-64k",
+      "effort": "*",
+      "modelId": "kimi-k2.6",
+      "reason": "CAIS AI Dashboard (batch 38). The -64k residual is a context tier, not a model distinction (the closed effort list rejects it, hence the gate's escalation); the tier is recorded in the row's own note. Identity settled by the board's metadata (name Kimi K2.6, provider moonshot, model card kimi.com/blog/kimi-k2-6) and by the number: CAIS 35.48 against AA's 37.5 for kimi-k2-6 at the same unstated-effort no-tools setting (5.4%), far above the 19.6 non-reasoning reading, so it is the thinking tier served at 64K."
+    },
+    {
+      "modelRaw": "gemini-3-flash-preview-high",
+      "effort": "*",
+      "modelId": "gemini-3-flash",
+      "reason": "CAIS AI Dashboard (batch 38). The -preview residual is part of the release name, not a model distinction; identity settled on the number: CAIS 36.6 at high against AA's gemini-3-flash reasoning 36.6 -- exact to the decimal. The board's metadata agrees (name Gemini 3 Flash, provider google, model card blog.google .../gemini-3-flash). CAIS spells the operating point -high where AA writes reasoning; they never meet in one disagreement-gate group and compare by precedence instead."
     }
   ],
   "benchmarkSplits": [
