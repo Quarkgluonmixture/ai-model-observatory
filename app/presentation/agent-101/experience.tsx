@@ -116,11 +116,7 @@ export default function Agent101Experience() {
   }, []);
 
   useEffect(() => {
-    if (!agentRunning) return;
-    if (agentStep >= AGENT_STEPS.length - 1) {
-      setAgentRunning(false);
-      return;
-    }
+    if (!agentRunning || agentStep >= AGENT_STEPS.length - 1) return;
     const timer = window.setTimeout(() => setAgentStep((step) => step + 1), 900);
     return () => window.clearTimeout(timer);
   }, [agentRunning, agentStep]);
@@ -232,7 +228,7 @@ export default function Agent101Experience() {
           </div>
 
           <div className={s.loopLab}>
-            <div className={s.loopHeader}><div><small>LIVE SIMULATION</small><b>“分析 CSV，比较模型，然后画图。”</b></div><button type="button" className={s.lightButton} onClick={runAgent}>{agentRunning ? "运行中…" : "重新运行 Agent"}</button></div>
+            <div className={s.loopHeader}><div><small>LIVE SIMULATION</small><b>“分析 CSV，比较模型，然后画图。”</b></div><button type="button" className={s.lightButton} onClick={runAgent}>{agentRunning && agentStep < AGENT_STEPS.length - 1 ? "运行中…" : "重新运行 Agent"}</button></div>
             <div className={s.timeline}>
               {AGENT_STEPS.map((step, index) => (
                 <div key={`${step.tag}-${index}`} className={`${s.timelineStep} ${index <= agentStep ? s.stepVisible : ""} ${index === agentStep ? s.stepCurrent : ""}`}>
@@ -267,7 +263,7 @@ export default function Agent101Experience() {
           <div className={s.githubSafety}>
             <div><span>GitHub 上能下载 Skill 吗？</span><strong>能。但别无脑运行。</strong></div>
             <ol><li><b>1</b>先读 SKILL.md</li><li><b>2</b>检查 scripts / commands</li><li><b>3</b>看需要哪些权限</li><li><b>4</b>确认没有把 Key 写进代码</li></ol>
-            <div className={s.keyCompare}><code className={s.bad}>API_KEY = "sk-xxxxx"</code><span>✕</span><code>.env → OPENAI_API_KEY=…</code><span>✓</span></div>
+            <div className={s.keyCompare}><code className={s.bad}>API_KEY = &quot;sk-xxxxx&quot;</code><span>✕</span><code>.env → OPENAI_API_KEY=…</code><span>✓</span></div>
           </div>
         </section>
 
