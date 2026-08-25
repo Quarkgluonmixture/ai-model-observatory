@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-24",
+  "checkedAt": "2026-08-25",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -388,6 +388,7 @@
       "https://openai.com/index/gpt-5-5-with-trusted-access-for-cyber",
       "https://openai.com/index/gpt-5-6",
       "https://openai.com/index/gpt-5-6-frontier-intelligence-efficiency",
+      "https://openai.com/index/gpt-5-6-in-kiro",
       "https://openai.com/index/gpt-5-6-preferred-model-microsoft-365-copilot",
       "https://openai.com/index/gpt-5-amgen",
       "https://openai.com/index/gpt-5-coding-design",
@@ -1245,11 +1246,9 @@
       "/news/cognizant-anthropic",
       "/news/donation-public-first-action",
       "/news/economic-futures-research-fund-agenda",
-      "/news/hard-questions",
       "/news/improving-fable-5-s-biology-safeguards",
       "/news/investigating-incidents-cybersecurity-evals",
       "/news/position-open-weights-models",
-      "/news/redeploying-fable-5",
       "/news/tino-cuellar"
     ],
     "moonshotai": [
