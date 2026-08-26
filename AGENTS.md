@@ -15,9 +15,13 @@ have already been made here — all of which passed every automated check.
 ## Three product surfaces share this repo
 
 - **`/` is the owner's personal site** (job-hunting portfolio). Its files are `app/page.tsx`,
-  `app/home-content.ts`, `app/home.module.css`, `public/shots/`. Copy lives in
-  `home-content.ts`; the wording rules and the fuller source of truth are in
-  `../quark-space/content/projects.json`.
+  `app/home-content.ts`, `app/home.module.css`, `public/shots/`. **`home-content.ts` is the
+  source of truth for this site's copy.** As of 2026-08-23 `../quark-space` is a design archive,
+  not a content source: its `content/projects.json` is a frozen snapshot of the 2026-08-03
+  portfolio and must never be synced back over `home-content.ts` — see
+  `../quark-space/content/CANONICAL_SOURCE.md`. Recruiter-facing positioning is maintained in
+  `JobFinder/00_总控/`. This paragraph pointed the other way until 2026-08-26; the archive had
+  already been demoted three days earlier and nothing here noticed.
 - **`/models` is the observatory** — `app/models/page.tsx` (+ `app/models/layout.tsx` for its
   title, since the page is a client component). Everything else in this file is about the
   observatory.
