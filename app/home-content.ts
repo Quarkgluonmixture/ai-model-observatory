@@ -100,24 +100,25 @@ export const featured: Featured[] = [
   },
   {
     slot: "03",
-    kicker: "03 / Agent Security / MCP",
+    kicker: "03 / Kaggle AI Agent Security / SCNet MCP",
     title: "Agent Red-Team Lab",
-    who: [{ text: "Tool-Using Agent" }, { text: "Read-only MCP" }, { text: "2026" }],
+    who: [{ text: "Kaggle · 72.72" }, { text: "SCNet · Gluons" }, { text: "Read-only MCP" }],
     lead:
-      "我同时从攻击和防守两边看 tool-using agent：攻击侧研究怎样在有限 replay / model-hop 预算里触发危险工具链；防守侧只读分析 tool-call trace，不执行真实动作。",
+      "同一个 Agent Security 项目里，我从比赛攻击和基础设施防守两边看 tool-using agent：Kaggle 侧研究怎样在有限 replay / model-hop 预算里触发危险工具链；SCNet 侧把防守分析器做成只读 MCP，只分析 tool-call trace，不执行真实动作。",
     points: [
+      "Kaggle AI Agent Security 竞赛侧围绕 replay budget、model-hop 和调用成本优化攻击组合，而不是只调 prompt；公开最佳分 72.72。",
+      "SCNet / 国家超算互联网侧的 scientific-agent-security-analyzer 作为防守 MCP 接入，验证记录 574 passed / 1 skipped。",
       "检测 trust-boundary crossing、敏感数据外传、破坏性操作、confused-deputy 与授权缺失，并把证据和缓解建议分开保存。",
       "防守 MCP 支持 stdio 与 Streamable HTTP；规则采用「降级不压制」，调用方自报审批不能让发现凭空消失。",
-      "竞赛攻击侧围绕 replay budget 和模型调用成本优化组合，而不是只调 prompt；公开版本最佳分 72.72。",
     ],
-    stack: "Python · MCP / JSON-RPC · Agent Security",
+    stack: "Python · MCP / JSON-RPC · Agent Security · SCNet",
     href: "https://github.com/Quarkgluonmixture/agent-redteam-lab",
     span: "c5",
   },
   {
     slot: "04",
-    kicker: "04 / Post-training Attribution",
-    title: "把模型的“涨点”拆开看",
+    kicker: "04 / FinQA / Post-training Attribution",
+    title: "FinQA",
     who: [{ text: "Qwen3 0.6B→14B" }, { text: "5×4 controlled matrix" }, { text: "2026" }],
     lead:
       "同一份分数上涨可能来自三件完全不同的事：prompt 协议对齐、answer-format SFT、显式思考。我每次只动一个变量，避免把协议修正误叫成模型能力提升。",
