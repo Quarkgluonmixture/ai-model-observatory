@@ -95,7 +95,7 @@ const tagOf = (xml, tag) => {
 
 for (const page of feeds) {
   try {
-    const response = await fetch(page.url, { headers: { "user-agent": "Mozilla/5.0 (ai-model-observatory release probe)" } });
+    const response = await fetch(page.url, { headers: { "user-agent": "Mozilla/5.0 (quarkspace release probe)" } });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     const xml = await response.text();
     const items = (xml.match(FEED_ITEM) ?? []).map((item) => ({
@@ -120,7 +120,7 @@ for (const page of feeds) {
 const HREF = /href="([^"]+)"/g;
 for (const page of plain) {
   try {
-    const response = await fetch(page.url, { headers: { "user-agent": "Mozilla/5.0 (ai-model-observatory release probe)" } });
+    const response = await fetch(page.url, { headers: { "user-agent": "Mozilla/5.0 (quarkspace release probe)" } });
     if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
     const html = await response.text();
     const pattern = new RegExp(page.match);
