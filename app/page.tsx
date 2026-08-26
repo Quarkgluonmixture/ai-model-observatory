@@ -168,25 +168,25 @@ function MeasurementChain() {
     {
       no: "01",
       title: "Target / Agent",
-      body: "模型真正做了什么？任务成功、拒答，还是越过了边界？",
+      body: "模型真正做了什么？任务成功了？拒答了？还是已经越过了边界？",
       foot: "behavior · task success",
     },
     {
       no: "02",
       title: "Execution / Harness",
-      body: "结果来自模型，还是 observation、tool、provider filter 或 scaffold？",
+      body: "这个结果真的是模型造成的吗？还是 observation、tool、provider filter、scaffold 或执行环境改变了它？",
       foot: "trajectory · environment",
     },
     {
       no: "03",
       title: "Judge / Grader",
-      body: "判官有没有系统性误判？rubric、阈值和 shortcut 会不会改写结论？",
+      body: "负责打分的工具自己靠谱吗？rubric、阈值、shortcut、FP/FN，会不会直接把结论改写？",
       foot: "FP / FN · calibration",
     },
     {
       no: "04",
       title: "Gold / Evidence",
-      body: "最终结论能不能回到独立标签、统计检验、来源和可重放证据？",
+      body: "最后这个结论靠什么兜底？能不能回到独立标签、统计检验、来源和可重放证据？",
       foot: "labels · provenance",
     },
   ];
@@ -222,7 +222,7 @@ function MeasurementChain() {
         ))}
       </div>
       <p className={s.cap} style={{ marginTop: 14 }}>
-        P79、Holistic、redteam-under-test、FinQA 和 Model Observatory 看起来是不同项目，但它们都在问同一件事：这个结果到底意味着什么，以及产生它的测量链能不能信。
+        P79、Holistic、redteam-under-test、FinQA 和 Model Observatory 看起来不像同一个项目。但我其实一直在问同一件事：这个结果到底意味着什么？产生它的测量链到底能不能信？
       </p>
     </div>
   );
