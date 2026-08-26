@@ -465,3 +465,69 @@ alias 的 reason 已按此改写。
   ⚠ `check-model-provenance.mjs:110` 的 `close()` 是**绝对容差 0.005**,所以 `qwen3.7-plus`
   56.59 vs 56.58 也算硬矛盾 ⇒ **每次 AA 刷新都会重演这一幕**,这是 TODO 里「价格/参数要不要走 ingest
   派生」那条的实证支持。路上踩到坑 **48**(注释写进记录里 ⇒ 分类器报「记录被移除」)。
+
+## [2026-08-26] 仓库改名 `quarkspace`,并修掉指反了三天的真相源 `#decision` `#ship` `#measure` `#incident`
+
+**起因是一句话。** 有人问「quark space 现在是不是没用了,现在都是 ai observatory 什么的」——
+名字在替代码回答问题,而且答错了。真正名不副实的是**这个仓库**:它装的是整个站
+(个人站 `/` · 观测台 `/models` · Persona Lab `/persona`),`ai-model-observatory` 只描述了一个路由。
+
+### 先修的:一个事实四份副本,两份指反
+
+`../quark-space` 在 **2026-08-23** 已被它自己新增的 `content/CANONICAL_SOURCE.md` 降级为设计存档。
+但同一个事实还有两份没跟上、而且**方向是反的**:本仓库 `AGENTS.md` 写着「更完整的真相源在
+`../quark-space/content/projects.json`」,`README.md` 目录说明里同一句反话。quark-space 那边同样两处:
+`CHECKPOINT.md`(新 session 的入口)的「链接」一节,和 `projects.json` **自己的 `_about` 字段**
+(「正式站点从这个文件构建」——这句在文件内部,谁打开谁被误导)。
+
+- ⚠ **`AGENTS.md` 不是普通文档,它是操作合同**。每天 10:30 UK 的 hermes 班和任何动首页的 agent
+  都先读它。指反了的后果不是文档不好看,是下一个执行者会照着一份**冻结快照**去改线上文案。
+- ⚠ **实测:本仓库 30 个 npm script 里没有一个校验散文** ⇒ 没有任何自动闸门够得到这件事。
+  它错了三天,零告警。
+- ⇒ 修完后又收到一条更准的意见,**又改了一次**:第一版把 `home-content.ts` 笼统写成
+  "source of truth",这会把权威从一处漂到另一处。正解是**分两层**:职业事实与定位的上游是
+  `JobFinder/00_总控/`,`home-content.ts` 只是**已部署首页的实现权威**(说什么、放哪些项目、什么顺序)。
+  混为一谈正是上一次漂移的起点。(#115)
+
+### 改名:三个名字**故意**不一致
+
+| 层 | 值 | 动了吗 |
+|---|---|---|
+| GitHub repo slug | `Quarkgluonmixture/quarkspace` | ✅ |
+| 本机文件夹(Mac) | `~/Documents/Promptfoo/ai-model-observatory` | ⛔ 故意不动 |
+| 本机文件夹(Windows / hermes) | `C:\Users\Administrator\Projects\ai-model-observatory` | ⛔ 故意不动 |
+| EdgeOne 项目名称 | `ai-model-observatory` | ⛔ 不是我们的 |
+
+**只改 GitHub identity、不动文件系统路径与 scheduler cwd**,是风险最小的做法 —— 自动化最怕的是
+为了"整齐"同时动 repo slug + 本地 path + scheduler cwd。⚠ 这三个名字现在长得不一样是**设计**,
+不是遗漏,⛔ 别顺手改统一(细节与两条不可逆事实在 `GOTCHAS.md` **49**)。
+
+**改名前实测过的**(所以敢动):全仓库**零处硬编码仓库 URL**;`scripts/check-heartbeat.mjs` 优先读
+`GITHUB_REPOSITORY`、否则从 `git remote get-url origin` 推导 ⇒ 改完 remote 自动切过去。
+hermes 侧同构:它的 cron job(canonical id `2d4dbdc7db6f`)配置里**没有** `--repo` flag,
+workdir 直指本地 clone、prompt 全是相对命令 ⇒ 切 remote 就通,`jobs.json` 不用改。
+
+**改名后实测**:`check:heartbeat --github` 从新 remote 推导出 `Quarkgluonmixture/quarkspace`
+并查通 GitHub API;`check:deployment` 两次全绿(ICP 备案 3/3 host-route,`quarkspace.top`
+服务内容与 `main` 一致,29 models × 72 benchmarks)。顺带清掉**第三个**历史名:
+`package-lock.json` 的 root name 一直还是 `site-creator-vinext-starter`
+—— 实测 `npm install --package-lock-only` **只改那 2 行、零依赖漂移**,所以并进改名而不是另开 commit。(#116)
+
+### #decision 三条,理由记在这里
+
+- **`quark-space/content/projects.json` 不搬进本仓库。** 它是 2026-08-03 的快照。搬进 live repo
+  它就变成一个 `grep` 得到、看起来像数据源的文件 —— 正是 8-23 那条禁令要防的事。历史留在
+  quark-space 的 git 里。同理那四张截图**字节级相同**于 `public/shots/`(`cmp` 过),搬 = 第三份副本。
+- **封存 quark-space 放在整个流程最后**,而不是紧跟改名。旧仓库保持可写,是 EdgeOne 或 hermes
+  出怪行为时唯一的退路。
+- **个人站的待办迁进本仓库 `TODO.md`**(此前这里完全没有个人站那一节)。⚠ 迁移**不是照搬**:
+  对着代码逐条验过,原本 7 条里 **5 条已经做掉了**,只剩 2 条。⇒ 教训是
+  **搬待办前先验它还成不成立**,一份 8-11 的清单搬进 8-26 的仓库就是凭空造出五件不存在的活。
+
+### ⚠ 一个假绿,当场记下来
+
+改完之后跑 `check:heartbeat --agent`,它报「队列有人在做,最近一次非 bot commit 0.0 天前
+(`62805ce`)」——**那是我们自己刚才的 commit**。这正是 §10 与 `TODO.md` 里那条已知缺陷:
+你自己开一次 session 就把三天时钟清零。⇒ ⛔ 这条**不能**用来证明 hermes 还活着。
+hermes 死掉仍然是这套系统里唯一背后没有推送的失败;那条「要不要给它推微信」的裁决,
+今天变得更值钱了。
