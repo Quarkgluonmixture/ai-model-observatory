@@ -222,7 +222,7 @@ function MeasurementChain() {
         ))}
       </div>
       <p className={s.cap} style={{ marginTop: 14 }}>
-        P79、Holistic、redteam-under-test、FinReason 和 Model Observatory 看起来是不同项目，但它们都在问同一件事：这个结果到底意味着什么，以及产生它的测量链能不能信。
+        P79、Holistic、redteam-under-test、FinQA 和 Model Observatory 看起来是不同项目，但它们都在问同一件事：这个结果到底意味着什么，以及产生它的测量链能不能信。
       </p>
     </div>
   );
@@ -272,10 +272,12 @@ export default function Home() {
             </div>
           </div>
 
+          <Section no="01" title="研究与系统" count={`${featured.length} 项`} id="work" />
+          {featured.slice(0, 3).map((p) => <Card key={p.slot} p={p} />)}
+
           <MeasurementChain />
 
-          <Section no="01" title="研究与系统" count={`${featured.length} 项`} id="work" />
-          {featured.map((p) => <Card key={p.slot} p={p} />)}
+          {featured.slice(3).map((p) => <Card key={p.slot} p={p} />)}
 
           <Section no="02" title="技能栈" count="每项都有项目对得上" id="skills" />
           <div className={`${s.t} ${s.c8}`}>
