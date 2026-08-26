@@ -254,7 +254,7 @@ app/
   models/layout.tsx            # its title (the page is a client component)
   persona/                     # Persona Lab UI, validation protocol, metrics, scoped styles
   page.tsx                     # the owner's personal site at / — no data files
-  home-content.ts              # that site's copy — and its source of truth (AGENTS.md)
+  home-content.ts              # that site's copy; implementation authority (AGENTS.md)
   home.module.css              # that site's styles, scoped under .home, --h-* properties
 data/
   sources/*.jsonl              # append-only archive: one row per published result
