@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-25",
+  "checkedAt": "2026-08-26",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -236,6 +236,7 @@
       "https://openai.com/index/disrupting-malicious-uses-of-ai-helgoland-bite",
       "https://openai.com/index/disrupting-malicious-uses-of-ai-high-five",
       "https://openai.com/index/disrupting-malicious-uses-of-ai-hoax-russian-troll",
+      "https://openai.com/index/disrupting-malicious-uses-of-ai-influence-campaign-russia",
       "https://openai.com/index/disrupting-malicious-uses-of-ai-iranian-influence-nexus",
       "https://openai.com/index/disrupting-malicious-uses-of-ai-it-workers",
       "https://openai.com/index/disrupting-malicious-uses-of-ai-iuvm",
@@ -482,6 +483,7 @@
       "https://openai.com/index/introducing-4o-image-generation",
       "https://openai.com/index/introducing-aardvark",
       "https://openai.com/index/introducing-activation-atlases",
+      "https://openai.com/index/introducing-admin-plugin",
       "https://openai.com/index/introducing-agentkit",
       "https://openai.com/index/introducing-ai-futures",
       "https://openai.com/index/introducing-apps-in-chatgpt",
@@ -573,6 +575,7 @@
       "https://openai.com/index/inworld-ai-DO-NOT-PUBLISH",
       "https://openai.com/index/ironclad",
       "https://openai.com/index/jakub-pachocki-announced-as-chief-scientist",
+      "https://openai.com/index/jalapeno-first-results",
       "https://openai.com/index/japan-economic-blueprint",
       "https://openai.com/index/japan-teen-safety-blueprint",
       "https://openai.com/index/jetbrains",
@@ -990,6 +993,7 @@
       "https://openai.com/index/text-and-code-embeddings-by-contrastive-pre-training",
       "https://openai.com/index/the-defenders-window",
       "https://openai.com/index/the-five-ai-value-models-driving-business-reinvention",
+      "https://openai.com/index/the-full-stack-behind-abundant-intelligence",
       "https://openai.com/index/the-instruction-hierarchy",
       "https://openai.com/index/the-international-2018-results",
       "https://openai.com/index/the-met-museum",
@@ -1244,12 +1248,12 @@
       "/news/claude-sonnet-5",
       "/news/claude-text-watermark",
       "/news/cognizant-anthropic",
-      "/news/donation-public-first-action",
       "/news/economic-futures-research-fund-agenda",
       "/news/improving-fable-5-s-biology-safeguards",
       "/news/investigating-incidents-cybersecurity-evals",
       "/news/position-open-weights-models",
-      "/news/tino-cuellar"
+      "/news/tino-cuellar",
+      "/news/wellbeing-research-grants"
     ],
     "moonshotai": [
       "/3546607314274766",
