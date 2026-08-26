@@ -704,3 +704,24 @@ GA 的分落进 preview 记录,这条讲**翻过来之后**那个防线该怎么
 - ⇒⇒ 好消息是它**朝安全方向坏**:一条"被移除的记录"绝不可能满足 tier-B 三条件,
   所以它挡住自合、逼人来看,不会静默放行。但它会浪费掉那个人的时间,也可能被当成真事故。
   与坑 **34** 同族:基于文本形状的判据,自己也会够不到。
+
+### 49. 仓库 2026-08-26 从 `ai-model-observatory` 改名为 `quarkspace` —— 两条不可逆事实
+2026-08-26。改名理由:这个仓库装的是**整个站**(个人站 `/` · 观测台 `/models` · Persona Lab
+`/persona`),旧名只描述了其中一个路由,已经害人问出「quark space 是不是没用了」这种问题。
+
+- ⛔⛔ **永远不要再建一个叫 `ai-model-observatory` 的仓库**。GitHub 的旧名重定向(web + `git
+  clone/fetch/push`)只在旧名**无人占用**时生效;一旦重建同名仓库,所有还指着旧 URL 的东西
+  当场断,且**无法恢复**。这是本次改名唯一真正不可逆的后果。
+- ⛔ **`ai-model-observatory-lhi0hg2y.edgeone.cool` 不是仓库名,是 EdgeOne 的项目名派生的默认域名**。
+  EdgeOne 控制台里的「项目名称」仍然是 `ai-model-observatory`,GitHub 改名不动它。
+  ⇒ `README.md`、`docs/ARCHITECTURE.md` §6、`data/deployment.json` 里那三处提到它的地方
+  **改名后仍然正确,不许顺手替换**(替换 = 把一个能用的 fallback 地址写成不存在的)。
+- ⚠ **hermes 那台 Windows 的 clone 要单独改 `origin`**,它的 job 配置不在本仓库里。
+  靠 GitHub redirect 能先活着,但 hermes 死掉是这套系统里**唯一背后没有推送的失败**
+  (见 `docs/ARCHITECTURE.md` 关于 gaps issue 与 `check-heartbeat --agent` 的那段)——
+  ⇒ 它不会报丧,只会安静地不干活。改名当天就去改,或第二天 09:30 UTC 后主动看一眼。
+- ✅ **代码里零处硬编码仓库 URL**(改名前实测)。`scripts/check-heartbeat.mjs` 优先读
+  `GITHUB_REPOSITORY`,否则从 `git remote get-url origin` 推导 ⇒ 改完 remote 就自然切过去。
+- 顺带清掉了第三个历史名:`package-lock.json` 的 root name 一直还是
+  `site-creator-vinext-starter`。实测 `npm install --package-lock-only` 只改那 2 行、
+  零依赖漂移,所以并进本次改名而不是另开 commit。
