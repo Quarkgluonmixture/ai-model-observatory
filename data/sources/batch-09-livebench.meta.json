@@ -9,5 +9,5 @@
     "https://livebench.ai/cost_2026_06_25.csv"
   ],
   "note": "LiveBench renders client-side and publishes no transcribable table, so this batch is fetched from the data files the page itself loads rather than read off the screen. Every row is one published task cell. LiveBench's category averages and Global Average are computed in the browser from these same columns and are deliberately NOT archived: they are derived, not published. reasoning_effort holds only an effort token that literally appears in the model string (…-max-effort, …-xhigh); everything else is null. source_kind is benchmark, not independent: LiveBench publishes its own tasks. The Agentic Coding tasks are system results run through mini-SWE-agent, which the leaderboard does not print — the scaffold is taken from the runner LiveBench vendors at livebench/agentic_code_runner/minisweagent, and is recorded on each such row. benchmark_version is the release date because that is how LiveBench versions the question set — releases must never be merged, the questions change between them.",
-  "retrievedDate": "2026-08-26"
+  "retrievedDate": "2026-08-27"
 }
