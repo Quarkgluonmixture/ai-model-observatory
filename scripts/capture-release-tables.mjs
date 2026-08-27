@@ -176,6 +176,64 @@ const RELEASES = {
       "Agents' Last Exam": { id: "ale", version: "ALE-V1", tools: true },
     },
   },
+  qwen37plus: {
+    label: "Qwen3.7-Plus release",
+    maker: "Alibaba",
+    // Discovered 2026-08-26 by direct URL probing: the qwen.ai/research index only lists five
+    // cards and has rotated every older post off, so the release probe cannot see this one —
+    // it exists, it renders, and it carries the full two-table benchmark grid. The index card
+    // rotation means any pre-3.8 Qwen post has to be reached at its blog?id= URL directly.
+    url: "https://qwen.ai/blog?id=qwen3.7-plus",
+    batch: "batch-38-qwen37plus-release",
+    batchLabel: "38 · Qwen3.7-Plus release tables",
+    // The page prints its own date: 「2026/06/01 · 44 分钟 · 8818 词」.
+    published: "2026-06-01",
+    noteName: "Qwen3.7-Plus",
+    keep: "Qwen3.7-Plus",
+    rowNote:
+      "厂商发布材料:harness 与 effort 只在页脚注层面声明、不落到行上(脚注原文在批次 meta 里)," +
+      "摊到具体行是判断不是抄录,行上记 null;evaluation_date 记的是发布日",
+    adoption:
+      "页面客户端渲染,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。" +
+      "⚠ 与 batch 17/32 不同,这一页**在脚注里给了 harness 与 effort 信息**:Terminal 行声明 Harbor/Terminus-2" +
+      "(5h 超时、12 CPU/24 GB RAM、temp=1.0、top_p=0.95、top_k=20、max_tokens=80K、256K ctx、5 次平均、" +
+      "每轮前置 <think> token);SWE 系列声明「Internal agent scaffold (bash + file-edit tools)」;" +
+      "Reasoning 场景给出推荐系统提示「Reasoning effort is set to xhigh」。三者都不说**哪几行**适用," +
+      "所以行上仍记 harness/effort 为 null,原文留在这里。表里的竞品列一并归档为证据," +
+      "但只有 Qwen3.7-Plus 会被 alias 采纳;「Qwen3.6-Plus」有全局 alias,这里的 file-scoped 拒收是承重的。" +
+      "双数字格取第一个数为指标、第二个进 note。未映射的标签记在 model-aliases.json 的 droppedBenchmarks 里," +
+      "免得下一代发布时重新推导一遍。",
+    extraNote:
+      "交叉验证(坑 33,采表前逐格对过目录现值):gpqa 90.3 vs AA 90.0;HLE 34.7 vs AA 35.6;" +
+      "IFBench 79.1 vs AA 77.96;SciCode 51.3 vs AA 45.5(12.7%,闸门内)。**身份用竞品列的数字定,不靠串**:" +
+      "IMOAnswerBench 的 GLM-5.1 83.8、DeepSeek-V4-Pro 89.8 与 batch 32 逐位相同;" +
+      "Apex 的 DeepSeek-V4-Pro 38.3 与目录既有 Epoch 读数逐位相同 —— 两个标签都以此确认是目录同名同口径的列。" +
+      "⚠ 「MRCR-v2 128k」:页面只写 v2@128K,**没写针数**;按 MRCR v2 的 8-needle 配置采" +
+      "(Qwen 自己在 3.8 发布页把 v2 写作「MRCR v2 256K (8-needle)」,Google 3.6 发布表的 128K 平均分也装在同一列)," +
+      "context_length 记 128K,行 note 原样保留页面标签;若 owner 认为针数存疑,翻掉这一条 alias 即可。" +
+      "⚠ 「CharXiv(RQ)」双数字口径与 3.8 那篇**不同**:页面自注「BabyVision and CharXiv(RQ): Scores are " +
+      "reported as 『with CI / without CI』」—— 第一个数是 with CI,与 3.8 页的「RQ + descriptive」不是一个东西," +
+      "note 里带全两个数。⚠ 拒收五个标签,理由在 droppedBenchmarks:SWE-Pro(脚注明说在**修正过的题集**上重测了" +
+      "所有基线,且用内部 scaffold,与官方 Public 板不是同一实例)、CritPT(6.0 会落进 Epoch 9.14 的同 null-effort 桶、" +
+      "分歧 34%,厂商读数低于独立榜时按源优先级留在档里)、MCP-Atlas(脚注明说 Public set)、" +
+      "SWE-Verified(内部 scaffold 读数,DSv4 80.6 vs Vals 96.4 差 ~20%,是 scaffold 差异不是模型差异)、" +
+      "MMLU-Pro(是 MMLU-Pro,不是目录 mmmu 列的 MMMU-Pro,一字之差的两个基准)。" +
+      "「Terminal Bench 2.0-Terminus」走 terminal|2.0,由 benchmarkSplits 路由到 terminal-20 legacy 列(2.0 与 2.1 " +
+      "是不同任务集);「IFEval」不是目录的 ifbench(IFBench)列,同音异基准;「Skillsbench」脚注明说剔掉 9 个" +
+      "外部 API 任务后跑 78 个,不是 Vals 那一列的口径。",
+    carried: {
+      "Terminal Bench 2.0-Terminus": { id: "terminal", version: "2.0", tools: true },
+      "GPQA Diamond": { id: "gpqa", version: "Diamond", tools: false },
+      HLE: { id: "hle-no-tools", version: "Full", tools: false },
+      IMOAnswerBench: { id: "imo-answer", version: "2026", tools: false },
+      Apex: { id: "apex", version: "2026", tools: true },
+      IFBench: { id: "ifbench", version: "2026", tools: false },
+      "MRCR-v2 128k": { id: "mrcr", version: "v2 · 8 needle", tools: false, contextLength: "128K" },
+      SciCode: { id: "scicode", version: "2026", tools: false },
+      "MMMU-Pro": { id: "mmmu", version: "Pro", tools: false },
+      "CharXiv(RQ)": { id: "charxiv", version: "RQ", tools: false, dual: "without-CI score(页面口径 with CI / without CI)" },
+    },
+  },
   glm53: {
     label: "GLM-5.3 release",
     maker: "Z.AI",
