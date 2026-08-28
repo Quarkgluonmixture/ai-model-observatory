@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-27",
+  "checkedAt": "2026-08-28",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -975,6 +975,7 @@
       "https://openai.com/index/superalignment-fast-grants",
       "https://openai.com/index/superhuman",
       "https://openai.com/index/supporting-eu-trustworthy-ai-ecosystem",
+      "https://openai.com/index/supporting-next-generation-ai-startups-thailand",
       "https://openai.com/index/supporting-nonprofit-and-community-innovation",
       "https://openai.com/index/swe-lancer",
       "https://openai.com/index/sycophancy-in-gpt-4o",
@@ -1251,20 +1252,21 @@
     ],
     "anthropic": [
       "/news/announcing-our-updated-responsible-scaling-policy",
-      "/news/anthropic-economic-index-connector",
       "/news/claude-opus-5",
       "/news/claude-sonnet-5",
       "/news/claude-text-watermark",
       "/news/cognizant-anthropic",
-      "/news/economic-futures-research-fund-agenda",
+      "/news/expanding-support-for-scientists",
       "/news/improving-fable-5-s-biology-safeguards",
       "/news/investigating-incidents-cybersecurity-evals",
+      "/news/model-hardware-standard-research-preview",
       "/news/position-open-weights-models",
       "/news/tino-cuellar",
       "/news/wellbeing-research-grants"
     ],
     "moonshotai": [
       "/3546607314274766",
+      "/about",
       "/agent",
       "/agent-swarm",
       "/api/app/pkg/latest/macos/download",
