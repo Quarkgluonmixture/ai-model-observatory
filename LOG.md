@@ -531,3 +531,28 @@ workdir 直指本地 clone、prompt 全是相对命令 ⇒ 切 remote 就通,`jo
 你自己开一次 session 就把三天时钟清零。⇒ ⛔ 这条**不能**用来证明 hermes 还活着。
 hermes 死掉仍然是这套系统里唯一背后没有推送的失败;那条「要不要给它推微信」的裁决,
 今天变得更值钱了。
+
+## [2026-08-31] batch-39 Kimi K3 落地:上一天被迭代上限截住的 commit,本班 rebase 后自合 #ship
+
+**背景**:8-30 班把 Kimi K3 发布表做完全验完(7 新格 + 7 证据升级,契约全绿,describe-change
+无已有数字改动),但被迭代上限截在 commit 之前,改动全留在工作区。本班(8-31)按显式路径
+commit 后 rebase 到 origin/main —— 中间进了一个每日 live refresh(4dd8f55:Qwen3.7/3.6 Plus
+FrontierMath 各 +1 格,Kimi K3 GDPval-AA 1668→1644,GPT-5.6 Luna / GLM-5.2 FrontierMath 下修,
+23 条 grok-4.6 LiveBench withdrawn 行 acknowledged 保留)。
+
+**为什么 rebase 后必须重验**:auto-merge 在 generated.ts 上无冲突,但无冲突 ≠ 语义正确 ——
+两边都重新生成过这个文件。重跑 `npm run ingest` 后工作区 clean,证明合并语义与 fresh ingest
+一致,这是唯一可靠的验法。⚠ 顺带发现 README 覆盖计数被 live refresh 顶旧了(我们 commit 的
+2190/1397/66.9% vs fresh ingest 真值 2196/1399/67.0%),单独修了一笔。
+
+**重验后 tier-B 三条件仍成立**(契约全绿含 disagreement/one-source-one-cell、describe-change
+无已有数字改动、无新增 exemption),按 batch-38 先例 agent 直推 main。
+
+**改动**:
+- `scripts/capture-release-tables.mjs`:+`kimik3` entry,行生成器支持 `carried.harness` /
+  `release.effort`(首个在脚注里声明 harness/effort 的发布表)。
+- batch-39:251 行整表归档,只采纳自家列 13 标签(HLE-Full 一行拆两列)14 行;五个竞品列
+  file-scoped 拒收;八个标签带理由拒收(六个 AA/官方榜转引、MCP-Atlas 500-task 子集、
+  SWE-Marathon H20 校准分支)。
+- 7 新格:hle-tools 56、FrontierSWE 81.2、PostTrainBench 36.6、BrowseComp 91.2、
+  OSWorld 2.0 58.3、OmniDocBench 91.1、CharXiv 84.8。覆盖率 2196/1399/67.0%。
