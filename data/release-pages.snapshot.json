@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-08-30",
+  "checkedAt": "2026-08-31",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -1266,35 +1266,9 @@
       "/news/wellbeing-research-grants"
     ],
     "moonshotai": [
-      "/3546607314274766",
       "/about",
-      "/agent",
-      "/agent-swarm",
-      "/api/app/pkg/latest/macos/download",
-      "/api/app/pkg/latest/windows/download",
       "/blog/",
-      "/bot",
-      "/business",
-      "/code/zh",
-      "/deep-research",
-      "/detail/kimi-%E6%B5%8F%E8%A7%88%E5%99%A8%E5%8A%A9%E6%89%8B/caejcfciegnnnepdhaopdogngbmojodl",
-      "/docs",
-      "/dxxzsp/xkz/xkzgl/resource/qiyesearch.jsp?num=%25E4%25BA%25ACB2-20240852&type=xuke",
-      "/en/blog/kimi-k2-6",
-      "/en/blog/kimi-k3",
-      "/en/blog/perception-bench",
-      "/membership/pricing",
-      "/moonshot-ai/assets/static/business_license.D2zBa9PM.jpg",
-      "/portal/registerSystemInfo?recordcode=11010802043150",
-      "/s/l2HNlnXaPWT9hW-OXUYrig",
-      "/sheets",
-      "/slides",
-      "/u/7909392214",
-      "/user/MS4wLjABAAAA8GVDaA0r5ePiUf2AAG3XMwclEnvgaG8ziSP4-Mdyfqi5qmXfFz9BxLtUV7sgpM0b",
-      "/user/agreement/modelUse?version=v2",
-      "/user/agreement/userPrivacy?version=v2",
-      "/user/profile/657fb438000000001902dbcf",
-      "/websites"
+      "/business"
     ],
     "minimax": [
       "/news/a-new-era-of-ai-filmmaking",
