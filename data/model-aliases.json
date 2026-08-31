@@ -2222,6 +2222,41 @@
       "file": "batch-38-qwen37plus-release",
       "modelId": null,
       "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Claude Fable 5 (max, w/ fallback)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (max)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (max)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT-5.5 (xhigh)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GLM-5.2 (max)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
     }
   ],
   "benchmarkSplits": [

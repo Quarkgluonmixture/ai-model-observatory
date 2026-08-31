@@ -287,6 +287,80 @@ const RELEASES = {
       "GDPval-AA v2": { id: "gdpval", version: "v2", tools: true },
     },
   },
+  kimik3: {
+    label: "Kimi K3 release",
+    maker: "Moonshot AI",
+    // The GitHub README is the maker's published table and it is static server-rendered markdown —
+    // no CDP wait needed, though openBrowser's evaluate works on it the same way. The kimi.com blog
+    // post carries the same table; the README is the one that also survives as a git history.
+    // NOT the HF model card: its benchmark table is a JPEG (figures/benchmark.jpeg), and
+    // .eval_results/minimax-m3.yaml-style structured files do not exist for K3 (checked 2026-08-30:
+    // the card has eval-results dataset metadata, not a benchmark table).
+    url: "https://github.com/MoonshotAI/Kimi-K3",
+    batch: "batch-39-kimik3-release",
+    batchLabel: "39 · Kimi K3 release table",
+    published: "2026-07-23",
+    noteName: "Kimi K3",
+    keep: "Kimi K3 (max)",
+    effort: "max",
+    // This page states harnesses and effort — the first release table this catalog captured that
+    // does. So rowNote says the opposite of the house default, and the row builder below uses
+    // `harnessByLabel` to put them on the rows instead of null.
+    rowNote:
+      "厂商发布材料:脚注声明所有 Kimi K3 结果 reasoning effort=max、temperature=1.0;" +
+      "带工具任务用 Kimi Code 脚手架(具体到行,见脚注 2/3);evaluation_date 记的是发布日",
+    adoption:
+      "GitHub README 是静态服务端渲染 markdown,采集脚本读表仍走 CDP 但无需等应用画完,因此这是可复跑的抓取。" +
+      "⚠ 与此前所有 release capture 不同,这张表**在脚注里声明了 harness 与 effort**,并具体到行组:" +
+      "Kimi K3 自己列全部 effort=max;DeepSWE/Terminal/ProgramBench/SWE-Marathon/PostTrainBench 用 Kimi Code;" +
+      "所以本批采纳行的 harness/effort 不再记 null(行生成器为此加了 carried.harness 与 release.effort)。" +
+      "**只采纳 Kimi K3 (max) 自己列里 Moonshot 自己测的 13 个标签**(HLE-Full 一行拆两列,共 14 行);" +
+      "五个竞品列 file-scoped 拒收(与 batch 17/32/38 一致)。**八个标签虽然目录有列、仍然拒收**,理由分三種,记在 extraNote:" +
+      "六个是脚注明说的**转引**(cited from AA/官方榜 as of July 23 —— 往 Exact 的原生行旁边放一条四舍五入的厂商孪生," +
+      "正是 supersededRows 机制要防的「同一测量读两遍」);一个是 **split 不匹配**;一个是**改过的题集**。" +
+      "**双数字格**:页面自注 MMMU-Pro/CharXiv(MathVision/ZeroBench/HLE 同)每格报「无工具 / 有工具」两数," +
+      "第一个数进主列,第二个数只进 note(目录没有这些基准的 with-tools 列);" +
+      "HLE-Full 例外:它的两个数**正好是目录两列**(hle-no-tools/hle-tools),按 dualColumn 拆行。",
+    extraNote:
+      "交叉验证(坑 33,采表前逐格对过目录现值):gpqa 93.5 与 AA 既有读数一致;ale 28.3 = 官方榜 28.29 的四舍五入;" +
+      "gdpval 1686 vs AA 活 Elo 1668 属正常漂移;toolathlon 76.5 vs 官方 76.54 同 —— 这两组近恒等正是脚注「cited from」的指纹," +
+      "所以那两行按转拒。⚠ deepswe 67.5 是 Kimi Code 脚手架的自测,官方榜同模型 mini-SWE-agent 67.3/另列 68.5 —— " +
+      "多 harness 同格是设计内多行,主显仍 benchmark 原生。⚠ frontierswe 81.2 脚注明说 Dominance as of July 16," +
+      "与目录列 2026-07 口径一致(batch 36 同判)。⚠ PostTrainBench 36.6:官方 Harbor 实现、H20 而非 H100、三次平均 —— " +
+      "harness 与题集都是官方的,硬件偏差留在本 note。⚠ BrowseComp 91.2 带 300K context-compaction 策略," +
+      "全 1M 无管理时 90.4(脚注原文)。⚠ SWE-Marathon 拒收:脚注明说基于官方任务的 **H20-calibrated 分支**、在最终 v1.1 之前," +
+      "Docker 镜像/性能门槛/参考 oracle 都为 H20 重校过 —— 修正过的题集不是官方 v1.1 实例(batch 38 拒 SWE-Pro 同判)," +
+      "且 droppedBenchmarks 是全局标签机制、会误杀 batch 32 的 GLM 行,所以按 batch 35 先例记在这里。" +
+      "⚠ MCP-Atlas 拒收:脚注明说 500-task public subset、100-turn、Gemini 3.1 Pro 裁判,与官方 1,000-task 全集不是同一实例" +
+      "(batch 38 拒「MCP-Atlas Public Set」同判;官方 82.3 行已在格)。⚠ 六个转引标签拒收:CritPt/AA-LCR/SciCode(引 AA)、" +
+      "GDPval-AA/APEX(引 AA 与 APEX 榜)、Agents' Last Exam(引官方榜)—— 目录已持这些榜的原生行," +
+      "厂商表里的四舍五入副本不添信息。⚠ 双数字口径:MMMU-Pro/CharXiv 每格「without / with tool augmentation」," +
+      "与 Qwen3.8 页同形,第一个数入列。其余无列标签(DeepSearchQA/ResearchRubrics/MCPMark/JobBench/AA-Briefcase/" +
+      "OfficeQA Pro/SpreadsheetBench 2/SaaS-Bench/Harvey Lab-AA/CorpFin/Finance Agent/Legal Research/WorldVQA/" +
+      "PerceptionBench/Video-MME/MMVU/BabyVision/MathVision/ZeroBench/Kimi Code Bench 2.0/MLS-Bench-Lite/OSWorld-Verified)" +
+      "照常留档;Vals 系五条脚注明说转引 Vals AI,τ³/Harvey 引 AA,同转引理由。",
+
+    carried: {
+      "GPQA Diamond": { id: "gpqa", version: "Diamond", tools: false },
+      "HLE-Full": {
+        id: "hle-no-tools",
+        version: "Full",
+        tools: false,
+        dualColumn: { id: "hle-tools", version: "Full", tools: true, harness: "Kimi Code" },
+      },
+      DeepSWE: { id: "deepswe", version: "v1.1", tools: true, harness: "Kimi Code" },
+      ProgramBench: { id: "program", version: "2026", tools: true, harness: "Kimi Code" },
+      "Terminal-Bench 2.1": { id: "terminal", version: "2.1", tools: true, harness: "Kimi Code" },
+      FrontierSWE: { id: "frontierswe", version: "2026-07", tools: true, harness: "Kimi Code" },
+      PostTrainBench: { id: "posttrain", version: "v1.1", tools: true, harness: "Kimi Code" },
+      BrowseComp: { id: "browsecomp", version: "2026", tools: true },
+      "Toolathlon-Verified": { id: "toolathlon", version: "Verified", tools: true },
+      "OSWorld 2.0": { id: "osworld2", version: "2.0", tools: true },
+      OmniDocBench: { id: "omnidoc", version: "1.5", tools: false },
+      "MMMU-Pro": { id: "mmmu", version: "Pro", tools: false, dual: "with-python score(页面口径 without / with)" },
+      "CharXiv (RQ)": { id: "charxiv", version: "RQ", tools: false, dual: "with-python score(页面口径 without / with)" },
+    },
+  },
 };
 
 const args = process.argv.slice(2);
@@ -368,8 +442,8 @@ for (const table of tables) {
         score: value,
         // Some cells are Elo-like rather than percentages (Qwen's QwenReactBench prints 1694).
         unit: value > 200 ? "Elo" : "%",
-        harness: null,
-        reasoning_effort: null,
+        harness: column?.harness ?? null,
+        reasoning_effort: release.effort ?? null,
         tools_enabled: column ? column.tools : null,
         context_length: column?.contextLength ?? null,
         evaluation_date: release.published,
