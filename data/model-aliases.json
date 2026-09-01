@@ -2922,6 +2922,76 @@
       "field": "price_cache_per_m",
       "supersededBy": "batch-34-openai-repricing",
       "reason": "Batch 06's official-page read froze $0.25/M cache read on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $0.20/M cache read. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Sol",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Sol's speed (64.9) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Sol",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Sol's latency (149.14) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Terra's speed (131.8) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Terra's latency (198.08) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.5",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.5's speed (64.6) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.5",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.5's latency (99.32) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Grok 4.5",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Grok 4.5's speed (57.9) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Grok 4.5",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Grok 4.5's latency (8.62) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Qwen3.7 Max",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Qwen3.7 Max's speed (199.6) from AA's model page in mid-August; batch 14's API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Qwen3.7 Max",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Qwen3.7 Max's latency (2.45) from AA's model page in mid-August; batch 14's API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
     }
   ],
   "withdrawnRows": [
