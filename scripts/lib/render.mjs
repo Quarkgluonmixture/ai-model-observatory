@@ -72,10 +72,10 @@ export const openBrowser = async () => {
      * load event worth waiting for here: these pages resolve their own data after hydration, so
      * "the document finished loading" and "the table exists" are seconds apart.
      */
-    async evaluate(url, expression, settleMs = 9000) {
+    async evaluate(url, expression, settleMs = 9000, { awaitPromise = false } = {}) {
       await send("Page.navigate", { url });
       await sleep(settleMs);
-      const { result } = await send("Runtime.evaluate", { expression, returnByValue: true });
+      const { result } = await send("Runtime.evaluate", { expression, awaitPromise, returnByValue: true });
       if (result?.exceptionDetails) {
         throw new Error(`page script failed on ${url}: ${result.exceptionDetails.text}`);
       }

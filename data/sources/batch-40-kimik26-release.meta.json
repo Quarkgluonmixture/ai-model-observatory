@@ -1,0 +1,11 @@
+{
+  "batch": "40 · Kimi K2.6 release table",
+  "collectedWith": "scripts/capture-release-tables.mjs kimik26",
+  "filtered": false,
+  "release": "kimik26",
+  "sources": [
+    "https://www.kimi.com/en/blog/kimi-k2-6"
+  ],
+  "note": "Kimi K2.6 release(2026-04-20)的性能表,整表抄录:164 行,11 个已发布模型列,36 个 benchmark 标签,6 个分区。页面客户端渲染,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。⚠ 本页有**两张结果表**:上面那张 5 行的营销对比表(K3 列 + 匿名 Model A/B 列,无口径声明,GPQA 88.4/AIME 93.3 与原表 90.5/96.4 明显不同、应是另一轮测量)和下面那张 38 行的原版表(脚注齐全)。**口径以原版表为准**:carried 标签全部选自原版表独有的拼写(「HLE-Full w/ tools」「GPQA-Diamond」「Terminal-Bench 2.0 (Terminus-2)」),营销表同义标签(带空格/无后缀)不被 carry、以未映射标签留档。唯一例外是「SWE-Bench Pro」两表拼写相同:营销表同标签行会重复出行(K2.6 两行同值 58.6,格内显示 +1),且营销表的「Kimi K3」「Gemini 3.1 Pro」列有全局 alias —— 已在 model-aliases.json 写 batch-40 file-scoped 拒收,否则竞品营销数字直接写进目录记录。表里的竞品列一并归档为证据,但只有 Kimi K2.6 会被 alias 采纳。「Kimi K3」「Kimi K2.6」「Gemini 3.1 Pro」有全局 alias,file-scoped 拒收是承重的(同 batch 17/32/36/38/39);「GPT-5.4 (xhigh)」只有 batch-38 的 scoped-to-null,这里再加一条防未来全局化;「GPT-5.4」「Claude Opus 4.6」「Claude Opus 4.6 (max effort)」「Gemini 3.1 Pro (thinking high)」「Kimi K2.5」无全局 alias,仍写显式拒收占位(batch 36 先例);「Model A」「Model B」匿名列不写拒收。evaluation_date 记的是发布日。 交叉验证(坑 33,采表前逐格对过官方榜/目录现值),验证对象是竞品列——同一张表里厂商给竞品标的数字若与官方榜归档一致,说明读的确实是那块板:**HLE-Full w/ tools 的 GPT-5.4 52.1 = 表 0 与本表逐位相同**;SWE-Bench Pro 列 GPT-5.4 57.7 / Opus 4.6 53.4 / Gemini 3.1 Pro 54.2 **全部低于**官方 Scale 板 2026-04-08 读数(59.1 / 51.9 / 46.1,注意 Opus/Gemini 官方更低、GPT-5.4 官方更高,方向不一致=非系统偏差,是 2026-04 自测 vs 后来 mini-swe-agent 重测的 harness 差)—— 所以 **K2.6 的 swe-pro 58.6 与官方板不是同一实例**,官方板上 K2.6 缺席、这格是厂商自测,kimik26 条目按源优先级照采(vendor 行在 benchmark 原生行缺位时填格),但格内主显会标注 vendor。⚠ 采表前对过目录现值:gpqa 90.5 vs 目录 epoch 90.78(0.3%);mmmu 79.4 vs 目录 86.301(Vals,8%)—— 同列已有多 harness 行,多一行 vendor 读数是设计内多行。⚠ 三个标签**有意不 carry**(会炸分歧闸门或混 split):「HLE-Full」34.7 vs 目录 Vals 19.6 = 77% 分歧(两个都是真实读数但口径差异巨大,未经 owner 确认不进列);「SciCode」52.2 vs 目录 39.5 = 32% 分歧;「APEX-Agents」27.9 vs 目录 epoch 18.9 = 48% 分歧。「Terminal-Bench 2.0 (Terminus-2)」66.7 走 terminal|2.0,由 benchmarkSplits 路由到 terminal-20 legacy 列。「BrowseComp (agent swarm)」「w/ python」变体行、DeepSearchQA、WideSearch、MCPMark、Claw Eval、OJBench、LiveCodeBench、SWE-Bench Multilingual、OSWorld-Verified、MathVision、BabyVision、V*、AIME 2026、HMMT、IMO-AnswerBench 目录无列或已在 droppedBenchmarks,留档不映射。",
+  "retrievedDate": "2026-09-02"
+}

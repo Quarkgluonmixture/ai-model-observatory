@@ -361,6 +361,65 @@ const RELEASES = {
       "CharXiv (RQ)": { id: "charxiv", version: "RQ", tools: false, dual: "with-python score(页面口径 without / with)" },
     },
   },
+  kimik26: {
+    label: "Kimi K2.6 release",
+    maker: "Moonshot AI",
+    // The kimi.com blog post is the release's own page (the gaps issue has listed it under
+    // "Release posts published since the last check" since 2026-09-01 and nobody had read it).
+    // There is no github.com/MoonshotAI/Kimi-K2.6 — 404, checked 2026-09-02 — unlike K3 whose
+    // README is the canonical table. So the blog is the only published table for this model.
+    url: "https://www.kimi.com/en/blog/kimi-k2-6",
+    batch: "batch-40-kimik26-release",
+    batchLabel: "40 · Kimi K2.6 release table",
+    published: "2026-04-20",
+    noteName: "Kimi K2.6",
+    keep: "Kimi K2.6",
+    // The original 38-row benchmark table lazy-renders below the fold; without scrolling the
+    // capture sees only the 5-row marketing table. See the scroll branch in the capture loop.
+    scroll: true,
+    rowNote:
+      "厂商发布材料:脚注 1 声明 K2.6/K2.5 thinking 恒开、temp=1.0、top-p=1.0、262,144 ctx;" +
+      "coding 系脚注声明 10 次平均 + in-house SWE-agent 式框架(bash/createfile/insert/view/strreplace/submit)," +
+      "与 K3 发布页同形——脚注组级声明不落到具体行,harness/effort 行上记 null,原文在批次 meta",
+    adoption:
+      "页面客户端渲染,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。" +
+      "⚠ 本页有**两张结果表**:上面那张 5 行的营销对比表(K3 列 + 匿名 Model A/B 列,无口径声明," +
+      "GPQA 88.4/AIME 93.3 与原表 90.5/96.4 明显不同、应是另一轮测量)和下面那张 38 行的原版表(脚注齐全)。" +
+      "**口径以原版表为准**:carried 标签全部选自原版表独有的拼写(「HLE-Full w/ tools」「GPQA-Diamond」" +
+      "「Terminal-Bench 2.0 (Terminus-2)」),营销表同义标签(带空格/无后缀)不被 carry、以未映射标签留档。" +
+      "唯一例外是「SWE-Bench Pro」两表拼写相同:营销表同标签行会重复出行(K2.6 两行同值 58.6,格内显示 +1)," +
+      "且营销表的「Kimi K3」「Gemini 3.1 Pro」列有全局 alias —— 已在 model-aliases.json 写 batch-40 file-scoped 拒收," +
+      "否则竞品营销数字直接写进目录记录。" +
+      "表里的竞品列一并归档为证据,但只有 Kimi K2.6 会被 alias 采纳。" +
+      "「Kimi K3」「Kimi K2.6」「Gemini 3.1 Pro」有全局 alias,file-scoped 拒收是承重的(同 batch 17/32/36/38/39);" +
+      "「GPT-5.4 (xhigh)」只有 batch-38 的 scoped-to-null,这里再加一条防未来全局化;" +
+      "「GPT-5.4」「Claude Opus 4.6」「Claude Opus 4.6 (max effort)」「Gemini 3.1 Pro (thinking high)」「Kimi K2.5」" +
+      "无全局 alias,仍写显式拒收占位(batch 36 先例);「Model A」「Model B」匿名列不写拒收。evaluation_date 记的是发布日。",
+    extraNote:
+      "交叉验证(坑 33,采表前逐格对过官方榜/目录现值),验证对象是竞品列——同一张表里厂商给竞品标的数字若与" +
+      "官方榜归档一致,说明读的确实是那块板:**HLE-Full w/ tools 的 GPT-5.4 52.1 = 表 0 与本表逐位相同**;" +
+      "SWE-Bench Pro 列 GPT-5.4 57.7 / Opus 4.6 53.4 / Gemini 3.1 Pro 54.2 **全部低于**官方 Scale 板 2026-04-08 读数" +
+      "(59.1 / 51.9 / 46.1,注意 Opus/Gemini 官方更低、GPT-5.4 官方更高,方向不一致=非系统偏差,是 2026-04 自测 vs" +
+      " 后来 mini-swe-agent 重测的 harness 差)—— 所以 **K2.6 的 swe-pro 58.6 与官方板不是同一实例**," +
+      "官方板上 K2.6 缺席、这格是厂商自测,kimik26 条目按源优先级照采(vendor 行在 benchmark 原生行缺位时填格)," +
+      "但格内主显会标注 vendor。⚠ 采表前对过目录现值:gpqa 90.5 vs 目录 epoch 90.78(0.3%);" +
+      "mmmu 79.4 vs 目录 86.301(Vals,8%)—— 同列已有多 harness 行,多一行 vendor 读数是设计内多行。" +
+      "⚠ 三个标签**有意不 carry**(会炸分歧闸门或混 split):「HLE-Full」34.7 vs 目录 Vals 19.6 = 77% 分歧" +
+      "(两个都是真实读数但口径差异巨大,未经 owner 确认不进列);「SciCode」52.2 vs 目录 39.5 = 32% 分歧;" +
+      "「APEX-Agents」27.9 vs 目录 epoch 18.9 = 48% 分歧。「Terminal-Bench 2.0 (Terminus-2)」66.7 走 terminal|2.0," +
+      "由 benchmarkSplits 路由到 terminal-20 legacy 列。「BrowseComp (agent swarm)」「w/ python」变体行、DeepSearchQA、" +
+      "WideSearch、MCPMark、Claw Eval、OJBench、LiveCodeBench、SWE-Bench Multilingual、OSWorld-Verified、MathVision、" +
+      "BabyVision、V*、AIME 2026、HMMT、IMO-AnswerBench 目录无列或已在 droppedBenchmarks,留档不映射。",
+    carried: {
+      "HLE-Full w/ tools": { id: "hle-tools", version: "Full", tools: true },
+      BrowseComp: { id: "browsecomp", version: "2026", tools: true },
+      "SWE-Bench Pro": { id: "swe-pro", version: "Public Dataset", tools: true },
+      "Terminal-Bench 2.0 (Terminus-2)": { id: "terminal", version: "2.0", tools: true },
+      "GPQA-Diamond": { id: "gpqa", version: "Diamond", tools: false },
+      "MMMU-Pro": { id: "mmmu", version: "Pro", tools: false },
+      "CharXiv (RQ)": { id: "charxiv", version: "RQ", tools: false, dual: "with-python score(页面口径 without / with)" },
+    },
+  },
 };
 
 const args = process.argv.slice(2);
@@ -387,7 +446,30 @@ const EXTRACT = `(() => [...document.querySelectorAll("table")].map((table) =>
 const browser = await openBrowser();
 let tables;
 try {
-  tables = await browser.evaluate(release.url, EXTRACT, 12000);
+  if (release.scroll) {
+    // Some pages lazy-render tables below the fold: the K2.6 post keeps its 38-row original
+    // benchmark table unrendered until the page has been scrolled through. The plain EXTRACT
+    // then sees only the 5-row marketing table above the fold and the batch ships a fraction
+    // of the page. Scrolling is opt-in per release so existing captures stay byte-stable.
+    tables = await browser.evaluate(
+      release.url,
+      `(async () => {
+        const el = document.scrollingElement;
+        let last = -1;
+        for (let i = 0; i < 40 && el.scrollTop !== last; i++) {
+          last = el.scrollTop;
+          el.scrollTop += 700;
+          await new Promise((r) => setTimeout(r, 350));
+        }
+        await new Promise((r) => setTimeout(r, 2000));
+        return ${EXTRACT};
+      })()`,
+      12000,
+      { awaitPromise: true },
+    );
+  } else {
+    tables = await browser.evaluate(release.url, EXTRACT, 12000);
+  }
 } finally {
   browser.close();
 }
@@ -397,6 +479,9 @@ if (!Array.isArray(tables) || tables.length === 0) throw new Error(`no tables re
 const rows = [];
 let section = null;
 let sectionsSeen = 0;
+// Model × column × score keys already emitted, so a page that prints one measurement in two
+// tables (a marketing comparison table over the original) contributes one row, not two.
+const emitted = new Set();
 
 for (const table of tables) {
   // The first row names the models. A table whose header has no model columns is a layout table,
@@ -430,12 +515,26 @@ for (const table of tables) {
       const score = Number(primary);
       if (!Number.isFinite(score)) continue;
 
+      // Some pages print the SAME measurement in two tables — a marketing comparison table on
+      // top of the original benchmark table (Kimi's K2.6 post does this: SWE-Bench Pro 58.6 for
+      // K2.6 appears byte-identical in both). One measurement printed twice is one row, not two
+      // (+n on the cell would claim a re-run nobody did). Deduplicate on model × column × score;
+      // a genuine re-measurement publishes a different score and stays.
       const baseNote = `${release.noteName} 发布页「${section ?? "performance"}」分区,原样抄录 ${label} 一行`;
       // Every release so far states no harness and no effort, so the row says so. A release that
       // states them says something else — the row is the evidence, and a sentence that is false on
       // every row is worse than the same sentence being false once in the meta.
       const tailNote = release.rowNote ?? "厂商发布材料:未标注 harness、reasoning effort 或运行日期";
-      const emit = (value, column, notes) => rows.push({
+      const emit = (value, column, notes) => {
+        // Some pages print the SAME measurement in two tables — a marketing comparison table
+        // on top of the original benchmark table (Kimi's K2.6 post does this: SWE-Bench Pro
+        // 58.6 for K2.6 appears byte-identical in both). One measurement printed twice is one
+        // row, not two (+n on the cell would claim a re-run nobody did). Deduplicate on
+        // model × column × score; a genuine re-measurement publishes a different score and stays.
+        const dedupeKey = `${model}|${column?.id ?? label}|${value}`;
+        if (emitted.has(dedupeKey)) return;
+        emitted.add(dedupeKey);
+        rows.push({
         model_raw: model,
         benchmark: column?.id ?? label,
         benchmark_version: column?.version ?? null,
@@ -451,7 +550,8 @@ for (const table of tables) {
         source_url: release.url,
         source_kind: "vendor",
         note: [baseNote, ...notes, tailNote].join(";"),
-      });
+        });
+      };
 
       // `dualColumn` is for the shape where ONE published row carries TWO catalog columns —
       // DeepSeek prints "HLE (wo / w tools)" as a single row with two numbers, where Qwen and Z.AI

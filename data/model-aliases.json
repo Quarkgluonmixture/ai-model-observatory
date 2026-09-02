@@ -2257,6 +2257,55 @@
       "file": "batch-39-kimik3-release",
       "modelId": null,
       "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Kimi K3",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table for K2.6 and it prints a column per competitor (two tables: a 5-row marketing comparison table whose K3 column is a later re-measurement — its GPQA 91.2/AIME 96.7 disagree with the K3 release table's own 91.2-Diamond/GPQA-Diamond values — plus the 38-row original). Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version for it, and source precedence puts it below every board that does. 'Kimi K3' resolves globally from batch 39, so the refusal has to be scoped to this file rather than expressed by leaving it out."
+    },
+    {
+      "modelRaw": "GPT-5.4 (xhigh)",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version for it, and source precedence puts it below every board that does. This string has only a batch-38 scoped refusal so far; this entry keeps it refused in batch 40 as well, so a future global alias cannot quietly adopt it here."
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table and it prints a column per competitor — the 5-row marketing table spells this column 'Gemini 3.1 Pro' exactly, and that string resolves globally to gemini-3.1-pro from other batches. Its SWE-Bench Pro 54.2 there is a 2026-04 self-measurement that disagrees with the official Scale board's 46.1 (mini-swe-agent re-run), so adopting it would put a marketing re-measurement into a column whose every other row comes from the official board. Refusal scoped to this file."
+    },
+    {
+      "modelRaw": "Claude Opus 4.6",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table and it prints a column per competitor. No global alias exists for this string today; this explicit refusal makes any future global alias have to lift it first (batch 36 precedent for DeepSeek-V4 Pro-0813 / Fable 5)."
+    },
+    {
+      "modelRaw": "Claude Opus 4.6 (max effort)",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table and it prints a column per competitor. No global alias exists for this string today; this explicit refusal makes any future global alias have to lift it first (batch 36 precedent)."
+    },
+    {
+      "modelRaw": "Gemini 3.1 Pro (thinking high)",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table and it prints a column per competitor. No global alias exists for this string today; this explicit refusal makes any future global alias have to lift it first (batch 36 precedent)."
+    },
+    {
+      "modelRaw": "Kimi K2.5",
+      "effort": "*",
+      "file": "batch-40-kimik26-release",
+      "modelId": null,
+      "reason": "Batch 40 is Moonshot's own release table and it prints a column per competitor. Kimi K2.5 is a previous-generation model the catalog deliberately does not track (one of the 1,417 untracked published strings); this refusal records that the string was seen and consciously left uncollected, not missed."
     }
   ],
   "benchmarkSplits": [
