@@ -1,5 +1,5 @@
 {
-  "checkedAt": "2026-09-01",
+  "checkedAt": "2026-09-02",
   "pages": {
     "openai": [
       "https://openai.com/index/1-million-businesses-putting-ai-to-work",
@@ -47,6 +47,7 @@
       "https://openai.com/index/ai-first-hire-small-business",
       "https://openai.com/index/ai-literacy-resources-for-teens-and-parents",
       "https://openai.com/index/ai-mental-health-research-grants",
+      "https://openai.com/index/ai-native-company-workflows",
       "https://openai.com/index/ai-progress-and-recommendations",
       "https://openai.com/index/ai-safety-needs-social-scientists",
       "https://openai.com/index/altera",
@@ -120,6 +121,7 @@
       "https://openai.com/index/chatgpt-ads-expands-across-europe",
       "https://openai.com/index/chatgpt-agent-system-card",
       "https://openai.com/index/chatgpt-can-now-see-hear-and-speak",
+      "https://openai.com/index/chatgpt-connects-health-records-and-healthcare-sources",
       "https://openai.com/index/chatgpt-enterprise-spend-controls",
       "https://openai.com/index/chatgpt-for-academic-researchers",
       "https://openai.com/index/chatgpt-for-excel",
@@ -355,6 +357,7 @@
       "https://openai.com/index/generative-models",
       "https://openai.com/index/genmab",
       "https://openai.com/index/genspark",
+      "https://openai.com/index/gilbert-tobin",
       "https://openai.com/index/global-news-partnerships-le-monde-and-prisa-media",
       "https://openai.com/index/glow",
       "https://openai.com/index/gotta-learn-fast",
@@ -832,6 +835,7 @@
       "https://openai.com/index/partnering-with-codeai",
       "https://openai.com/index/partnership-with-american-journalism-project-to-support-local-news",
       "https://openai.com/index/patch-the-planet",
+      "https://openai.com/index/path-to-astra",
       "https://openai.com/index/people-first-ai-fund",
       "https://openai.com/index/people-first-ai-fund-grantees",
       "https://openai.com/index/personal-finance-chatgpt",
@@ -1141,7 +1145,6 @@
       "https://deepmind.google/blog/gemini-robotics-er-2-powering-robotics-with-video-understanding-task-orchestration-and-multi-robot-collaboration/",
       "https://deepmind.google/blog/gemma-4-byte-for-byte-the-most-capable-open-models/",
       "https://deepmind.google/blog/gemma-scope-2-helping-the-ai-safety-community-deepen-understanding-of-complex-language-model-behavior/",
-      "https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/",
       "https://deepmind.google/blog/google-deepmind-and-a24-announce-first-of-its-kind-research-partnership/",
       "https://deepmind.google/blog/google-deepmind-supports-us-department-of-energy-on-genesis/",
       "https://deepmind.google/blog/googles-year-in-review-8-areas-with-research-breakthroughs-in-2025/",
@@ -1150,6 +1153,7 @@
       "https://deepmind.google/blog/how-were-bringing-ai-image-verification-to-the-gemini-app/",
       "https://deepmind.google/blog/improved-gemini-audio-models-for-powerful-voice-experiences/",
       "https://deepmind.google/blog/intelligent-transcription-with-gemini-3-5-transcribe/",
+      "https://deepmind.google/blog/introducing-agentic-video-in-gemini/",
       "https://deepmind.google/blog/introducing-computer-use-in-gemini-3-5-flash/",
       "https://deepmind.google/blog/introducing-gemini-3-5-flash-cyber/",
       "https://deepmind.google/blog/introducing-gemini-3-6-flash-3-5-flash-lite-and-3-5-flash-cyber/",
@@ -1256,9 +1260,8 @@
     "anthropic": [
       "/news/announcing-our-updated-responsible-scaling-policy",
       "/news/claude-opus-5",
-      "/news/claude-sonnet-5",
       "/news/claude-text-watermark",
-      "/news/cognizant-anthropic",
+      "/news/enterprise-frontier-safeguards",
       "/news/expanding-support-for-scientists",
       "/news/improving-alignment-security-efforts",
       "/news/improving-fable-5-s-biology-safeguards",
@@ -1300,9 +1303,8 @@
       "/websites"
     ],
     "minimax": [
-      "/news/a-new-era-of-ai-filmmaking",
-      "/news/from-prompting-to-directing-hailuo-ai-cuhk",
       "/news/imagination-is-productivity",
+      "/news/minimax-ai-founder-day-at-gtc",
       "/news/minimax-announces-first-half-2026-financial-results-1787744160",
       "/news/minimax-at-harvard-xr-2026",
       "/news/minimax-at-humanx-2026",
@@ -1310,8 +1312,8 @@
       "/news/minimax-h3-open-source",
       "/news/minimax-m25",
       "/news/minimax-m27-en",
-      "/news/minimax-shanghai-international-film-festival",
-      "/news/minimax-speech-28"
+      "/news/minimax-speech-28",
+      "/news/minimax-x-agora-in-anime-japan"
     ],
     "qwen": [
       "Qwen-AgentWorld: Language World Models for General Agents",
