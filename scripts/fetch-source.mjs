@@ -93,6 +93,36 @@ const serialise = (rows) => rows.map((row) => JSON.stringify(row)).join("\n") + 
 const withdrawnFor = (batch) =>
   (loadAliasConfig().withdrawnRows ?? []).filter((entry) => entry.file === batch);
 
+// The fourth hatch, added 2026-09-04, and the narrowest of them.
+//
+// The rule above says a moved number is an integrity failure no written reason can excuse, and
+// that stays true as a default: a board that silently corrects a published score is the exact
+// thing this check exists to catch. But "no reason can excuse it" left the owner with only two
+// moves once it actually happened — leave the daily job permanently red, or downgrade the whole
+// source to `versioning: "live"` and lose the check on its other 24 columns. Both are worse than
+// the thing they answer.
+//
+// So: an acknowledgement that pins BOTH values. It excuses one restatement of one cell — this
+// archived value becoming that upstream value — and nothing else. If the same cell moves again to
+// a third value, `to` stops matching and the check fails exactly as it did before. That is the
+// property `versioning: "live"` cannot give: it excuses this change without excusing the next one.
+//
+// It differs from `withdrawnRows` in what happens to the row. A withdrawn row is KEPT (upstream
+// stopped publishing it and the archive is the only remaining record). A restated row is REPLACED
+// — the point of accepting a restatement is that upstream's new value is the one to hold, so the
+// normal write path takes it with no special handling.
+const restatedFor = (batch) =>
+  (loadAliasConfig().restatedRows ?? []).filter((entry) => entry.file === batch);
+
+// Both values pinned, and compared as strings so 45 and "45" match however the source serialises
+// them. Matching on the cell key alone would turn this into a standing licence for that cell.
+const isRestated = (row, from, to, entries) =>
+  entries.some((entry) =>
+    entry.modelRaw === row.model_raw &&
+    (entry.benchmark === undefined || entry.benchmark === row.benchmark) &&
+    String(entry.from) === String(from) &&
+    String(entry.to) === String(to));
+
 // Matched on the row, never on the diff key: `model_raw` can itself contain a slash (Vals publishes
 // `grok/grok-4.6`), so splitting the key would silently match the wrong thing.
 const isWithdrawn = (row, entries) =>
@@ -231,24 +261,36 @@ for (const fetcher of selected) {
   // Acknowledged withdrawals are separated from real ones here, not filtered out of the report:
   // an exclusion nobody can see is indistinguishable from a check that stopped looking.
   const acknowledged = withdrawnFor(fetcher.batch);
+  const restatements = restatedFor(fetcher.batch);
   const usedAcks = new Set();
 
   const changed = [];
   const gone = [];
   const withdrawn = [];
+  const restated = [];
   for (const [key, score] of stored) {
     if (!upstream.has(key)) {
       const row = storedRow.get(key);
       const ack = acknowledged.find((entry) => isWithdrawn(row, [entry]));
       if (ack) { withdrawn.push(key); usedAcks.add(ack); } else gone.push(key);
     }
-    else if (upstream.get(key) !== score) changed.push(`${key}: archived ${score} -> upstream ${upstream.get(key)}`);
+    else if (upstream.get(key) !== score) {
+      const row = storedRow.get(key);
+      const ack = restatements.find((entry) => isRestated(row, score, upstream.get(key), [entry]));
+      if (ack) {
+        restated.push(`${key}: archived ${score} -> upstream ${upstream.get(key)}`);
+        usedAcks.add(ack);
+      } else {
+        changed.push(`${key}: archived ${score} -> upstream ${upstream.get(key)}`);
+      }
+    }
   }
   const added = [...upstream.keys()].filter((key) => !stored.has(key));
   const differences = [
     ...changed.map((entry) => `changed  ${entry}`),
     ...gone.map((entry) => `removed  ${entry} (in the archive, absent upstream)`),
     ...withdrawn.map((entry) => `withdrawn ${entry} (acknowledged in withdrawnRows; kept in the archive)`),
+    ...restated.map((entry) => `restated ${entry} (acknowledged in restatedRows; upstream value accepted)`),
     ...added.map((entry) => `appeared ${entry} (upstream, missing from the archive)`),
   ];
 
@@ -259,6 +301,24 @@ for (const fetcher of selected) {
     if (!usedAcks.has(entry)) {
       console.log(`note: withdrawnRows entry ${fetcher.batch}/${entry.modelRaw} no longer matches any archived row — delete it.`);
     }
+  }
+  // A restatement acknowledgement stops matching the moment the archive is rewritten with the
+  // accepted value — there is no `changed` left for it to match. That is the entry doing its job,
+  // not going stale, so it must stay SILENT: the `withdrawnRows` note above fires on an entry that
+  // has become meaningless, and reusing that wording here would print a "delete it" line every
+  // morning for an acknowledgement that is correctly holding a decision on the record.
+  //
+  // What is worth a note is the third case: the cell now holds neither the value the entry came
+  // from nor the value it accepted, which means upstream moved AGAIN. The check has already failed
+  // on that (the new value is an unacknowledged `changed`), so this only names why.
+  for (const entry of restatements) {
+    if (usedAcks.has(entry)) continue;
+    const row = (archived ?? []).find((candidate) =>
+      candidate.model_raw === entry.modelRaw &&
+      (entry.benchmark === undefined || candidate.benchmark === entry.benchmark));
+    const held = row ? cellValue(row) : undefined;
+    if (row && String(held) === String(entry.to)) continue; // satisfied: the archive holds the accepted value
+    console.log(`note: restatedRows entry ${fetcher.batch}/${entry.modelRaw}/${entry.benchmark ?? "*"} matches nothing — the archive holds ${held ?? "no such row"}, not ${entry.from} or ${entry.to}. Upstream moved again, or the entry is obsolete.`);
   }
 
   // Reported for a pinned source and never failed on: a new release is new data, and the old

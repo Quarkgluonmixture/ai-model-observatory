@@ -5,7 +5,10 @@
 //
 // The alias config has escape hatches that only take effect with a written reason:
 // `acknowledgedDisagreements` (two sources really do measure different things),
-// `mergedInOneSource` (two published strings really are one model) and `withdrawnRows` (the source
+// `mergedInOneSource` (two published strings really are one model), `withdrawnRows` (the source
+// stopped publishing a row) and `restatedRows` (the source changed a published value and the owner
+// accepted it — added 2026-09-04, and the most load-bearing of the four: it is the only one that
+// silences the integrity check itself)
 // itself withdrew a row it had published). Each one is a judgement a person owes, so an unattended
 // merge must never carry one — that is the third of tier B's three conditions in
 // `docs/AGENT-OPERATIONS.md`.
@@ -26,7 +29,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 
-export const HATCHES = ["acknowledgedDisagreements", "mergedInOneSource", "withdrawnRows"];
+export const HATCHES = ["acknowledgedDisagreements", "mergedInOneSource", "withdrawnRows", "restatedRows"];
 const FILE = "data/model-aliases.json";
 
 /** Entry counts per hatch. A missing key is 0, not an error: a config may predate a hatch. */
@@ -48,7 +51,7 @@ if (process.argv.includes("--self-test")) {
     console.log(`${ok ? "ok   " : "FAIL "} ${label}${ok ? "" : ` — expected ${JSON.stringify(expected)}, got ${JSON.stringify(actual)}`}`);
     if (!ok) failed = 1;
   };
-  const c = (n) => ({ acknowledgedDisagreements: n, mergedInOneSource: n, withdrawnRows: n });
+  const c = (n) => Object.fromEntries(HATCHES.map((key) => [key, n]));
 
   check("no change is no growth", grown(c(2), c(2)), []);
   // The case the old grep missed, and the whole reason this file exists.
@@ -60,11 +63,11 @@ if (process.argv.includes("--self-test")) {
     [{ key: "acknowledgedDisagreements", before: 0, after: 1 }]);
   check("removing an exemption is not growth", grown(c(3), c(2)), []);
   check("a missing key counts as zero, not a crash", countHatches({}), c(0));
-  check("all three hatches are watched", HATCHES.length, 3);
+  check("every hatch is watched", HATCHES.length, 4);
   // Every hatch in the real config must be named here, or the gate is silently partial again.
   const live = JSON.parse(readFileSync(FILE, "utf8"));
   const unwatched = Object.keys(live).filter(
-    (k) => Array.isArray(live[k]) && /disagree|merged|withdrawn|exempt/i.test(k) && !HATCHES.includes(k),
+    (k) => Array.isArray(live[k]) && /disagree|merged|withdrawn|restated|exempt/i.test(k) && !HATCHES.includes(k),
   );
   check("no hatch-shaped key in the live config is unwatched", unwatched, []);
 

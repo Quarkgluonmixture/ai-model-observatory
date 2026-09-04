@@ -792,21 +792,33 @@ GA 的分落进 preview 记录,这条讲**翻过来之后**那个防线该怎么
 闸: 无 — 身份配在远端机器上,本仓库检查不到;能做的只有让检查**说出**它读到了什么
 (已做:多打的那一行),红不红由人看。
 
-### 54. 每日 drift job 从 2026-09-04 起**长期红**,这是已裁决状态 —— ⛔ 别去关 issue #122
-LiveBench 在冻结的 2026-06-25 版本下把 3 个 `nemotron` 的 mini-SWE-agent 分改高了。
-owner 当天裁决:**不管,「改了就改了」**。
+### 54. 「任何书面理由都不能赦免」这条默认,真撞上时会把你逼进两个更坏的选项
+2026-09-04。LiveBench 在冻结的 2026-06-25 版本下把 3 个 `nemotron` 的 mini-SWE-agent 分改高了
+(27.273→54.545 / 15→45 / 6.667→16.667)。`fetch-source.mjs` 当时明写着 *a moved number is an
+integrity failure **no written reason can excuse***(`withdrawnRows` 只赦免 vanish,永不赦免 change)。
 
-- ⛔⛔ **不要去关 #122**。关了明天的 job 会重新开一个,而**「开」这个动作会再推一次微信**
-  (`publish-integrity-issue.sh` 按状态变化报警,坑 **38**);**挂着不动**则是每天原地编辑 body,
-  **完全静默**。⇒ 关它 = 给自己每天订一条推送。
-- ⛔ **不要去造一个「接受上游改写」的口子**。`scripts/fetch-source.mjs` 明写着
-  *a moved number is an integrity failure no written reason can excuse* ——
-  `withdrawnRows` 只赦免 **vanish**,永不赦免 **change**,这是设计不是遗漏。
-- ✅ 裁决站得住的实测依据:`nemotron` **不在目录里**,那 3 格**一格都没进
-  `app/observations.generated.ts`** ⇒ 站上看不见,纯归档记账题
-  (复算 = `grep -c nemotron app/model-data.ts app/observations.generated.ts` → 0 0)。
-- ⇒ **这个 job 的「红」从今天起 = 「就是这一条」**。⚠ 代价说清楚:它**不再是一个可用的新信号** ——
-  下一次真的出别的 integrity 问题,你只会看到同一片红。要分辨得读 issue body 里的 cell 清单,
-  或看 `#122` 的编辑时间。可用性那一半已经在 09-04 拆走了(坑 **52**),所以这里只剩 integrity 一种成因。
-闸: 无 — 「这片红是已裁决的那条,还是新出的一条」机器分不了,因为两者走同一条 code path;
-能做的是把判据写在这里,并保证 issue body 每天带着当前 cell 清单(已如此)。
+那条默认**本身是对的**,但它只留下两条出路,两条都更坏:
+
+- **① 让每日 job 长期红。** 红一旦成为常态,这个 job 就**不再是一个可用的信号** —— 下次真出别的
+  integrity 问题,看到的还是同一片红。(这正是坑 **52** 刚刚为可用性拆掉的那个病。)
+- **② 把这个源降成 `versioning: "live"`。** 一行,但**整个 LiveBench 的完整性检查全没了** ——
+  24 个列,以后任何一次静默改分都被吞掉。为一格换掉一源。
+
+✅ **正解是第三条:一个把两端值都钉死的窄赦免**(`restatedRows`,与 `withdrawnRows` 同族,
+第四个 hatch,已接 `check-exemptions-untouched.mjs` ⇒ agent 写不了)。
+它赦免的是**这一次**「这个归档值 → 那个上游值」,**不是这一格**。
+⇒ 同一格再动到第三个值,`to` 对不上,照样红。**这正是 `versioning: "live"` 给不了的性质:
+赦免这一次而不赦免下一次。**
+
+- ⚠ 两个 hatch 对行的处置**相反**,别搞混:`withdrawnRows` 的行**保留**(上游不发了,归档是唯一
+  记录);`restatedRows` 的行**被替换**(接受重述的意思就是以上游新值为准,走正常写入路径)。
+- ⚠ 赦免生效后归档会被改写成新值 ⇒ 条目就**不再匹配任何 changed**。那是它**干完活**,不是过期,
+  所以必须**静默**(实测:满足后 `--check` 零 note)。⛔ 别照抄 `withdrawnRows` 那条
+  「no longer matches — delete it」的措辞,那会每天早上打印一次「删掉我」。
+- ⭐ 落地前逐段实测过:写入前 = 3 条 restated 被承认、退出码 0、无 integrity 失败;
+  写入后 = 归档持新值、`--check` 完全干净、零 note。
+- ⛔ 顺带一条仍然成立的:**别去关 integrity issue** —— 关了下次重开,而「开」这个动作会
+  **再推一次微信**(按状态变化报警,坑 **38**);挂着不动是静默原地编辑。
+闸: scripts/check-exemptions-untouched.mjs — 它挡住「agent 自己写一条赦免」(HATCHES 已含
+`restatedRows`,self-test 从 HATCHES 派生、不再手写条数);⚠ 挡不住的那半是**人**判错该不该赦免,
+那要靠条目里的 reason 和两端值被钉死这件事本身。
