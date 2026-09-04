@@ -9,5 +9,15 @@
     "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
   ],
   "note": "OpenAI's docs pages moved Luna to $0.20/$1.20 ($0.02 cache) and Terra to $2.00/$12.00 ($0.20 cache) between batch-06's 2026-07-31 read and today; Sol is unchanged at $5/$30/$0.50 and is archived here as the control that pins the scope of the cut. The adjudication that set the catalog to the old figures was 'the official page wins over AA' (batch-06 fieldSourcePolicy) — and the official page now prints exactly what AA has read all along: every AA row ever archived for these two models (batch-06 07-31, batch-08, batch-14) says $0.2/$1.2 and $2/$12, so the only $1/$6 and $2.5/$15 readings on file are batch-06's single official-page read from the day the pages were stale. Six supersededRows entries retire those three price fields per model, routed here; batch-06's rows stay untouched. No promotion language anywhere on the three pages — no end date, no 'introductory', no discount wording — so these are list prices and check:prices has nothing to gate. Two conditional tiers are deliberately NOT rows: prompts over 272K input tokens bill at 2x input / 1.5x output for the whole request, and cache writes bill at 1.25x the uncached input rate; the archived price_cache_per_m is the cache READ price the page prints in its pricing block.",
-  "priceTerms": []
+  "priceChangeSince": "2026-09-03: Sol's page moved. The same 'Text tokens / Per 1M tokens' block now reads $4 input / $20 output / $0.40 cached input, described verbatim as 'GPT-5.6 Sol costs $4 per million input tokens and $20 per million output tokens, a 20% reduction in input pricing and a 33% reduction in output pricing. GPT-5.6 Sol's promotional pricing is available at least through November 21, 2026.' That is a PROMOTION with a published window, not a list-price cut — the mirror of the Anthropic case in batch 41 — so the catalog keeps quoting the $5/$30 list price this batch archived, and the term below guards the day the window closes. This note is context, not evidence; the term's numbers came from a fresh read of the page on 2026-09-03, recorded in the term itself.",
+  "priceTerms": [
+    {
+      "modelId": "gpt-5.6-sol",
+      "listPrice": { "input": 5, "output": 30 },
+      "promotional": { "input": 4, "output": 20, "endsOn": "2026-11-21" },
+      "source": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "retrievedOn": "2026-09-03",
+      "reason": "OpenAI's own page calls the $4/$20 rate 'promotional pricing ... available at least through November 21, 2026' — a discount with a published window, so the catalog must keep the $5/$30 list price (check:prices fails if the promotional rate reaches it). The window's end is a floor ('at least through'), so when it lapses the page must be re-read: it may renew, or return to $5/$30, or cut the list price outright. 'at least' also means 2026-11-21 is the earliest end date, not a promise — the note in check:prices will fire only when the catalog stops quoting $5/$30 or the term stops matching reality, and the re-read decision is exactly what that note is for. AA has read $4/$20 since ~2026-08-31 (batch-14 refresh), which is how the 2026-09-02 gap report flagged this model: AA follows the charged rate, promotional or not."
+    }
+  ]
 }

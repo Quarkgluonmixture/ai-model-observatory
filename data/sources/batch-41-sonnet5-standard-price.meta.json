@@ -1,0 +1,18 @@
+{
+  "batch": "41 · Claude Sonnet 5 standard price, read 2026-09-03",
+  "retrievedDate": "2026-09-03",
+  "retrievedDateIsMeasurement": true,
+  "collectedWith": "curl of the platform pricing docs page (server-rendered HTML, no CDP needed); Sonnet 5 row parsed from the model pricing table, cross-checked against www.anthropic.com/pricing read the same day",
+  "filtered": false,
+  "schema": "Model operating parameters, NOT benchmark scores. Price evidence only: one row, quoting Claude Sonnet 5's per-1M token prices as standard (not promotional). (Schema prefix must stay 'Model operating parameters' — check-model-provenance.mjs only reads batches whose meta says so.)",
+  "sources": [
+    "https://platform.claude.com/docs/en/about-claude/pricing",
+    "https://www.anthropic.com/pricing"
+  ],
+  "note": "Anthropic cancelled the scheduled Sonnet 5 increase. The platform docs' own footnote reads verbatim: 'The $2/$10 per million input/output token pricing for Claude Sonnet 5, announced at launch as introductory pricing through August 31, 2026, is now the standard price. The previously scheduled increase to $3/$15 per million input/output tokens on September 1, 2026 will not occur.' So the number batch-10 archived as the promotion is now the list price — the catalog moves from $3/$15 to $2/$10, cache from the inferred tenth-of-input $0.30 to the published $0.20 (0.1x of $2). The gap report's 2026-09-02 'claude-sonnet-5 catalog $3/$15, AA $2/$10' was this event seen from the AA side: AA followed the vendor, the catalog's official row was frozen on the cancelled pre-promotion standard. Same shape as the Gemini cut (batch-37) and the OpenAI reprice (batch-34), direction reversed. Batch-10's $3/$15 row and batch-08's promotional $2/$10 row both stay in the archive untouched; supersededRows routes the provenance audit to this batch for the price fields. The marketing page (anthropic.com/pricing) prints the same $2/$10 in its Sonnet 5 section with no introductory language — two pages, one price.",
+  "quotingRule": "目录引用标准价 $2/$10,缓存读 $0.20(页面明写 0.1x 基准输入价;5m/1h 缓存写 $2.50/$4.00 是另一维度,不进目录字段)。Batch 处理 5 折($1/$5)是条件档位,记在 tiersNotArchived,不引用。",
+  "tiersNotArchived": {
+    "claude-sonnet-5": "Batch API 50% off: $1 input / $5 output per MTok (same table, 'Save 50% with batch processing'). Conditional tier, not quoted."
+  },
+  "priceTerms": []
+}
