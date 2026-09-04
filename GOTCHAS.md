@@ -791,3 +791,22 @@ GA 的分落进 preview 记录,这条讲**翻过来之后**那个防线该怎么
   而它的名字会让每个人以为它量的是这个。
 闸: 无 — 身份配在远端机器上,本仓库检查不到;能做的只有让检查**说出**它读到了什么
 (已做:多打的那一行),红不红由人看。
+
+### 54. 每日 drift job 从 2026-09-04 起**长期红**,这是已裁决状态 —— ⛔ 别去关 issue #122
+LiveBench 在冻结的 2026-06-25 版本下把 3 个 `nemotron` 的 mini-SWE-agent 分改高了。
+owner 当天裁决:**不管,「改了就改了」**。
+
+- ⛔⛔ **不要去关 #122**。关了明天的 job 会重新开一个,而**「开」这个动作会再推一次微信**
+  (`publish-integrity-issue.sh` 按状态变化报警,坑 **38**);**挂着不动**则是每天原地编辑 body,
+  **完全静默**。⇒ 关它 = 给自己每天订一条推送。
+- ⛔ **不要去造一个「接受上游改写」的口子**。`scripts/fetch-source.mjs` 明写着
+  *a moved number is an integrity failure no written reason can excuse* ——
+  `withdrawnRows` 只赦免 **vanish**,永不赦免 **change**,这是设计不是遗漏。
+- ✅ 裁决站得住的实测依据:`nemotron` **不在目录里**,那 3 格**一格都没进
+  `app/observations.generated.ts`** ⇒ 站上看不见,纯归档记账题
+  (复算 = `grep -c nemotron app/model-data.ts app/observations.generated.ts` → 0 0)。
+- ⇒ **这个 job 的「红」从今天起 = 「就是这一条」**。⚠ 代价说清楚:它**不再是一个可用的新信号** ——
+  下一次真的出别的 integrity 问题,你只会看到同一片红。要分辨得读 issue body 里的 cell 清单,
+  或看 `#122` 的编辑时间。可用性那一半已经在 09-04 拆走了(坑 **52**),所以这里只剩 integrity 一种成因。
+闸: 无 — 「这片红是已裁决的那条,还是新出的一条」机器分不了,因为两者走同一条 code path;
+能做的是把判据写在这里,并保证 issue body 每天带着当前 cell 清单(已如此)。
