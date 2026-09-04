@@ -26,8 +26,14 @@
 排行与雷达图纯派生(某轴凑够该轴 core 的 50%、最少 2 格就出数,`portfolioFloor`),
 **没有第二个开关**。出路是 `TODO.md` 里那条「最新发布」看板。
 
-⇒ **剩下真的要你定的都在 `TODO.md` 顶部那一节**,每条都写了它卡在哪个条件上。
-⛔ 那些不是漏做的自动化。
+**同日收尾**:三条积压的 PR 全部落地(#105 / #109 死路 verdict 入 §9;**#108 = CAIS HLE**,
+出题方自己的板按规则 3 取代 AA 镜像当 primary,**实测移动 15 个已发布数字 + 16 格证据等级**,
+覆盖率不变 67.1%、benchmark 源 932→948,详情 `LOG.md`)。⇒ **开着的 PR 清零。**
+⭐ #108 是 tier-B 条件 2 的**唯一一次真实触发** —— 它自己在 body 里点名了是哪一条不满足
+⇒ **闸门形状是对的,坏的只是措辞。**
+
+⇒ **剩下真的要你定的都在 `TODO.md` 顶部那一节**(现在只剩 issue #122 那条 tier-C + 两条小的
++「最新发布」看板),每条都写了它卡在哪个条件上。⛔ 那些不是漏做的自动化。
 
 ⛔⛔ 仓库 2026-08-26 已改名 `ai-model-observatory` → `quarkspace`;**永远不要再建旧名的仓库**,
 `…-lhi0hg2y.edgeone.cool` 是 EdgeOne 项目名派生的域名、**不许顺手替换**。全文 → 坑 **49**。
@@ -56,8 +62,8 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2160 rows · 1391 / 2088 cells（66.6% cell coverage）** —— 8-26 实测（8-20 是 2155 / 1390 / 66.6%），复算 = `npm run check:data` 末行 |
-| 源分类 | benchmark 921 / independent 1044 / vendor 195（8-26 实测；较 8-20 +0 / +5 / +0）|
+| 观测 | **2221 rows · 1402 / 2088 cells（67.1% cell coverage）** —— 2026-09-04 实测（8-26 是 2160 / 1391 / 66.6%），复算 = `npm run check:data` 末行 |
+| 源分类 | benchmark **948** / independent 1054 / vendor 219（2026-09-04 实测；benchmark 那一格 +16 全部来自 CAIS HLE batch-38）|
 | 溯源 | **319 / 322**（99%；3 格有值无据 = `deepseek-v4-flash` 两格 + `deepseek-v4-pro` 的 `open`，都在 `TODO.md`）⚠ 分母是**解析得到的行** |
 | 归档 | **34 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-20 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ 只增不减地长过两次（batch 35 之后至少 +76；8-19 又加进 V4 Pro preview 的全部 132 行）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法或加法 |

@@ -674,3 +674,24 @@ streak 存在 issue body 的 HTML 注释里 —— 那是这个 job 唯一不用
 `TODO.md`,迁移时逐条验过 —— 原本 7 条**只剩 2 条**成立,⇒ **搬待办前先验它还成不成立**。
 8-19 那一整轮(`deepseek-v4-pro` 原地翻转成 GA、守卫从日期换成串、batch 35 的 GA 列采纳)
 已全部落地,详情在本文件 2026-08-19 三条 + 坑 40/41/42/43/44/45,⛔ 别重新论证。
+
+## [2026-09-04] CAIS HLE 落地(#108):出题方自己的读数取代第三方镜像当 primary `#ship` `#decision` `#measure`
+
+owner 裁决「按推荐修、自动合」后合的。batch-38 = CAIS AI Dashboard,**HLE 的出题方自己的板**。
+
+`#measure` **实测移动 15 个已发布数字**(不是 PR body 写的 18 —— 那是 2026-08-25 相对当时 main 的
+计数,10 天里 main 动过,引用前重算了),外加 **16 格的证据等级从 `independent` 变成
+`benchmark+independent``。⭐ **后者才是机制**:分数没动,但格子里谁当 primary 变了 ——
+规则 3(benchmark-native > independent)本来就该让出题方的读数压过 AA 的镜像。
+典型移动:Opus 5 54.9→51 · Fable 5 55.5→52.72 · Terra 42.9→35.88 · Muse Spark 1.1 46.2→**49.44↑**
+(方向不是一边倒,所以不是系统性偏移)。合并后实测 **2221 obs / 1402 格 / 67.1%**
+(benchmark 932→**948**,independent 与 vendor 未变)—— 覆盖率没变,变的是同一格里谁说话。
+
+⚠ 合之前解过两次冲突,两次的解法都值得记:
+- `data/model-aliases.json` —— 两边都只是往同一个数组**追加条目**,保留双方即可(HEAD 的 CAIS
+  五条 + main 的 batch-38/39 file-scoped 拒绝),解完 `json.load` 验一遍再走。
+- `app/observations.generated.ts` —— ⛔ **不要手工解**,它是生成物:取任一侧再 `npm run ingest` 重跑。
+  (硬规则 3 的直接推论,冲突时最容易忘。)
+
+⇒ 这条也是 tier-B 条件 2 的**唯一一次真实触发**:#105/#109 是被旧措辞误挡的,#108 是真的该停,
+而它自己在 body 里点名了是哪一条不满足。⇒ **闸门的形状是对的,坏的只是措辞。**
