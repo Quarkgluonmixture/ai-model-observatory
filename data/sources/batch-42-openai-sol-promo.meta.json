@@ -1,0 +1,27 @@
+{
+  "batch": "42 · OpenAI GPT-5.6 Sol promotional pricing declared, read 2026-09-04",
+  "retrievedDate": "2026-09-04",
+  "collectedWith": "web_extract of https://platform.openai.com/docs/pricing (pricing page, Standard table + promotional sentence); no CDP needed",
+  "schema": "Price terms only. This batch carries NO .jsonl, deliberately — see rowsNotArchived.",
+  "sources": [
+    "https://platform.openai.com/docs/pricing"
+  ],
+  "rowsNotArchived": "The pricing page's Standard table prints gpt-5.6-sol at $4.00/$20.00 (cache read $0.40, cache write $5.00) short-context, $8/$30 long-context — but the page itself labels this a promotion ('GPT-5.6 Sol's promotional pricing is available at least through November 21, 2026'). A promotional rate must never become a catalog number (check:prices exists for this), and archiving it as a price row would let it win the first-batch-wins slot against batch-34's official $5/$30 control read. So no row is archived; the term is declared in priceTerms and the catalog keeps quoting the $5/$30 list price until the promotion's status resolves.",
+  "note": "Price-drift probe (report:gaps 2026-09-04) flagged gpt-5.6-sol: catalog $5/$30 vs AA $4/$20. AA was reading the promotional rate. Batch-34 (2026-08-17) archived Sol at $5/$30 explicitly as the control of that day's Luna/Terra cut and found no promotion language then; the promotional sentence and the $4/$20 Standard-table figure appeared on the page between 2026-08-17 and 2026-09-04. The catalog keeps the list price; the promotion is a real published fact and is archived here as a term.",
+  "priceTerms": [
+    {
+      "modelId": "gpt-5.6-sol",
+      "listPrice": {
+        "input": 5,
+        "output": 30
+      },
+      "promotional": {
+        "input": 4,
+        "output": 20,
+        "endsOn": "2026-11-21"
+      },
+      "source": "https://platform.openai.com/docs/pricing",
+      "reason": "Vendor page's own words: 'GPT-5.6 Sol's promotional pricing is available at least through November 21, 2026.' 'At least' means the end date is a floor, not a promise — re-read the page on/after 2026-11-21 before treating $4/$20 as expired. The promotion is archived because it is a real published fact; it must never become the catalog number. npm run check:prices fails if it does."
+    }
+  ]
+}

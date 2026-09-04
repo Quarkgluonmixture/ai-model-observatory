@@ -176,6 +176,64 @@ const RELEASES = {
       "Agents' Last Exam": { id: "ale", version: "ALE-V1", tools: true },
     },
   },
+  qwen37plus: {
+    label: "Qwen3.7-Plus release",
+    maker: "Alibaba",
+    // Discovered 2026-08-26 by direct URL probing: the qwen.ai/research index only lists five
+    // cards and has rotated every older post off, so the release probe cannot see this one —
+    // it exists, it renders, and it carries the full two-table benchmark grid. The index card
+    // rotation means any pre-3.8 Qwen post has to be reached at its blog?id= URL directly.
+    url: "https://qwen.ai/blog?id=qwen3.7-plus",
+    batch: "batch-38-qwen37plus-release",
+    batchLabel: "38 · Qwen3.7-Plus release tables",
+    // The page prints its own date: 「2026/06/01 · 44 分钟 · 8818 词」.
+    published: "2026-06-01",
+    noteName: "Qwen3.7-Plus",
+    keep: "Qwen3.7-Plus",
+    rowNote:
+      "厂商发布材料:harness 与 effort 只在页脚注层面声明、不落到行上(脚注原文在批次 meta 里)," +
+      "摊到具体行是判断不是抄录,行上记 null;evaluation_date 记的是发布日",
+    adoption:
+      "页面客户端渲染,采集脚本用 CDP 驱动无头 Chrome,等应用画完再读表,因此这是可复跑的抓取而不是眼抄。" +
+      "⚠ 与 batch 17/32 不同,这一页**在脚注里给了 harness 与 effort 信息**:Terminal 行声明 Harbor/Terminus-2" +
+      "(5h 超时、12 CPU/24 GB RAM、temp=1.0、top_p=0.95、top_k=20、max_tokens=80K、256K ctx、5 次平均、" +
+      "每轮前置 <think> token);SWE 系列声明「Internal agent scaffold (bash + file-edit tools)」;" +
+      "Reasoning 场景给出推荐系统提示「Reasoning effort is set to xhigh」。三者都不说**哪几行**适用," +
+      "所以行上仍记 harness/effort 为 null,原文留在这里。表里的竞品列一并归档为证据," +
+      "但只有 Qwen3.7-Plus 会被 alias 采纳;「Qwen3.6-Plus」有全局 alias,这里的 file-scoped 拒收是承重的。" +
+      "双数字格取第一个数为指标、第二个进 note。未映射的标签记在 model-aliases.json 的 droppedBenchmarks 里," +
+      "免得下一代发布时重新推导一遍。",
+    extraNote:
+      "交叉验证(坑 33,采表前逐格对过目录现值):gpqa 90.3 vs AA 90.0;HLE 34.7 vs AA 35.6;" +
+      "IFBench 79.1 vs AA 77.96;SciCode 51.3 vs AA 45.5(12.7%,闸门内)。**身份用竞品列的数字定,不靠串**:" +
+      "IMOAnswerBench 的 GLM-5.1 83.8、DeepSeek-V4-Pro 89.8 与 batch 32 逐位相同;" +
+      "Apex 的 DeepSeek-V4-Pro 38.3 与目录既有 Epoch 读数逐位相同 —— 两个标签都以此确认是目录同名同口径的列。" +
+      "⚠ 「MRCR-v2 128k」:页面只写 v2@128K,**没写针数**;按 MRCR v2 的 8-needle 配置采" +
+      "(Qwen 自己在 3.8 发布页把 v2 写作「MRCR v2 256K (8-needle)」,Google 3.6 发布表的 128K 平均分也装在同一列)," +
+      "context_length 记 128K,行 note 原样保留页面标签;若 owner 认为针数存疑,翻掉这一条 alias 即可。" +
+      "⚠ 「CharXiv(RQ)」双数字口径与 3.8 那篇**不同**:页面自注「BabyVision and CharXiv(RQ): Scores are " +
+      "reported as 『with CI / without CI』」—— 第一个数是 with CI,与 3.8 页的「RQ + descriptive」不是一个东西," +
+      "note 里带全两个数。⚠ 拒收五个标签,理由在 droppedBenchmarks:SWE-Pro(脚注明说在**修正过的题集**上重测了" +
+      "所有基线,且用内部 scaffold,与官方 Public 板不是同一实例)、CritPT(6.0 会落进 Epoch 9.14 的同 null-effort 桶、" +
+      "分歧 34%,厂商读数低于独立榜时按源优先级留在档里)、MCP-Atlas(脚注明说 Public set)、" +
+      "SWE-Verified(内部 scaffold 读数,DSv4 80.6 vs Vals 96.4 差 ~20%,是 scaffold 差异不是模型差异)、" +
+      "MMLU-Pro(是 MMLU-Pro,不是目录 mmmu 列的 MMMU-Pro,一字之差的两个基准)。" +
+      "「Terminal Bench 2.0-Terminus」走 terminal|2.0,由 benchmarkSplits 路由到 terminal-20 legacy 列(2.0 与 2.1 " +
+      "是不同任务集);「IFEval」不是目录的 ifbench(IFBench)列,同音异基准;「Skillsbench」脚注明说剔掉 9 个" +
+      "外部 API 任务后跑 78 个,不是 Vals 那一列的口径。",
+    carried: {
+      "Terminal Bench 2.0-Terminus": { id: "terminal", version: "2.0", tools: true },
+      "GPQA Diamond": { id: "gpqa", version: "Diamond", tools: false },
+      HLE: { id: "hle-no-tools", version: "Full", tools: false },
+      IMOAnswerBench: { id: "imo-answer", version: "2026", tools: false },
+      Apex: { id: "apex", version: "2026", tools: true },
+      IFBench: { id: "ifbench", version: "2026", tools: false },
+      "MRCR-v2 128k": { id: "mrcr", version: "v2 · 8 needle", tools: false, contextLength: "128K" },
+      SciCode: { id: "scicode", version: "2026", tools: false },
+      "MMMU-Pro": { id: "mmmu", version: "Pro", tools: false },
+      "CharXiv(RQ)": { id: "charxiv", version: "RQ", tools: false, dual: "without-CI score(页面口径 with CI / without CI)" },
+    },
+  },
   glm53: {
     label: "GLM-5.3 release",
     maker: "Z.AI",
@@ -227,6 +285,80 @@ const RELEASES = {
       "Toolathlon Verified": { id: "toolathlon", version: "Verified", tools: true },
       "HLE w/ Tools": { id: "hle-tools", version: "Full", tools: true },
       "GDPval-AA v2": { id: "gdpval", version: "v2", tools: true },
+    },
+  },
+  kimik3: {
+    label: "Kimi K3 release",
+    maker: "Moonshot AI",
+    // The GitHub README is the maker's published table and it is static server-rendered markdown —
+    // no CDP wait needed, though openBrowser's evaluate works on it the same way. The kimi.com blog
+    // post carries the same table; the README is the one that also survives as a git history.
+    // NOT the HF model card: its benchmark table is a JPEG (figures/benchmark.jpeg), and
+    // .eval_results/minimax-m3.yaml-style structured files do not exist for K3 (checked 2026-08-30:
+    // the card has eval-results dataset metadata, not a benchmark table).
+    url: "https://github.com/MoonshotAI/Kimi-K3",
+    batch: "batch-39-kimik3-release",
+    batchLabel: "39 · Kimi K3 release table",
+    published: "2026-07-23",
+    noteName: "Kimi K3",
+    keep: "Kimi K3 (max)",
+    effort: "max",
+    // This page states harnesses and effort — the first release table this catalog captured that
+    // does. So rowNote says the opposite of the house default, and the row builder below uses
+    // `harnessByLabel` to put them on the rows instead of null.
+    rowNote:
+      "厂商发布材料:脚注声明所有 Kimi K3 结果 reasoning effort=max、temperature=1.0;" +
+      "带工具任务用 Kimi Code 脚手架(具体到行,见脚注 2/3);evaluation_date 记的是发布日",
+    adoption:
+      "GitHub README 是静态服务端渲染 markdown,采集脚本读表仍走 CDP 但无需等应用画完,因此这是可复跑的抓取。" +
+      "⚠ 与此前所有 release capture 不同,这张表**在脚注里声明了 harness 与 effort**,并具体到行组:" +
+      "Kimi K3 自己列全部 effort=max;DeepSWE/Terminal/ProgramBench/SWE-Marathon/PostTrainBench 用 Kimi Code;" +
+      "所以本批采纳行的 harness/effort 不再记 null(行生成器为此加了 carried.harness 与 release.effort)。" +
+      "**只采纳 Kimi K3 (max) 自己列里 Moonshot 自己测的 13 个标签**(HLE-Full 一行拆两列,共 14 行);" +
+      "五个竞品列 file-scoped 拒收(与 batch 17/32/38 一致)。**八个标签虽然目录有列、仍然拒收**,理由分三種,记在 extraNote:" +
+      "六个是脚注明说的**转引**(cited from AA/官方榜 as of July 23 —— 往 Exact 的原生行旁边放一条四舍五入的厂商孪生," +
+      "正是 supersededRows 机制要防的「同一测量读两遍」);一个是 **split 不匹配**;一个是**改过的题集**。" +
+      "**双数字格**:页面自注 MMMU-Pro/CharXiv(MathVision/ZeroBench/HLE 同)每格报「无工具 / 有工具」两数," +
+      "第一个数进主列,第二个数只进 note(目录没有这些基准的 with-tools 列);" +
+      "HLE-Full 例外:它的两个数**正好是目录两列**(hle-no-tools/hle-tools),按 dualColumn 拆行。",
+    extraNote:
+      "交叉验证(坑 33,采表前逐格对过目录现值):gpqa 93.5 与 AA 既有读数一致;ale 28.3 = 官方榜 28.29 的四舍五入;" +
+      "gdpval 1686 vs AA 活 Elo 1668 属正常漂移;toolathlon 76.5 vs 官方 76.54 同 —— 这两组近恒等正是脚注「cited from」的指纹," +
+      "所以那两行按转拒。⚠ deepswe 67.5 是 Kimi Code 脚手架的自测,官方榜同模型 mini-SWE-agent 67.3/另列 68.5 —— " +
+      "多 harness 同格是设计内多行,主显仍 benchmark 原生。⚠ frontierswe 81.2 脚注明说 Dominance as of July 16," +
+      "与目录列 2026-07 口径一致(batch 36 同判)。⚠ PostTrainBench 36.6:官方 Harbor 实现、H20 而非 H100、三次平均 —— " +
+      "harness 与题集都是官方的,硬件偏差留在本 note。⚠ BrowseComp 91.2 带 300K context-compaction 策略," +
+      "全 1M 无管理时 90.4(脚注原文)。⚠ SWE-Marathon 拒收:脚注明说基于官方任务的 **H20-calibrated 分支**、在最终 v1.1 之前," +
+      "Docker 镜像/性能门槛/参考 oracle 都为 H20 重校过 —— 修正过的题集不是官方 v1.1 实例(batch 38 拒 SWE-Pro 同判)," +
+      "且 droppedBenchmarks 是全局标签机制、会误杀 batch 32 的 GLM 行,所以按 batch 35 先例记在这里。" +
+      "⚠ MCP-Atlas 拒收:脚注明说 500-task public subset、100-turn、Gemini 3.1 Pro 裁判,与官方 1,000-task 全集不是同一实例" +
+      "(batch 38 拒「MCP-Atlas Public Set」同判;官方 82.3 行已在格)。⚠ 六个转引标签拒收:CritPt/AA-LCR/SciCode(引 AA)、" +
+      "GDPval-AA/APEX(引 AA 与 APEX 榜)、Agents' Last Exam(引官方榜)—— 目录已持这些榜的原生行," +
+      "厂商表里的四舍五入副本不添信息。⚠ 双数字口径:MMMU-Pro/CharXiv 每格「without / with tool augmentation」," +
+      "与 Qwen3.8 页同形,第一个数入列。其余无列标签(DeepSearchQA/ResearchRubrics/MCPMark/JobBench/AA-Briefcase/" +
+      "OfficeQA Pro/SpreadsheetBench 2/SaaS-Bench/Harvey Lab-AA/CorpFin/Finance Agent/Legal Research/WorldVQA/" +
+      "PerceptionBench/Video-MME/MMVU/BabyVision/MathVision/ZeroBench/Kimi Code Bench 2.0/MLS-Bench-Lite/OSWorld-Verified)" +
+      "照常留档;Vals 系五条脚注明说转引 Vals AI,τ³/Harvey 引 AA,同转引理由。",
+
+    carried: {
+      "GPQA Diamond": { id: "gpqa", version: "Diamond", tools: false },
+      "HLE-Full": {
+        id: "hle-no-tools",
+        version: "Full",
+        tools: false,
+        dualColumn: { id: "hle-tools", version: "Full", tools: true, harness: "Kimi Code" },
+      },
+      DeepSWE: { id: "deepswe", version: "v1.1", tools: true, harness: "Kimi Code" },
+      ProgramBench: { id: "program", version: "2026", tools: true, harness: "Kimi Code" },
+      "Terminal-Bench 2.1": { id: "terminal", version: "2.1", tools: true, harness: "Kimi Code" },
+      FrontierSWE: { id: "frontierswe", version: "2026-07", tools: true, harness: "Kimi Code" },
+      PostTrainBench: { id: "posttrain", version: "v1.1", tools: true, harness: "Kimi Code" },
+      BrowseComp: { id: "browsecomp", version: "2026", tools: true },
+      "Toolathlon-Verified": { id: "toolathlon", version: "Verified", tools: true },
+      "OSWorld 2.0": { id: "osworld2", version: "2.0", tools: true },
+      OmniDocBench: { id: "omnidoc", version: "1.5", tools: false },
+      "MMMU-Pro": { id: "mmmu", version: "Pro", tools: false, dual: "with-python score(页面口径 without / with)" },
+      "CharXiv (RQ)": { id: "charxiv", version: "RQ", tools: false, dual: "with-python score(页面口径 without / with)" },
     },
   },
 };
@@ -310,8 +442,8 @@ for (const table of tables) {
         score: value,
         // Some cells are Elo-like rather than percentages (Qwen's QwenReactBench prints 1694).
         unit: value > 200 ? "Elo" : "%",
-        harness: null,
-        reasoning_effort: null,
+        harness: column?.harness ?? null,
+        reasoning_effort: release.effort ?? null,
         tools_enabled: column ? column.tools : null,
         context_length: column?.contextLength ?? null,
         evaluation_date: release.published,

@@ -71,7 +71,7 @@ if (!repo) {
 // still runs on a machine that has no gh credentials — which is exactly the machine most likely to
 // be the one that is broken.
 const api = async (path) => {
-  const headers = { accept: "application/vnd.github+json", "user-agent": "ai-model-observatory-heartbeat" };
+  const headers = { accept: "application/vnd.github+json", "user-agent": "quarkspace-heartbeat" };
   const token = process.env.GH_TOKEN ?? process.env.GITHUB_TOKEN;
   if (token) headers.authorization = `Bearer ${token}`;
   const response = await fetch(`https://api.github.com/repos/${repo}${path}`, { headers });

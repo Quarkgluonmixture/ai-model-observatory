@@ -32,9 +32,20 @@ export const deepswe = {
     // `generated_at` moves every time the artifact is rebuilt, whether or not a number changed,
     // so it must not reach a row: it would make every re-fetch look like new data. The
     // newest job's finish date only moves when results actually do.
+    //
+    // Since 2026-08-26 DataCurve publishes `finished_at: null` for a job that has not logged a
+    // finish, while still naming it in `latest_job.name` with its own `YYYYMMDD-` prefix — the
+    // same date the finish stamp would carry. Falling back to the name's date keeps rows datable
+    // without touching `generated_at`; the guard still throws when neither is present, because a
+    // row with no date at all would date every cell to the fetch. Measured: job
+    // `20260825-deep-swe-glm-5-3-flash` sat `finished_at: null` from the 08-26 rebuild onward and
+    // turned the daily drift job red twice for an availability reason no integrity check should
+    // fail on.
     const finished = payload.latest_job?.finished_at;
-    if (!finished) throw new Error("the artifact no longer names a latest job to date the rows");
-    const evaluationDate = finished.slice(0, 10);
+    const namedDate = payload.latest_job?.name?.match(/^(\d{4})(\d{2})(\d{2})-/);
+    const evaluationDate = finished?.slice(0, 10)
+      ?? (namedDate ? `${namedDate[1]}-${namedDate[2]}-${namedDate[3]}` : null);
+    if (!evaluationDate) throw new Error("the artifact no longer names a latest job to date the rows");
 
     const rows = payload.rows
       .filter((row) => row.model && Number.isFinite(row.pass_at_1))

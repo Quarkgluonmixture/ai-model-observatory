@@ -75,7 +75,7 @@ if (!configured) {
 const base = configured.replace(/\/+$/, "");
 
 const fetchText = async (url) => {
-  const response = await fetch(url, { headers: { "User-Agent": "ai-model-observatory deployment check" } });
+  const response = await fetch(url, { headers: { "User-Agent": "quarkspace deployment check" } });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText} — ${url}`);
   return response.text();
 };

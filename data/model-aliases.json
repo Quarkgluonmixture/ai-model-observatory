@@ -2167,6 +2167,96 @@
       "file": "batch-33-deepseek-peak-pricing",
       "modelId": "deepseek-v4-pro",
       "reason": "The pricing page pins its own column headers: the MODEL VERSION row reads `DeepSeek-V4-Flash-0731 | DeepSeek-V4-Pro-0813`, so the bare column name in this batch means the GA in the source's own words (batch 33's meta records the sentence verbatim). This is the row that backs the record's peak list price of $1.32/$3.96 with cache-hit $0.044, archived on the effective day 2026-08-16 and deliberately left unmapped until the record's identity was settled. Settled 2026-08-19; this entry is what the batch-31 price term meant by 'update the record, then retire this term'."
+    },
+    {
+      "modelRaw": "Qwen3.7-Plus",
+      "effort": "*",
+      "modelId": "qwen3.7-plus",
+      "reason": "Batch 38 is the model's own release page. Unlike batch 17/32, only Qwen3.7-Plus's own column is adopted from this table; its competitor columns are refused below, file-scoped. Identity was not taken on trust from the string: the page's competitor columns carry GLM-5.1 Thinking IMOAnswerBench 83.8 and DeepSeek-V4-Pro Max IMOAnswerBench 89.8, digit-identical to batch 32, and DSv4-Pro Apex 38.3, digit-identical to the existing Epoch reading - confirming the benchmark columns are the catalog's named boards at the same口径. Case-insensitive orphan guard: qwen3.7-plus alias exists in lower case from other batches; without this entry the row is silently dropped."
+    },
+    {
+      "modelRaw": "DeepSeek-V4-Pro Max",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GLM-5.1 Thinking",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT-5.4 (xhigh)",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Gemini-3.1 Pro",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "K2.6 Thinking",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Opus-4.6 Max",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Qwen3.6-Plus",
+      "effort": "*",
+      "file": "batch-38-qwen37plus-release",
+      "modelId": null,
+      "reason": "Batch 38 is Qwen's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no harness, no reasoning effort and no benchmark version, and source precedence puts it below every board that does. Several of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Claude Fable 5 (max, w/ fallback)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT-5.6 Sol (max)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "Claude Opus 4.8 (max)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GPT-5.5 (xhigh)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
+    },
+    {
+      "modelRaw": "GLM-5.2 (max)",
+      "effort": "*",
+      "file": "batch-39-kimik3-release",
+      "modelId": null,
+      "reason": "Batch 39 is Moonshot's own release table and it prints a column per competitor. Those numbers are archived as evidence but must not be ingested: a maker publishing a rival's score states no benchmark version for it (Kimi's footnotes describe only Kimi K3's own setup), and source precedence puts it below every board that does. Four of these strings resolve globally from other batches, so the refusal has to be scoped to this file rather than expressed by leaving them out."
     }
   ],
   "benchmarkSplits": [
@@ -2451,6 +2541,16 @@
     {
       "benchmark": "Agents' Last Exam ALE-CLI",
       "reason": "The CLI track of Agents' Last Exam, not the full ALE the ale column holds. On Z.AI's GLM-5.3 release table (batch 36) Qwen3.8-Max 27.0 matches the official board's 26.97, but GPT-5.6 Sol 28.6 vs official 30.59 and GLM-5.2 23.8 vs official 20.39 do not -- same name, different split, the OSWorld-Verified shape. A single corroborating cell is not adoption evidence when two others contradict. If ALE ever publishes a separate CLI leaderboard worth a column, lift this entry first."
+    },
+    {
+      "benchmarks": [
+        "SWE-Pro",
+        "CritPT",
+        "MCP-Atlas",
+        "SWE-Verified",
+        "MMLU-Pro"
+      ],
+      "reason": "Batch 38 (Qwen3.7-Plus release) 的五个拒收标签,理由分五类,写在这里免得下一代发布时重新推导。(1) SWE-Pro:脚注明说在修正过的题集上重测了所有基线,且用内部 scaffold,与官方 Public 板不是同一实例。(2) CritPT:6.0 会落进 Epoch 9.14 的同 null-effort 桶,分歧 34%,厂商读数低于独立榜时按源优先级留在档里。(3) MCP-Atlas:脚注明说 Public set。(4) SWE-Verified:内部 scaffold 读数,DSv4 80.6 vs Vals 96.4 差约 20%,是 scaffold 差异不是模型差异。(5) MMLU-Pro:是 MMLU-Pro,不是目录 mmmu 列的 MMMU-Pro,一字之差的两个基准。这五个标签在整个档案里只出现在 batch-38,全局拒收无副作用(已验证)。"
     }
   ],
   "versionFallbacks": [
@@ -2822,6 +2922,90 @@
       "field": "price_cache_per_m",
       "supersededBy": "batch-34-openai-repricing",
       "reason": "Batch 06's official-page read froze $0.25/M cache read on 2026-07-31; OpenAI's docs pages were repriced and batch 34 reads the same pages on 2026-08-17 at $0.20/M cache read. Every AA row ever archived (batch-06, batch-08, batch-14) already read the new figure, so the catalog's old number rested on the single official read from the day the pages were stale. Both rows stay in the archive; this entry routes the provenance check to batch 34 for this field. Scoped to modelRaw+field because batch 06's row also carries context and Elo the reprice does not touch -- only the price fields are superseded, not the row."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Sol",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Sol's speed (64.9) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Sol",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Sol's latency (149.14) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Terra's speed (131.8) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.6 Terra",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.6 Terra's latency (198.08) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.5",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.5's speed (64.6) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "GPT-5.5",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed GPT-5.5's latency (99.32) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Grok 4.5",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Grok 4.5's speed (57.9) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Grok 4.5",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Grok 4.5's latency (8.62) from AA's model page in mid-August; batch 14's same-effort API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Qwen3.7 Max",
+      "field": "output_tokens_per_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Qwen3.7 Max's speed (199.6) from AA's model page in mid-August; batch 14's API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-08-operating",
+      "modelRaw": "Qwen3.7 Max",
+      "field": "latency_first_chunk_s",
+      "supersededBy": "batch-14-aa-parameters",
+      "reason": "Batch 08 hand-transcribed Qwen3.7 Max's latency (2.45) from AA's model page in mid-August; batch 14's API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-10-standard-pricing",
+      "modelRaw": "Claude Sonnet 5",
+      "field": "price_input_per_m",
+      "reason": "Batch-10's $3 row archived the standard rate the vendor PROMISED would apply after 2026-08-31 ('standard input/output thereafter $3/$15 per M', verbatim in the row note). The vendor never applied it: the official docs table has printed $2/$10 as the standing rate since (batch-41, read 2026-09-04). Field-level supersession routes the price provenance to the live official reading; batch-10's row stays in the archive untouched.",
+      "supersededBy": "batch-41-anthropic-sonnet5-list-price"
+    },
+    {
+      "file": "batch-10-standard-pricing",
+      "modelRaw": "Claude Sonnet 5",
+      "field": "price_output_per_m",
+      "reason": "Same as price_input_per_m: the promised $3/$15 standard rate never came into force; batch-41's official docs read ($2/$10) is the list price.",
+      "supersededBy": "batch-41-anthropic-sonnet5-list-price"
     }
   ],
   "withdrawnRows": [
