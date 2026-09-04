@@ -9,10 +9,19 @@
 # fetch by hand. The key is already a repository secret. So this runs the same fetch here, on
 # request, and opens a pull request with it.
 #
-# It does not commit to main and it does not fail on a red `check:models`. A catalog value that no
-# longer matches AA is the expected outcome of a re-measure, and reconciling it — deciding whether
-# the catalog or the source is stale — is the reviewer's job, which is why the check output is
-# pasted into the pull request body rather than used as a gate.
+# Changed 2026-09-04: it still opens the pull request, and now it merges it too when nothing about
+# the result needs a person.
+#
+# What used to sit here was "reconciling a red `check:models` — deciding whether the catalog or the
+# source is stale — is the reviewer's job". That was true of the decision and false of the work.
+# The decision had already been taken, twice, by the same argument each time (PR #114, PR #121):
+# for `speed` and `latency`, the archive row was written by a script from the source minutes
+# earlier and the catalog is a copy of an older run, so the catalog is the stale side by
+# construction. What the reviewer was actually doing was typing twenty numbers across.
+#
+# So `scripts/reconcile-aa.mjs` types them, refuses every other field, and `check:models` becomes
+# the gate it was always shaped like. A red one now means the reconciler refused something, and a
+# refusal is the request for a person — the only one on this path.
 name: Refresh Artificial Analysis
 
 on:
@@ -67,25 +76,124 @@ jobs:
             echo "unchanged=1" >> "$GITHUB_OUTPUT"
           fi
 
-      # Reported, never gated. check:models comparing the catalog against a just-re-measured AA
-      # is exactly the conversation this pull request exists to start.
+      # The step that used to be a person editing app/model-data.ts by hand, twice, with the same
+      # argument each time. A re-measured `speed` or `latency` is copied into the catalog record
+      # that quotes it; every other kind of disagreement is refused and left for a human, and one
+      # refusal stops the whole write. The reasoning, and why the line sits between `latency` and
+      # `intelligence`, is in the script's header.
+      - name: Reconcile the catalog with the re-measured archive
+        if: steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1'
+        id: reconcile
+        run: |
+          node scripts/reconcile-aa.mjs --write | tee reconcile.md
+          sed -n 's/.*<!-- aa-reconciled: \([0-9]*\) -->.*/reconciled=\1/p' reconcile.md >> "$GITHUB_OUTPUT"
+          sed -n 's/.*<!-- aa-escalated: \([0-9]*\) -->.*/escalated=\1/p' reconcile.md >> "$GITHUB_OUTPUT"
+          cat reconcile.md >> "$GITHUB_STEP_SUMMARY"
+
+      # No published observation cell should move on an AA refresh: this batch carries operating
+      # parameters, not benchmark rows. Read rather than assumed, because it is the cheap backstop
+      # for the day that stops being true.
+      - name: Describe the change
+        if: steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1'
+        id: describe
+        run: |
+          node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
+          # `observation-cells-moved`, NOT `changed-cells … moved`. The second counts catalog
+          # numbers too, and this branch exists to move catalog numbers — reading it here would
+          # refuse every successful reconcile. See the marker's comment in describe-change.mjs.
+          sed -n 's/.*<!-- observation-cells-moved: \([0-9]*\) -->.*/moved=\1/p' change.md >> "$GITHUB_OUTPUT"
+
+      # Now a gate, where it used to be a report — because the reconcile step above removed the
+      # reason it could not be one. `check:models` was expected to be red here: it was comparing a
+      # catalog nobody had updated against an archive re-read minutes earlier, and that is the
+      # conversation the pull request existed to start. The conversation now has a scripted answer
+      # for the two fields where there was only ever one answer, so a red `check:models` after
+      # reconciling means something the script refused — which is exactly when a person is wanted.
+      #
+      # `check:prices` stays reported-only, for the reason already ratified for the daily refresh
+      # on 2026-08-19: nothing on this path writes a `priceTerms` block or a `MODELS[].price`, so
+      # this diff cannot change that verdict, and gating on it strands an archive refresh behind
+      # somebody else's price decision. `ci.yml` still fails on it. See GOTCHAS 41.
       - name: Run the contract
         if: steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1'
+        id: contract
         run: |
+          # Redirect into the file and `cat` it afterwards; never `{ … } | tee`. A brace group on
+          # the left of a pipe runs in a subshell, so every `green=no` set inside one is discarded
+          # when it exits — the verdict would come out `yes` however red the checks were. Plain
+          # redirection does not fork, so the assignments survive. This is the same shape
+          # scripts/attribute-and-merge.sh uses, and the same family of mistake as the missing
+          # `pipefail` that let 4239916 commit a red check:models to main on 2026-08-03.
+          green=yes
+          set +e
           {
             npm run --silent lint && echo "lint ok"
-            npm run --silent check:data || echo "check:data FAILED"
-            npm run --silent check:models || echo "check:models FAILED — a catalog value disagrees with the re-measured source; decide which one is stale"
-            npm run --silent check:prices || echo "check:prices FAILED"
-          } 2>&1 | tee checks.txt
+            npm run --silent check:data || { echo "check:data FAILED"; green=no; }
+            npm run --silent check:models || { echo "check:models FAILED — a catalog value disagrees with the re-measured source and reconcile-aa refused it; decide which one is stale"; green=no; }
+            npm run --silent check:prices || echo "check:prices is red — reported, not gating this refresh; ci.yml still fails on it"
+            npm run --silent build > /dev/null && echo "build ok" || { echo "build FAILED"; green=no; }
+          } > checks.txt 2>&1
+          set -e
+          cat checks.txt
+          echo "green=$green" >> "$GITHUB_OUTPUT"
 
       - name: Open a pull request
         if: steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1'
+        id: pr
         env:
           GH_TOKEN: ${{ github.token }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: |
           bash scripts/open-aa-pr.sh checks.txt
+
+      # The pull request still opens first, every time, and it is still the record. What changed on
+      # 2026-09-04 is that it no longer has to be read: four conditions decide, and they are the
+      # same ones the attribution and new-model gates already merge under, plus the one this branch
+      # needs of its own.
+      #
+      #   green       the full contract passes AFTER reconciling — so `check:models`, the check that
+      #               was expected to be red here, is now the gate it was always shaped like
+      #   escalated   the reconciler refused nothing. A refusal IS the request for a person, and it
+      #               is the only thing on this path that can be one
+      #   moved       no published observation cell changed. An AA parameter batch should not move
+      #               one; if it does, that is a different event and it is the owner's
+      #   handsoff    somebody is already deciding on this pull request — commented, reviewed, or
+      #               committed to the branch. Then it is theirs and this run never touched it
+      #
+      # Why this is allowed at all, stated rather than assumed: the merge is not "trust the diff",
+      # it is that this branch's only two possible contents are an archive row a script re-read
+      # from the source, and a catalog value copied from that row. Neither carries a decision. The
+      # decisions — which model a string is, whether a record should exist, which reading a ranked
+      # field should publish — all live on other branches, behind other gates, and reconcile-aa
+      # refuses every one of them.
+      - name: Merge it when nothing about the result needs a person
+        if: >-
+          steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1' &&
+          steps.pr.outputs.handsoff != 'yes' &&
+          steps.contract.outputs.green == 'yes' &&
+          steps.reconcile.outputs.escalated == '0' &&
+          steps.describe.outputs.moved == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr merge auto/refresh-aa --merge --delete-branch
+          echo "Merged: contract green, ${{ steps.reconcile.outputs.reconciled }} value(s) reconciled, nothing escalated, no published cell moved." >> "$GITHUB_STEP_SUMMARY"
+
+      # Said out loud only when it did NOT merge, and only about why. A pull request that merges
+      # itself is not news; one that stopped is the queue this repository is trying not to grow.
+      - name: Say why it is waiting
+        if: >-
+          steps.fetch.outputs.skipped != '1' && steps.diff.outputs.unchanged != '1' &&
+          steps.pr.outputs.handsoff != 'yes' &&
+          !(steps.contract.outputs.green == 'yes' && steps.reconcile.outputs.escalated == '0' && steps.describe.outputs.moved == '0')
+        run: |
+          {
+            echo "### Left open for a person"
+            echo
+            echo "- contract green: \`${{ steps.contract.outputs.green }}\`"
+            echo "- reconciler escalated: \`${{ steps.reconcile.outputs.escalated }}\`"
+            echo "- published cells moved: \`${{ steps.describe.outputs.moved }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # This workflow is dispatched by upstream.yml, which fires and forgets — `gh workflow run`
       # returns as soon as the dispatch is accepted and nothing ever reads the outcome. So until

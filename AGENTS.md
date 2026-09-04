@@ -374,6 +374,7 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/report-gaps.mjs` | What was never collected — floors, unaliased rows, new upstream models |
 | `scripts/propose-attribution.mjs` | Which catalog model a published string is — the alias step, unattended, with `--backtest` as its guard |
 | `scripts/attribute-and-merge.sh` | Applies those proposals and merges them only when the contract is green and no existing number moved |
+| `scripts/reconcile-aa.mjs` | Copies a re-measured AA `speed`/`latency` into the catalog record quoting it. The only writer to `app/model-data.ts` that is not a person; refuses every other field, and one refusal writes nothing at all |
 | `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |

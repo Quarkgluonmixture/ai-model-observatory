@@ -306,6 +306,15 @@ reviewed when its fetcher was written, and the contract is a complete check on i
 reaching `app/model-data.ts` or `data/model-aliases.json` introduces a *new* mapping, which is
 where every real mistake in this project has come from, and it opens a pull request instead.
 
+One narrow exception, since 2026-09-04. Artificial Analysis re-measures speed and latency
+continuously, so every re-read left a catalog record quoting last week's number and a pull request
+that could not merge until somebody typed twenty values across. That is not a mapping and it is not
+a judgement — the archive row was written by a script from the source minutes earlier, so the
+catalog is the stale side by construction — so `scripts/reconcile-aa.mjs` writes exactly those two
+fields, on records that already exist, and refuses everything else. One refusal stops the whole
+write and the pull request waits for a person, which is the only thing on that path that can ask
+for one.
+
 ## Notes
 
 - Metrics from different sources are not blended into a hidden universal score.

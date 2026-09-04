@@ -1,12 +1,22 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-26:**这个仓库在 GitHub 上已改名 `ai-model-observatory` → `quarkspace`。
-本机文件夹、hermes 那台的文件夹、EdgeOne 项目名**故意都没改** —— 三个名字现在不一样是设计,不是遗漏。**
+**接手点** — 2026-09-04:**「每周合一次 AA 的 PR」这件事没了。** owner 的原话是「我总得手动合 PR,
+我不想看,我就想让他更新」,所以这一轮拆的是**重复劳动**,不是判断:
 
-⛔⛔ **永远不要再建一个叫 `ai-model-observatory` 的仓库**:GitHub 旧名重定向只在旧名无人占用时有效,
-重建同名当场断且**不可恢复**。⛔ `ai-model-observatory-lhi0hg2y.edgeone.cool`(在 `README.md` /
-`docs/ARCHITECTURE.md` §6 / `data/deployment.json`)是 **EdgeOne 项目名**派生的默认域名,
-改名后**仍然正确,不许顺手替换**。全文 → 坑 **49**,理由 → `LOG.md` 2026-08-26。
+- `auto/refresh-aa` 现在自己对账、自己合。`scripts/reconcile-aa.mjs` 只把重测过的
+  **`speed` / `latency`** 抄进目录记录(这两个字段「归档是新的、目录是旧的」**按构造为真**),
+  其余字段一律拒绝,**一条不合就整个不写**。四条件全绿才自合 —— 契约绿 · 零升级 ·
+  零观测格移动 · 没人在这条 PR 上动过手。
+- `docs/AGENT-OPERATIONS.md` 的 tier-B 从「**可以**自合」改成「**就该**自合」。旧措辞被
+  hermes 读成「默认开 PR」(#109 的 body 自己这么写的),于是三条 CI 全绿的 PR 开了 10 天。
+- ⛔ **别把 reconciler 当成「碰 `model-data.ts` 就要人」这条规矩被推翻了**:它是一个**窄例外**,
+  两个参数位、只在已存在的记录上、只抄归档已发布的值。要放宽它是一次决定,不是维护性修改。
+
+⇒ **剩下真的要你定的四件在 `TODO.md` 顶部那一节**(三条开着的 PR + 一条 tier-C),
+每条都写了它卡在哪个条件上。⛔ 那些不是漏做的自动化。
+
+⛔⛔ 仓库 2026-08-26 已改名 `ai-model-observatory` → `quarkspace`;**永远不要再建旧名的仓库**,
+`…-lhi0hg2y.edgeone.cool` 是 EdgeOne 项目名派生的域名、**不许顺手替换**。全文 → 坑 **49**。
 
 同一轮修掉了一个**指反了三天**的真相源:`AGENTS.md` 曾写着「更完整的真相源在
 `../quark-space/content/projects.json`」。⚠ `AGENTS.md` 是操作合同,hermes 和任何动首页的 agent
@@ -68,12 +78,16 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 |---|---|---|---|
 | ~08:10（cron 写 06:00，GitHub 实际延迟约两小时） | GitHub Actions `upstream.yml` | **14** 个每日源漂移检查（16 个 fetcher 中 `live`/`append-only` 那些；复算 = `npm run report:column-automation`） → 重抓 live 板 → 发布页探针 → 写 gaps issue → AA 新模型侦测 | 只碰 `data/sources/` + 生成文件 → **直推 main** |
 | 同上，末步 | GitHub Actions | 归属闸门 `attribute-and-merge.sh`：提议 alias → 跑契约 → 三条件满足才自合 | 有条件自合，否则留 PR |
-| 09:30 UTC（10:30 UK） | hermes（Windows 定时任务，canonical job id **`2d4dbdc7db6f`**） | 读 gaps issue → 挑一件完整做完 → 开 PR / tier-B 三条件自合 | 有条件自合 |
+| 由 `upstream.yml` 末步按需触发 | GitHub Actions `aa-refresh.yml` | 重读 AA 参数 → `reconcile-aa.mjs` 把重测的 speed/latency 抄进目录 → 契约(**现在是闸**) → 开 PR → 四条件自合 | 有条件自合，否则留 PR |
+| 09:30 UTC（10:30 UK） | hermes（Windows 定时任务，canonical job id **`2d4dbdc7db6f`**） | 读 gaps issue → 挑一件完整做完 → 开 PR → **四条件全真就合并并删分支**（2026-09-04 起是指令不是许可） | 有条件自合 |
 | 任意 push 到 main | GitHub Actions `ci.yml` | 契约全套 + 归属闸门回测 + 两个分类器自测 + 手机探针（两条路由）+ 站上新增模型才推微信 | — |
 
 **三条件**（tier B 自合的唯一门槛，写在 `docs/AGENT-OPERATIONS.md`）：契约全绿（含跨源分歧闸门与
 一源两串闸门）· `describe-change` 报告**没有已有数字被改动** · 没有写 `acknowledgedDisagreements`
 或 `mergedInOneSource`、`withdrawnRows` 例外（由 `scripts/check-exemptions-untouched.mjs` 比对条目数判定 —— 旧的 grep 判据够不到,见 `GOTCHAS.md` 34）。
+
+⚠ 2026-09-04 起这三条是**指令**:全真就合并并删分支,不真就留 PR 并**点名是哪一条**。
+「和相关 PR 一起看」不是第五条件 —— 把能合的压在不能合的后面正是那 10 天的成因。
 
 闸门的 hands-off 判据是 branch-scoped —— 见 `GOTCHAS.md` 坑 13。
 
@@ -119,13 +133,13 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **hermes 改名后的第一班**(2026-08-27 10:30 UK,job `2d4dbdc7db6f`)。改名侧的 blocker 已实测为零
-   (remote 已切、workdir 无路径依赖、`jobs.json` 里没有 `--repo` flag),但**它死掉是这套系统里
-   唯一背后没有推送的失败** ⇒ 不会报丧,只会安静地不干活。
-   ⛔⛔ **别用 `npm run check:heartbeat -- --agent` 判断它** —— 那条量的是「队列有没有人在做」,
+1. **`auto/refresh-aa` 的第一次真实自合**,以及 hermes 拿到新章程后的第一班。
+   两件都只能在真跑里验:GitHub 的 step output 传递(`handsoff`/`escalated`/`moved`)本地验不了,
+   hermes 会不会真的按新措辞合并也一样。**它死掉是这套系统里唯一背后没有推送的失败** ⇒
+   不会报丧,只会安静地不干活。
+   ⛔⛔ **别用 `npm run check:heartbeat -- --agent` 判断 hermes** —— 那条量的是「队列有没有人在做」,
    你自己开一次 session 就把时钟清零(2026-08-26 当场实测:它拿我们自己的 commit 报了绿)。
-   ⚠ 另有一条与改名无关:这个 job 与其他 glm-5.3 重活**共享同一个 5 小时配额窗口**,
-   8-26 撞了三次 429、靠重试队列补跑兜住 ⇒ 明天若延迟,先怀疑配额不是改名。
+   ⚠ 它与其他 glm-5.3 重活**共享同一个 5 小时配额窗口** ⇒ 延迟先怀疑配额。
 2. **`deepseek-v4-pro` 翻转后的两件小尾巴**(都在 `TODO.md`,都不急):`open` 现在无据 ·
    `value` 这个 chip 还算不算数。
 3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——

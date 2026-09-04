@@ -109,6 +109,11 @@ for (const row of rows) {
 
 const close = (a, b) => Math.abs(a - b) < 0.005;
 const errors = [];
+// The same contradictions as `errors`, in the shape a writer can act on rather than print.
+// `--json` emits these instead of the report, and `scripts/reconcile-aa.mjs` is the only reader:
+// it needs to know WHICH field of WHICH configuration disagrees, and parsing that back out of an
+// English sentence would put the audit's field names in two places. One authority, two renderings.
+const contradictions = [];
 const caseErrors = [];
 const variantErrors = [];
 let backed = 0;
@@ -216,17 +221,18 @@ for (const model of MODELS) {
 
   // Booleans cannot go through `check`, which compares numerically. Same verdicts otherwise:
   // absent from the archive is unsourced, present and different is a contradiction.
-  const checkFlag = (label, catalogValue, archiveValue) => {
+  const checkFlag = (label, catalogValue, archiveValue, slot) => {
     if (catalogValue == null) return;
     if (archiveValue == null) { legacy.push(label); return; }
     if (catalogValue !== archiveValue) {
       errors.push(`${label}: catalog ${catalogValue} but archive says ${archiveValue}`);
+      contradictions.push({ ...slot, label, catalogValue, archiveValue });
       return;
     }
     backed += 1;
   };
 
-  const check = (label, catalogValue, archiveValue) => {
+  const check = (label, catalogValue, archiveValue, slot) => {
     if (catalogValue == null) return;
     if (archiveValue == null) {
       legacy.push(label);
@@ -234,6 +240,7 @@ for (const model of MODELS) {
     }
     if (!close(catalogValue, archiveValue)) {
       errors.push(`${label}: catalog ${catalogValue} but archive says ${archiveValue}`);
+      contradictions.push({ ...slot, label, catalogValue, archiveValue });
       return;
     }
     backed += 1;
@@ -272,10 +279,15 @@ for (const model of MODELS) {
     if (!effortIndex.has(key) && !effortIndex.has(`${model.id}|null`) && configuration.intelligence != null) {
       legacy.push(`${at} - no archive row for this configuration`);
     }
-    check(`${at} intelligence`, configuration.intelligence, archive.intelligence_index);
-    check(`${at} costTask`, configuration.costTask, archive.cost_per_task_usd);
-    check(`${at} speed`, configuration.speed, archive.output_tokens_per_s);
-    check(`${at} latency`, configuration.latency, archive.latency_first_chunk_s);
+    // The fourth argument names the catalog slot in `cfg(...)` terms, so a reader of the JSON
+    // output can find the exact argument to rewrite. It is not the archive's field name: the
+    // archive says `output_tokens_per_s`, the catalog parameter is `speed`, and the writer edits
+    // the catalog.
+    const slot = { modelId: model.id, effort: configuration.effort ?? null };
+    check(`${at} intelligence`, configuration.intelligence, archive.intelligence_index, { ...slot, field: "intelligence" });
+    check(`${at} costTask`, configuration.costTask, archive.cost_per_task_usd, { ...slot, field: "costTask" });
+    check(`${at} speed`, configuration.speed, archive.output_tokens_per_s, { ...slot, field: "speed" });
+    check(`${at} latency`, configuration.latency, archive.latency_first_chunk_s, { ...slot, field: "latency" });
   }
 
   // Official vendor pages outrank Artificial Analysis for price; LMArena and rows quoting a
@@ -286,10 +298,11 @@ for (const model of MODELS) {
   const priceRow = (field) =>
     pickModelLevel(model, field, (row) => usable(row) && row.source_kind === "official") ??
     pickModelLevel(model, field, usable);
-  check(`${model.id} price.input`, model.price.input, priceRow("price_input_per_m"));
-  check(`${model.id} price.output`, model.price.output, priceRow("price_output_per_m"));
-  check(`${model.id} textElo`, model.textElo, pickModelLevel(model, "text_elo"));
-  check(`${model.id} codeElo`, model.codeElo, pickModelLevel(model, "code_elo"));
+  const modelSlot = { modelId: model.id, effort: null };
+  check(`${model.id} price.input`, model.price.input, priceRow("price_input_per_m"), { ...modelSlot, field: "price.input" });
+  check(`${model.id} price.output`, model.price.output, priceRow("price_output_per_m"), { ...modelSlot, field: "price.output" });
+  check(`${model.id} textElo`, model.textElo, pickModelLevel(model, "text_elo"), { ...modelSlot, field: "textElo" });
+  check(`${model.id} codeElo`, model.codeElo, pickModelLevel(model, "code_elo"), { ...modelSlot, field: "codeElo" });
 
   // Context window and open-weights status are facts about the model, and the archive has
   // carried both since batch 06 — this audit simply never read them. Until it did, they were
@@ -318,7 +331,20 @@ for (const model of MODELS) {
   else if (Math.abs(model.contextK - archivedContext) > 0.1 * archivedContext) {
     disputed.push(`${model.id} contextK: catalog ${model.contextK}K, archive ${archivedContext}K`);
   } else backed += 1;
-  checkFlag(`${model.id} open`, model.open, fact("open_weights"));
+  checkFlag(`${model.id} open`, model.open, fact("open_weights"), { modelId: model.id, effort: null, field: "open" });
+}
+
+// Machine-readable mode, for scripts/reconcile-aa.mjs and nothing else. It prints the same
+// findings the report below prints and then exits 0 whatever they say: the caller is asking "what
+// disagrees", not "is the catalog green", and an exit code would force it to decide which of the
+// two questions a non-zero status answered.
+//
+// `blockers` travels with them because a writer must not act on the contradictions alone. A
+// spelling orphan or a product-tier mismap means the archive is being read wrong, so every
+// value below it is suspect — reconciling under one would write a confident wrong number.
+if (process.argv.includes("--json")) {
+  console.log(JSON.stringify({ contradictions, blockers: { caseErrors, variantErrors } }, null, 2));
+  process.exit(0);
 }
 
 if (variantErrors.length) {
