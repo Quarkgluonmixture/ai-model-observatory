@@ -291,6 +291,20 @@ Only after the activation check has passed once, and only when a trigger fired.
    If the heartbeat is missing, report it and **do not compensate**. Re-running the daily job's
    work by hand is how two schedulers end up owning one file.
 
+   ⚠ **"Do not compensate" is not "do not work" — spelled out 2026-09-04 because it reads like
+   it.** This check exits non-zero for two different events and only one of them says anything
+   about your queue:
+
+   - **No completed run in 36 hours** → the queue you are about to read may be stale. Report it,
+     and treat anything in the gaps issue as possibly a day old.
+   - **A run completed and failed** → the daily job ran, so the issue IS today's. A tier-C
+     integrity failure is the commonest cause and it is *already reported* by the workflow, to an
+     issue and to WeChat. It is not yours to re-report and it does not block anything you do.
+     **Carry on with the recurring task.**
+
+   Neither case is permission to redo the Action's work, and neither is a reason to skip your own.
+   A day where the drift job is red and you did nothing is a day the queue grew for no reason.
+
 1. `git pull`, `npm ci`.
 2. Read the open **Collection gaps** issue. It carries the release-probe findings too, so it is
    the whole queue — you do not need to open a workflow run, and nobody needs to forward a

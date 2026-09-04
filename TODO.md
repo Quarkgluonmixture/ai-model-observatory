@@ -22,8 +22,9 @@
       3 个 nemotron 的 mini-SWE-agent 分改高了(27.273→54.545 / 15→45 / 6.667→16.667)。
       23 条 withdrawn 已在 `withdrawnRows` 里承认、不失败,**只有这 3 条 changed 让它红**。
       ⇒ 这正是整套 drift 机制存在的目的:**上游改写了自己的历史**,归档该怎么说是人定的。
-      ⛔ 别 re-fetch、别"修"归档。⚠ 顺带影响:`check:heartbeat --github` 因此报 failure,
-      而 hermes 的第 0 步读它 —— **红着的心跳有让 hermes 停工的语义歧义**,判这条时一并想一下。
+      ⛔ 别 re-fetch、别"修"归档。~~⚠ 红着的心跳有让 hermes 停工的语义歧义~~ —— 歧义 2026-09-04
+      已在章程里说死(「跑了但失败」= 队列是今天的,照常干活;只有「36 小时没跑完」才是队列可能过期),
+      所以这条**只剩归档该怎么说**这一个问题。
 - [ ] 小:`auto/refresh-aa` 首次自合后回头看一眼 —— 确认 `handsoff` / `escalated` / `moved`
       三个 output 在真实运行里取到了值(本地只验了 marker 与条件逻辑,没验 GitHub 的 output 传递)。
 
