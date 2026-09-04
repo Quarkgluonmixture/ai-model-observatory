@@ -200,9 +200,9 @@ export const MODELS: ModelRecord[] = [
     cfg("max", 62.1, 3.1396, 66.9, 90.02, 10, 50, false, 1),
   ]),
   m("gpt-5.6-sol", "GPT-5.6 Sol", "OpenAI", "#bf8b18", false, 1000, ["reasoning", "coding", "presentation"], [
-    cfg("max", 60.9, 0.953, 70.29, 112.71, 5, 30, false, 0.5),
-    cfg("xhigh", 59, 0.6279, 72.92, 46.43, 5, 30, false, 0.5),
-    cfg("high", 57.3, 0.4269, 78.01, 9.92, 5, 30, false, 0.5),
+    cfg("max", 60.9, 0.953, 76.54, 98.87, 5, 30, false, 0.5),
+    cfg("xhigh", 59, 0.6279, 76.74, 33.68, 5, 30, false, 0.5),
+    cfg("high", 57.3, 0.4269, 70.42, 10.02, 5, 30, false, 0.5),
   ]),
   m("kimi-k3", "Kimi K3", "Moonshot", "#6d62cf", true, 1050, ["webdev", "long context"], [
     cfg("max", 59.7, 0.8375, 35.4, 3.94, 3, 15, true, 0.3),
@@ -210,11 +210,11 @@ export const MODELS: ModelRecord[] = [
   // Repriced 2026-08-17 (batch-34): $2.5/$15 → $2/$12, cache $0.25 → $0.20. Same vendor-page move
   // as Luna below; Sol was checked the same day and did NOT move ($5/$30, archived as the control).
   m("gpt-5.6-terra", "GPT-5.6 Terra", "OpenAI", "#ecbb55", false, 1000, ["fast", "reasoning", "multimodal"], [
-    cfg("max", 56.6, 0.526, 107.72, 141.99, 2, 12, false, 0.2),
-    cfg("xhigh", 52.8, 0.3182, 104.22, 15.71, 2, 12, false, 0.2),
+    cfg("max", 56.6, 0.526, 103.2, 236.34, 2, 12, false, 0.2),
+    cfg("xhigh", 52.8, 0.3182, 84.09, 18.82, 2, 12, false, 0.2),
   ]),
   m("grok-4.5", "Grok 4.5", "xAI", "#42576b", false, 500, ["coding", "reasoning", "realtime"], [
-    cfg("high", 55.8, 0.4256, 51.09, 14.51, 2, 6, false, 0.5),
+    cfg("high", 55.8, 0.4256, 56.27, 8.57, 2, 6, false, 0.5),
   ]),
   // List price. The $2/$10 introductory rate "through August 31, 2026" was expected to revert to
   // $3/$15 (batch-10 term); the vendor never reverted — the official docs table has printed
@@ -233,7 +233,7 @@ export const MODELS: ModelRecord[] = [
     cfg("xhigh", 53.2, 0.29, 130, 2.64, 1.25, 4.25, true),
   ]),
   m("gpt-5.5", "GPT-5.5", "OpenAI", "#8d751e", false, 1000, ["reasoning", "codex", "long context"], [
-    cfg("xhigh", 56.3, 1.191, 93.74, 40.8, 5, 30, false, 0.5),
+    cfg("xhigh", 56.3, 1.191, 85.71, 61.2, 5, 30, false, 0.5),
   ]),
   m("gemini-3.5-flash", "Gemini 3.5 Flash", "Google", "#367ed8", false, 1000, ["fast", "vision", "long context"], [
     cfg("high", 52, 0.69, 171.5, 23.83, 1.5, 9, false, 0.15),
@@ -276,7 +276,7 @@ export const MODELS: ModelRecord[] = [
   // row; what moved with it is AA's own end-to-end median, 33.46s -> 58.82s. Two fields moving
   // together in the same direction is a re-measure, so the catalog follows the source.
   m("qwen3.8-max", "Qwen3.8 Max", "Alibaba", "#1c5f6e", false, 1000, ["coding", "agents", "vision"], [
-    cfg(null, 58.1, 0.9133, 40.54, 2.53, 2, 6, false, 0.17),
+    cfg(null, 58.1, 0.9133, 38.84, 2.5, 2, 6, false, 0.17),
   ]),
   // costTask was 1.28 until 2026-08-12, transcribed from AA's leaderboard into batch 07. AA has
   // since re-measured it at 0.5413 and batch 14 carries that, but the audit takes whichever
@@ -288,10 +288,10 @@ export const MODELS: ModelRecord[] = [
   // 而是因为那个 tag 现在由 `open` 派生(见 DERIVED_TAGS),手写它会抛错而不是悄悄显示出来。
   // 规矩靠注释记着就会被忘,靠构造函数记着不会。
   m("qwen3.7-max", "Qwen3.7 Max", "Alibaba", "#358a9a", false, 1000, ["fast", "multilingual"], [
-    cfg(null, 46.7, 0.6792, 204.51, 2.24, 2.5, 7.5, false, 0.25),
+    cfg(null, 46.7, 0.6792, 203.91, 2.27, 2.5, 7.5, false, 0.25),
   ]),
   m("qwen3.7-plus", "Qwen3.7 Plus", "Alibaba", "#5bb8c9", false, 1000, ["fast", "value", "multilingual"], [
-    cfg(null, 39.4, 0.1703, 56.08, 2.17, 0.4, 1.6, false, 0.04),
+    cfg(null, 39.4, 0.1703, 56.15, 2.13, 0.4, 1.6, false, 0.04),
   ]),
   // This record is the GA release `DeepSeek-V4-Pro-0813`, since 2026-08-19. It held the April preview
   // for three months and the changeover is the one thing to understand before touching anything here.
