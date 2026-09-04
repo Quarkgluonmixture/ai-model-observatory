@@ -11,5 +11,5 @@
   ],
   "licence": "CC BY 4.0 — Epoch AI, 'AI Benchmarking Hub', https://epoch.ai/benchmarks",
   "note": "Read from /data/benchmarks.csv, which is the file the board page's own client chunk fetches — not a transcription of the rendered table and not the benchmark_data.zip export, whose frontiermath.csv holds the retired 2025-02-28 question set and therefore scores about 1.7x lower for the same model. score is mean_score, the column the page reads, verified equal to best_score on every row. Reasoning effort is split off the model string (claude-opus-5_max) onto the row. evaluation_date is Epoch's run timestamp, never the model's release date. tools_enabled and context_length come from the board page's stated affordances (python + submit_answer, 1,000,000-token hard limit), which the CSV does not carry. This batch supersedes batch 01's transcription of the same two boards — see supersededRows in data/model-aliases.json.",
-  "retrievedDate": "2026-09-02"
+  "retrievedDate": "2026-09-04"
 }
