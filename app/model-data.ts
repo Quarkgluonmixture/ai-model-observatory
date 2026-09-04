@@ -686,7 +686,7 @@ const SOURCE_REGISTRY = {
   openrouter: { label: "OpenRouter Models API", date: "live feed", url: "https://openrouter.ai/docs/api/api-reference/models/list-all-models-and-their-properties", role: "provider pricing and context-window metadata", category: "pricing", match: "openrouter.ai", feeds: "the live price route" },
   deepmind: { label: "Google DeepMind model cards", date: "31 Jul 2026", url: GOOGLE_36_URL, role: "vendor results with harness notes", category: "vendor", match: "deepmind.google" },
   deepseek: { label: "DeepSeek V4 model cards", date: "31 Jul 2026", url: DEEPSEEK_URL, role: "vendor results with effort modes", category: "vendor", match: "DeepSeek-V4" },
-  kimi: { label: "Kimi K3 release table", date: "23 Jul 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", category: "vendor", match: "MoonshotAI/Kimi-K3" },
+  kimi: { label: "Kimi K3 release table", date: "25 Aug 2026", url: KIMI_URL, role: "comparison seed only, not the global standard", category: "vendor", match: "MoonshotAI/Kimi-K3" },
   qwen: { label: "Qwen release tables", date: "3 Aug 2026", url: "https://qwen.ai/blog?id=qwen3.8", role: "vendor results, captured per release", category: "vendor", match: "qwen.ai" },
 } as const;
 
