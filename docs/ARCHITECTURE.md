@@ -1167,6 +1167,34 @@ stay. That is judgement, and judgement does not go in a cron job.
   from the owner (both push as a person, and the comment says so), so it answers "is the queue being
   worked", not "is hermes alive": an owner session resets its three-day clock. Both are defensible
   as written; together they mean a dead hermes is the one failure with no push behind it.
+
+  **Half of that closed on 2026-09-04, and the half that closed was the measurement, not the
+  alarm.** The reason the check could not tell the two apart was an identity, not a design: hermes
+  commits under the owner's git author. `hermes-agent` appears as an author exactly once in the
+  whole history (2026-08-11). So `--agent` now prints a second, separate line — how long since a
+  commit authored by the agent — and `docs/AGENT-OPERATIONS.md` gained a *Commit as yourself*
+  section telling it to set the identity. That line **reports and does not fail**, because the
+  identity lives on a machine this repository cannot see and a check that goes red for a
+  configuration it cannot inspect is a check that gets ignored. ⇒ The question is answerable now;
+  whether a silent hermes should push to WeChat is still open in `TODO.md`.
+
+- **A source that could not be read had no destination until 2026-09-04, and it was borrowing the
+  daily job's colour.** `check:upstream` exits non-zero for two unrelated events — a frozen source
+  rewriting history, and a page not answering at all — and only the first had an issue and a push.
+  Measured over the 31 days to 2026-09-04: **12 red daily runs, 3 integrity issues** (08-05, 08-15,
+  09-04). The other nine were availability — Vals AI timing out at 120s on 09-03, AA's GDPval
+  leaderboard failing to get a Chrome page target on 08-31 — and they reached a `::warning::` in a
+  log and nothing else. Two costs: red became that job's normal colour, and
+  `check:heartbeat --github` reported failure on all of them, which is the first thing the
+  scheduled agent reads each morning.
+
+  Now `scripts/publish-availability-issue.sh` owns it: a `source-availability` issue opens on the
+  first unreadable run and is edited silently after that, and WeChat fires only when a source
+  reaches **two consecutive** runs unreadable. The streak lives in the issue body as an HTML
+  comment — the only state this job has that survives to tomorrow without a commit — and a source
+  that reads again is dropped, so the count is genuinely consecutive. The drift job's verdict is
+  now decided from the log rather than passed through from the exit code: integrity fails it,
+  availability does not, and a non-zero that is neither still does.
 - **The generated observation store has a compiler ceiling, and the archive walked into it on
   2026-08-07.** `ObservationRow` carries four optional properties, so every emitted row literal has a
   slightly different shape and TypeScript checks the array by building a union across all of them. Past

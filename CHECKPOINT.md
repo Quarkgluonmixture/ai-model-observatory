@@ -12,25 +12,29 @@
 - ⛔ **别把 reconciler 当成「碰 `model-data.ts` 就要人」这条规矩被推翻了**:它是一个**窄例外**,
   两个参数位、只在已存在的记录上、只抄归档已发布的值。要放宽它是一次决定,不是维护性修改。
 
-⇒ **剩下真的要你定的四件在 `TODO.md` 顶部那一节**(三条开着的 PR + 一条 tier-C),
-每条都写了它卡在哪个条件上。⛔ 那些不是漏做的自动化。
+**同日第二轮**(体检 31 天之后补的两个洞):**可用性有了自己的收件人** ——
+源读不出来不再借 drift job 的颜色,`source-availability` issue 首次就开(记录)、
+微信**连续两次**才推(报警);drift 的判决改成从 log 决定,**未知的非零仍然红**。
+**agent 的 liveness 变成可测** —— 章程加《Commit as yourself》,`check:heartbeat --agent`
+多打一行 agent 署名的 commit 距今多久(只报不失败,身份在本仓库看不见的机器上)。
+→ 坑 **52 / 53**,数字与复算在 `LOG.md` 2026-09-04 第二条。
+
+⭐⭐ **体检的真正结论:新模型不会自动进目录,而这不是 bug。** 闸门每天跑、
+**一次都没触发过**(`auto/new-model` 零 PR;上次加模型 = 2026-08-06 人工)。地板 = 现有模型
+平均格数 = **49**,今天最好的候选 `grok-4.6` 只有 31 格 ⇒ 结构性够不到。⛔ 别去放开地板
+(8-12 已判,会自我强化地塌)。⭐ 但**记录一旦存在,后面全自动**:归属闸门挂 alias、ingest 挂新行、
+排行与雷达图纯派生(某轴凑够该轴 core 的 50%、最少 2 格就出数,`portfolioFloor`),
+**没有第二个开关**。出路是 `TODO.md` 里那条「最新发布」看板。
+
+⇒ **剩下真的要你定的都在 `TODO.md` 顶部那一节**,每条都写了它卡在哪个条件上。
+⛔ 那些不是漏做的自动化。
 
 ⛔⛔ 仓库 2026-08-26 已改名 `ai-model-observatory` → `quarkspace`;**永远不要再建旧名的仓库**,
 `…-lhi0hg2y.edgeone.cool` 是 EdgeOne 项目名派生的域名、**不许顺手替换**。全文 → 坑 **49**。
 
-同一轮修掉了一个**指反了三天**的真相源:`AGENTS.md` 曾写着「更完整的真相源在
-`../quark-space/content/projects.json`」。⚠ `AGENTS.md` 是操作合同,hermes 和任何动首页的 agent
-都先读它 ⇒ 指反了 = 下一个执行者照着一份冻结快照改线上文案。**这仓库 30 个 npm script
-没有一个校验散文**,所以零告警地错了三天。现在的权威是三层,别再压平成一句 "source of truth":
-职业事实/定位 → `JobFinder/00_总控/` · 线上首页文案/选择/排序 → `app/home-content.ts` ·
-历史设计快照 → quark-space(**2026-08-26 已 GitHub archived,只读**),⛔ 不得回灌。
-
-⭐ **个人站 `/` 现在在本仓库 `TODO.md` 里有自己那一节了**(此前没有,待办锁在 quark-space)。
-迁移时逐条验过,原本 7 条**只剩 2 条**成立 —— ⇒ **搬待办前先验它还成不成立**。
-
-⭐ 8-19 那一整轮(`deepseek-v4-pro` 原地翻转成 GA、守卫从日期换成串、batch 35 的 GA 列采纳)
-已全部落地并入档 → `LOG.md` 2026-08-19 三条 + 坑 **40/41/42/43/44/45**。**⛔ 别重新论证**,
-翻转留下的两件小尾巴(`open` 无据 · `value` chip 还算不算数)在 `TODO.md`,都不急。
+⚠ **文案的权威是三层,别压平成一句 "source of truth"**:职业事实/定位 → `JobFinder/00_总控/` ·
+线上首页文案/选择/排序 → `app/home-content.ts` · 历史设计快照 → quark-space(已 archived,只读,
+⛔ 不得回灌)。指反过三天且零告警(**30 个 npm script 没有一个校验散文**)—— 全文 `LOG.md` 2026-08-26。
 
 ⛔ **已定、别重新论证的两条**:**preview 规矩** —— 一条记录 = 一个在服役的版本,preview 的行留档不入库
 (Qwen / Gemini 那两条上游精确同名且族里无 GA 取代 ⇒ 按坑 **25** 不动);**收录地板不放开** ——
@@ -124,7 +128,7 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 **推送前**：`gh auth switch -u Quarkgluonmixture`（个人账号）。仓库密钥：`AA_API_KEY`、
 `PUSHPLUS_TOKEN`，两个都是可选的——缺了对应步骤跳过自己，不会让任何检查变红。
 
-**微信推送 7 条**（复算 = `grep -rn notify-pushplus .github/workflows scripts`；⚠ §10 的表还停在
+**微信推送 8 条**(9-04 加了「源连续两天读不出来」)（复算 = `grep -rn notify-pushplus .github/workflows scripts`；⚠ §10 的表还停在
 8-06 的四条），策略是「只在异常时说话」；细节 → `docs/ARCHITECTURE.md` §10 + 坑 **38/39**
 （`main 变红` 按「红的集合变化」推，**沉默 = 没变，不是绿了**；它的 stdout 就是消息）。
 **沉默可诊断**：两个调度器互相看守（`scripts/check-heartbeat.mjs` 头部），⚠ 但这个看守是**不对称**的。

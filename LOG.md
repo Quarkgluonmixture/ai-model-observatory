@@ -616,3 +616,61 @@ speed/latency ⇒ `moved == 0` 在这条分支上 = 在问「我有没有干活�
 `open-aa-pr.sh`(commit 带上 `model-data.ts`;人已介入时向 workflow 报 `handsoff`)·
 `AGENT-OPERATIONS.md`(硬规则 1 从三条变四条;tier-B 默认翻转)· `AGENTS.md` / `README.md` 同笔改
 (那两处都写着「碰 `model-data.ts` 就要人」,现在有了一个窄例外,**不改就是让读者读到漂移的那份**)。
+
+## [2026-09-04] 可用性有了自己的收件人;agent 的 liveness 变成可测 `#ship` `#measure` `#ops` `#incident`
+
+同一天的第二轮。上一轮拆的是「要人合 PR」,这一轮拆的是**体检**里查出来的两个洞。
+
+### 体检结论(31 天,8-05 → 9-04)
+
+`#measure` 复算命令都在下面,数字是实测不是印象:
+
+- **数据更新是全自动且真的在跑**:8-20 → 9-04 **连续 16 天**每天都有 `Refresh live boards` 自动提交。
+  8-16~8-19 那 4 天断更是**已经修掉的旧事故**(价格 term 红着卡住刷新,8-19 降成只报)。
+  复算 = `git log --format='%ad|%s' --date=short origin/main | grep 'Refresh live boards'`。
+- **每日 job 红了 12 次,但红的全是 drift job,refresh job 12 次全绿** ⇒ 站上的数一天没受影响。
+  复算 = 对每个 failure run 跑 `gh run view <id> --json jobs`。
+- **72 列里 53 列每日自动重读**,5 列只有 AA 脚本(不每日),11 列只有手抄行,3 列无归档行。
+  复算 = `npm run report:column-automation`。
+- **部署每天被验证**:`check:deployment` 核 quarkspace.top 服务内容与 main 一致 + ICP 备案 3/3。
+
+### 洞一:一个红扛两个语义(→ 坑 52)
+
+12 次红只开出 **3 个** integrity issue ⇒ 约 9 次是「源读不出来」,只有 log 里一条 `::warning::`。
+它借走了 job 的颜色,而那个颜色被 `check:heartbeat --github` 读、被 hermes 每天第一件事读。
+⇒ `scripts/publish-availability-issue.sh`(新):issue 首次就开(记录),微信**连续两次**才推(报警),
+streak 存在 issue body 的 HTML 注释里 —— 那是这个 job 唯一不用 commit 就能活到明天的状态。
+源读通了就从 body 里删掉,所以 streak 是**真·连续**不是终身计数。
+同时把 drift 步骤的判决改成**从 log 决定**:integrity 红 · availability 不红 ·
+**既不是这个也不是那个的非零仍然红**(⛔ 不许吞掉自己不认识的失败)。
+
+### 洞二:心跳读的身份和被监控者共用(→ 坑 53)
+
+`#measure` `hermes-agent` 这个作者名在整个仓库历史里**只出现过一次**(2026-08-11,
+而且干的正是今天被自动化掉的那件 AA 对账)。此后每一班都签成 owner ⇒
+`check-heartbeat --agent` 永远分不清「hermes 跑了」和「owner 开了个 session」。
+⇒ 修的是**身份**不是逻辑:章程加《Commit as yourself》,`--agent` 多打一行 agent 署名的 commit 距今多久,
+**只报不失败**(身份配在本仓库看不见的机器上)。「hermes 死了要不要推微信」仍在 `TODO.md`,没动。
+
+### 顺带查清的一件事:新模型**不会**自动进目录
+
+`#measure` `#deadend` 被问到「新模型是不是自动加入、自动进榜和雷达图」,实测:
+
+- **闸门每天跑,从来没触发过一次**。`auto/new-model` 分支**一个 PR 都没开过**,
+  git log 里零条 "cleared the floor"。上一次加模型是 **2026-08-06,人工**。
+- 原因是地板 = 现有模型的平均格数,今天 **49**(1402 格 / 29 模型)。而新模型天生格少:
+  今天最好的候选 `x-ai/grok-4.6` 只有 **31** 格,`meta/muse-spark-1.2` 32 格,
+  `z-ai/glm-5.3` 29 格 —— **结构性地永远够不到**。复算 = `npm run propose:model`。
+- ⭐ 但**记录一旦存在,后面全自动**:alias 归属闸门每天跑;ingest 自动挂新行;
+  排行与雷达图纯派生 —— 一个模型在某轴凑够该轴 core 基准的 **50%**(最少 2 个,
+  `portfolioFloor` in `app/model-data.ts`)就自动出数,**没有第二个开关、没人给它配置**。
+- ⚠ 自动写出来的记录 `tags: []`(无筛选 chip)、颜色自动挑、`open` 硬编码 `false`
+  —— 若模型其实是开源权重,`check:models` 会红 ⇒ 闸门不自合、转 PR。fail-closed,是对的。
+- ⇒ 这不是「自动化没做」,是 8-12 已定的收录门槛在起作用(放开会自我强化地塌:
+  收 9 个 → 覆盖率 67.0% 掉到 53.5%)。真正的出路在 `TODO.md` 那条
+  「把上游新模型那段改成『最新发布』看板」—— 覆盖率一个点都不掉,因为它们本来就不在分母里。
+
+**从 CHECKPOINT 退役的两段(2026-09-04,快照满了)**:个人站 `/` 的待办 8-26 从 quark-space 迁进本仓
+`TODO.md`,迁移时逐条验过 —— 原本 7 条**只剩 2 条**成立,⇒ **搬待办前先验它还成不成立**。
+8-19 那一整轮(`deepseek-v4-pro` 原地翻转成 GA、守卫从日期换成串、batch 35 的 GA 列采纳)
+已全部落地,详情在本文件 2026-08-19 三条 + 坑 40/41/42/43/44/45,⛔ 别重新论证。

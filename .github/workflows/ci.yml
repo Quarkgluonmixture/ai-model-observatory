@@ -167,6 +167,15 @@ jobs:
       - name: Replay the AA reconciler
         run: node scripts/reconcile-aa.mjs --self-test
 
+      # The third notifier-side assertion, and the same reason as the two above it: this alarm only
+      # ever runs on a morning something is broken, so nothing else in this repository exercises it.
+      # What it asserts beyond delivery is the streak arithmetic — a source must be unreadable on
+      # two consecutive runs before WeChat hears about it, and a source that reads again must be
+      # dropped from the state rather than keeping a lifetime tally that eventually pushes for a
+      # source that is working.
+      - name: Replay the source-availability alarm
+        run: bash scripts/publish-availability-issue.sh --self-test
+
       - name: Build production application
         run: npm run build
 
