@@ -86,10 +86,37 @@ jobs:
             echo "integrity=no" >> "$GITHUB_OUTPUT"
           fi
           if grep -q "could not be read" drift.log; then
-            echo "::warning::A source could not be read at all. That is an availability problem, not an integrity one:"
+            echo "availability=yes" >> "$GITHUB_OUTPUT"
             grep "could not be read" drift.log >&2 || true
+          else
+            echo "availability=no" >> "$GITHUB_OUTPUT"
           fi
-          exit "${status:-0}"
+
+          # The step's verdict, decided from the log rather than passed through from the exit code.
+          # `check:upstream` exits non-zero for two unrelated events and this job's colour is read
+          # by `check:heartbeat --github`, which is the first thing the scheduled agent looks at
+          # every morning — so the colour has to mean one thing.
+          #
+          # Measured over the 31 days to 2026-09-04: 12 red days, 3 integrity issues. The other
+          # nine were a page not answering, and they were reaching the agent as "GitHub's side is
+          # broken" and the owner as nothing at all. Availability now has its own issue and its own
+          # push (scripts/publish-availability-issue.sh), so it no longer borrows this job's colour.
+          #
+          # ⚠ An unexplained non-zero still fails. "Neither integrity nor availability" means
+          # check:upstream broke in a way nothing here has a name for, and a check that swallows
+          # its own unknown failures is worth less than no check.
+          if grep -q "no longer matches its archive" drift.log; then
+            echo "::error::A frozen source rewrote a published number."
+            exit 1
+          fi
+          if [ "${status:-0}" != "0" ] && ! grep -q "could not be read" drift.log; then
+            echo "::error::check:upstream failed for a reason that is neither integrity nor availability."
+            exit "${status:-1}"
+          fi
+          if [ "${status:-0}" != "0" ]; then
+            echo "::notice::A source could not be read. Reported to the source-availability issue; not failing this job."
+          fi
+          exit 0
 
       # Runs even when drift failed above: the two findings are independent, and suppressing the
       # gap report because a cell moved would hide a week of collection targets behind one number.
@@ -182,6 +209,23 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
         run: bash scripts/publish-integrity-issue.sh close || true
+
+      # The other half of the drift job's verdict, given its own destination on 2026-09-04. The
+      # issue opens on the first unreadable run and is edited silently after that; WeChat fires
+      # only when a source reaches two consecutive runs. See the script's header for why the two
+      # thresholds are different.
+      - name: Report a source that could not be read
+        if: always() && contains(steps.drift.outputs.availability, 'yes')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PUSHPLUS_TOKEN: ${{ secrets.PUSHPLUS_TOKEN }}
+        run: bash scripts/publish-availability-issue.sh report drift.log || echo "::warning::Could not publish the availability issue; the unreadable sources are in this run's log."
+
+      - name: Clear the availability issue
+        if: always() && contains(steps.drift.outputs.availability, 'no')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/publish-availability-issue.sh close || true
 
       # AA is excluded from the daily refresh because it re-measures continuously and a scheduled
       # rewrite would fail check:models every morning. That is right, and it quietly turned into

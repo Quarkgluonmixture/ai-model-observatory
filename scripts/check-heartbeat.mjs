@@ -53,6 +53,11 @@ if (!wantGithub && !wantAgent) {
 const BOT = "github-actions[bot]";
 const GITHUB_MAX_HOURS = 36;
 const AGENT_MAX_DAYS = 3;
+// The identity the scheduled agent commits under, so its liveness can be asked about separately
+// from the queue's. A set rather than a string because the one historical example spells it two
+// ways — the author name `hermes-agent` and the noreply address built from it — and because a
+// second scheduler would be a second entry here rather than a second copy of the logic.
+const AGENT_AUTHORS = new Set(["hermes-agent", "hermes"]);
 
 const repo = (() => {
   if (process.env.GITHUB_REPOSITORY) return process.env.GITHUB_REPOSITORY;
@@ -133,6 +138,32 @@ if (wantAgent) {
       } else {
         console.log(`The queue is being worked: last non-bot commit ${days.toFixed(1)} day(s) ago (\`${human.sha.slice(0, 7)}\`).`);
       }
+    }
+
+    // The second reading, added 2026-09-04, because the first one cannot answer the question
+    // everybody actually asks of it.
+    //
+    // "Last non-bot commit" measures whether the QUEUE is being worked, and that is deliberate and
+    // documented — but it is measured on an identity the agent shares with the owner, so an owner
+    // session resets the clock and the check reports a green heartbeat for an agent that has been
+    // dead for a week. Measured 2026-09-04: `hermes-agent` appears as a commit author exactly once
+    // in the repository's whole history (2026-08-11); every other run committed as the owner.
+    //
+    // So this asks the other question directly, and reports rather than failing. It fails nothing
+    // because the identity is set on a machine this repository does not control: until hermes is
+    // actually committing under its own name, "no hermes commits" means "not configured yet", and
+    // a check that goes red for a configuration it cannot see is a check that gets ignored.
+    // `docs/AGENT-OPERATIONS.md` carries the instruction that makes this readable.
+    const hermes = commits.find((commit) => AGENT_AUTHORS.has(commit.commit?.author?.name ?? "")
+      || AGENT_AUTHORS.has(commit.author?.login ?? ""));
+    if (!hermes) {
+      console.log(`No commit authored by the scheduled agent in the last ${commits.length} on main —` +
+        " either it has not run, or it is still committing under the owner's identity" +
+        " (see docs/AGENT-OPERATIONS.md, 'Commit as yourself').");
+    } else {
+      const agentDays = hoursSince(hermes.commit.author.date) / 24;
+      const verdict = agentDays > AGENT_MAX_DAYS ? "⚠ " : "";
+      console.log(`${verdict}Last commit authored by the scheduled agent: ${agentDays.toFixed(1)} day(s) ago (\`${hermes.sha.slice(0, 7)}\`).`);
     }
   } catch (error) {
     console.log(`Could not reach the GitHub API to check for agent activity (${error.message}); heartbeat unknown.`);

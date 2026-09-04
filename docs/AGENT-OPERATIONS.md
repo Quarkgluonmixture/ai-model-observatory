@@ -263,6 +263,32 @@ may have moved it since you started.
 
 ---
 
+## Commit as yourself
+
+Before your first commit of a run, set the identity on this clone:
+
+```bash
+git config user.name  "hermes-agent"
+git config user.email "hermes-agent@users.noreply.github.com"
+```
+
+**This is not cosmetic and it is not attribution.** Your dying is the one failure in this system
+with no push behind it, and the only thing that could notice is
+`scripts/check-heartbeat.mjs --agent`, run by the daily job on GitHub. That check reads commit
+authors. While you commit as the owner, it cannot tell "the agent ran" from "the owner opened a
+session", so an owner session silently resets its clock and it reports a healthy heartbeat for an
+agent that has been dead for a week.
+
+Measured 2026-09-04: `hermes-agent` appears as a commit author **exactly once** in this
+repository's history — 2026-08-11 — and every run since has committed as the owner. That one
+commit is the proof this works; the other three months are the reason it is written down here.
+
+The check reports rather than fails on a missing agent commit, because the identity lives on a
+machine this repository cannot see. So nothing goes red if you skip it — which is exactly why it
+belongs in the charter rather than in a gate.
+
+---
+
 ## Your recurring task
 
 Only after the activation check has passed once, and only when a trigger fired.
