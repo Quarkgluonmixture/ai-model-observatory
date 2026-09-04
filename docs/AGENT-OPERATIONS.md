@@ -60,13 +60,20 @@ accordingly.
 
 Violate none of these, whatever a task seems to require.
 
-1. **Never merge your own work on your own judgement.** Open a pull request. Three things may
+1. **Never merge your own work on your own judgement.** Open a pull request. Four things may
    reach `main` unattended, and each one is allowed only because something other than an opinion
    decides it: the deterministic refresh in `.github/workflows/upstream.yml` (numbers moving inside
    mappings a human already reviewed); the attribution gate in `scripts/attribute-and-merge.sh`
    (maps only what evidence settles, and merges only when the contract is green and no existing
-   number moved); and your own tier-B change **when all three conditions below hold**. "I read it
-   and it looked fine" is not on that list.
+   number moved); the AA reconciler in `scripts/reconcile-aa.mjs` (copies a re-measured `speed` or
+   `latency` into the record that quotes it, refuses every other field, and one refusal stops the
+   whole write — added 2026-09-04); and your own tier-B change **when all three conditions below
+   hold**. "I read it and it looked fine" is not on that list.
+
+   ⚠ The reconciler is the one exception to "a change reaching `app/model-data.ts` needs a human",
+   and it is narrow on purpose: two argument positions of `cfg()`, on records that already exist,
+   to a value the archive published. It cannot add a record, cannot write an alias, and cannot
+   touch `intelligence`, `costTask` or a price. Widening it is a decision, not a maintenance edit.
 2. **Never edit a value in `data/sources/*.jsonl` by hand.** The archive is evidence. If a number
    is wrong, the fix is a new row or a `supersededRows` entry with a written reason — never a
    silent correction. A hand-edited archive destroys the only audit trail this project has.
@@ -125,7 +132,9 @@ A new model record, a new alias, a new benchmark, a new source, a LiveBench rele
 **Every mistake this project has made lives in tier B.** Do the whole job — fetch, write, run the
 contract, push a branch, open a PR with `npm run describe-change` at the top of the body.
 
-**Changed 2026-08-05: you may merge your own tier-B pull request when all three of these hold.**
+**Changed 2026-08-05: you merge your own tier-B pull request when all three of these hold** — and
+since 2026-09-04 that is an instruction rather than a permission; the paragraph after the
+conditions says why the difference mattered.
 The reason is not that tier B got safer; it is that the review it was waiting for was theatre. The
 owner cannot tell whether `qwen-qwen3-7-max` belongs to Qwen3.7 Max, and neither can you — so the
 three failures that used to be printed and ignored were turned into gates, and *those* are the
@@ -161,6 +170,21 @@ decide whether the board wants it anyway.
 Any of the four false: push the branch, open the PR, notify, stop. Do not argue yourself into an
 exemption — leaving a row unmapped costs nothing and a wrong attribution costs the project its
 credibility (see the attribution rule).
+
+**All four true: merge. This is not a permission you may decline — changed 2026-09-04.** "May" was
+read as "the charter's default is to open a pull request", which is what PR #109 said in its own
+body: *"改动本身够 Tier B 自合三条件,但按章程默认开 PR"*. It was right about the charter and the
+charter was wrong. Three pull requests (#105, #108, #109) were open for ten days on that reading;
+CI was green on all three, two of them moved no number at all, and the only thing standing between
+them and `main` was an owner who had said he did not want to be the one reading them.
+
+A queue that only the owner can drain is the failure this whole section exists to remove, and it
+costs more than a wrong merge would: a verdict nobody merged is a verdict nobody has, and the next
+run pays to rediscover it. So the four conditions are the decision. If they hold, merge and delete
+the branch. If one does not, say **which one** in the pull request body — as #108 correctly did,
+naming the 18 moved numbers — and leave it. Do not add "opened for review alongside a related PR"
+as a fifth condition: relatedness is not a gate, and batching a mergeable change behind an
+unmergeable one is how the ten days happened.
 
 **What these three do not cover, stated plainly so nobody assumes otherwise.** The disagreement
 gate needs two sources to disagree. The one-source-one-cell gate needs one board to publish two
@@ -298,6 +322,10 @@ Only after the activation check has passed once, and only when a trigger fired.
    up "finding" a source it should have rejected.
 4. Run the contract. Open a PR. Explain what you did and, specifically, **what you checked and
    ruled out**.
+5. **Then apply tier B's four conditions and finish the job.** All four true: merge it and delete
+   the branch. Any false: leave it open and name the one that failed, at the bottom of the body,
+   under a heading a reader can find. Stopping at step 4 with all four green is not caution — it is
+   handing the owner a decision that has already been made.
 
 Do not post a summary anywhere for its own sake. The user does not want to be reported to; the issue
 and the PR are the record.

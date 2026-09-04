@@ -556,3 +556,63 @@ FrontierMath 各 +1 格,Kimi K3 GDPval-AA 1668→1644,GPT-5.6 Luna / GLM-5.2 Fro
   SWE-Marathon H20 校准分支)。
 - 7 新格:hle-tools 56、FrontierSWE 81.2、PostTrainBench 36.6、BrowseComp 91.2、
   OSWorld 2.0 58.3、OmniDocBench 91.1、CharXiv 84.8。覆盖率 2196/1399/67.0%。
+
+## [2026-09-04] AA 刷新改成自己对账、自己合;章程把「可以自合」改成「就该自合」 `#ship` `#decision` `#measure` `#ops`
+
+**触发**:owner 一句「我总得手动合 PR,我不想看,我就想让他更新」。先盘了一遍最近的动作,
+把「要人」的活分成三条独立的流,**它们的成因完全不同**,不能一刀切:
+
+1. **`auto/refresh-aa`(每周 1 条,人合)** —— 真正的重复劳动。
+2. **hermes 的 tier-B PR(#105 / #108 / #109,开了 10 天)** —— 与检查无关,是章程措辞。
+3. **每日 `Upstream` 的 drift job 自 9-03 起红** —— tier-C,LiveBench 改写了冻结版本下的
+   3 个 nemotron 格(issue #122)。真的要人定,**没动**。
+
+### 1 · AA:那个「reviewer 的判断」其实已经被同一套论证做过两次
+
+`#measure` 实测两次人工对账 commit,内容是同一件事:
+- PR #114(9-01)14 条矛盾 → 目录抄归档值(+10 条 `supersededRows` 把 batch-08 的槽位路由到 14)。
+- PR #121(9-04)20 条矛盾,**全是 speed/latency**,目录抄归档值,10 行 diff。
+  commit message 的全部论证 = 「归档那边是今早脚本从源头重读的,所以目录是陈旧的那一边」。
+
+那不是判断,对这两个字段它**按构造为真**:归档行是脚本几分钟前从源头写的,目录值是同一个脚本
+更早一次运行的副本,没有第三种可能可权衡。⇒ 写进 `scripts/reconcile-aa.mjs`,不再每周重新论证一次。
+
+- **只碰 `speed` / `latency`**。`intelligence` / `costTask` 同批次但**故意不收**:它们是给板子排序的
+  合成值(intelligence 直接决定读者看到的顺序),8-12 那次整批移动的正解是一个**路由决定**
+  (`supersededRows`,逐模型逐字段),要人做一次并写下来。脚本悄悄跟着它们走 = 没人决定却把站重排了。
+- **一条不合就整个不写**(fail-closed)。理由二才是承重的:只要有一条没对上,`check:models` 照样红、
+  PR 照样等人;写掉机械的那一半买不到任何东西,只会把真正要人看的那一半埋进 20 行 diff 里。
+- 写法是**按 `cfg()` 参数位置**改单行,并且校验「文件里现在这个值 == 审计说它看到的值」,
+  对不上就抛 —— 那说明审计和写者看的不是同一个东西,这时唯一正确的动作是停。
+- 实测:把 sol/max 的 speed+latency 改回旧值 → 跑 `--write` → **与 PR #121 那次人工 commit
+  逐字节一致**,`check:models` 回绿;再把 `intelligence` 也改一下 → **一个字都没写**,只报升级。
+
+### 2 · hermes 那三条不是检查挡的,是**章程措辞**挡的
+
+`#measure` 先去核了假设(原以为是 `check:prices` 红着的假依赖,**猜错了**):三条 PR 的 CI
+**全是 success**。#109 的 body 自己写着:「改动本身够 Tier B 自合三条件,**但按章程默认开 PR**」。
+
+⇒ 它对章程的理解是对的,**是章程错了**。「you **may** merge」被读成「默认开 PR」,于是一个
+只有 owner 能排空的队列长了 10 天,而 owner 明确说过他不想当读的那个人。
+⇒ 改成:四条全真 = **合并并删分支**,不是可选;有一条不真 = 留着并**点名是哪一条**(#108 做对了,
+它点名了 18 个移动的数字)。并明确禁掉「和相关 PR 一起看」这条第五条件 —— 相关性不是闸门,
+把能合的压在不能合的后面正是这 10 天的成因。
+
+### 3 · 接闸门之前先量读数,救回一个「永远为假」的条件
+
+`#incident` 差点写出一个静默失效的自合条件。`describe-change` 的 `moved` marker
+**把目录数字也算进去**(故意的,历史理由在该文件头部),而 `auto/refresh-aa` 存在的目的就是改目录
+speed/latency ⇒ `moved == 0` 在这条分支上 = 在问「我有没有干活」,干了就拒。
+实测:只对账一个值就打印 `0 models, **1** moved`。
+⛔ 没有去放宽 `moved` —— 归属闸门和新记录闸门读同一个 marker,在**那两条**分支上「目录数字动了」
+正是该叫人的事件,放宽 = 在它们身上开洞。✅ 另起 `<!-- observation-cells-moved: N -->`
+只数观测网格,一个 marker 一个问题。→ 坑 **50**。同一步还踩到 `{ … } | tee` 吞变量 → 坑 **51**。
+
+### 落地清单
+
+`scripts/reconcile-aa.mjs`(新,带 `--self-test`,已接 `ci.yml`)· `check-model-provenance.mjs --json`
+(结构化矛盾,唯一读者是 reconciler,避免把审计的字段名抄成第二份)· `describe-change.mjs` 新 marker ·
+`aa-refresh.yml`(对账 → 描述 → **契约变成闸**(`check:prices` 仍只报,理由同 8-19)→ 开 PR → 四条件自合)·
+`open-aa-pr.sh`(commit 带上 `model-data.ts`;人已介入时向 workflow 报 `handsoff`)·
+`AGENT-OPERATIONS.md`(硬规则 1 从三条变四条;tier-B 默认翻转)· `AGENTS.md` / `README.md` 同笔改
+(那两处都写着「碰 `model-data.ts` 就要人」,现在有了一个窄例外,**不改就是让读者读到漂移的那份**)。
