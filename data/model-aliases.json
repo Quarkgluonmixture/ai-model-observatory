@@ -2992,6 +2992,20 @@
       "field": "latency_first_chunk_s",
       "supersededBy": "batch-14-aa-parameters",
       "reason": "Batch 08 hand-transcribed Qwen3.7 Max's latency (2.45) from AA's model page in mid-August; batch 14's API re-read of 2026-09-01 carries the current measurement, and AA re-measures both continuously. Field-scoped: the row's price and intelligence stay valid."
+    },
+    {
+      "file": "batch-10-standard-pricing",
+      "modelRaw": "Claude Sonnet 5",
+      "field": "price_input_per_m",
+      "reason": "Batch-10's $3 row archived the standard rate the vendor PROMISED would apply after 2026-08-31 ('standard input/output thereafter $3/$15 per M', verbatim in the row note). The vendor never applied it: the official docs table has printed $2/$10 as the standing rate since (batch-41, read 2026-09-04). Field-level supersession routes the price provenance to the live official reading; batch-10's row stays in the archive untouched.",
+      "supersededBy": "batch-41-anthropic-sonnet5-list-price"
+    },
+    {
+      "file": "batch-10-standard-pricing",
+      "modelRaw": "Claude Sonnet 5",
+      "field": "price_output_per_m",
+      "reason": "Same as price_input_per_m: the promised $3/$15 standard rate never came into force; batch-41's official docs read ($2/$10) is the list price.",
+      "supersededBy": "batch-41-anthropic-sonnet5-list-price"
     }
   ],
   "withdrawnRows": [
