@@ -465,3 +465,154 @@ alias 的 reason 已按此改写。
   ⚠ `check-model-provenance.mjs:110` 的 `close()` 是**绝对容差 0.005**,所以 `qwen3.7-plus`
   56.59 vs 56.58 也算硬矛盾 ⇒ **每次 AA 刷新都会重演这一幕**,这是 TODO 里「价格/参数要不要走 ingest
   派生」那条的实证支持。路上踩到坑 **48**(注释写进记录里 ⇒ 分类器报「记录被移除」)。
+
+## [2026-08-26] 仓库改名 `quarkspace`,并修掉指反了三天的真相源 `#decision` `#ship` `#measure` `#incident`
+
+**起因是一句话。** 有人问「quark space 现在是不是没用了,现在都是 ai observatory 什么的」——
+名字在替代码回答问题,而且答错了。真正名不副实的是**这个仓库**:它装的是整个站
+(个人站 `/` · 观测台 `/models` · Persona Lab `/persona`),`ai-model-observatory` 只描述了一个路由。
+
+### 先修的:一个事实四份副本,两份指反
+
+`../quark-space` 在 **2026-08-23** 已被它自己新增的 `content/CANONICAL_SOURCE.md` 降级为设计存档。
+但同一个事实还有两份没跟上、而且**方向是反的**:本仓库 `AGENTS.md` 写着「更完整的真相源在
+`../quark-space/content/projects.json`」,`README.md` 目录说明里同一句反话。quark-space 那边同样两处:
+`CHECKPOINT.md`(新 session 的入口)的「链接」一节,和 `projects.json` **自己的 `_about` 字段**
+(「正式站点从这个文件构建」——这句在文件内部,谁打开谁被误导)。
+
+- ⚠ **`AGENTS.md` 不是普通文档,它是操作合同**。每天 10:30 UK 的 hermes 班和任何动首页的 agent
+  都先读它。指反了的后果不是文档不好看,是下一个执行者会照着一份**冻结快照**去改线上文案。
+- ⚠ **实测:本仓库 30 个 npm script 里没有一个校验散文** ⇒ 没有任何自动闸门够得到这件事。
+  它错了三天,零告警。
+- ⇒ 修完后又收到一条更准的意见,**又改了一次**:第一版把 `home-content.ts` 笼统写成
+  "source of truth",这会把权威从一处漂到另一处。正解是**分两层**:职业事实与定位的上游是
+  `JobFinder/00_总控/`,`home-content.ts` 只是**已部署首页的实现权威**(说什么、放哪些项目、什么顺序)。
+  混为一谈正是上一次漂移的起点。(#115)
+
+### 改名:三个名字**故意**不一致
+
+| 层 | 值 | 动了吗 |
+|---|---|---|
+| GitHub repo slug | `Quarkgluonmixture/quarkspace` | ✅ |
+| 本机文件夹(Mac) | `~/Documents/Promptfoo/ai-model-observatory` | ⛔ 故意不动 |
+| 本机文件夹(Windows / hermes) | `C:\Users\Administrator\Projects\ai-model-observatory` | ⛔ 故意不动 |
+| EdgeOne 项目名称 | `ai-model-observatory` | ⛔ 不是我们的 |
+
+**只改 GitHub identity、不动文件系统路径与 scheduler cwd**,是风险最小的做法 —— 自动化最怕的是
+为了"整齐"同时动 repo slug + 本地 path + scheduler cwd。⚠ 这三个名字现在长得不一样是**设计**,
+不是遗漏,⛔ 别顺手改统一(细节与两条不可逆事实在 `GOTCHAS.md` **49**)。
+
+**改名前实测过的**(所以敢动):全仓库**零处硬编码仓库 URL**;`scripts/check-heartbeat.mjs` 优先读
+`GITHUB_REPOSITORY`、否则从 `git remote get-url origin` 推导 ⇒ 改完 remote 自动切过去。
+hermes 侧同构:它的 cron job(canonical id `2d4dbdc7db6f`)配置里**没有** `--repo` flag,
+workdir 直指本地 clone、prompt 全是相对命令 ⇒ 切 remote 就通,`jobs.json` 不用改。
+
+**改名后实测**:`check:heartbeat --github` 从新 remote 推导出 `Quarkgluonmixture/quarkspace`
+并查通 GitHub API;`check:deployment` 两次全绿(ICP 备案 3/3 host-route,`quarkspace.top`
+服务内容与 `main` 一致,29 models × 72 benchmarks)。顺带清掉**第三个**历史名:
+`package-lock.json` 的 root name 一直还是 `site-creator-vinext-starter`
+—— 实测 `npm install --package-lock-only` **只改那 2 行、零依赖漂移**,所以并进改名而不是另开 commit。(#116)
+
+### #decision 三条,理由记在这里
+
+- **`quark-space/content/projects.json` 不搬进本仓库。** 它是 2026-08-03 的快照。搬进 live repo
+  它就变成一个 `grep` 得到、看起来像数据源的文件 —— 正是 8-23 那条禁令要防的事。历史留在
+  quark-space 的 git 里。同理那四张截图**字节级相同**于 `public/shots/`(`cmp` 过),搬 = 第三份副本。
+- **封存 quark-space 放在整个流程最后**,而不是紧跟改名。旧仓库保持可写,是 EdgeOne 或 hermes
+  出怪行为时唯一的退路。
+- **个人站的待办迁进本仓库 `TODO.md`**(此前这里完全没有个人站那一节)。⚠ 迁移**不是照搬**:
+  对着代码逐条验过,原本 7 条里 **5 条已经做掉了**,只剩 2 条。⇒ 教训是
+  **搬待办前先验它还成不成立**,一份 8-11 的清单搬进 8-26 的仓库就是凭空造出五件不存在的活。
+
+### ⚠ 一个假绿,当场记下来
+
+改完之后跑 `check:heartbeat --agent`,它报「队列有人在做,最近一次非 bot commit 0.0 天前
+(`62805ce`)」——**那是我们自己刚才的 commit**。这正是 §10 与 `TODO.md` 里那条已知缺陷:
+你自己开一次 session 就把三天时钟清零。⇒ ⛔ 这条**不能**用来证明 hermes 还活着。
+hermes 死掉仍然是这套系统里唯一背后没有推送的失败;那条「要不要给它推微信」的裁决,
+今天变得更值钱了。
+
+## [2026-08-31] batch-39 Kimi K3 落地:上一天被迭代上限截住的 commit,本班 rebase 后自合 #ship
+
+**背景**:8-30 班把 Kimi K3 发布表做完全验完(7 新格 + 7 证据升级,契约全绿,describe-change
+无已有数字改动),但被迭代上限截在 commit 之前,改动全留在工作区。本班(8-31)按显式路径
+commit 后 rebase 到 origin/main —— 中间进了一个每日 live refresh(4dd8f55:Qwen3.7/3.6 Plus
+FrontierMath 各 +1 格,Kimi K3 GDPval-AA 1668→1644,GPT-5.6 Luna / GLM-5.2 FrontierMath 下修,
+23 条 grok-4.6 LiveBench withdrawn 行 acknowledged 保留)。
+
+**为什么 rebase 后必须重验**:auto-merge 在 generated.ts 上无冲突,但无冲突 ≠ 语义正确 ——
+两边都重新生成过这个文件。重跑 `npm run ingest` 后工作区 clean,证明合并语义与 fresh ingest
+一致,这是唯一可靠的验法。⚠ 顺带发现 README 覆盖计数被 live refresh 顶旧了(我们 commit 的
+2190/1397/66.9% vs fresh ingest 真值 2196/1399/67.0%),单独修了一笔。
+
+**重验后 tier-B 三条件仍成立**(契约全绿含 disagreement/one-source-one-cell、describe-change
+无已有数字改动、无新增 exemption),按 batch-38 先例 agent 直推 main。
+
+**改动**:
+- `scripts/capture-release-tables.mjs`:+`kimik3` entry,行生成器支持 `carried.harness` /
+  `release.effort`(首个在脚注里声明 harness/effort 的发布表)。
+- batch-39:251 行整表归档,只采纳自家列 13 标签(HLE-Full 一行拆两列)14 行;五个竞品列
+  file-scoped 拒收;八个标签带理由拒收(六个 AA/官方榜转引、MCP-Atlas 500-task 子集、
+  SWE-Marathon H20 校准分支)。
+- 7 新格:hle-tools 56、FrontierSWE 81.2、PostTrainBench 36.6、BrowseComp 91.2、
+  OSWorld 2.0 58.3、OmniDocBench 91.1、CharXiv 84.8。覆盖率 2196/1399/67.0%。
+
+## [2026-09-04] AA 刷新改成自己对账、自己合;章程把「可以自合」改成「就该自合」 `#ship` `#decision` `#measure` `#ops`
+
+**触发**:owner 一句「我总得手动合 PR,我不想看,我就想让他更新」。先盘了一遍最近的动作,
+把「要人」的活分成三条独立的流,**它们的成因完全不同**,不能一刀切:
+
+1. **`auto/refresh-aa`(每周 1 条,人合)** —— 真正的重复劳动。
+2. **hermes 的 tier-B PR(#105 / #108 / #109,开了 10 天)** —— 与检查无关,是章程措辞。
+3. **每日 `Upstream` 的 drift job 自 9-03 起红** —— tier-C,LiveBench 改写了冻结版本下的
+   3 个 nemotron 格(issue #122)。真的要人定,**没动**。
+
+### 1 · AA:那个「reviewer 的判断」其实已经被同一套论证做过两次
+
+`#measure` 实测两次人工对账 commit,内容是同一件事:
+- PR #114(9-01)14 条矛盾 → 目录抄归档值(+10 条 `supersededRows` 把 batch-08 的槽位路由到 14)。
+- PR #121(9-04)20 条矛盾,**全是 speed/latency**,目录抄归档值,10 行 diff。
+  commit message 的全部论证 = 「归档那边是今早脚本从源头重读的,所以目录是陈旧的那一边」。
+
+那不是判断,对这两个字段它**按构造为真**:归档行是脚本几分钟前从源头写的,目录值是同一个脚本
+更早一次运行的副本,没有第三种可能可权衡。⇒ 写进 `scripts/reconcile-aa.mjs`,不再每周重新论证一次。
+
+- **只碰 `speed` / `latency`**。`intelligence` / `costTask` 同批次但**故意不收**:它们是给板子排序的
+  合成值(intelligence 直接决定读者看到的顺序),8-12 那次整批移动的正解是一个**路由决定**
+  (`supersededRows`,逐模型逐字段),要人做一次并写下来。脚本悄悄跟着它们走 = 没人决定却把站重排了。
+- **一条不合就整个不写**(fail-closed)。理由二才是承重的:只要有一条没对上,`check:models` 照样红、
+  PR 照样等人;写掉机械的那一半买不到任何东西,只会把真正要人看的那一半埋进 20 行 diff 里。
+- 写法是**按 `cfg()` 参数位置**改单行,并且校验「文件里现在这个值 == 审计说它看到的值」,
+  对不上就抛 —— 那说明审计和写者看的不是同一个东西,这时唯一正确的动作是停。
+- 实测:把 sol/max 的 speed+latency 改回旧值 → 跑 `--write` → **与 PR #121 那次人工 commit
+  逐字节一致**,`check:models` 回绿;再把 `intelligence` 也改一下 → **一个字都没写**,只报升级。
+
+### 2 · hermes 那三条不是检查挡的,是**章程措辞**挡的
+
+`#measure` 先去核了假设(原以为是 `check:prices` 红着的假依赖,**猜错了**):三条 PR 的 CI
+**全是 success**。#109 的 body 自己写着:「改动本身够 Tier B 自合三条件,**但按章程默认开 PR**」。
+
+⇒ 它对章程的理解是对的,**是章程错了**。「you **may** merge」被读成「默认开 PR」,于是一个
+只有 owner 能排空的队列长了 10 天,而 owner 明确说过他不想当读的那个人。
+⇒ 改成:四条全真 = **合并并删分支**,不是可选;有一条不真 = 留着并**点名是哪一条**(#108 做对了,
+它点名了 18 个移动的数字)。并明确禁掉「和相关 PR 一起看」这条第五条件 —— 相关性不是闸门,
+把能合的压在不能合的后面正是这 10 天的成因。
+
+### 3 · 接闸门之前先量读数,救回一个「永远为假」的条件
+
+`#incident` 差点写出一个静默失效的自合条件。`describe-change` 的 `moved` marker
+**把目录数字也算进去**(故意的,历史理由在该文件头部),而 `auto/refresh-aa` 存在的目的就是改目录
+speed/latency ⇒ `moved == 0` 在这条分支上 = 在问「我有没有干活」,干了就拒。
+实测:只对账一个值就打印 `0 models, **1** moved`。
+⛔ 没有去放宽 `moved` —— 归属闸门和新记录闸门读同一个 marker,在**那两条**分支上「目录数字动了」
+正是该叫人的事件,放宽 = 在它们身上开洞。✅ 另起 `<!-- observation-cells-moved: N -->`
+只数观测网格,一个 marker 一个问题。→ 坑 **50**。同一步还踩到 `{ … } | tee` 吞变量 → 坑 **51**。
+
+### 落地清单
+
+`scripts/reconcile-aa.mjs`(新,带 `--self-test`,已接 `ci.yml`)· `check-model-provenance.mjs --json`
+(结构化矛盾,唯一读者是 reconciler,避免把审计的字段名抄成第二份)· `describe-change.mjs` 新 marker ·
+`aa-refresh.yml`(对账 → 描述 → **契约变成闸**(`check:prices` 仍只报,理由同 8-19)→ 开 PR → 四条件自合)·
+`open-aa-pr.sh`(commit 带上 `model-data.ts`;人已介入时向 workflow 报 `handsoff`)·
+`AGENT-OPERATIONS.md`(硬规则 1 从三条变四条;tier-B 默认翻转)· `AGENTS.md` / `README.md` 同笔改
+(那两处都写着「碰 `model-data.ts` 就要人」,现在有了一个窄例外,**不改就是让读者读到漂移的那份**)。

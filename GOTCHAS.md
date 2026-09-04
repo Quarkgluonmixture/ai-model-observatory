@@ -704,3 +704,56 @@ GA 的分落进 preview 记录,这条讲**翻过来之后**那个防线该怎么
 - ⇒⇒ 好消息是它**朝安全方向坏**:一条"被移除的记录"绝不可能满足 tier-B 三条件,
   所以它挡住自合、逼人来看,不会静默放行。但它会浪费掉那个人的时间,也可能被当成真事故。
   与坑 **34** 同族:基于文本形状的判据,自己也会够不到。
+
+### 49. 仓库 2026-08-26 从 `ai-model-observatory` 改名为 `quarkspace` —— 两条不可逆事实
+2026-08-26。改名理由:这个仓库装的是**整个站**(个人站 `/` · 观测台 `/models` · Persona Lab
+`/persona`),旧名只描述了其中一个路由,已经害人问出「quark space 是不是没用了」这种问题。
+
+- ⛔⛔ **永远不要再建一个叫 `ai-model-observatory` 的仓库**。GitHub 的旧名重定向(web + `git
+  clone/fetch/push`)只在旧名**无人占用**时生效;一旦重建同名仓库,所有还指着旧 URL 的东西
+  当场断,且**无法恢复**。这是本次改名唯一真正不可逆的后果。
+- ⛔ **`ai-model-observatory-lhi0hg2y.edgeone.cool` 不是仓库名,是 EdgeOne 的项目名派生的默认域名**。
+  EdgeOne 控制台里的「项目名称」仍然是 `ai-model-observatory`,GitHub 改名不动它。
+  ⇒ `README.md`、`docs/ARCHITECTURE.md` §6、`data/deployment.json` 里那三处提到它的地方
+  **改名后仍然正确,不许顺手替换**(替换 = 把一个能用的 fallback 地址写成不存在的)。
+- ⚠ **hermes 那台 Windows 的 clone 要单独改 `origin`**,它的 job 配置不在本仓库里。
+  靠 GitHub redirect 能先活着,但 hermes 死掉是这套系统里**唯一背后没有推送的失败**
+  (见 `docs/ARCHITECTURE.md` 关于 gaps issue 与 `check-heartbeat --agent` 的那段)——
+  ⇒ 它不会报丧,只会安静地不干活。改名当天就去改,或第二天 09:30 UTC 后主动看一眼。
+- ✅ **代码里零处硬编码仓库 URL**(改名前实测)。`scripts/check-heartbeat.mjs` 优先读
+  `GITHUB_REPOSITORY`,否则从 `git remote get-url origin` 推导 ⇒ 改完 remote 就自然切过去。
+- 顺带清掉了第三个历史名:`package-lock.json` 的 root name 一直还是
+  `site-creator-vinext-starter`。实测 `npm install --package-lock-only` 只改那 2 行、
+  零依赖漂移,所以并进本次改名而不是另开 commit。
+
+### 50. `describe-change` 的 `moved` **把目录记录的数字也算进去** ⇒ 它当不了 AA 分支的自合闸
+2026-09-04。给 `aa-refresh.yml` 接自合时踩到,**接线前实测才发现**,不然会写出一个永远为假的条件。
+
+- `<!-- changed-cells: N models, M moved -->` 里的 `M` = 观测格移动 + **目录数字变化** +
+  重分类(`scripts/describe-change.mjs` 末尾那行)。这是**故意的**,历史理由就在该文件头部:
+  曾经有一次 AA 刷新改了目录数字而这份报告看不见。
+- ⇒ 但 `auto/refresh-aa` 这条分支**存在的目的就是改目录 speed/latency**。拿 `moved == 0`
+  当它的自合条件 = 在问「我有没有干活」,干了就拒。实测:只对账一个值,打印
+  `0 models, **1** moved`。
+- ⛔ **别为此放宽 `moved` 本身** —— 归属闸门和新记录闸门都在读同一个 marker,而在**那两条**
+  分支上「目录数字动了」正是该叫人来的事件。放宽它 = 在它们身上开一个洞。
+- ✅ 正解 = **另起一个 marker 回答另一个问题**:`<!-- observation-cells-moved: N -->`
+  只数观测网格(moved + reclassified + lost),AA 那条分支读它,其余照旧读 `moved`。
+  一个 marker 一个问题,不复用。
+- ⇒⇒ 可迁移的那句:**接一个闸门之前,先拿一次真实改动量一遍它的读数**。
+  这个条件写错不会报错,只会安静地永不放行 —— 症状与「自动化没做」完全一样。
+闸: 无 — 机器判不了「这个条件读的 marker 和它想问的问题对不对上」,那是语义不是语法。
+  ✅ 但坏的方向是安全的:marker 若被删或改名,`sed` 取空 ⇒ `moved == '0'` 为假 ⇒ **不自合**,
+  留 PR 给人。⇒ 会漏掉的只有「自动化悄悄停了」,不会漏掉「错误地合了」。
+
+### 51. workflow 里 `{ … } | tee` 会**吞掉**块内所有变量赋值(`green=no` 白设)
+2026-09-04,写 aa-refresh 契约步骤时。管道左边的花括号组跑在**子 shell** 里,块内
+`green=no` 随子 shell 一起消失,外面读到的永远是 `yes` —— 检查全红也照样自合。
+
+- ✅ 改成 `{ … } > checks.txt 2>&1` 再 `cat checks.txt`:**单纯重定向不 fork**,赋值活得下来。
+  `scripts/attribute-and-merge.sh` 早就是这个形状,照抄它。
+- 与坑 **34** / 4239916 那次(`| tee` 让退出码变成 tee 的)同族:**`tee` 一进来,
+  管道左边的退出码和变量都不再是你以为的那个**。要日志就先落盘再打印。
+闸: 无 — 不做成 CI grep 是**故意的**:`| tee` 本身完全合法(本仓多处在用),
+  只有「块内有赋值 **且** 赋值在块外被读」才是 bug,而这要跨步骤看 `$GITHUB_OUTPUT`,
+  纯文本闸只会制造假阳性。⇒ 判据留给人:**写 `{ … } | tee` 之前问一句「块里有赋值吗」**。

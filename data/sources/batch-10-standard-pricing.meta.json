@@ -5,15 +5,27 @@
   "collectedWith": "promoted from batch 08's capture, not a new retrieval",
   "filtered": false,
   "schema": "Model operating parameters, NOT benchmark scores. Carries the list price for models whose published rate is temporarily discounted.",
-  "sources": ["https://www.anthropic.com/pricing"],
-  "note": "The catalog quotes list price, never a promotional rate — a temporary discount is not comparable against every other model's list price, and it goes stale silently the day it lapses. Batch 08 archived Claude Sonnet 5 at its introductory $2/$10 and recorded the standard $3/$15 verbatim inside that row's note. This batch promotes that already-captured fact into a row of its own so the catalog value has something to check against. No new page was fetched; the source and retrieval date are batch 08's.",
-  "priceTerms": [
+  "sources": [
+    "https://www.anthropic.com/pricing"
+  ],
+  "note": "The catalog quotes list price, never a promotional rate — a temporary discount is not comparable against every other model's list price, and it goes stale silently the day it lapses. Batch 08 archived Claude Sonnet 5 at its introductory $2/$10 and recorded the standard $3/$15 verbatim inside that row's note. This batch promotes that already-captured fact into a row of its own so the catalog value has something to check against. No new page was fetched; the source and retrieval date are batch 08's. | RETIRED 2026-09-04: the term below is retired — see retiredTerms. The vendor kept $2/$10 in force after the published end date instead of moving to $3/$15; batch-41 archives the official docs table saying so.",
+  "priceTerms": [],
+  "retiredTerms": [
     {
       "modelId": "claude-sonnet-5",
-      "listPrice": { "input": 3, "output": 15 },
-      "promotional": { "input": 2, "output": 10, "endsOn": "2026-08-31" },
+      "retrievedOn": "2026-08-01",
+      "listPrice": {
+        "input": 3,
+        "output": 15
+      },
+      "promotional": {
+        "input": 2,
+        "output": 10,
+        "endsOn": "2026-08-31"
+      },
       "source": "https://www.anthropic.com/pricing",
-      "reason": "Introductory pricing with a published end date. The promotion is archived because it is a real published fact, but it must never become the catalog number. npm run check:prices fails if it does."
+      "retiredOn": "2026-09-04",
+      "retiredBecause": "Superseded by the vendor, not satisfied. The promised standard $3/$15 'thereafter August 31, 2026' never came into force: the official docs pricing table has printed the promotional $2/$10 as the standing rate since the term expired (read 2026-09-04, batch-41, no promotional language anywhere on the page). The catalog now quotes $2/$10, evidenced by batch-41's official row. Moved here rather than deleted per the batch-31 precedent: a term left in priceTerms after the vendor makes its promo the standing rate starts failing check:prices against the new list price."
     }
   ]
 }

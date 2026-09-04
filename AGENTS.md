@@ -15,9 +15,16 @@ have already been made here — all of which passed every automated check.
 ## Three product surfaces share this repo
 
 - **`/` is the owner's personal site** (job-hunting portfolio). Its files are `app/page.tsx`,
-  `app/home-content.ts`, `app/home.module.css`, `public/shots/`. Copy lives in
-  `home-content.ts`; the wording rules and the fuller source of truth are in
-  `../quark-space/content/projects.json`.
+  `app/home-content.ts`, `app/home.module.css`, `public/shots/`. **Two authorities here, and
+  conflating them is how the last drift started.** `home-content.ts` is the *implementation*
+  authority: what the deployed homepage says, which projects appear, in what order. Career
+  facts and positioning are *upstream* in `JobFinder/00_总控/` (`CURRENT_PROFILE.md`,
+  `WEAPON_INVENTORY.md`, `POSITIONING_V2.md`) — change those there first, then hand-sync into
+  `home-content.ts`. As of 2026-08-23 `../quark-space` is neither: it is a design archive, and
+  its `content/projects.json` is a frozen snapshot of the 2026-08-03 portfolio that must never
+  be synced back over `home-content.ts` — see `../quark-space/content/CANONICAL_SOURCE.md`.
+  This paragraph named that archive as the source of truth until 2026-08-26; the demotion had
+  happened three days earlier and nothing in this repository noticed.
 - **`/models` is the observatory** — `app/models/page.tsx` (+ `app/models/layout.tsx` for its
   title, since the page is a client component). Everything else in this file is about the
   observatory.
@@ -367,6 +374,7 @@ official pages for precision, not because LMArena is wrong.
 | `scripts/report-gaps.mjs` | What was never collected — floors, unaliased rows, new upstream models |
 | `scripts/propose-attribution.mjs` | Which catalog model a published string is — the alias step, unattended, with `--backtest` as its guard |
 | `scripts/attribute-and-merge.sh` | Applies those proposals and merges them only when the contract is green and no existing number moved |
+| `scripts/reconcile-aa.mjs` | Copies a re-measured AA `speed`/`latency` into the catalog record quoting it. The only writer to `app/model-data.ts` that is not a person; refuses every other field, and one refusal writes nothing at all |
 | `scripts/check-price-terms.mjs` | Fails when a promotional price reaches the catalog |
 | `app/model-data.ts` | Model catalog, benchmark taxonomy, derived views |
 | `app/observations.generated.ts` | Generated — never hand-edit |

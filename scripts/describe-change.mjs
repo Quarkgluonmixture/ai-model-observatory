@@ -408,6 +408,19 @@ if (newModels.length) {
 
 process.stdout.write(out.join("\n") + "\n");
 console.log(`<!-- changed-cells: ${gained.size + lost.size} models, ${moved.length + catalogChanges.length + reclassified.length} moved -->`);
+// The same question asked of the OBSERVATION grid alone — a cell that changed, was reclassified,
+// or vanished — with catalog-record numbers deliberately left out.
+//
+// It exists for one caller, `aa-refresh.yml`, and it exists because the marker above cannot answer
+// it there. That branch's whole purpose is to move catalog speed and latency, so `moved` counts
+// the change the branch was created to make, and a merge gate reading it would be asking "did I do
+// my job?" and refusing whenever the answer was yes. Measured 2026-09-04, before it was wired:
+// a one-value reconcile prints `0 models, 1 moved`.
+//
+// Every other caller keeps reading `moved`, and must. On the attribution and new-model branches a
+// catalog number moving is exactly the event that needs a person, and narrowing their gate to the
+// observation grid would open a hole in it. One marker per question, not one marker reused.
+console.log(`<!-- observation-cells-moved: ${moved.length + reclassified.length + lost.size} -->`);
 console.log(`<!-- elo-changes: ${eloChanges.length} -->`);
 console.log(`<!-- new-models: ${newModels.map((m) => m.name).join(" · ")} -->`);
 // Reported, deliberately NOT a merge condition. A gate on it was measured and rejected: 47 of the

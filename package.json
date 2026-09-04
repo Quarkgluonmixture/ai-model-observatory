@@ -1,5 +1,5 @@
 {
-  "name": "ai-model-observatory",
+  "name": "quarkspace",
   "version": "0.1.0",
   "private": true,
   "engines": {
@@ -39,6 +39,7 @@
     "describe-change": "node scripts/describe-change.mjs",
     "draft:model": "node scripts/draft-model-record.mjs",
     "aa:new": "node scripts/aa-new-models.mjs",
+    "reconcile:aa": "node scripts/reconcile-aa.mjs",
     "capture:release": "node scripts/capture-release-tables.mjs"
   },
   "dependencies": {

@@ -159,6 +159,14 @@ jobs:
       - name: Replay the exemption gate
         run: node scripts/check-exemptions-untouched.mjs --self-test
 
+      # The AA reconciler rewrites app/model-data.ts unattended, by argument position. Two things
+      # can invalidate it silently and neither would fail any other check here: a reordering of
+      # `cfg()`'s parameters, which would put a latency into the speed slot, and a reformat of the
+      # catalog that breaks the one-call-per-line shape it matches. The self-test asserts the
+      # positions against the real declaration, so this is the step that notices.
+      - name: Replay the AA reconciler
+        run: node scripts/reconcile-aa.mjs --self-test
+
       - name: Build production application
         run: npm run build
 

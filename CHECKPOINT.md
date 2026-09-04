@@ -1,17 +1,32 @@
 # CHECKPOINT
 
-**接手点** — 2026-08-20:**连红两天的 refresh 已修好并放行,152 格待入档一次性入库。
-根因不是上游漂移,是上游把同一条测量发了两遍 —— 而闸门丢的是整批。**
+**接手点** — 2026-09-04:**「每周合一次 AA 的 PR」这件事没了。** owner 的原话是「我总得手动合 PR,
+我不想看,我就想让他更新」,所以这一轮拆的是**重复劳动**,不是判断:
 
-Epoch 的 zip 里同一条测量出现两次(ARC CSV 同一 Airtable 记录以仅大小写不同的显示名;`apex_agents`
-同一个 run 一次纯 slug、一次把 effort 放进显示名),解析成**字节级相同**的行 ⇒ duplicate-configuration
-断言红 ⇒ **整个批次不入库**,而看板看着完全正常。修法只折叠字节级相同的行(PR #102,tier-B 自合),
-**故意不碰**同配置不同分数的 8 格 —— 那是板在动,静默挑一个正是这个项目要防的失败。
-全文在 `LOG.md` 2026-08-20,机制进坑 **47**,⛔ 别重新论证。
+- `auto/refresh-aa` 现在自己对账、自己合。`scripts/reconcile-aa.mjs` 只把重测过的
+  **`speed` / `latency`** 抄进目录记录(这两个字段「归档是新的、目录是旧的」**按构造为真**),
+  其余字段一律拒绝,**一条不合就整个不写**。四条件全绿才自合 —— 契约绿 · 零升级 ·
+  零观测格移动 · 没人在这条 PR 上动过手。
+- `docs/AGENT-OPERATIONS.md` 的 tier-B 从「**可以**自合」改成「**就该**自合」。旧措辞被
+  hermes 读成「默认开 PR」(#109 的 body 自己这么写的),于是三条 CI 全绿的 PR 开了 10 天。
+- ⛔ **别把 reconciler 当成「碰 `model-data.ts` 就要人」这条规矩被推翻了**:它是一个**窄例外**,
+  两个参数位、只在已存在的记录上、只抄归档已发布的值。要放宽它是一次决定,不是维护性修改。
 
-⚠ **一个观察点被记成了「通过」而其实是「没发生」**:`deepseek-v4-flash` 三格 ARC-AGI-2 上板了,
-但走的是**已有 alias**,归属闸门那天没提任何新 alias ⇒「fetcher 收行 → 闸门归属 → 自合」端到端
-**仍然一次都没看到过**(已改写进 `TODO.md`)。
+⇒ **剩下真的要你定的四件在 `TODO.md` 顶部那一节**(三条开着的 PR + 一条 tier-C),
+每条都写了它卡在哪个条件上。⛔ 那些不是漏做的自动化。
+
+⛔⛔ 仓库 2026-08-26 已改名 `ai-model-observatory` → `quarkspace`;**永远不要再建旧名的仓库**,
+`…-lhi0hg2y.edgeone.cool` 是 EdgeOne 项目名派生的域名、**不许顺手替换**。全文 → 坑 **49**。
+
+同一轮修掉了一个**指反了三天**的真相源:`AGENTS.md` 曾写着「更完整的真相源在
+`../quark-space/content/projects.json`」。⚠ `AGENTS.md` 是操作合同,hermes 和任何动首页的 agent
+都先读它 ⇒ 指反了 = 下一个执行者照着一份冻结快照改线上文案。**这仓库 30 个 npm script
+没有一个校验散文**,所以零告警地错了三天。现在的权威是三层,别再压平成一句 "source of truth":
+职业事实/定位 → `JobFinder/00_总控/` · 线上首页文案/选择/排序 → `app/home-content.ts` ·
+历史设计快照 → quark-space(**2026-08-26 已 GitHub archived,只读**),⛔ 不得回灌。
+
+⭐ **个人站 `/` 现在在本仓库 `TODO.md` 里有自己那一节了**(此前没有,待办锁在 quark-space)。
+迁移时逐条验过,原本 7 条**只剩 2 条**成立 —— ⇒ **搬待办前先验它还成不成立**。
 
 ⭐ 8-19 那一整轮(`deepseek-v4-pro` 原地翻转成 GA、守卫从日期换成串、batch 35 的 GA 列采纳)
 已全部落地并入档 → `LOG.md` 2026-08-19 三条 + 坑 **40/41/42/43/44/45**。**⛔ 别重新论证**,
@@ -32,13 +47,13 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 
 ---
 
-## 现状（2026-08-20 实测）
+## 现状（2026-08-26 实测）
 
 | | |
 |---|---|
 | 目录 | 29 model families · **72** benchmarks |
-| 观测 | **2155 rows · 1390 / 2088 cells（66.6% cell coverage）** —— 8-20 refresh 之后（8-19 是 2129 / 1385 / 66.3%），复算 = `npm run check:data` 末行 |
-| 源分类 | benchmark 921 / independent 1039 / vendor 195（8-20 实测；较 8-19 +5 / +21 / +0，全部来自那次放行的入档）|
+| 观测 | **2160 rows · 1391 / 2088 cells（66.6% cell coverage）** —— 8-26 实测（8-20 是 2155 / 1390 / 66.6%），复算 = `npm run check:data` 末行 |
+| 源分类 | benchmark 921 / independent 1044 / vendor 195（8-26 实测；较 8-20 +0 / +5 / +0）|
 | 溯源 | **319 / 322**（99%；3 格有值无据 = `deepseek-v4-flash` 两格 + `deepseek-v4-pro` 的 `open`，都在 `TODO.md`）⚠ 分母是**解析得到的行** |
 | 归档 | **34 个带行的批次**（+ `batch-31` 只有 meta，是纯价格条款；编号到 **35**），其中 **20** 个 `collectedWith` 指向 `scripts/`、再加 batch-33 那条 curl（8-20 实测，复算 = 数 `data/sources/*.meta.json` 的 `collectedWith`）⚠ 「裸奔行数」引用前先钉定义 → `TODO.md` |
 | 归档里收了不入库 | **3582 行**（8-09 实测），全部带写明理由（`droppedBenchmarks` / 未映射 / 已退役）——拒绝也要可审计 ⚠ 只增不减地长过两次（batch 35 之后至少 +76；8-19 又加进 V4 Pro preview 的全部 132 行）；这个数的取数口径没写下来，引用前先钉定义，别在它上面做减法或加法 |
@@ -63,12 +78,16 @@ Snapshot for the next session. One page. 现场状态在这里;**动手前的自
 |---|---|---|---|
 | ~08:10（cron 写 06:00，GitHub 实际延迟约两小时） | GitHub Actions `upstream.yml` | **14** 个每日源漂移检查（16 个 fetcher 中 `live`/`append-only` 那些；复算 = `npm run report:column-automation`） → 重抓 live 板 → 发布页探针 → 写 gaps issue → AA 新模型侦测 | 只碰 `data/sources/` + 生成文件 → **直推 main** |
 | 同上，末步 | GitHub Actions | 归属闸门 `attribute-and-merge.sh`：提议 alias → 跑契约 → 三条件满足才自合 | 有条件自合，否则留 PR |
-| 09:30 | hermes（Windows 定时任务） | 读 gaps issue → 挑一件完整做完 → 开 PR / tier-B 三条件自合 | 有条件自合 |
+| 由 `upstream.yml` 末步按需触发 | GitHub Actions `aa-refresh.yml` | 重读 AA 参数 → `reconcile-aa.mjs` 把重测的 speed/latency 抄进目录 → 契约(**现在是闸**) → 开 PR → 四条件自合 | 有条件自合，否则留 PR |
+| 09:30 UTC（10:30 UK） | hermes（Windows 定时任务，canonical job id **`2d4dbdc7db6f`**） | 读 gaps issue → 挑一件完整做完 → 开 PR → **四条件全真就合并并删分支**（2026-09-04 起是指令不是许可） | 有条件自合 |
 | 任意 push 到 main | GitHub Actions `ci.yml` | 契约全套 + 归属闸门回测 + 两个分类器自测 + 手机探针（两条路由）+ 站上新增模型才推微信 | — |
 
 **三条件**（tier B 自合的唯一门槛，写在 `docs/AGENT-OPERATIONS.md`）：契约全绿（含跨源分歧闸门与
 一源两串闸门）· `describe-change` 报告**没有已有数字被改动** · 没有写 `acknowledgedDisagreements`
 或 `mergedInOneSource`、`withdrawnRows` 例外（由 `scripts/check-exemptions-untouched.mjs` 比对条目数判定 —— 旧的 grep 判据够不到,见 `GOTCHAS.md` 34）。
+
+⚠ 2026-09-04 起这三条是**指令**:全真就合并并删分支,不真就留 PR 并**点名是哪一条**。
+「和相关 PR 一起看」不是第五条件 —— 把能合的压在不能合的后面正是那 10 天的成因。
 
 闸门的 hands-off 判据是 branch-scoped —— 见 `GOTCHAS.md` 坑 13。
 
@@ -114,9 +133,13 @@ node scripts/fetch-source.mjs arcprize # 单独重抓一个源（arcprize / arcp
 
 ## 现在要盯的三件事
 
-1. **明早的 refresh 是修完之后第一次自己跑**（8-20 那次是手动 dispatch 的）。要看的是
-   **积压清空之后的稳态**：入档量应当回到日常的个位数量级，不再是 152 格那种一次性放行。
-   ⚠ 顺便看 `--any-open` 第一次生效、以及归属闸门有没有第一次真提出 alias（都在 `TODO.md`）。
+1. **`auto/refresh-aa` 的第一次真实自合**,以及 hermes 拿到新章程后的第一班。
+   两件都只能在真跑里验:GitHub 的 step output 传递(`handsoff`/`escalated`/`moved`)本地验不了,
+   hermes 会不会真的按新措辞合并也一样。**它死掉是这套系统里唯一背后没有推送的失败** ⇒
+   不会报丧,只会安静地不干活。
+   ⛔⛔ **别用 `npm run check:heartbeat -- --agent` 判断 hermes** —— 那条量的是「队列有没有人在做」,
+   你自己开一次 session 就把时钟清零(2026-08-26 当场实测:它拿我们自己的 commit 报了绿)。
+   ⚠ 它与其他 glm-5.3 重活**共享同一个 5 小时配额窗口** ⇒ 延迟先怀疑配额。
 2. **`deepseek-v4-pro` 翻转后的两件小尾巴**(都在 `TODO.md`,都不急):`open` 现在无据 ·
    `value` 这个 chip 还算不算数。
 3. **`swe-pro` 第一次自己动**（batch 30 是 `live`）。它读 RSC flight,**不是稳定 API** ——

@@ -2,11 +2,12 @@
   "batch": "29 · Vals AI",
   "collectedWith": "scripts/fetchers/vals.mjs",
   "filtered": true,
-  "filterRule": "Every board Vals links from /benchmarks, one row per model on its `overall` task — plus the named sub-tasks batch 05 recorded as their own columns (CyberBench poc/patch, Web Search finance/legal). Every OTHER sub-task is deliberately not read: they are conditions and subsets of the same questions (CorpFin's three context settings, LegalBench's five task types, MGSM's twelve languages), and beside `overall` they would put one model's condition against another's in one column. Boards with no catalog column yet are collected under `vals-<slug>` and refused at ingest with a reason, so adding the column later costs no re-collection: aime (AIME), case_law_v2 (CaseLaw v2), emb (EMB), hlab (Harvey's Legal Agent Benchmark), legal_bench (LegalBench), math500 (MATH 500), medcode (MedCode), medqa (MedQA), mgsm (MGSM), poker_agent (Agent Poker Bench), public-benefits-bench-v1 (Public Benefits Bench v1), reverse_eng (ReverseEngBench), sage (SAGE), tax_eval_v2 (TaxEval v2), time_horizon_index (Time Horizon Index: KSP). Boards whose page carries no server-rendered board at all — a client-only component with the data bundled in its JS chunk — are skipped and named here rather than allowed to fail the whole source; they have no catalog column, so nothing published depends on them: rsi_index",
+  "filterRule": "Every board Vals links from /benchmarks, one row per model on its `overall` task — plus the named sub-tasks batch 05 recorded as their own columns (CyberBench poc/patch, Web Search finance/legal). Every OTHER sub-task is deliberately not read: they are conditions and subsets of the same questions (CorpFin's three context settings, LegalBench's five task types, MGSM's twelve languages), and beside `overall` they would put one model's condition against another's in one column. Boards with no catalog column yet are collected under `vals-<slug>` and refused at ingest with a reason, so adding the column later costs no re-collection: aime (AIME), biomysterybench (BioMysteryBench), case_law_v2 (CaseLaw v2), emb (EMB), hlab (Harvey's Legal Agent Benchmark), legal_bench (LegalBench), math500 (MATH 500), medcode (MedCode), medqa (MedQA), mgsm (MGSM), poker_agent (Agent Poker Bench), public-benefits-bench-v1 (Public Benefits Bench v1), sage (SAGE), srebench (SRE Bench), tax_eval_v2 (TaxEval v2), time_horizon_index (Time Horizon Index: KSP), voice-code-bench (VoiceCodeBench). Boards whose page carries no server-rendered board at all — a client-only component with the data bundled in its JS chunk — are skipped and named here rather than allowed to fail the whole source; they have no catalog column, so nothing published depends on them: rsi_index",
   "release": "rolling",
   "sources": [
     "https://www.vals.ai/benchmarks",
     "https://www.vals.ai/benchmarks/aime",
+    "https://www.vals.ai/benchmarks/biomysterybench",
     "https://www.vals.ai/benchmarks/case_law_v2",
     "https://www.vals.ai/benchmarks/code-migration",
     "https://www.vals.ai/benchmarks/corp_fin_v2",
@@ -32,10 +33,10 @@
     "https://www.vals.ai/benchmarks/proof_bench",
     "https://www.vals.ai/benchmarks/public-benefits-bench",
     "https://www.vals.ai/benchmarks/public-benefits-bench-v1",
-    "https://www.vals.ai/benchmarks/reverse_eng",
     "https://www.vals.ai/benchmarks/rsi_index",
     "https://www.vals.ai/benchmarks/sage",
     "https://www.vals.ai/benchmarks/skillsbench",
+    "https://www.vals.ai/benchmarks/srebench",
     "https://www.vals.ai/benchmarks/swebench",
     "https://www.vals.ai/benchmarks/tax_eval_v2",
     "https://www.vals.ai/benchmarks/terminal-bench-2",
@@ -44,8 +45,9 @@
     "https://www.vals.ai/benchmarks/vals_index",
     "https://www.vals.ai/benchmarks/vals_multimodal_index",
     "https://www.vals.ai/benchmarks/vibe-code",
+    "https://www.vals.ai/benchmarks/voice-code-bench",
     "https://www.vals.ai/benchmarks/web_search"
   ],
   "note": "Read from the `props` attribute Astro server-renders onto each board's <astro-island>, which is where the whole leaderboard lives — /benchmarks is an index with no scores, and that page is what two earlier passes measured before recording Vals as publishing nothing machine-readable. score is the published `accuracy` (already 0-100). harness and reasoning_effort come from the row's own fields rather than from prose. evaluation_date is null on every row on purpose: Vals dates the BOARD, not the run. model_raw is the published `provider/model` string, verbatim — attribution stays the alias step's decision. source_kind is independent throughout: Vals is a third party even on the private sets it owns, which this project distinguishes from a board a benchmark's own authors publish.",
-  "retrievedDate": "2026-08-22"
+  "retrievedDate": "2026-09-04"
 }

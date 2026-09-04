@@ -22,6 +22,9 @@ DIR="$(dirname "$0")"
 # run reproduces, so there is nothing to save by doing it and then throwing it away.
 engaged_pr="$(bash "$DIR/pr-hands-off.sh" "$BRANCH")"
 if [ -n "$engaged_pr" ]; then
+  # Told to the caller, not just to the log: the workflow's self-merge step must not fire on a
+  # pull request this run deliberately did not touch.
+  echo "handsoff=yes" >> "${GITHUB_OUTPUT:-/dev/null}"
   echo "::warning::PR #$engaged_pr is waiting on a person; leaving $BRANCH alone. AA re-measures continuously, so tomorrow's run will refresh it once that pull request is merged or closed."
   {
     echo "### AA refresh paused"
@@ -34,7 +37,7 @@ fi
 # Describe the change before committing it: this compares the working tree against HEAD, so it
 # has to run while the change is still uncommitted. It goes at the top of the pull request body,
 # where a reviewer who cannot check an alias mapping can still check a score.
-node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
+[ -s change.md ] || node scripts/describe-change.mjs > change.md || echo "(could not describe the change)" > change.md
 
 # Every AA model the catalog does not carry *and the archive can already fill*, drafted from the
 # batch that just landed. The numbers in a model record all have a source; only the display name,
@@ -52,7 +55,10 @@ git config user.name "github-actions[bot]"
 git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
 git checkout -B "$BRANCH"
-git add data/sources app/observations.generated.ts
+# app/model-data.ts is here because scripts/reconcile-aa.mjs may have written to it before this
+# script ran. It is unchanged when the reconciler found nothing or refused, so adding it
+# unconditionally is a no-op on those days rather than a second code path.
+git add data/sources app/observations.generated.ts app/model-data.ts
 git commit -m "Refresh the Artificial Analysis parameter batch
 
 Re-read on request via .github/workflows/aa-refresh.yml. AA re-measures speed,
@@ -61,16 +67,25 @@ catalog is only wrong where check:models says so.
 "
 git push --force origin "$BRANCH"
 
+reconcile="$( [ -s reconcile.md ] && sed '/^<!--/d' reconcile.md || echo "_The reconciler did not run._" )"
+
 body="$(sed '/^<!--/d' change.md)
+
+## Catalog reconciliation
+
+$reconcile
 
 An on-demand re-read of Artificial Analysis. AA is not part of the daily refresh because it
 re-measures continuously; this branch exists so that adding a model does not require a person with
 the API key at a terminal.
 
-**Read \`check:models\` below before merging.** A value it flags is not automatically a defect in
-this diff — AA re-measuring speed is normal, and the question is whether the catalog number or the
-archived one is the stale side. Batch 08 corrected 43 catalog values this way, two of which had
-been quoted as evidence *against* the source.
+**If \`check:models\` is red below, this pull request is waiting for you** — the reconciler
+refused something, and what it refuses is the part that is a judgement rather than a re-measure.
+When it is green the run merges itself, and you are reading this only because you went looking.
+A flagged value is not automatically a defect in this diff: AA re-measuring speed is normal, and
+the question is whether the catalog number or the archived one is the stale side. Batch 08
+corrected 43 catalog values this way, two of which had been quoted as evidence *against* the
+source.
 
 \`\`\`
 $(cat "$CHECKS")

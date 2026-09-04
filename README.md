@@ -71,8 +71,8 @@ Benchmark observations are stored in `app/model-data.ts` as `model × benchmark 
 A cell may hold more than one observation. Terminal-Bench 2.1 reports Fable 5 at 83.8% under Claude Code and 80.4% under Terminus 2; both rows are kept, the table shows the primary and marks the alternates as `+n`. Listing a source is not coverage — only transcribed rows are. `npm run check:data` prints filled cells and the benchmark / independent / vendor split so the difference stays visible:
 
 ```text
-2133 observations across 1382/2088 cells (66.2% cell coverage;
-benchmark 918 / independent 1025 / vendor 190)
+2196 observations across 1399/2088 cells (67.0% cell coverage;
+benchmark 931 / independent 1046 / vendor 219)
 ```
 
 The percentage moves in both directions on purpose: adding a benchmark widens the grid, so
@@ -254,7 +254,7 @@ app/
   models/layout.tsx            # its title (the page is a client component)
   persona/                     # Persona Lab UI, validation protocol, metrics, scoped styles
   page.tsx                     # the owner's personal site at / — no data files
-  home-content.ts              # that site's copy (source of truth: ../quark-space)
+  home-content.ts              # that site's copy; implementation authority (AGENTS.md)
   home.module.css              # that site's styles, scoped under .home, --h-* properties
 data/
   sources/*.jsonl              # append-only archive: one row per published result
@@ -305,6 +305,15 @@ confined to `data/sources/` and the generated store is numbers moving inside a m
 reviewed when its fetcher was written, and the contract is a complete check on it. A change
 reaching `app/model-data.ts` or `data/model-aliases.json` introduces a *new* mapping, which is
 where every real mistake in this project has come from, and it opens a pull request instead.
+
+One narrow exception, since 2026-09-04. Artificial Analysis re-measures speed and latency
+continuously, so every re-read left a catalog record quoting last week's number and a pull request
+that could not merge until somebody typed twenty values across. That is not a mapping and it is not
+a judgement — the archive row was written by a script from the source minutes earlier, so the
+catalog is the stale side by construction — so `scripts/reconcile-aa.mjs` writes exactly those two
+fields, on records that already exist, and refuses everything else. One refusal stops the whole
+write and the pull request waits for a person, which is the only thing on that path that can ask
+for one.
 
 ## Notes
 
