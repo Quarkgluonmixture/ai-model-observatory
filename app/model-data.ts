@@ -216,11 +216,12 @@ export const MODELS: ModelRecord[] = [
   m("grok-4.5", "Grok 4.5", "xAI", "#42576b", false, 500, ["coding", "reasoning", "realtime"], [
     cfg("high", 55.8, 0.4256, 51.09, 14.51, 2, 6, false, 0.5),
   ]),
-  // List price, not the $2/$10 introductory rate that runs to 2026-08-31: a temporary discount
-  // is not comparable against every other model's list price. Cache falls back to the standard
-  // tenth-of-input default because the official page prices cache only under the promotion.
+  // List price. The $2/$10 introductory rate "through August 31, 2026" was expected to revert to
+  // $3/$15 (batch-10 term); the vendor never reverted — the official docs table has printed
+  // $2/$10 (cache read $0.20, write $2.50) as the standing rate since (batch-41, 2026-09-04),
+  // and the batch-10 term is retired there. Cache write $2.50/M stays in the archive note.
   m("claude-sonnet-5", "Claude Sonnet 5", "Anthropic", "#df9a72", false, 1000, ["coding", "agents", "fast"], [
-    cfg("max", 55.3, 1.72, 79.1, 167.49, 3, 15),
+    cfg("max", 55.3, 1.72, 79.1, 167.49, 2, 10, false, 0.2),
   ]),
   m("claude-opus-4.8", "Claude Opus 4.8", "Anthropic", "#a35f42", false, 1000, ["reasoning", "coding", "agents"], [
     cfg("max", 57.3, 2.0318, 61.3, 10.06, 5, 25, false, 0.5),

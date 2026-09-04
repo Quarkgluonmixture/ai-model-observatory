@@ -1,0 +1,31 @@
+{
+  "batch": "41 · Anthropic Sonnet 5 list price re-read, 2026-09-04",
+  "retrievedDate": "2026-09-04",
+  "collectedWith": "web_extract of https://docs.claude.com/en/docs/about-claude/pricing (server-rendered docs table); model-pricing table row for Claude Sonnet 5",
+  "filtered": false,
+  "schema": "Model operating parameters, NOT benchmark scores. Price evidence only: one row, quoting the official docs pricing table for Claude Sonnet 5 as read today.",
+  "sources": [
+    "https://docs.claude.com/en/docs/about-claude/pricing"
+  ],
+  "note": "Batch-10 declared Sonnet 5's $2/$10 introductory term (endsOn 2026-08-31) with a promised standard $3/$15 'thereafter'. On 2026-09-04 the official docs pricing table prints $2/$10/$0.20 for Sonnet 5 with no promotional language anywhere on the page — the vendor did not move to the promised standard rate, the promo became the standing rate. The batch-10 term is retired below (moved, not deleted, per GOTCHAS 37: a satisfied/expired term moved to retiredTerms stops asserting anything). A supersededRows entry routes the provenance check for price fields away from batch-10's row so the live official reading wins.",
+  "priceTerms": [],
+  "retiredTermsNote": "See note above.",
+  "retiredTerms": [
+    {
+      "modelId": "claude-sonnet-5",
+      "retrievedOn": "2026-08-01",
+      "listPrice": {
+        "input": 3,
+        "output": 15
+      },
+      "promotional": {
+        "input": 2,
+        "output": 10,
+        "endsOn": "2026-08-31"
+      },
+      "source": "https://www.anthropic.com/pricing",
+      "retiredOn": "2026-09-04",
+      "retiredBecause": "Superseded by the vendor. The promised standard $3/$15 'thereafter August 31' never came into force; the official docs table has printed $2/$10 as the standing rate since (read 2026-09-04, batch-41). The catalog now quotes $2/$10, evidenced by batch-41's row."
+    }
+  ]
+}
